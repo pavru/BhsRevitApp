@@ -6,7 +6,12 @@ TFMs).
 
 ## Version Information
 
-**Version:** 1.0.0
+**Version:** 1.0.1
+
+Bump this on every change, and update the `Sdk="BHS.Revit.Sdk/<version>"` attribute in the
+projects under `source/` with it. The package carries an MSBuild task assembly, so any process
+that has evaluated a Revit project - the IDE included - holds `BHS.Revit.Sdk.dll` open and the
+extracted package cannot be replaced in place. A new version number sidesteps that entirely.
 
 This is a fork of `BimHouse.Revit.Sdk`, taken into this repository so the build model can be
 changed without touching a package that has other consumers. The upstream repository at

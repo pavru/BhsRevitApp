@@ -4,12 +4,37 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Статус репозитория
 
-Каталог **пустой** — кода, решения и git-репозитория ещё нет. Это greenfield-проект:
-набор плагинов (add-ins) для Autodesk Revit **плюс** собственный framework для них.
+Набор плагинов (add-ins) для Autodesk Revit **плюс** собственный framework для них.
+Каркас заложен и собирается; прикладного кода пока нет.
 
-Пока каркас не заложен, разделы «Команды» и «Архитектура» ниже описывают *целевую*
-модель, унаследованную от соседних решений автора. Актуализируйте этот файл по мере
-появления реального кода — не оставляйте расхождений между документом и деревом проекта.
+```
+BhsRevitApp.slnx              решение, виртуальные папки по слоям
+Directory.Build.props         общие правила для source/
+Directory.Packages.props      CPM; Revit-пакеты сюда НЕ вносятся, их даёт SDK
+NuGet.config                  <clear/> + репозиторный фид + nuget.org
+build/
+  BHS.Revit.Sdk/              наш MSBuild SDK, форк BimHouse.Revit.Sdk
+  RefCheck/                   проверка конфликтов сборок с самим Revit
+  Directory.Build.props        пустой намеренно — щит инструментов от корневых правил
+source/
+  Shared/BHS.Shared           чистая ось .NET
+  Revit/BHS.Revit.Abstractions
+  Revit/BHS.Revit.Common
+artifacts/feed/               репозиторный NuGet-фид, в git не попадает
+```
+
+**Порядок сборки двухэтапный.** MSBuild разрешает SDK-пакет до того, как хоть один проект
+начнёт восстанавливаться, поэтому сначала собирается `build/BHS.Revit.Sdk` (кладёт пакет
+в `artifacts/feed`), и только потом всё остальное. Обойти это нельзя.
+
+**При правке SDK поднимайте его версию.** Пакет везёт сборку задач MSBuild, и любой процесс,
+успевший оценить Revit-проект, держит `BHS.Revit.Sdk.dll` открытой — распакованная копия
+в кэше не перезаписывается, а `dotnet build-server shutdown` узлы MSBuild не убивает.
+Симптом старой копии — `MSB3992` или `Could not resolve SDK`. Ссылки на версию правятся
+в `build/BHS.Revit.Sdk/BHS.Revit.Sdk.csproj` и в шапках проектов `source/Revit/*`.
+
+Разделы ниже описывают частью действующее устройство, частью — целевую модель. Актуализируйте
+этот файл по мере появления кода: расхождение документа с деревом дороже, чем его отсутствие.
 
 ## Экосистема на диске
 
@@ -18,29 +43,46 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 | Путь | Роль |
 |---|---|
-| `..\BimHouse.Revit.Sdk` | **Актуальный** кастомный MSBuild SDK для Revit. Исходники + `readme.md` с полным описанием свойств |
-| `..\BimHouseApp` | Ближайший предшественник: слоистая структура `source/`, `.slnx`, CPM. Собран на *старом* подходе `Directory.Build.props`/`.targets` |
-| `..\BHS` | Большое legacy-решение (`BHS.sln`): Revit-side/Win-side разделение, gRPC-сервисы, тесты |
-| `E:\Development\NuGetPackages` | Локальный NuGet-фид (источник `Local` в глобальном `NuGet.Config`), куда `BimHouse.Revit.Sdk` пушит пакет таргетом `PushToLocal` |
+| `..\BimHouse.Revit.Sdk` | Источник, из которого форкнут наш `build/BHS.Revit.Sdk`. Дальше живёт своей жизнью; **мы его не правим** |
+| `..\BimHouseApp` | Ближайший предшественник: слоистая структура `source/`, `.slnx`, CPM, подбор UI-пакетов |
+| `..\BHS` | Большое legacy-решение (`BHS.sln`): Revit-side/Win-side разделение, слой `HostBased`, gRPC-сервисы |
+| `..\RevitWinUiTest` | Прототип окна WinUI 3 внутри Revit: интероп окон, модальность, цикл сообщений |
 | `..\Revit SDK 20xx`, `..\autodesk.revit.api` | Официальные Revit SDK и сборки API по версиям |
+| `E:\Development\NuGetPackages` | Машинный NuGet-фид соседних решений. **Нашему репозиторию не виден** — `NuGet.config` его отбрасывает через `<clear/>` |
+
+**Соседние проекты только на чтение.** Они источник решений и справка, но правкам не подлежат:
+их код используется как первоисточник, а не как общая кодовая база.
 
 ## Сборочная модель
 
-Использовать **`BimHouse.Revit.Sdk`**, а не ручные `Directory.Build.props`-хаки из
-`BimHouseApp`/`BHS`. SDK подключается в заголовке проекта и берётся из локального фида:
+Revit-side проекты собираются нашим **`BHS.Revit.Sdk`** из `build/`, а не ручными
+`Directory.Build.props`-хаками, как в `BimHouseApp`/`BHS`. SDK подключается в заголовке
+проекта и берётся из репозиторного фида `artifacts/feed`:
 
 ```xml
-<Project Sdk="BimHouse.Revit.Sdk">
+<Project Sdk="BHS.Revit.Sdk/1.0.1">
   <PropertyGroup>
-    <TargetFrameworks>net8.0-revit2025;net8.0-revit2026;net10.0-revit2027</TargetFrameworks>
+    <TargetFrameworks>net48-revit2024;net8.0-revit2025;net8.0-revit2026;net10.0-revit2027</TargetFrameworks>
   </PropertyGroup>
 </Project>
 ```
 
-Что SDK делает за вас (детали — в `..\BimHouse.Revit.Sdk\readme.md`, он поддерживается в актуальном состоянии):
+Что SDK делает за вас (детали — в `build/BHS.Revit.Sdk/readme.md`):
 
-- **Кастомные TFM** `net8.0-revit2025`, `net8.0-revit2026`, `net10.0-revit2027`. **`net48-revit2024` пока НЕ поддержан** — см. «Матрица версий». Несоответствие
-  версии .NET и Revit — ошибка сборки, а не тихая деградация.
+- **Кастомные TFM** `net48-revit2024`, `net8.0-revit2025`, `net8.0-revit2026`, `net10.0-revit2027`.
+  Несоответствие версии .NET и Revit — ошибка сборки, а не тихая деградация. Внутрь моникёр
+  **транслируется**: сборка идёт как обычный `net48` / `net8.0-windows` / `net10.0-windows`,
+  поэтому базовый SDK разрешает всё штатно.
+- **Central Package Management поддержан**: под CPM неявные пакеты объявляются парой
+  «`PackageReference` без версии + `PackageVersion`». Перечислять `Nice3point.Revit.Api.*`
+  в `Directory.Packages.props` **нельзя** — это второй `PackageVersion` на тот же id (NU1506).
+- **Ссылки между проектами** работают по обеим осям: Revit-проект → Revit-проект берёт
+  соответствующую версию зависимости, Revit-проект → проект чистой оси берёт ближайший TFM
+  (`net48` для 2024, `net8.0` для 2025–2026, `net10.0` для 2027). Зависимость чистой оси
+  восстанавливается **один раз, на своих условиях**.
+- **`LangVersion`** на Revit-TFM поверх .NET Framework подставляется как `latest`, иначе
+  умолчание компилятора 7.3 конфликтует с `Nullable=enable`. Значение проекта выигрывает.
+  Открывается только синтаксис: записи, `init`, индексы и диапазоны на `net48` требуют полифилла.
 - **Константы препроцессора** `REVIT`, `REVIT2026`, `REVIT2025_OR_GREATER` и т.д. генерируются
   автоматически задачей `GenerateRevitDefineConstants`. Условная компиляция под версии Revit
   делается через них.
@@ -89,21 +131,24 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 Соответствие фиксировано Autodesk, свободного произведения двух осей не существует.
 Проверено по `ref/`-папкам пакетов `Nice3point.Revit.Api.RevitAPI` в кэше NuGet:
 
-| Revit | Рантайм | TFM проекта | Статус в BimHouse.Revit.Sdk |
-|---|---|---|---|
-| 2024 | .NET Framework 4.8 | `net48-revit2024` | **не поддержан** |
-| 2025 | .NET 8 | `net8.0-revit2025` | поддержан |
-| 2026 | .NET 8 | `net8.0-revit2026` | поддержан |
-| 2027 | .NET 10 | `net10.0-revit2027` | поддержан |
+| Revit | Рантайм | TFM проекта | Транслируется в | Версия пакета API |
+|---|---|---|---|---|
+| 2024 | .NET Framework 4.8 | `net48-revit2024` | `net48` | 2024.3.60 |
+| 2025 | .NET 8 | `net8.0-revit2025` | `net8.0-windows` | 2025.4.60 |
+| 2026 | .NET 8 | `net8.0-revit2026` | `net8.0-windows` | 2026.4.10 |
+| 2027 | .NET 10 | `net10.0-revit2027` | `net10.0-windows` | 2027.2.0 |
+
+Все четыре поддержаны и проверены сборкой. Добавление новой версии Revit — две строки
+в `build/BHS.Revit.Sdk/Sdk/targets/Revit.TfmMapping.targets` и в таблице валидации.
 
 Реальная вторая ось мультитаргетинга — **сторона процесса**, а не версия .NET:
 Revit-side сборки собираются по Revit-TFM, а общий код и UI — по чистой оси `net48;net8.0;net10.0`.
 
-> **Предусловие для 2024.** `SupportedTargetFrameworks` в
-> `..\BimHouse.Revit.Sdk\Sdk\props\Before.Microsoft.NET.Sdk.props` закрыт версиями 2025–2027.
-> Механика для .NET Framework уже отлажена в `..\BHS\Directory.Build.props` (подмена
-> `TargetFrameworkProfile`, `FrameworkPathOverride` через `ToolLocationHelper`, `AssetTargetFallback`) —
-> её нужно перенести в SDK, а не изобретать заново.
+> **Механику .NET Framework из `..\BHS` переносить не нужно.** Там подмена
+> `TargetFrameworkProfile` и `FrameworkPathOverride` через `ToolLocationHelper` понадобилась
+> потому, что BHS оставляет кастомный моникёр настоящим `TargetFramework` и чинит разрешение
+> вручную. У нас моникёр транслируется, внутренняя сборка идёт как обычный `net48`, и базовый
+> SDK разрешает его сам. Проверено сборкой — перенос был бы работой впустую.
 
 > **Ограничение WinUI 3.** Windows App SDK требует .NET 6+, а Revit 2024 — это `net48`.
 > Общий UI-слой, обязанный собираться под 2024, на WinUI 3 не соберётся. Рабочий прототип
@@ -344,11 +389,22 @@ Win-side потребляет их как обычный `IConfigurationSource` 
 
 ## Известные проблемы окружения
 
-- **`dotnet restore` молча падает** на любом пакете, которого нет в глобальном кэше:
-  `RestoreTask returned false but did not log an error`. Воспроизводится вне песочницы,
-  с чистым `nuget.config` и с переопределённым `globalPackagesFolder`. Проекты без
-  `PackageReference` собираются нормально — проблема строго в скачивании. Блокирует
-  добавление любой новой зависимости и живую проверку транспорта. Причина не найдена.
+- **Устаревшая распакованная копия SDK.** Симптомы — `MSB3992`, `Could not resolve SDK`,
+  `UnauthorizedAccessException` при восстановлении. Причина в разделе «Статус репозитория»:
+  сборку задач держит открытой любой процесс, оценивший Revit-проект. Лечится поднятием
+  версии SDK; если версию поднять нельзя — закрыть Rider и снести
+  `%USERPROFILE%\.nuget\packages\bhs.revit.sdk\<версия>`. Помогает также `MSBUILDDISABLENODEREUSE=1`.
+- **Гонка при параллельной сборке на холодном кэше** — несколько проектов распаковывают SDK
+  одновременно и получают `UnauthorizedAccessException`. Наблюдалась однократно,
+  систематичность не проверена. Обходится предварительной сборкой `build/BHS.Revit.Sdk`.
+- **Отладка MSBuild включена машинно**: `MSBUILDDEBUGENGINE=1` и `MSBUILDDEBUGPATH=C:\Temp\msbuild.logs`.
+  Замедляет restore примерно восьмикратно и копит логи сотнями мегабайт. К проектам отношения
+  не имеет, но при странном поведении сборки проверяйте это первым.
+
+> **Исторически:** «`dotnet restore` молча падает на любом пакете вне кэша» оказалось
+> неверным диагнозом. Обычные проекты восстанавливались нормально; не работал `Restore`
+> **в SDK** — его диспетчер читал свойство, которое нигде не присваивалось, и рапортовал успех,
+> не сделав ничего. Устранено.
 
 ## Справочники Revit API
 
@@ -370,12 +426,22 @@ https://help.autodesk.com/view/RVT/2027/ENU/?guid=Revit_API_Revit_API_Developers
 ## Команды
 
 ```powershell
+# ПЕРВЫМ ДЕЛОМ на чистом клоне: собрать SDK, иначе решение не разрешит его в шапках проектов
+dotnet build build\BHS.Revit.Sdk\BHS.Revit.Sdk.csproj -c Release
+
 # восстановление и сборка всего решения
-dotnet restore
-dotnet build -c Release
+dotnet restore BhsRevitApp.slnx
+dotnet build BhsRevitApp.slnx -c Release
 
 # сборка под одну версию Revit (мультитаргет-проект)
 dotnet build -c Debug -f net8.0-revit2026
+
+# что SDK захватил и как классифицировал TFM — при непонятном поведении диспетчера
+dotnet build -p:RevitSdkDiagnostics=true
+
+# проверить сборки на конфликт с копиями, которые возит сам Revit
+dotnet run --project build\RefCheck -c Release -- check `
+    --baseline build\RefCheck\baselines\revit-2025.json --input <путь к каталогу или dll>
 
 # сборка + установка add-in локально (свойства проекта, а не CLI-режим)
 #   PublishRevitAddIn=true, RevitDeploy=Local  →  %AppData%\Autodesk\Revit\Addins\<version>\
@@ -405,17 +471,30 @@ Revit* (жёстко привязаны к версии API), и внешние 
 
 ### Слоистость framework'а
 
-Проверенная в `BimHouseApp` раскладка `source/`, которую стоит воспроизвести:
+Раскладка `source/` восходит к `BimHouseApp`, но **все имена сборок несут префикс `BHS.`** —
+в отличие от оригинала, где Revit-слой назывался `Revit.Abstractions` и подобным.
 
-- `Revit/Revit.Abstractions` — контракты, свободные от конкретной версии API
-- `Revit/Revit.Base`, `Revit/Revit.Common` — базовые реализации и утилиты поверх Revit API
-- `Revit/Revit.Intermediate` — прослойка, сглаживающая различия версий Revit
-- `Frontend/WPF/*` — `UI.Abstractions`, `UI.Framework`, `UI`, `UI.Translations`
-- `Features/<Домен>/` — плагины как feature-модули (реализация, `*.UI`, `*.Playground`)
-- корневой host-проект (`*.FullEdition`) — точка входа `IExternalApplication`, собирающая features
+> **Почему префикс обязателен.** Revit 2024 грузит все add-in в **один AppDomain**, изоляции
+> там нет. Сборка с родовым именем вроде `Revit.Abstractions.dll` — это столкновение, ждущее
+> чужого вендора с тем же именем; победит загрузившийся первым, и отлаживать это будет
+> невозможно. Префикс стоит ноль и снимает целый класс отказов. То же соображение стоит за
+> метрикой полифиллов BCL в разделе про конфликт сборок.
 
-Framework — это `Revit.*` + `Frontend/*`; плагины — это `Features/*`. Зависимость идёт только
-в одну сторону: features → framework, никогда наоборот.
+| Каталог | Ось TFM | Роль |
+|---|---|---|
+| `Shared/BHS.Shared` | `net48;net8.0;net10.0` | код, не знающий ни о Revit, ни о стороне процесса |
+| `Revit/BHS.Revit.Abstractions` | Revit | контракты, за которыми прячутся различия версий API |
+| `Revit/BHS.Revit.Common` | Revit | базовые реализации и утилиты поверх Revit API |
+| `Frontend/WPF/BHS.UI.*` | чистая .NET | `Abstractions`, `Framework`, `UI`, `Translations` |
+| `Features/<Домен>/BHS.<Домен>*` | Revit | плагины как feature-модули |
+| `BHS.<Издание>` (корень `source/`) | Revit | host-проект, точка входа `IExternalApplication` |
+
+Framework — это `BHS.Shared`, `BHS.Revit.*` и `BHS.UI.*`; плагины — это `Features/*`.
+Зависимость идёт только в одну сторону: features → framework, никогда наоборот.
+
+**Слои заводятся по мере появления реального потребителя, а не заранее.** В `BimHouseApp`
+проект `Revit.Base` так и остался пустым, а `Revit.Common` содержал один файл. Пустой каталог
+в дереве — не задел, а обещание, которое некому выполнить.
 
 ### Мультиверсионность Revit
 
