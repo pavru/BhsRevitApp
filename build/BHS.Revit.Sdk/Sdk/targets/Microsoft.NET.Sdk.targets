@@ -1,0 +1,90 @@
+<Project>
+    <!-- ======================================================================================= -->
+    <!-- Dispatcher logic for Single-Targeting Outer Builds                                      -->
+    <!-- ======================================================================================= -->
+
+    <!-- We only dispatch if this is the outer build and TargetFramework is set (Single-targeting) -->
+    <PropertyGroup Condition="'$(IsRevitOuterBuild)' == 'true' And '$(TargetFramework)' != ''">
+        <_IsSingleTargetOuterBuild>true</_IsSingleTargetOuterBuild>
+    </PropertyGroup>
+
+    <Target Name="_PrepareSingleRevitDispatch" Condition="'$(_IsSingleTargetOuterBuild)' == 'true'">
+        <PropertyGroup>
+            <_SingleOriginalTfm>$(TargetFramework)</_SingleOriginalTfm>
+            <_SingleInnerTfm Condition="$(_SingleOriginalTfm.Contains('-revit')) And $(_SingleOriginalTfm.StartsWith('net8.0'))">net8.0-windows</_SingleInnerTfm>
+            <_SingleInnerTfm Condition="$(_SingleOriginalTfm.Contains('-revit')) And $(_SingleOriginalTfm.StartsWith('net10.0'))">net10.0-windows</_SingleInnerTfm>
+            <_SingleInnerTfm Condition="'$(_SingleInnerTfm)' == ''">$(_SingleOriginalTfm)</_SingleInnerTfm>
+            
+            <_InnerBuildProperties>_IsInnerRevitBuild=true;TargetFramework=$(_SingleInnerTfm);RevitInnerTfm=$(_SingleOriginalTfm)</_InnerBuildProperties>
+        </PropertyGroup>
+    </Target>
+
+    <!-- Intercept core build targets -->
+    <Target Name="Build" DependsOnTargets="_PrepareSingleRevitDispatch" Condition="'$(_IsSingleTargetOuterBuild)' == 'true'">
+        <MSBuild Projects="$(MSBuildProjectFullPath)" Targets="Build" Properties="$(_InnerBuildProperties)"/>
+    </Target>
+
+    <Target Name="Clean" DependsOnTargets="_PrepareSingleRevitDispatch" Condition="'$(_IsSingleTargetOuterBuild)' == 'true'">
+        <MSBuild Projects="$(MSBuildProjectFullPath)" Targets="Clean" Properties="$(_InnerBuildProperties)"/>
+    </Target>
+
+    <Target Name="Rebuild" DependsOnTargets="_PrepareSingleRevitDispatch" Condition="'$(_IsSingleTargetOuterBuild)' == 'true'">
+        <MSBuild Projects="$(MSBuildProjectFullPath)" Targets="Rebuild" Properties="$(_InnerBuildProperties)"/>
+    </Target>
+
+    <Target Name="Pack" DependsOnTargets="_PrepareSingleRevitDispatch" Condition="'$(_IsSingleTargetOuterBuild)' == 'true'">
+        <MSBuild Projects="$(MSBuildProjectFullPath)" Targets="Pack" Properties="$(_InnerBuildProperties)"/>
+    </Target>
+
+    <Target Name="Publish" DependsOnTargets="_PrepareSingleRevitDispatch" Condition="'$(_IsSingleTargetOuterBuild)' == 'true'">
+        <MSBuild Projects="$(MSBuildProjectFullPath)" Targets="Publish" Properties="$(_InnerBuildProperties)"/>
+    </Target>
+
+    <!-- Design-Time Targets -->
+    <Target Name="Compile" DependsOnTargets="_PrepareSingleRevitDispatch" Condition="'$(_IsSingleTargetOuterBuild)' == 'true'">
+        <MSBuild Projects="$(MSBuildProjectFullPath)" Targets="Compile" Properties="$(_InnerBuildProperties)"/>
+    </Target>
+
+    <Target Name="ResolveReferences" Returns="@(ReferencePath)" DependsOnTargets="_PrepareSingleRevitDispatch" Condition="'$(_IsSingleTargetOuterBuild)' == 'true'">
+        <MSBuild Projects="$(MSBuildProjectFullPath)" Targets="ResolveReferences" Properties="$(_InnerBuildProperties)">
+             <Output TaskParameter="TargetOutputs" ItemName="ReferencePath"/>
+        </MSBuild>
+    </Target>
+    
+    <Target Name="ResolveAssemblyReferences" Returns="@(ReferencePath)" DependsOnTargets="_PrepareSingleRevitDispatch" Condition="'$(_IsSingleTargetOuterBuild)' == 'true'">
+        <MSBuild Projects="$(MSBuildProjectFullPath)" Targets="ResolveAssemblyReferences" Properties="$(_InnerBuildProperties)">
+            <Output TaskParameter="TargetOutputs" ItemName="ReferencePath"/>
+        </MSBuild>
+    </Target>
+
+    <Target Name="ResolveProjectReferences" Returns="@(_ResolvedProjectReferencePaths)" DependsOnTargets="_PrepareSingleRevitDispatch" Condition="'$(_IsSingleTargetOuterBuild)' == 'true'">
+        <MSBuild Projects="$(MSBuildProjectFullPath)" Targets="ResolveProjectReferences" Properties="$(_InnerBuildProperties)">
+            <Output TaskParameter="TargetOutputs" ItemName="_ResolvedProjectReferencePaths"/>
+        </MSBuild>
+    </Target>
+
+    <Target Name="ResolvePackageDependenciesDesignTime" Returns="@(_DependenciesDesignTime)" DependsOnTargets="_PrepareSingleRevitDispatch" Condition="'$(_IsSingleTargetOuterBuild)' == 'true'">
+        <MSBuild Projects="$(MSBuildProjectFullPath)" Targets="ResolvePackageDependenciesDesignTime" Properties="$(_InnerBuildProperties)">
+            <Output TaskParameter="TargetOutputs" ItemName="_DependenciesDesignTime"/>
+        </MSBuild>
+    </Target>
+
+    <Target Name="CollectPackageReferences" Returns="@(PackageReference)" DependsOnTargets="_PrepareSingleRevitDispatch" Condition="'$(_IsSingleTargetOuterBuild)' == 'true'">
+        <MSBuild Projects="$(MSBuildProjectFullPath)" Targets="CollectPackageReferences" Properties="$(_InnerBuildProperties)">
+            <Output TaskParameter="TargetOutputs" ItemName="PackageReference"/>
+        </MSBuild>
+    </Target>
+
+    <Target Name="GetTargetPath" Returns="@(TargetPathWithTargetPlatformMoniker)" DependsOnTargets="_PrepareSingleRevitDispatch" Condition="'$(_IsSingleTargetOuterBuild)' == 'true'">
+        <MSBuild Projects="$(MSBuildProjectFullPath)" Targets="GetTargetPath" Properties="$(_InnerBuildProperties)">
+            <Output TaskParameter="TargetOutputs" ItemName="TargetPathWithTargetPlatformMoniker"/>
+        </MSBuild>
+    </Target>
+    
+    <Target Name="GetNativeManifest" Returns="@(NativeManifest)" DependsOnTargets="_PrepareSingleRevitDispatch" Condition="'$(_IsSingleTargetOuterBuild)' == 'true'">
+        <MSBuild Projects="$(MSBuildProjectFullPath)" Targets="GetNativeManifest" Properties="$(_InnerBuildProperties)">
+            <Output TaskParameter="TargetOutputs" ItemName="NativeManifest"/>
+        </MSBuild>
+    </Target>
+
+</Project>

@@ -1,0 +1,14 @@
+<Project>
+    <PropertyGroup>
+        <_RevitPropsDir>$(MSBuildThisFileDirectory)props\</_RevitPropsDir>
+    </PropertyGroup>
+
+    <!-- Properties loaded BEFORE Microsoft.NET.Sdk -->
+    <Import Project="$(_RevitPropsDir)Before.Microsoft.NET.Sdk.props" Condition="Exists('$(_RevitPropsDir)Before.Microsoft.NET.Sdk.props')"/>
+
+    <!-- Import base Sdk.props -->
+    <Import Project="Sdk.props" Sdk="Microsoft.NET.Sdk"/>
+
+    <!-- Properties loaded AFTER Microsoft.NET.Sdk -->
+    <Import Project="$(_RevitPropsDir)After.Microsoft.NET.Sdk.props" Condition="Exists('$(_RevitPropsDir)After.Microsoft.NET.Sdk.props')"/>
+</Project>

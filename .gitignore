@@ -5,6 +5,9 @@ artifacts/
 publish/
 *.binlog
 
+## Repo-local NuGet feed (produced by building build/BHS.Revit.Sdk)
+artifacts/feed/
+
 ## Rider / JetBrains
 .idea/
 *.sln.iml

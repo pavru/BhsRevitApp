@@ -1,0 +1,38 @@
+<Project>
+
+    <!-- Outer Build: Spoof TargetPlatformIdentifier to prevent base SDK validation crash on custom Revit TFMs 
+         This runs AFTER the user's .csproj file is evaluated, so $(TargetFramework) is fully known. -->
+    <PropertyGroup Condition="'$(TargetFramework)' != '' And $(TargetFramework.Contains('-revit')) And '$(_IsInnerRevitBuild)' != 'true'">
+        <IsRevitOuterBuild>true</IsRevitOuterBuild>
+        <TargetPlatformIdentifier>Windows</TargetPlatformIdentifier>
+        <TargetFrameworkIdentifier>.NETCoreApp</TargetFrameworkIdentifier>
+    </PropertyGroup>
+
+    <PropertyGroup Condition="'$(TargetFramework)' == '' And '$(TargetFrameworks)' != '' And '$(_IsInnerRevitBuild)' != 'true'">
+        <IsRevitOuterBuild>true</IsRevitOuterBuild>
+    </PropertyGroup>
+
+    <!-- Import base Sdk.targets from Microsoft.NET.Sdk -->
+    <Import Project="Sdk.targets" Sdk="Microsoft.NET.Sdk"/>
+
+    <PropertyGroup>
+        <_RevitTargetsDir>$(MSBuildThisFileDirectory)targets\</_RevitTargetsDir>
+    </PropertyGroup>
+
+    <!-- Validation logic (Inner Build only) -->
+    <Import Project="$(_RevitTargetsDir)Revit.Validation.targets" Condition="'$(IsRevitTfm)' == 'true' And Exists('$(_RevitTargetsDir)Revit.Validation.targets')"/>
+    
+    <!-- Dispatcher Logic (Outer Build) -->
+    <Import Project="$(_RevitTargetsDir)Microsoft.NET.Sdk.CrossTargeting.targets" Condition="'$(IsRevitOuterBuild)' == 'true' And '$(TargetFrameworks)' != '' And Exists('$(_RevitTargetsDir)Microsoft.NET.Sdk.CrossTargeting.targets')" />
+    <Import Project="$(_RevitTargetsDir)Microsoft.NET.Sdk.targets" Condition="'$(IsRevitOuterBuild)' == 'true' And '$(TargetFramework)' != '' And Exists('$(_RevitTargetsDir)Microsoft.NET.Sdk.targets')"/>
+    
+    <!-- Framework resolution bypass (Inner Build) -->
+    <Import Project="$(_RevitTargetsDir)Microsoft.NET.Sdk.FrameworkReferenceResolution.targets" Condition="'$(IsRevitTfm)' == 'true' And Exists('$(_RevitTargetsDir)Microsoft.NET.Sdk.FrameworkReferenceResolution.targets')"/>
+    
+    <!-- NuGet Restore Overrides (Outer Build) -->
+    <Import Project="$(_RevitTargetsDir)NuGet.targets" Condition="'$(IsRevitOuterBuild)' == 'true' And Exists('$(_RevitTargetsDir)NuGet.targets')"/>
+    
+    <!-- Final tasks (Inner Build or outer build depending on condition) -->
+    <Import Project="$(_RevitTargetsDir)Revit.Tasks.targets" Condition="Exists('$(_RevitTargetsDir)Revit.Tasks.targets')"/>
+    <Import Project="$(_RevitTargetsDir)Revit.Publish.targets" Condition="Exists('$(_RevitTargetsDir)Revit.Publish.targets')"/>
+</Project>

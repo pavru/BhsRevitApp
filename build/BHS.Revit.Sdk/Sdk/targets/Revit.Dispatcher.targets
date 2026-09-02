@@ -1,0 +1,99 @@
+<Project>
+    <!-- ======================================================================================= -->
+    <!-- Central Dispatcher for Outer Builds                                                     -->
+    <!-- Intercepts MSBuild targets and dispatches them to Inner Builds with translated TFMs     -->
+    <!-- ======================================================================================= -->
+
+    <PropertyGroup>
+        <_InnerBuildProperties>_IsInnerRevitBuild=true</_InnerBuildProperties>
+    </PropertyGroup>
+
+    <Target Name="_GetRevitInnerBuilds">
+        <!-- 1. Gather all TFMs requested by the user or IDE -->
+        <ItemGroup>
+            <!-- From TargetFrameworks -->
+            <_RawRequestedTfms Include="$(TargetFrameworks.Split(';'))" Condition="'$(TargetFrameworks)' != ''" />
+            <!-- From TargetFramework (Single target or DesignTime evaluation) -->
+            <_RawRequestedTfms Include="$(TargetFramework)" Condition="'$(TargetFramework)' != '' And '$(TargetFrameworks)' == ''" />
+        </ItemGroup>
+
+        <!-- 2. Translate custom Revit TFMs to standard Windows TFMs -->
+        <ItemGroup>
+            <_RevitInnerBuilds Include="%(_RawRequestedTfms.Identity)">
+                <OriginalTfm>%(_RawRequestedTfms.Identity)</OriginalTfm>
+                <InnerTfm Condition="%(_RawRequestedTfms.Identity).Contains('-revit') And %(_RawRequestedTfms.Identity).StartsWith('net8.0')">net8.0-windows</InnerTfm>
+                <InnerTfm Condition="%(_RawRequestedTfms.Identity).Contains('-revit') And %(_RawRequestedTfms.Identity).StartsWith('net10.0')">net10.0-windows</InnerTfm>
+                <!-- Pass-through for standard TFMs -->
+                <InnerTfm Condition="!%(_RawRequestedTfms.Identity).Contains('-revit')">%(_RawRequestedTfms.Identity)</InnerTfm>
+            </_RevitInnerBuilds>
+        </ItemGroup>
+    </Target>
+
+    <!-- Core Compilation Targets -->
+    <Target Name="Build" DependsOnTargets="_GetRevitInnerBuilds">
+        <MSBuild Projects="$(MSBuildProjectFullPath)" Targets="Build" Properties="TargetFramework=%(_RevitInnerBuilds.InnerTfm);RevitInnerTfm=%(_RevitInnerBuilds.OriginalTfm);$(_InnerBuildProperties)"/>
+    </Target>
+
+    <Target Name="Clean" DependsOnTargets="_GetRevitInnerBuilds">
+        <MSBuild Projects="$(MSBuildProjectFullPath)" Targets="Clean" Properties="TargetFramework=%(_RevitInnerBuilds.InnerTfm);RevitInnerTfm=%(_RevitInnerBuilds.OriginalTfm);$(_InnerBuildProperties)"/>
+    </Target>
+
+    <Target Name="Rebuild" DependsOnTargets="_GetRevitInnerBuilds">
+        <MSBuild Projects="$(MSBuildProjectFullPath)" Targets="Rebuild" Properties="TargetFramework=%(_RevitInnerBuilds.InnerTfm);RevitInnerTfm=%(_RevitInnerBuilds.OriginalTfm);$(_InnerBuildProperties)"/>
+    </Target>
+
+    <Target Name="Pack" DependsOnTargets="_GetRevitInnerBuilds">
+        <MSBuild Projects="$(MSBuildProjectFullPath)" Targets="Pack" Properties="TargetFramework=%(_RevitInnerBuilds.InnerTfm);RevitInnerTfm=%(_RevitInnerBuilds.OriginalTfm);$(_InnerBuildProperties)"/>
+    </Target>
+
+    <Target Name="Publish" DependsOnTargets="_GetRevitInnerBuilds">
+        <MSBuild Projects="$(MSBuildProjectFullPath)" Targets="Publish" Properties="TargetFramework=%(_RevitInnerBuilds.InnerTfm);RevitInnerTfm=%(_RevitInnerBuilds.OriginalTfm);$(_InnerBuildProperties)"/>
+    </Target>
+
+    <!-- Design-Time & IDE Support Targets -->
+    <Target Name="Compile" DependsOnTargets="_GetRevitInnerBuilds">
+        <MSBuild Projects="$(MSBuildProjectFullPath)" Targets="Compile" Properties="TargetFramework=%(_RevitInnerBuilds.InnerTfm);RevitInnerTfm=%(_RevitInnerBuilds.OriginalTfm);$(_InnerBuildProperties)"/>
+    </Target>
+
+    <Target Name="ResolveReferences" Returns="@(ReferencePath)" DependsOnTargets="_GetRevitInnerBuilds">
+        <MSBuild Projects="$(MSBuildProjectFullPath)" Targets="ResolveReferences" Properties="TargetFramework=%(_RevitInnerBuilds.InnerTfm);RevitInnerTfm=%(_RevitInnerBuilds.OriginalTfm);$(_InnerBuildProperties)">
+             <Output TaskParameter="TargetOutputs" ItemName="ReferencePath"/>
+        </MSBuild>
+    </Target>
+    
+    <Target Name="ResolveAssemblyReferences" Returns="@(ReferencePath)" DependsOnTargets="_GetRevitInnerBuilds">
+        <MSBuild Projects="$(MSBuildProjectFullPath)" Targets="ResolveAssemblyReferences" Properties="TargetFramework=%(_RevitInnerBuilds.InnerTfm);RevitInnerTfm=%(_RevitInnerBuilds.OriginalTfm);$(_InnerBuildProperties)">
+            <Output TaskParameter="TargetOutputs" ItemName="ReferencePath"/>
+        </MSBuild>
+    </Target>
+
+    <Target Name="ResolveProjectReferences" Returns="@(_ResolvedProjectReferencePaths)" DependsOnTargets="_GetRevitInnerBuilds">
+        <MSBuild Projects="$(MSBuildProjectFullPath)" Targets="ResolveProjectReferences" Properties="TargetFramework=%(_RevitInnerBuilds.InnerTfm);RevitInnerTfm=%(_RevitInnerBuilds.OriginalTfm);$(_InnerBuildProperties)">
+            <Output TaskParameter="TargetOutputs" ItemName="_ResolvedProjectReferencePaths"/>
+        </MSBuild>
+    </Target>
+
+    <Target Name="ResolvePackageDependenciesDesignTime" Returns="@(_DependenciesDesignTime)" DependsOnTargets="_GetRevitInnerBuilds">
+        <MSBuild Projects="$(MSBuildProjectFullPath)" Targets="ResolvePackageDependenciesDesignTime" Properties="TargetFramework=%(_RevitInnerBuilds.InnerTfm);RevitInnerTfm=%(_RevitInnerBuilds.OriginalTfm);$(_InnerBuildProperties)">
+            <Output TaskParameter="TargetOutputs" ItemName="_DependenciesDesignTime"/>
+        </MSBuild>
+    </Target>
+
+    <Target Name="CollectPackageReferences" Returns="@(PackageReference)" DependsOnTargets="_GetRevitInnerBuilds">
+        <MSBuild Projects="$(MSBuildProjectFullPath)" Targets="CollectPackageReferences" Properties="TargetFramework=%(_RevitInnerBuilds.InnerTfm);RevitInnerTfm=%(_RevitInnerBuilds.OriginalTfm);$(_InnerBuildProperties)">
+            <Output TaskParameter="TargetOutputs" ItemName="PackageReference"/>
+        </MSBuild>
+    </Target>
+
+    <Target Name="GetTargetPath" Returns="@(TargetPathWithTargetPlatformMoniker)" DependsOnTargets="_GetRevitInnerBuilds">
+        <MSBuild Projects="$(MSBuildProjectFullPath)" Targets="GetTargetPath" Properties="TargetFramework=%(_RevitInnerBuilds.InnerTfm);RevitInnerTfm=%(_RevitInnerBuilds.OriginalTfm);$(_InnerBuildProperties)">
+            <Output TaskParameter="TargetOutputs" ItemName="TargetPathWithTargetPlatformMoniker"/>
+        </MSBuild>
+    </Target>
+    
+    <Target Name="GetNativeManifest" Returns="@(NativeManifest)" DependsOnTargets="_GetRevitInnerBuilds">
+        <MSBuild Projects="$(MSBuildProjectFullPath)" Targets="GetNativeManifest" Properties="TargetFramework=%(_RevitInnerBuilds.InnerTfm);RevitInnerTfm=%(_RevitInnerBuilds.OriginalTfm);$(_InnerBuildProperties)">
+            <Output TaskParameter="TargetOutputs" ItemName="NativeManifest"/>
+        </MSBuild>
+    </Target>
+</Project>

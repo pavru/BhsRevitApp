@@ -1,0 +1,45 @@
+<Project>
+    <PropertyGroup>
+        <NoWarn>$(NoWarn);NU1701;NU1202</NoWarn>
+    </PropertyGroup>
+
+    <PropertyGroup>
+        <SupportedTargetFrameworks>$(SupportedTargetFrameworks);net8.0-revit2025;net8.0-revit2026;net10.0-revit2027</SupportedTargetFrameworks>
+    </PropertyGroup>
+
+    <PropertyGroup Condition="'$(_IsInnerRevitBuild)' != 'true'">
+        <IsRevitOuterBuild>true</IsRevitOuterBuild>
+        
+        <!-- If the IDE (e.g. Rider) passes a specific TargetFramework globally during a design-time build, 
+             this file will catch it. We spoof the identifiers early here as well to prevent crashes. -->
+        <TargetPlatformIdentifier Condition="'$(TargetFramework)' != '' And $(TargetFramework.Contains('-revit'))">Windows</TargetPlatformIdentifier>
+        <TargetFrameworkIdentifier Condition="'$(TargetFramework)' != '' And $(TargetFramework.Contains('-revit'))">.NETCoreApp</TargetFrameworkIdentifier>
+    </PropertyGroup>
+
+    <PropertyGroup Condition="'$(_IsInnerRevitBuild)' == 'true'">
+        <IsRevitOuterBuild>false</IsRevitOuterBuild>
+        
+        <IsRevitTfm Condition="'$(RevitInnerTfm)' != '' And $(RevitInnerTfm.Contains('-revit'))">true</IsRevitTfm>
+        <RevitVersion Condition="'$(IsRevitTfm)' == 'true'">$([System.Text.RegularExpressions.Regex]::Match('$(RevitInnerTfm)', `revit(\d+)`).Groups[1].Value)</RevitVersion>
+        
+        <AppendTargetFrameworkToOutputPath Condition="'$(IsRevitTfm)' == 'true'">false</AppendTargetFrameworkToOutputPath>
+        
+        <_RevitTfmOutputPath Condition="'$(IsRevitTfm)' == 'true'">obj\Revit$(RevitVersion)\</_RevitTfmOutputPath>
+        
+        <BaseIntermediateOutputPath Condition="'$(IsRevitTfm)' == 'true'">$(_RevitTfmOutputPath)</BaseIntermediateOutputPath>
+        <MSBuildProjectExtensionsPath Condition="'$(IsRevitTfm)' == 'true'">$(_RevitTfmOutputPath)</MSBuildProjectExtensionsPath>
+        
+        <RestoreOutputPath Condition="'$(IsRevitTfm)' == 'true'">$(_RevitTfmOutputPath)</RestoreOutputPath>
+        <ProjectAssetsFile Condition="'$(IsRevitTfm)' == 'true'">$(RestoreOutputPath)project.assets.json</ProjectAssetsFile>
+        <ProjectAssetsCacheFile Condition="'$(IsRevitTfm)' == 'true'">$(RestoreOutputPath)project.assets.cache</ProjectAssetsCacheFile>
+    </PropertyGroup>
+
+    <PropertyGroup>
+        <BuildTasksDirectoryRoot>$(MSBuildThisFileDirectory)..\..\tasks\</BuildTasksDirectoryRoot>
+        <BuildTasksTFM Condition=" '$(MSBuildRuntimeType)' == 'Core'">net10.0</BuildTasksTFM>
+        <BuildTasksTFM Condition=" '$(BuildTasksTFM)' == ''">net48</BuildTasksTFM>
+        <BuildTasksDirectory>$(BuildTasksDirectoryRoot)$(BuildTasksTFM)\</BuildTasksDirectory>
+        <BuildTasksAssembly>$(BuildTasksDirectory)BHS.Revit.Sdk.dll</BuildTasksAssembly>
+    </PropertyGroup>
+
+</Project>

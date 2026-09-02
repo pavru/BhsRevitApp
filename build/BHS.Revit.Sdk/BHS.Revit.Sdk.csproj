@@ -1,0 +1,65 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <TargetFrameworks>net48;net10.0</TargetFrameworks>
+        <ImplicitUsings>enable</ImplicitUsings>
+        <Nullable>enable</Nullable>
+        <LangVersion>latestmajor</LangVersion>
+        <RootNamespace>BHS.Revit.Sdk</RootNamespace>
+        <AssemblyName>BHS.Revit.Sdk</AssemblyName>
+    </PropertyGroup>
+
+    <!-- MSBuild SDK package -->
+    <PropertyGroup>
+        <PackageId>BHS.Revit.Sdk</PackageId>
+        <PackageType>MSBuildSdk</PackageType>
+        <Version>1.0.0</Version>
+        <AssemblyVersion>1.0.0</AssemblyVersion>
+
+        <IsPackable>true</IsPackable>
+        <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+        <IncludeBuildOutput>true</IncludeBuildOutput>
+        <BuildOutputTargetFolder>tasks</BuildOutputTargetFolder>
+        <SuppressDependenciesWhenPacking>true</SuppressDependenciesWhenPacking>
+
+        <Title>BHS Revit add-in SDK</Title>
+        <Description>MSBuild SDK for Revit add-ins: custom Revit target frameworks, implicit Revit API packages, .addin manifest generation, publishing and deployment.</Description>
+        <Copyright>alex@pototskiy.net</Copyright>
+        <PackageTags>autodesk;revit;sdk;msbuild</PackageTags>
+        <PackageReadmeFile>readme.md</PackageReadmeFile>
+        <PackageIcon>images/BimHouseLogoNoName.256.png</PackageIcon>
+
+        <NoWarn>$(NoWarn);NU5100</NoWarn>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <PackageReference Include="Microsoft.Build.Framework" Version="18.4.0"/>
+        <PackageReference Include="Microsoft.Build.Utilities.Core" Version="18.4.0" ExcludeAssets="Runtime"/>
+        <PackageReference Include="Polyfill" Version="10.0.0"/>
+        <PackageReference Include="JetBrains.Annotations" Version="2025.2.4"/>
+    </ItemGroup>
+
+    <ItemGroup>
+        <Content Include="Sdk\**" Pack="true" PackagePath="Sdk\"/>
+        <None Include="readme.md" Pack="true" PackagePath="\" Visible="true"/>
+        <None Include="images\BimHouseLogoNoName.256.png" Pack="true" PackagePath="images\" Visible="false"/>
+    </ItemGroup>
+
+    <!--
+      The SDK is consumed from a feed inside this repository, not from the machine-wide one.
+      MSBuild resolves an SDK package before any project builds, so the SDK has to be packed
+      into the feed before the rest of the solution can restore. See readme.md, "Bootstrap".
+    -->
+    <PropertyGroup>
+        <RepoFeedDirectory>$(MSBuildThisFileDirectory)..\..\artifacts\feed\</RepoFeedDirectory>
+    </PropertyGroup>
+
+    <Target Name="PushToRepoFeed" AfterTargets="Pack" Condition="'$(IsPackable)' == 'true'">
+        <MakeDir Directories="$(RepoFeedDirectory)"/>
+        <Copy SourceFiles="$(PackageOutputPath)$(PackageId).$(PackageVersion).nupkg"
+              DestinationFolder="$(RepoFeedDirectory)"/>
+        <Message Importance="high"
+                 Text="$(PackageId) $(PackageVersion) published to $(RepoFeedDirectory)"/>
+    </Target>
+
+</Project>

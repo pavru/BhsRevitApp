@@ -1,0 +1,52 @@
+<Project>
+    <!-- Set default values for properties -->
+    <PropertyGroup Condition="'$(IsRevitTfm)' == 'true'">
+        <UseRevitApi Condition="'$(UseRevitApi)' == ''">true</UseRevitApi>
+    </PropertyGroup>
+
+    <!-- 
+      This file contains implicit PackageReferences for Revit API assemblies 
+      based on the flags set in the project file (e.g. UseRevitApi).
+    -->
+    <ItemGroup Condition="'$(IsRevitTfm)' == 'true'">
+        <!-- RevitAPI -->
+        <PackageReference Include="Nice3point.Revit.Api.RevitAPI"
+                          Version="$(RevitVersion).*"
+                          Condition="'$(UseRevitApi)' == 'true'"/>
+
+        <!-- RevitAPIUI -->
+        <PackageReference Include="Nice3point.Revit.Api.RevitAPIUI"
+                          Version="$(RevitVersion).*"
+                          Condition="'$(UseRevitApiUi)' == 'true'"/>
+
+        <!-- AdWindows -->
+        <PackageReference Include="Nice3point.Revit.Api.AdWindows"
+                          Version="$(RevitVersion).*"
+                          Condition="'$(UseRevitAdWindows)' == 'true'"/>
+
+        <!-- RevitAPIIFC -->
+        <PackageReference Include="Nice3point.Revit.Api.RevitAPIIFC"
+                          Version="$(RevitVersion).*"
+                          Condition="'$(UseRevitApiIfc)' == 'true'"/>
+
+        <!-- UIFramework -->
+        <PackageReference Include="Nice3point.Revit.Api.UIFramework"
+                          Version="$(RevitVersion).*"
+                          Condition="'$(UseRevitUiFramework)' == 'true'"/>
+
+        <!-- RevitAPIMacros -->
+        <PackageReference Include="Nice3point.Revit.Api.RevitAPIMacros"
+                          Version="$(RevitVersion).*"
+                          Condition="'$(UserRevitApiMacros)' == 'true'"/>
+
+        <!-- RevitAddInUtility -->
+        <PackageReference Include="Nice3point.Revit.Api.RevitAddInUtility"
+                          Version="$(RevitVersion).*"
+                          Condition="'$(UseRevitAddInUtility)' == 'true'"/>
+
+        <!-- TUnit.Revit -->
+        <PackageReference Include="Nice3point.TUnit.Revit"
+                          Version="$(RevitVersion).*"
+                          Condition="'$(UserRevitTUnit)' == 'true'"/>
+    </ItemGroup>
+</Project>

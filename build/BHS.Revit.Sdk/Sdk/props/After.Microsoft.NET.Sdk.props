@@ -1,0 +1,23 @@
+<Project>
+    <PropertyGroup Condition="'$(UseWinUI)' == 'true'">
+        <TargetPlatformMinVersion Condition="'$(TargetPlatformMinVersion)' == ''">10.0.17763.0</TargetPlatformMinVersion>
+        <RuntimeIdentifiers Condition="'$(RuntimeIdentifiers)' == ''">win10-x64</RuntimeIdentifiers>
+        <EnableMsixTooling Condition="'$(EnableMsixTooling)' == ''">true</EnableMsixTooling>
+    </PropertyGroup>
+
+    <PropertyGroup Condition="'$(IsRevitTfm)' == 'true'">
+        <!-- The TargetFramework (e.g. net8.0-windows) is parsed naturally by the base SDK.
+             We only override the TargetPlatformVersion if we need to force a specific SDK version based on Revit version. -->
+        <TargetPlatformVersion Condition="'$(RevitVersion)' == '2025' Or '$(RevitVersion)' == '2026'">10.0.17763.0</TargetPlatformVersion>
+        <TargetPlatformVersion Condition="'$(RevitVersion)' &gt; '2026'">10.0.22000.0</TargetPlatformVersion>
+        <TargetPlatformVersion Condition="'$(TargetPlatformVersion)' == '' or '$(TargetPlatformVersion)' == '0.0'">7.0</TargetPlatformVersion>
+    </PropertyGroup>
+
+    <PropertyGroup Condition="'$(_IsInnerRevitBuild)' == 'true'">
+        <!-- MSBuild uses this to determine if it should parse inner dependencies -->
+        <IsCrossTargetingBuild>false</IsCrossTargetingBuild>
+    </PropertyGroup>
+
+    <!-- Packages -->
+    <Import Project="$(MSBuildThisFileDirectory)Revit.Packages.props" Condition="'$(IsRevitTfm)' == 'true' And Exists('$(MSBuildThisFileDirectory)Revit.Packages.props')"/>
+</Project>
