@@ -1,0 +1,18 @@
+{
+  "comment": "Assemblies whose full member surface is stored in every baseline. Keep this to assemblies a Revit-side project actually redistributes: indexing everything Revit ships costs about 5 MB per version for libraries no add-in would ever carry. RefCheck emits RVTREF004 when the build references a Revit-shipped assembly that is missing here, so gaps report themselves - add the name, re-collect, commit. See readme.md for why each entry is on the list.",
+  "assemblies": [
+    "Google.Protobuf",
+    "Grpc.Core.Api",
+    "Grpc.Net.Client",
+    "Grpc.Net.Common",
+    "Newtonsoft.Json",
+    "System.Buffers",
+    "System.Collections.Immutable",
+    "System.Diagnostics.DiagnosticSource",
+    "System.Memory",
+    "System.Numerics.Vectors",
+    "System.Runtime.CompilerServices.Unsafe",
+    "System.Text.Json",
+    "System.Threading.Tasks.Extensions"
+  ]
+}

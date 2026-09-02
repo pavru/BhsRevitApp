@@ -1,0 +1,21 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!--
+    Build-time tool, deliberately independent of the Revit build model:
+    plain net10.0, no PackageReference, no Revit TFM. It reads assembly
+    metadata only, so it never needs the Revit API packages.
+  -->
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net10.0</TargetFramework>
+    <LangVersion>latest</LangVersion>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>true</ImplicitUsings>
+    <AssemblyName>RefCheck</AssemblyName>
+    <RootNamespace>BimHouse.RefCheck</RootNamespace>
+    <InvariantGlobalization>true</InvariantGlobalization>
+    <IsPackable>false</IsPackable>
+  </PropertyGroup>
+
+</Project>

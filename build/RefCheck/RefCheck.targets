@@ -1,0 +1,71 @@
+<Project>
+
+  <!--
+    Verifies that what a Revit-side project puts in the add-in folder only uses members
+    that exist in the assembly copies Revit itself loads. See readme.md.
+
+    Opt out for one project:   <RevitReferenceCheck>false</RevitReferenceCheck>
+    Opt in for a non-Revit one: <RevitReferenceCheck>true</RevitReferenceCheck>
+  -->
+
+  <PropertyGroup>
+    <!-- On by default exactly for Revit-side targets, which are the ones that share a process with Revit. -->
+    <RevitReferenceCheck Condition="'$(RevitReferenceCheck)' == '' and '$(RevitVersion)' != ''">true</RevitReferenceCheck>
+    <RevitReferenceCheck Condition="'$(RevitReferenceCheck)' == ''">false</RevitReferenceCheck>
+
+    <RefCheckDirectory Condition="'$(RefCheckDirectory)' == ''">$(MSBuildThisFileDirectory)</RefCheckDirectory>
+    <RefCheckBaselineDirectory Condition="'$(RefCheckBaselineDirectory)' == ''">$(RefCheckDirectory)baselines\</RefCheckBaselineDirectory>
+    <RefCheckProject Condition="'$(RefCheckProject)' == ''">$(RefCheckDirectory)RefCheck.csproj</RefCheckProject>
+
+    <!-- Pinned to Release so the tool is built once, not once per configuration of the consuming project. -->
+    <RefCheckToolConfiguration Condition="'$(RefCheckToolConfiguration)' == ''">Release</RefCheckToolConfiguration>
+    <RefCheckToolAssembly Condition="'$(RefCheckToolAssembly)' == ''">$(RefCheckDirectory)bin\$(RefCheckToolConfiguration)\net10.0\RefCheck.dll</RefCheckToolAssembly>
+  </PropertyGroup>
+
+  <Target Name="BuildRefCheckTool"
+          Condition="'$(RevitReferenceCheck)' == 'true'">
+    <!--
+      RemoveProperties matters: without it the consuming project's Revit TFM, platform and
+      runtime identifier would leak into this plain net10.0 tool and fail the build.
+    -->
+    <MSBuild Projects="$(RefCheckProject)"
+             Targets="Build"
+             Properties="Configuration=$(RefCheckToolConfiguration)"
+             RemoveProperties="TargetFramework;TargetFrameworks;RuntimeIdentifier;RuntimeIdentifiers;Platform;PlatformTarget;PublishRevitAddIn;RevitVersion;RevitDeploy;SelfContained"
+             BuildInParallel="false" />
+  </Target>
+
+  <Target Name="RevitReferenceCheck"
+          AfterTargets="Build"
+          DependsOnTargets="BuildRefCheckTool"
+          Condition="'$(RevitReferenceCheck)' == 'true'">
+
+    <PropertyGroup>
+      <_RefCheckBaseline>$(RefCheckBaselineDirectory)revit-$(RevitVersion).json</_RefCheckBaseline>
+    </PropertyGroup>
+
+    <Warning Condition="!Exists('$(_RefCheckBaseline)')"
+             Code="RVTREF000"
+             Text="No RefCheck baseline for Revit $(RevitVersion). Nothing was verified against the assemblies that version ships. Collect one into $(_RefCheckBaseline) - see build/RefCheck/readme.md." />
+
+    <!--
+      IgnoreExitCode keeps MSB3073 out of the log: the tool already emits one canonical
+      error per finding, and the summary below says what to do about them.
+    -->
+    <Exec Condition="Exists('$(_RefCheckBaseline)')"
+          Command="dotnet &quot;$(RefCheckToolAssembly)&quot; check --baseline &quot;$(_RefCheckBaseline)&quot; --input &quot;$(TargetDir.TrimEnd('\'))&quot;"
+          StandardOutputImportance="normal"
+          IgnoreExitCode="true">
+      <Output TaskParameter="ExitCode" PropertyName="_RefCheckExitCode" />
+    </Exec>
+
+    <Error Condition="'$(_RefCheckExitCode)' == '1'"
+           Code="RVTREF999"
+           Text="$(MSBuildProjectName) ships assemblies that conflict with the copies Revit $(RevitVersion) loads. See the RVTREF errors above and build/RefCheck/readme.md." />
+
+    <Error Condition="'$(_RefCheckExitCode)' != '' and '$(_RefCheckExitCode)' != '0' and '$(_RefCheckExitCode)' != '1'"
+           Code="RVTREF998"
+           Text="RefCheck failed to run (exit code $(_RefCheckExitCode)). See the output above." />
+  </Target>
+
+</Project>
