@@ -1,0 +1,52 @@
+## Build output
+[Bb]in/
+[Oo]bj/
+artifacts/
+publish/
+*.binlog
+
+## Rider / JetBrains
+.idea/
+*.sln.iml
+*.DotSettings.user
+
+## Visual Studio
+.vs/
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+*.VC.db
+*.psess
+*.vsp
+*.vspx
+
+## NuGet
+*.nupkg
+*.snupkg
+packages/
+!packages/build/
+.nuget/
+
+## Test / coverage
+[Tt]est[Rr]esult*/
+coverage*.xml
+coverage*.json
+*.coverage
+
+## Revit
+*.rvt.[0-9][0-9][0-9][0-9]
+*.rfa.[0-9][0-9][0-9][0-9]
+*.rte.[0-9][0-9][0-9][0-9]
+*.slog
+*.dmp
+Journals/
+
+## OS
+[Tt]humbs.db
+Desktop.ini
+$RECYCLE.BIN/
+
+## Local overrides
+*.local.json
+appsettings.Development.json
