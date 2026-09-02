@@ -37,7 +37,21 @@
     <!-- ======================================================================================= -->
     <PropertyGroup Condition="'$(_IsInnerRevitBuild)' != 'true' And '$(_IsStandardRestore)' != 'true' And '$(TargetFramework)' != '' And $(TargetFramework.Contains('-revit'))">
         <IsRevitOuterBuild>true</IsRevitOuterBuild>
+    </PropertyGroup>
 
+    <!--
+      The identity fix-up itself is deliberately NOT tied to inner or outer. Any evaluation that
+      ends up holding a custom moniker in TargetFramework needs it, and there are more of those
+      than the dispatcher creates: the base cross-targeting GetTargetFrameworks splits
+      TargetFrameworks and re-evaluates this project once per entry, inheriting _IsInnerRevitBuild
+      from the enclosing dispatch. Guarding on that flag left those evaluations unpatched and they
+      failed with NETSDK1139.
+
+      An evaluation the dispatcher really did start carries _RevitInnerTargetFramework, and by this
+      point Before.Microsoft.NET.Sdk.props has already replaced TargetFramework with the standard
+      moniker, so the condition below is false there and nothing is disturbed.
+    -->
+    <PropertyGroup Condition="'$(TargetFramework)' != '' And $(TargetFramework.Contains('-revit'))">
         <_RevitOuterBaseTfm>$(TargetFramework.Split('-')[0])</_RevitOuterBaseTfm>
         <TargetFrameworkIdentifier>$([MSBuild]::GetTargetFrameworkIdentifier('$(_RevitOuterBaseTfm)'))</TargetFrameworkIdentifier>
         <TargetFrameworkVersion>v$([MSBuild]::GetTargetFrameworkVersion('$(_RevitOuterBaseTfm)', 2))</TargetFrameworkVersion>
@@ -51,6 +65,21 @@
 
     <PropertyGroup Condition="'$(TargetFramework)' == '' And '$(TargetFrameworks)' != '' And '$(_IsInnerRevitBuild)' != 'true' And '$(_IsStandardRestore)' != 'true'">
         <IsRevitOuterBuild>true</IsRevitOuterBuild>
+    </PropertyGroup>
+
+    <!--
+      An inner build compiles exactly one framework. Before.Microsoft.NET.Sdk.props already clears
+      TargetFrameworks, but the project body re-declares it afterwards, so it has to be cleared
+      again here, after the body and before the base SDK decides whether this is a cross-targeting
+      build.
+
+      This used to be handled by passing TargetFramework as a global property, which outranks the
+      body. That is no longer done - a global TargetFramework leaks into referenced projects - so
+      the clearing has to be explicit. Without it the inner restore produced a spec covering all
+      four Revit frameworks and applied one Revit version's packages to all of them (NU1202).
+    -->
+    <PropertyGroup Condition="'$(_IsInnerRevitBuild)' == 'true' And '$(_RevitInnerTargetFramework)' != ''">
+        <TargetFrameworks/>
     </PropertyGroup>
 
     <!-- Import base Sdk.targets from Microsoft.NET.Sdk -->

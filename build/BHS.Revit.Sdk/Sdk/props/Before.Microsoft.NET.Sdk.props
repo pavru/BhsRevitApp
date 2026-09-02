@@ -24,6 +24,19 @@
         <!-- Clear TargetFrameworks so the base SDK treats this as a single-target build. -->
         <TargetFrameworks/>
 
+        <!--
+          The dispatcher hands the framework over as _RevitInnerTargetFramework, not as
+          TargetFramework, and it becomes TargetFramework here - a project-level property.
+
+          This is the whole point. A global property is viral: it flows into every project reached
+          through ProjectReference, so a global TargetFramework made a referenced library evaluate
+          and restore as net8.0-windows or net48 simply because that is what the referencing
+          project compiles as. Its assets file ended up with one wrong target (NETSDK1005), or with
+          none at all when the value was empty (MSB3992). A normal single-targeting project sets
+          TargetFramework in its own file, where it does not propagate; this reproduces that.
+        -->
+        <TargetFramework Condition="'$(_RevitInnerTargetFramework)' != ''">$(_RevitInnerTargetFramework)</TargetFramework>
+
         <IsRevitTfm Condition="'$(RevitInnerTfm)' != '' And $(RevitInnerTfm.Contains('-revit'))">true</IsRevitTfm>
         <RevitVersion Condition="'$(IsRevitTfm)' == 'true'">$([System.Text.RegularExpressions.Regex]::Match('$(RevitInnerTfm)', `revit(\d+)`).Groups[1].Value)</RevitVersion>
 
@@ -58,6 +71,14 @@
              Set here, before Microsoft.NET.Sdk.DefaultItems.props appends its own entries. -->
         <DefaultItemExcludes Condition="'$(IsRevitTfm)' == 'true'">$(DefaultItemExcludes);obj\**;bin\**</DefaultItemExcludes>
     </PropertyGroup>
+
+    <!--
+      Nothing is undefined at the ProjectReference boundary on purpose. The framework is a
+      project-level property here, not a global one, so it does not propagate by itself and the
+      standard reference protocol applies: the referenced project reports what it targets and
+      MSBuild negotiates the nearest match. Undefining TargetFramework here broke that negotiation
+      and the reference resolved to nothing.
+    -->
 
     <PropertyGroup>
         <BuildTasksDirectoryRoot>$(MSBuildThisFileDirectory)..\..\tasks\</BuildTasksDirectoryRoot>

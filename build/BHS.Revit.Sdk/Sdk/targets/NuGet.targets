@@ -47,7 +47,8 @@
              Before.Microsoft.NET.Sdk.props will catch _IsInnerRevitBuild=true and re-route outputs -->
         <MSBuild Projects="$(MSBuildProjectFullPath)"
                  Targets="Restore"
-                 Properties="_IsInnerRevitBuild=true;RevitInnerTfm=%(_RevitTfms.OriginalTfm);TargetFramework=%(_RevitTfms.InnerTfm);TargetFrameworks="
+                 Properties="_IsInnerRevitBuild=true;RevitInnerTfm=%(_RevitTfms.OriginalTfm);_RevitInnerTargetFramework=%(_RevitTfms.InnerTfm)"
+                 RemoveProperties="TargetFramework;TargetFrameworks"
                  Condition="'@(_RevitTfms)' != ''" />
     </Target>
 
@@ -60,7 +61,20 @@
       NuGet calls this target per TFM during IDE evaluation.
       We intercept it and ensure the paths reflect our inner build logic.
     -->
-    <Target Name="_GenerateRestoreGraphProjectEntry" DependsOnTargets="_PrepareRevitDispatchRestore" Condition="'$(IsRevitOuterBuild)' == 'true'">
+    <!--
+      A solution-level restore never calls the project's Restore target: NuGet asks each project
+      for graph entries and then restores the graph in one pass. That pass writes the outer assets
+      file only, so the per-version files under obj\RevitNNNN\ that the inner builds read were
+      never produced and the build failed with NETSDK1004.
+
+      Depending on Restore here makes the inner restores happen in both paths. MSBuild runs a
+      target at most once per project instance, so a project-level restore does not pay twice.
+    -->
+    <Target Name="_GenerateRestoreGraphProjectEntry" DependsOnTargets="_PrepareRevitDispatchRestore;Restore" Condition="'$(IsRevitOuterBuild)' == 'true'">
+
+        <Message Condition="'$(RevitSdkDiagnostics)' == 'true'" Importance="high"
+                 Text="[Revit SDK] graph entry: project=$(MSBuildProjectName) isRevitTfm='$(IsRevitTfm)' cpm='$(ManagePackageVersionsCentrally)'%0A    refs=@(PackageReference->'%(Identity)', ' | ')%0A    vers=@(PackageVersion->'%(Identity)=%(Version)', ' | ')"/>
+
 
         <!-- Standard TFMs Graph -->
         <MSBuild Projects="$(MSBuildProjectFullPath)"
@@ -71,7 +85,8 @@
         <!-- Revit TFMs Graph -->
         <MSBuild Projects="$(MSBuildProjectFullPath)"
                  Targets="_GenerateRestoreProjectSpec"
-                 Properties="_IsInnerRevitBuild=true;RevitInnerTfm=%(_RevitTfmMap.OriginalTfm);TargetFramework=%(_RevitTfmMap.InnerTfm)"
+                 Properties="_IsInnerRevitBuild=true;RevitInnerTfm=%(_RevitTfmMap.OriginalTfm);_RevitInnerTargetFramework=%(_RevitTfmMap.InnerTfm)"
+                 RemoveProperties="TargetFramework;TargetFrameworks"
                  Condition="'%(_RevitTfmMap.IsRevit)' == 'true'"/>
     </Target>
 

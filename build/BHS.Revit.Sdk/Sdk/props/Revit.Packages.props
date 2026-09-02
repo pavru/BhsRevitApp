@@ -4,49 +4,41 @@
         <UseRevitApi Condition="'$(UseRevitApi)' == ''">true</UseRevitApi>
     </PropertyGroup>
 
-    <!-- 
-      This file contains implicit PackageReferences for Revit API assemblies 
-      based on the flags set in the project file (e.g. UseRevitApi).
+    <!--
+      Implicit package references for the Revit API assemblies, selected by the Use* flags set in
+      the project file. The version always follows the Revit target framework; no project ever
+      spells it out.
+
+      The list of packages and their switches is declared once, below. How it is emitted depends on
+      whether the consuming repository uses Central Package Management, which is already known here:
+      the base SDK imports Directory.Build.props and Directory.Packages.props long before this file.
+
+        without CPM   PackageReference carries the version.
+        with CPM      a Version attribute on PackageReference is an error (NU1008), so the version
+                      moves to a matching PackageVersion item and the reference goes bare.
+
+      Do not list these packages in Directory.Packages.props as well: two PackageVersion items for
+      the same id is NU1506, and pinning them by hand would defeat the alignment this file exists
+      to provide.
     -->
     <ItemGroup Condition="'$(IsRevitTfm)' == 'true'">
-        <!-- RevitAPI -->
-        <PackageReference Include="Nice3point.Revit.Api.RevitAPI"
-                          Version="$(RevitVersion).*"
-                          Condition="'$(UseRevitApi)' == 'true'"/>
-
-        <!-- RevitAPIUI -->
-        <PackageReference Include="Nice3point.Revit.Api.RevitAPIUI"
-                          Version="$(RevitVersion).*"
-                          Condition="'$(UseRevitApiUi)' == 'true'"/>
-
-        <!-- AdWindows -->
-        <PackageReference Include="Nice3point.Revit.Api.AdWindows"
-                          Version="$(RevitVersion).*"
-                          Condition="'$(UseRevitAdWindows)' == 'true'"/>
-
-        <!-- RevitAPIIFC -->
-        <PackageReference Include="Nice3point.Revit.Api.RevitAPIIFC"
-                          Version="$(RevitVersion).*"
-                          Condition="'$(UseRevitApiIfc)' == 'true'"/>
-
-        <!-- UIFramework -->
-        <PackageReference Include="Nice3point.Revit.Api.UIFramework"
-                          Version="$(RevitVersion).*"
-                          Condition="'$(UseRevitUiFramework)' == 'true'"/>
-
-        <!-- RevitAPIMacros -->
-        <PackageReference Include="Nice3point.Revit.Api.RevitAPIMacros"
-                          Version="$(RevitVersion).*"
-                          Condition="'$(UserRevitApiMacros)' == 'true'"/>
-
-        <!-- RevitAddInUtility -->
-        <PackageReference Include="Nice3point.Revit.Api.RevitAddInUtility"
-                          Version="$(RevitVersion).*"
-                          Condition="'$(UseRevitAddInUtility)' == 'true'"/>
-
-        <!-- TUnit.Revit -->
-        <PackageReference Include="Nice3point.TUnit.Revit"
-                          Version="$(RevitVersion).*"
-                          Condition="'$(UserRevitTUnit)' == 'true'"/>
+        <_RevitImplicitPackage Include="Nice3point.Revit.Api.RevitAPI" Condition="'$(UseRevitApi)' == 'true'"/>
+        <_RevitImplicitPackage Include="Nice3point.Revit.Api.RevitAPIUI" Condition="'$(UseRevitApiUi)' == 'true'"/>
+        <_RevitImplicitPackage Include="Nice3point.Revit.Api.AdWindows" Condition="'$(UseRevitAdWindows)' == 'true'"/>
+        <_RevitImplicitPackage Include="Nice3point.Revit.Api.RevitAPIIFC" Condition="'$(UseRevitApiIfc)' == 'true'"/>
+        <_RevitImplicitPackage Include="Nice3point.Revit.Api.UIFramework" Condition="'$(UseRevitUiFramework)' == 'true'"/>
+        <_RevitImplicitPackage Include="Nice3point.Revit.Api.RevitAPIMacros" Condition="'$(UserRevitApiMacros)' == 'true'"/>
+        <_RevitImplicitPackage Include="Nice3point.Revit.Api.RevitAddInUtility" Condition="'$(UseRevitAddInUtility)' == 'true'"/>
+        <_RevitImplicitPackage Include="Nice3point.TUnit.Revit" Condition="'$(UserRevitTUnit)' == 'true'"/>
     </ItemGroup>
+
+    <ItemGroup Condition="'$(IsRevitTfm)' == 'true' And '$(ManagePackageVersionsCentrally)' != 'true'">
+        <PackageReference Include="@(_RevitImplicitPackage)" Version="$(RevitVersion).*"/>
+    </ItemGroup>
+
+    <ItemGroup Condition="'$(IsRevitTfm)' == 'true' And '$(ManagePackageVersionsCentrally)' == 'true'">
+        <PackageReference Include="@(_RevitImplicitPackage)"/>
+        <PackageVersion Include="@(_RevitImplicitPackage)" Version="$(RevitVersion).*"/>
+    </ItemGroup>
+
 </Project>

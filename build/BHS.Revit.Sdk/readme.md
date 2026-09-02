@@ -345,6 +345,91 @@ that machinery applies here.
 What Revit 2024 does need is a .NET Framework 4.8 targeting pack on the build machine, either the
 installed one or the `Microsoft.NETFramework.ReferenceAssemblies` package.
 
+### Central Package Management
+
+The implicit Revit API references work with and without CPM. The list of packages and their `Use*`
+switches is declared once in `Sdk/props/Revit.Packages.props`; only the way it is emitted differs:
+
+| | emitted as |
+|---|---|
+| without CPM | `PackageReference` carrying `Version="$(RevitVersion).*"` |
+| with CPM | bare `PackageReference` plus a matching `PackageVersion` |
+
+Under CPM a `Version` attribute on `PackageReference` is an error (NU1008), which is why the
+version moves to its own item. The promise is unchanged either way: the version follows the Revit
+target framework and no project spells it out.
+
+`ManagePackageVersionsCentrally` is readable at that point because the base SDK imports
+`Directory.Build.props` and `Directory.Packages.props` well before this file.
+
+Three things follow from this, all of them load-bearing:
+
+* **Do not list the Revit API packages in `Directory.Packages.props`.** Two `PackageVersion` items
+  for one id is NU1506, and pinning them by hand defeats the alignment.
+* **`CentralPackageFloatingVersionsEnabled` is defaulted to true** in
+  `After.Microsoft.NET.Sdk.props`. NuGet rejects a floating version on a `PackageVersion` item with
+  NU1011 otherwise, and the implicit references are floating by design. It is a default: set the
+  property in `Directory.Build.props` to decide it yourself. Note it permits floating central
+  versions for the whole project, not only for the Revit packages.
+* **The version collector is chained to the reference collector.** NuGet's `_GetRestoreProjectStyle`
+  depends on `CollectPackageReferences` alone. Since the dispatchers merge the inner builds'
+  references into the outer project, the outer ended up with references and no versions, and
+  restore failed with NU1010. Both dispatchers now run `CollectCentralPackageVersions` alongside.
+
+### Solution-level restore
+
+A solution restore never calls a project's `Restore` target: NuGet asks every project for graph
+entries and then restores the graph in one pass. That pass writes the outer assets file only, so
+the per-version files under `obj\RevitNNNN\` that the inner builds read were missing and the build
+failed with NETSDK1004. `_GenerateRestoreGraphProjectEntry` therefore depends on `Restore`, which
+makes the inner restores happen in both paths. MSBuild runs a target at most once per project
+instance, so a project-level restore does not pay for it twice.
+
+### Global properties, and why the framework travels under a private name
+
+The dispatcher has to tell the inner build which framework to compile. The obvious way - passing
+`TargetFramework` in the `<MSBuild>` task's `Properties` - makes it a **global** property, and
+global properties are viral: they flow into every project reached through `ProjectReference`.
+
+A referenced library then evaluated and restored as whatever the referencing project happened to
+compile as. A `net48;net8.0;net10.0` library came out with a single wrong target and the build
+failed with NETSDK1005, or, when `TargetFrameworks=` was passed empty as well, with MSB3992
+because the library saw no framework at all.
+
+So the framework travels as `_RevitInnerTargetFramework`, and
+`Before.Microsoft.NET.Sdk.props` turns it into a plain project-level `TargetFramework`. That is
+exactly what an ordinary single-targeting project does, and it does not propagate. Three things
+hold this together:
+
+* **`TargetFrameworks` is cleared in `Sdk.targets`, not only in the props.** The project body
+  re-declares it after the props are imported, so clearing it early is not enough. Without the
+  second clearing the inner build became cross-targeting again and NuGet restored one spec covering
+  all four Revit frameworks, applying one Revit version's packages to all of them (NU1202).
+* **Every dispatch passes `RemoveProperties="TargetFramework;TargetFrameworks"`.** With
+  `dotnet build -f net48-revit2024` the custom moniker arrives as a global property, and a
+  project-level assignment cannot override one; it has to be removed for the child invocation.
+* **Nothing is undefined at the `ProjectReference` boundary.** With the leak gone the standard
+  protocol applies: the referenced project reports what it targets and MSBuild negotiates the
+  nearest match. Undefining `TargetFramework` there breaks that negotiation and the reference
+  resolves to nothing.
+
+Both reference shapes work as a result:
+
+| from | to | resolves to |
+|---|---|---|
+| Revit project | Revit project | the same Revit version's `bin\RevitNNNN` |
+| `net48-revit2024` | `net48;net8.0;net10.0` | `net48` |
+| `net8.0-revit2025`, `net8.0-revit2026` | same | `net8.0` |
+| `net10.0-revit2027` | same | `net10.0` |
+
+### What the outer build does not do
+
+The outer build dispatches; it does not collect. It deliberately does not merge the inner builds'
+`PackageReference` items into itself. Doing so left it holding four Revit versions' references at
+once: without their versions that was NU1010, and with them NuGet resolved a single central version
+across all four frameworks and rejected it as incompatible (NU1202). The packages belong to the
+inner builds, and that is where they stay.
+
 ### Per-version output isolation
 
 `AppendTargetFrameworkToOutputPath` is off for Revit TFMs, and two Revit versions can share an inner

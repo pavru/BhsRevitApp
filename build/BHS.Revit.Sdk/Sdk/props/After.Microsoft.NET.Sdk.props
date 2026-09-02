@@ -31,6 +31,24 @@
         <LangVersion>latest</LangVersion>
     </PropertyGroup>
 
+    <!--
+      Under Central Package Management the implicit Revit API references come with a floating
+      PackageVersion pinned to the Revit target framework, and NuGet rejects a floating version on
+      a PackageVersion item with NU1011 unless this is on.
+
+      It has to be set here rather than in Revit.Packages.props: that file is only imported for
+      Revit target frameworks, while the outer build - which is where restore validates the
+      collected items - has no Revit TFM of its own. Directory.Build.props has been imported by
+      now, so ManagePackageVersionsCentrally is already known.
+
+      It is a default: set the property in Directory.Build.props to take the decision away from
+      the SDK. Note this permits floating central versions for the whole project, including ones
+      the project declares itself.
+    -->
+    <PropertyGroup Condition="'$(ManagePackageVersionsCentrally)' == 'true' And '$(CentralPackageFloatingVersionsEnabled)' == ''">
+        <CentralPackageFloatingVersionsEnabled>true</CentralPackageFloatingVersionsEnabled>
+    </PropertyGroup>
+
     <!-- Packages -->
     <Import Project="$(MSBuildThisFileDirectory)Revit.Packages.props" Condition="'$(IsRevitTfm)' == 'true' And Exists('$(MSBuildThisFileDirectory)Revit.Packages.props')"/>
 </Project>
