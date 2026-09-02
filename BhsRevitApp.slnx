@@ -1,0 +1,38 @@
+<Solution>
+
+  <Configurations>
+    <Platform Name="x64" />
+  </Configurations>
+
+  <!--
+    Build tooling. These build before anything else can restore: BHS.Revit.Sdk has to be packed
+    into artifacts/feed for the source projects to resolve their SDK at all.
+  -->
+  <Folder Name="/build/">
+    <Project Path="build/BHS.Revit.Sdk/BHS.Revit.Sdk.csproj" Type="C#" />
+    <Project Path="build/RefCheck/RefCheck.csproj" Type="C#" />
+  </Folder>
+
+  <!-- Repository-level files, so they are editable without leaving the solution. -->
+  <Folder Name="/config/">
+    <File Path="CLAUDE.md" />
+    <File Path="Directory.Build.props" />
+    <File Path="Directory.Packages.props" />
+    <File Path="NuGet.config" />
+    <File Path="global.json" />
+    <File Path=".gitattributes" />
+    <File Path=".gitignore" />
+  </Folder>
+
+  <!-- Side-agnostic code: plain .NET axis, knows nothing about a Revit version. -->
+  <Folder Name="/Shared/">
+    <Project Path="source/Shared/BHS.Shared/BHS.Shared.csproj" Type="C#" />
+  </Folder>
+
+  <!-- Revit-side framework: loaded into the Revit process, multi-targeted on the Revit axis. -->
+  <Folder Name="/Revit/">
+    <Project Path="source/Revit/BHS.Revit.Abstractions/BHS.Revit.Abstractions.csproj" Type="C#" />
+    <Project Path="source/Revit/BHS.Revit.Common/BHS.Revit.Common.csproj" Type="C#" />
+  </Folder>
+
+</Solution>

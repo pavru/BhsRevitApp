@@ -1,0 +1,16 @@
+<Project>
+
+    <!--
+      Central Package Management. Versions live here and nowhere else: projects reference
+      packages without a Version attribute, and CentralPackageVersionOverrideEnabled is false
+      in Directory.Build.props so a project cannot quietly deviate.
+
+      Revit API packages are NOT listed here. BHS.Revit.Sdk adds them implicitly and pins the
+      version to the Revit target framework, so listing them centrally would fight the SDK.
+    -->
+
+    <ItemGroup>
+        <!-- Populated as projects appear. -->
+    </ItemGroup>
+
+</Project>

@@ -1,0 +1,15 @@
+<Project>
+
+    <!--
+      Intentionally empty and intentionally not importing the repository root file.
+
+      MSBuild stops walking up at the first Directory.Build.props, so this shields the tooling
+      under build/ from the settings that source/ needs: x64, Revit vendor identity, central
+      package management. RefCheck and BHS.Revit.Sdk are plain net10.0 / net48 projects that
+      must keep building on their own - the SDK in particular has to build before anything
+      else can restore.
+
+      If something here ever needs a shared setting, add it to this file rather than removing it.
+    -->
+
+</Project>

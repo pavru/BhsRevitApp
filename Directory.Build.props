@@ -1,0 +1,48 @@
+<Project>
+
+    <!--
+      Settings shared by everything under source/.
+      Tooling under build/ is deliberately shielded from this file by build/Directory.Build.props:
+      RefCheck and the SDK itself are plain net10.0 projects and must not inherit Revit or x64
+      specifics. MSBuild stops at the first Directory.Build.props it finds walking up, so that
+      file is enough to keep them separate.
+    -->
+
+    <PropertyGroup>
+        <Configurations>Debug;Release</Configurations>
+        <Platform>x64</Platform>
+        <Platforms>x64</Platforms>
+        <PlatformTarget>x64</PlatformTarget>
+    </PropertyGroup>
+
+    <PropertyGroup>
+        <LangVersion>latest</LangVersion>
+        <Nullable>enable</Nullable>
+        <ImplicitUsings>enable</ImplicitUsings>
+        <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
+    </PropertyGroup>
+
+    <PropertyGroup>
+        <NeutralLanguage>en</NeutralLanguage>
+        <SatelliteResourceLanguages>en-US;en-GB;ru-RU</SatelliteResourceLanguages>
+    </PropertyGroup>
+
+    <PropertyGroup>
+        <ManagePackageVersionsCentrally>true</ManagePackageVersionsCentrally>
+        <CentralPackageVersionOverrideEnabled>false</CentralPackageVersionOverrideEnabled>
+    </PropertyGroup>
+
+    <!-- Vendor identity, used by the .addin manifest and the install paths. -->
+    <PropertyGroup>
+        <Company>BimHouse Software</Company>
+        <Authors>alex@pototskiy.net</Authors>
+        <RevitVendorId>BimHouseSoftware</RevitVendorId>
+        <RevitVendorDescription>BimHouse Software by alex@pototskiy.net</RevitVendorDescription>
+    </PropertyGroup>
+
+    <!--
+      Output paths are left to BHS.Revit.Sdk, which already redirects obj and bin per Revit
+      version (obj\RevitNNNN\, bin\RevitNNNN\). Redirecting them again here would collide.
+    -->
+
+</Project>

@@ -1,0 +1,18 @@
+<Project Sdk="BHS.Revit.Sdk/1.0.1">
+
+    <!--
+      Utilities over the Revit API, written against the contracts. Exists to prove and to hold
+      the version-specific work: what differs between releases is resolved here, not in features.
+    -->
+    <PropertyGroup>
+        <TargetFrameworks>net48-revit2024;net8.0-revit2025;net8.0-revit2026;net10.0-revit2027</TargetFrameworks>
+        <RootNamespace>BHS.Revit.Common</RootNamespace>
+        <UseRevitApi>true</UseRevitApi>
+        <UseRevitApiUi>true</UseRevitApiUi>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="..\BHS.Revit.Abstractions\BHS.Revit.Abstractions.csproj" />
+    </ItemGroup>
+
+</Project>
