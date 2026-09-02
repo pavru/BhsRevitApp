@@ -20,6 +20,17 @@
         <IsCrossTargetingBuild>false</IsCrossTargetingBuild>
     </PropertyGroup>
 
+    <!-- On .NET Framework the compiler defaults to C# 7.3, so Nullable=enable fails with CS8630.
+         A net48-revit TFM exists precisely to write modern code against an old framework, so the
+         SDK supplies the language version rather than making every project repeat it.
+
+         A default, not an override: a project that sets LangVersion itself keeps its value.
+         Note that `latest` only unlocks the syntax. Features needing runtime support - records,
+         init accessors, index and range - still want a polyfill package on net48. -->
+    <PropertyGroup Condition="'$(IsRevitTfm)' == 'true' And '$(TargetFramework)' != '' And $(TargetFramework.StartsWith('net4')) And '$(LangVersion)' == ''">
+        <LangVersion>latest</LangVersion>
+    </PropertyGroup>
+
     <!-- Packages -->
     <Import Project="$(MSBuildThisFileDirectory)Revit.Packages.props" Condition="'$(IsRevitTfm)' == 'true' And Exists('$(MSBuildThisFileDirectory)Revit.Packages.props')"/>
 </Project>

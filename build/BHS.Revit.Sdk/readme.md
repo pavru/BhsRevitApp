@@ -324,6 +324,16 @@ each framework:
 dotnet restore -p:RevitSdkDiagnostics=true
 ```
 
+### Language version on Revit 2024
+
+`net48-revit2024` compiles as .NET Framework, where the compiler still defaults to C# 7.3. That
+makes `Nullable=enable` fail with CS8630 on 2024 while the same project builds fine on 2025-2027.
+The SDK therefore sets `LangVersion=latest` for Revit TFMs on .NET Framework.
+
+It is a default, not an override: a project that sets `LangVersion` itself keeps its own value.
+
+`latest` only unlocks the syntax. Features that need runtime support - records, `init` accessors,
+index and range - still want a polyfill package such as `PolySharp` on net48.
 ### Why Revit 2024 needed no special machinery
 
 The older `BHS` solution keeps the custom moniker as the real `TargetFramework` and patches
