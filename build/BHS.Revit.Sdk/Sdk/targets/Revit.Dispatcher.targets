@@ -1,5 +1,15 @@
 <Project>
     <!-- ======================================================================================= -->
+    <!-- NOT IMPORTED. Nothing references this file; Sdk.targets imports                         -->
+    <!-- Microsoft.NET.Sdk.CrossTargeting.targets and Microsoft.NET.Sdk.targets instead, and     -->
+    <!-- those carry the dispatch logic that actually runs. This file duplicates them with its   -->
+    <!-- own copy of the TFM translation, which is now centralised in Revit.TfmMapping.targets.  -->
+    <!--                                                                                         -->
+    <!-- Editing it changes nothing. Either wire it in and delete the two live dispatchers, or   -->
+    <!-- delete it. Left in place because the decision belongs to whoever owns the SDK.          -->
+    <!-- ======================================================================================= -->
+
+    <!-- ======================================================================================= -->
     <!-- Central Dispatcher for Outer Builds                                                     -->
     <!-- Intercepts MSBuild targets and dispatches them to Inner Builds with translated TFMs     -->
     <!-- ======================================================================================= -->

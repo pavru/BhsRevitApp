@@ -8,17 +8,15 @@
         <_IsSingleTargetOuterBuild>true</_IsSingleTargetOuterBuild>
     </PropertyGroup>
 
-    <Target Name="_PrepareSingleRevitDispatch" Condition="'$(_IsSingleTargetOuterBuild)' == 'true'">
+    <!-- The TFM translation lives in Revit.TfmMapping.targets, shared with the cross-targeting
+         and restore dispatchers. Here the map holds exactly one entry. -->
+    <Target Name="_PrepareSingleRevitDispatch"
+            DependsOnTargets="_MapRevitTargetFrameworks"
+            Condition="'$(_IsSingleTargetOuterBuild)' == 'true'">
         <PropertyGroup>
-            <_SingleOriginalTfm>$(TargetFramework)</_SingleOriginalTfm>
-            <_SingleInnerTfm Condition="$(_SingleOriginalTfm.Contains('-revit')) And $(_SingleOriginalTfm.StartsWith('net8.0'))">net8.0-windows</_SingleInnerTfm>
-            <_SingleInnerTfm Condition="$(_SingleOriginalTfm.Contains('-revit')) And $(_SingleOriginalTfm.StartsWith('net10.0'))">net10.0-windows</_SingleInnerTfm>
-            <_SingleInnerTfm Condition="'$(_SingleInnerTfm)' == ''">$(_SingleOriginalTfm)</_SingleInnerTfm>
-            
-            <_InnerBuildProperties>_IsInnerRevitBuild=true;TargetFramework=$(_SingleInnerTfm);RevitInnerTfm=$(_SingleOriginalTfm)</_InnerBuildProperties>
+            <_InnerBuildProperties>_IsInnerRevitBuild=true;TargetFrameworks=;TargetFramework=@(_RevitTfmMap->'%(InnerTfm)');RevitInnerTfm=@(_RevitTfmMap->'%(OriginalTfm)')</_InnerBuildProperties>
         </PropertyGroup>
     </Target>
-
     <!-- Intercept core build targets -->
     <Target Name="Build" DependsOnTargets="_PrepareSingleRevitDispatch" Condition="'$(_IsSingleTargetOuterBuild)' == 'true'">
         <MSBuild Projects="$(MSBuildProjectFullPath)" Targets="Build" Properties="$(_InnerBuildProperties)"/>

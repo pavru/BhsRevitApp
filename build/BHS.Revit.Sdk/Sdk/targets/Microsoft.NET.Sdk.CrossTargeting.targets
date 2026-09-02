@@ -5,22 +5,9 @@
     <!-- sent to the inner build, passing standard .NET targets to trick the inner base SDK.     -->
     <!-- ======================================================================================= -->
 
-    <Target Name="_GetInnerTargetFrameworks">
-        <ItemGroup>
-            <_RevitInnerTfm Include="$(TargetFrameworks.Split(';'))" />
-        </ItemGroup>
-
-        <ItemGroup>
-            <!-- Create a list of internal representations for the inner build -->
-            <_InnerBuildTfm Include="%(_RevitInnerTfm.Identity)">
-                <OriginalTfm>%(_RevitInnerTfm.Identity)</OriginalTfm>
-                <InnerTfm Condition="%(_RevitInnerTfm.Identity).Contains('-revit') And %(_RevitInnerTfm.Identity).StartsWith('net8.0')">net8.0-windows</InnerTfm>
-                <InnerTfm Condition="%(_RevitInnerTfm.Identity).Contains('-revit') And %(_RevitInnerTfm.Identity).StartsWith('net10.0')">net10.0-windows</InnerTfm>
-                <InnerTfm Condition="!%(_RevitInnerTfm.Identity).Contains('-revit')">%(_RevitInnerTfm.Identity)</InnerTfm>
-            </_InnerBuildTfm>
-        </ItemGroup>
-    </Target>
-
+    <!-- The TFM translation itself lives in Revit.TfmMapping.targets so that both build
+         dispatchers and the restore dispatcher share one table. -->
+    <Target Name="_GetInnerTargetFrameworks" DependsOnTargets="_MapRevitTargetFrameworks"/>
     <!-- Common outer-loop properties to pass to the inner build -->
     <PropertyGroup>
         <_InnerBuildProperties>_IsInnerRevitBuild=true;TargetFrameworks=</_InnerBuildProperties>
@@ -28,23 +15,23 @@
 
     <!-- Standard Build Targets -->
     <Target Name="Build" DependsOnTargets="_GetInnerTargetFrameworks">
-        <MSBuild Projects="$(MSBuildProjectFullPath)" Targets="Build" Properties="TargetFramework=%(_InnerBuildTfm.InnerTfm);RevitInnerTfm=%(_InnerBuildTfm.OriginalTfm);$(_InnerBuildProperties)"/>
+        <MSBuild Projects="$(MSBuildProjectFullPath)" Targets="Build" Properties="TargetFramework=%(_RevitTfmMap.InnerTfm);RevitInnerTfm=%(_RevitTfmMap.OriginalTfm);$(_InnerBuildProperties)"/>
     </Target>
 
     <Target Name="Clean" DependsOnTargets="_GetInnerTargetFrameworks">
-        <MSBuild Projects="$(MSBuildProjectFullPath)" Targets="Clean" Properties="TargetFramework=%(_InnerBuildTfm.InnerTfm);RevitInnerTfm=%(_InnerBuildTfm.OriginalTfm);$(_InnerBuildProperties)"/>
+        <MSBuild Projects="$(MSBuildProjectFullPath)" Targets="Clean" Properties="TargetFramework=%(_RevitTfmMap.InnerTfm);RevitInnerTfm=%(_RevitTfmMap.OriginalTfm);$(_InnerBuildProperties)"/>
     </Target>
 
     <Target Name="Rebuild" DependsOnTargets="_GetInnerTargetFrameworks">
-        <MSBuild Projects="$(MSBuildProjectFullPath)" Targets="Rebuild" Properties="TargetFramework=%(_InnerBuildTfm.InnerTfm);RevitInnerTfm=%(_InnerBuildTfm.OriginalTfm);$(_InnerBuildProperties)"/>
+        <MSBuild Projects="$(MSBuildProjectFullPath)" Targets="Rebuild" Properties="TargetFramework=%(_RevitTfmMap.InnerTfm);RevitInnerTfm=%(_RevitTfmMap.OriginalTfm);$(_InnerBuildProperties)"/>
     </Target>
 
     <Target Name="Pack" DependsOnTargets="_GetInnerTargetFrameworks">
-        <MSBuild Projects="$(MSBuildProjectFullPath)" Targets="Pack" Properties="TargetFramework=%(_InnerBuildTfm.InnerTfm);RevitInnerTfm=%(_InnerBuildTfm.OriginalTfm);$(_InnerBuildProperties)"/>
+        <MSBuild Projects="$(MSBuildProjectFullPath)" Targets="Pack" Properties="TargetFramework=%(_RevitTfmMap.InnerTfm);RevitInnerTfm=%(_RevitTfmMap.OriginalTfm);$(_InnerBuildProperties)"/>
     </Target>
 
     <Target Name="Publish" DependsOnTargets="_GetInnerTargetFrameworks">
-        <MSBuild Projects="$(MSBuildProjectFullPath)" Targets="Publish" Properties="TargetFramework=%(_InnerBuildTfm.InnerTfm);RevitInnerTfm=%(_InnerBuildTfm.OriginalTfm);$(_InnerBuildProperties)"/>
+        <MSBuild Projects="$(MSBuildProjectFullPath)" Targets="Publish" Properties="TargetFramework=%(_RevitTfmMap.InnerTfm);RevitInnerTfm=%(_RevitTfmMap.OriginalTfm);$(_InnerBuildProperties)"/>
     </Target>
 
     <!-- ============================================================================== -->
@@ -53,47 +40,47 @@
     <!-- ============================================================================== -->
 
     <Target Name="Compile" DependsOnTargets="_GetInnerTargetFrameworks">
-        <MSBuild Projects="$(MSBuildProjectFullPath)" Targets="Compile" Properties="TargetFramework=%(_InnerBuildTfm.InnerTfm);RevitInnerTfm=%(_InnerBuildTfm.OriginalTfm);$(_InnerBuildProperties)"/>
+        <MSBuild Projects="$(MSBuildProjectFullPath)" Targets="Compile" Properties="TargetFramework=%(_RevitTfmMap.InnerTfm);RevitInnerTfm=%(_RevitTfmMap.OriginalTfm);$(_InnerBuildProperties)"/>
     </Target>
 
     <Target Name="ResolveReferences" Returns="@(ReferencePath)" DependsOnTargets="_GetInnerTargetFrameworks">
-        <MSBuild Projects="$(MSBuildProjectFullPath)" Targets="ResolveReferences" Properties="TargetFramework=%(_InnerBuildTfm.InnerTfm);RevitInnerTfm=%(_InnerBuildTfm.OriginalTfm);$(_InnerBuildProperties)">
+        <MSBuild Projects="$(MSBuildProjectFullPath)" Targets="ResolveReferences" Properties="TargetFramework=%(_RevitTfmMap.InnerTfm);RevitInnerTfm=%(_RevitTfmMap.OriginalTfm);$(_InnerBuildProperties)">
              <Output TaskParameter="TargetOutputs" ItemName="ReferencePath"/>
         </MSBuild>
     </Target>
     
     <Target Name="ResolveAssemblyReferences" Returns="@(ReferencePath)" DependsOnTargets="_GetInnerTargetFrameworks">
-        <MSBuild Projects="$(MSBuildProjectFullPath)" Targets="ResolveAssemblyReferences" Properties="TargetFramework=%(_InnerBuildTfm.InnerTfm);RevitInnerTfm=%(_InnerBuildTfm.OriginalTfm);$(_InnerBuildProperties)">
+        <MSBuild Projects="$(MSBuildProjectFullPath)" Targets="ResolveAssemblyReferences" Properties="TargetFramework=%(_RevitTfmMap.InnerTfm);RevitInnerTfm=%(_RevitTfmMap.OriginalTfm);$(_InnerBuildProperties)">
             <Output TaskParameter="TargetOutputs" ItemName="ReferencePath"/>
         </MSBuild>
     </Target>
 
     <Target Name="ResolveProjectReferences" Returns="@(_ResolvedProjectReferencePaths)" DependsOnTargets="_GetInnerTargetFrameworks">
-        <MSBuild Projects="$(MSBuildProjectFullPath)" Targets="ResolveProjectReferences" Properties="TargetFramework=%(_InnerBuildTfm.InnerTfm);RevitInnerTfm=%(_InnerBuildTfm.OriginalTfm);$(_InnerBuildProperties)">
+        <MSBuild Projects="$(MSBuildProjectFullPath)" Targets="ResolveProjectReferences" Properties="TargetFramework=%(_RevitTfmMap.InnerTfm);RevitInnerTfm=%(_RevitTfmMap.OriginalTfm);$(_InnerBuildProperties)">
             <Output TaskParameter="TargetOutputs" ItemName="_ResolvedProjectReferencePaths"/>
         </MSBuild>
     </Target>
 
     <Target Name="ResolvePackageDependenciesDesignTime" Returns="@(_DependenciesDesignTime)" DependsOnTargets="_GetInnerTargetFrameworks">
-        <MSBuild Projects="$(MSBuildProjectFullPath)" Targets="ResolvePackageDependenciesDesignTime" Properties="TargetFramework=%(_InnerBuildTfm.InnerTfm);RevitInnerTfm=%(_InnerBuildTfm.OriginalTfm);$(_InnerBuildProperties)">
+        <MSBuild Projects="$(MSBuildProjectFullPath)" Targets="ResolvePackageDependenciesDesignTime" Properties="TargetFramework=%(_RevitTfmMap.InnerTfm);RevitInnerTfm=%(_RevitTfmMap.OriginalTfm);$(_InnerBuildProperties)">
             <Output TaskParameter="TargetOutputs" ItemName="_DependenciesDesignTime"/>
         </MSBuild>
     </Target>
 
     <Target Name="CollectPackageReferences" Returns="@(PackageReference)" DependsOnTargets="_GetInnerTargetFrameworks">
-        <MSBuild Projects="$(MSBuildProjectFullPath)" Targets="CollectPackageReferences" Properties="TargetFramework=%(_InnerBuildTfm.InnerTfm);RevitInnerTfm=%(_InnerBuildTfm.OriginalTfm);$(_InnerBuildProperties)">
+        <MSBuild Projects="$(MSBuildProjectFullPath)" Targets="CollectPackageReferences" Properties="TargetFramework=%(_RevitTfmMap.InnerTfm);RevitInnerTfm=%(_RevitTfmMap.OriginalTfm);$(_InnerBuildProperties)">
             <Output TaskParameter="TargetOutputs" ItemName="PackageReference"/>
         </MSBuild>
     </Target>
 
     <Target Name="GetTargetPath" Returns="@(TargetPathWithTargetPlatformMoniker)" DependsOnTargets="_GetInnerTargetFrameworks">
-        <MSBuild Projects="$(MSBuildProjectFullPath)" Targets="GetTargetPath" Properties="TargetFramework=%(_InnerBuildTfm.InnerTfm);RevitInnerTfm=%(_InnerBuildTfm.OriginalTfm);$(_InnerBuildProperties)">
+        <MSBuild Projects="$(MSBuildProjectFullPath)" Targets="GetTargetPath" Properties="TargetFramework=%(_RevitTfmMap.InnerTfm);RevitInnerTfm=%(_RevitTfmMap.OriginalTfm);$(_InnerBuildProperties)">
             <Output TaskParameter="TargetOutputs" ItemName="TargetPathWithTargetPlatformMoniker"/>
         </MSBuild>
     </Target>
     
     <Target Name="GetNativeManifest" Returns="@(NativeManifest)" DependsOnTargets="_GetInnerTargetFrameworks">
-        <MSBuild Projects="$(MSBuildProjectFullPath)" Targets="GetNativeManifest" Properties="TargetFramework=%(_InnerBuildTfm.InnerTfm);RevitInnerTfm=%(_InnerBuildTfm.OriginalTfm);$(_InnerBuildProperties)">
+        <MSBuild Projects="$(MSBuildProjectFullPath)" Targets="GetNativeManifest" Properties="TargetFramework=%(_RevitTfmMap.InnerTfm);RevitInnerTfm=%(_RevitTfmMap.OriginalTfm);$(_InnerBuildProperties)">
             <Output TaskParameter="TargetOutputs" ItemName="NativeManifest"/>
         </MSBuild>
     </Target>

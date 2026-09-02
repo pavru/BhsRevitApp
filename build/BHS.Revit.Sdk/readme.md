@@ -6,28 +6,28 @@ TFMs).
 
 ## Version Information
 
-**Version:** 1.0.40
+**Version:** 1.0.0
 
-**Recent Changes:**
-*   **v1.0.40**:
-    *   **Critical IDE Compatibility Fix**: Refactored the Outer Build evaluation logic to ensure `TargetFrameworks` flows unmodified into the base SDK. This completely resolves the issue where Rider/Visual Studio could not "see" the custom TFMs in the UI and only evaluated the fallback framework.
-    *   Added dedicated Outer-Loop dispatchers in both `Microsoft.NET.Sdk.targets` (for single-targeting) and `Microsoft.NET.Sdk.CrossTargeting.targets` (for multi-targeting).
-*   **v1.0.39**:
-    *   Added bypass logic for `ProcessFrameworkReferences` in `Microsoft.NET.Sdk.FrameworkReferenceResolution.targets`.
-*   **v1.0.35**:
-    *   Added bypass logic for `ProcessFrameworkReferences`.
-*   **v1.0.34**:
-    *   Added `ProcessFrameworkReferences` wrapper.
-*   **v1.0.33**:
-    *   Moved `ResolveFrameworkReferences` bypass logic to a dedicated file `Microsoft.NET.Sdk.FrameworkReferenceResolution.targets` to align with base SDK structure.
-*   **v1.0.31**: 
-    *   **Added Publishing and Deployment:** Introduced `PublishRevitSpecificPackage` and `PublishRevitCommonPackage` targets to create distributable packages.
-    *   **Added Deployment Targets:** Introduced `DeployRevitSpecificPackage` and `DeployRevitCommonPackage` to install packages locally for testing.
-    *   **Flexible Package Configuration:** Package structure is now determined by the presence of the `<RevitVersion>` property.
-    *   **Simplified Deployment Scopes:** The `<RevitDeploy>` property now accepts simple `System` and `Local` values.
-    *   **Enhanced Validation:** Added warnings for missing `VendorId` and `PackageName` during publishing.
-    *   **Comprehensive Add-In Generation:** The `GenerateRevitAddIn` task now supports a wide range of `.addin` manifest properties, including version-specific features for Revit 2025 and 2026.
+This is a fork of `BimHouse.Revit.Sdk`, taken into this repository so the build model can be
+changed without touching a package that has other consumers. The upstream repository at
+`..\BimHouse.Revit.Sdk` is read-only from here.
 
+**Changes since the fork point:**
+
+*   **Revit 2024 (`net48-revit2024`) is supported.** The dispatcher maps it to plain `net48`.
+    The base SDK then resolves .NET Framework reference assemblies natively, so none of the
+    `TargetFrameworkProfile` / `FrameworkPathOverride` machinery used by the older `BHS`
+    solution is needed here - see "Why Revit 2024 needed no special machinery" below.
+*   **Restore works.** It never did. `RevitTargetFrameworks`, which the restore dispatcher reads,
+    was assigned nowhere, so both dispatch phases were skipped by their own conditions and
+    `Restore` reported success without writing `project.assets.json`. Fixing that exposed a
+    second fault right behind it: `Properties="TargetFrameworks=@(_StandardTfms, ';')"` is
+    rejected by MSBuild with MSB4012, because an item list cannot be joined inside a task
+    attribute. See "Restore dispatch" below.
+*   **One TFM translation table.** `Sdk/targets/Revit.TfmMapping.targets` is the only place that
+    knows a Revit TFM maps to a .NET one. The same table used to be copied into three files.
+*   Publishing, deployment, `.addin` generation and TFM validation were empty two-line stubs in
+    the fork; they are restored and adapted.
 ## Features
 
 ### 1. Custom Target Framework Monikers (TFMs)
@@ -36,12 +36,20 @@ The SDK introduces support for custom TFMs that explicitly declare both the .NET
 
 **Supported TFMs:**
 
-* `net8.0-revit2025`
-* `net8.0-revit2026`
-* `net10.0-revit2027`
+| TFM | Revit | Compiles as |
+|---|---|---|
+| `net48-revit2024` | 2024 | `net48` |
+| `net8.0-revit2025` | 2025 | `net8.0-windows` |
+| `net8.0-revit2026` | 2026 | `net8.0-windows` |
+| `net10.0-revit2027` | 2027 | `net10.0-windows` |
 
-By using these TFMs, the SDK automatically determines the correct `.NETCoreApp` version, `TargetPlatformIdentifier` (
-`revit`), and `TargetPlatformVersion`.
+The custom moniker never reaches the compiler. An outer build reads the requested TFMs, translates
+each one through `Sdk/targets/Revit.TfmMapping.targets`, and dispatches an inner build per entry
+with a standard moniker the base SDK understands natively. `RevitVersion` is carried alongside in
+`RevitInnerTfm`, and each version gets its own `obj\RevitNNNN\` and `bin\RevitNNNN\` subtree.
+
+Adding a Revit version means adding one row to that mapping file and one row to the validation
+table in `Revit.Validation.targets`. Nothing else in the SDK enumerates versions.
 
 ### 2. IDE Contexts & Preprocessor Directives
 
@@ -63,8 +71,11 @@ This functionality is powered by a custom MSBuild task shipped within the SDK, m
 The SDK ensures configuration consistency:
 
 * Throws an error if an unsupported Revit version is specified in the TFM.
-* Throws an error if there is a mismatch between the .NET version and the Revit version (e.g., Revit 2025 requires .NET
-  8.0, Revit 2027 requires .NET 10.0).
+* Throws an error if there is a mismatch between the .NET version and the Revit version. The
+  pairing is fixed by Autodesk: 2024 requires .NET Framework 4.8, 2025 and 2026 require .NET 8.0,
+  2027 requires .NET 10.0. There is no free product of the two axes.
+* Throws an error if a `-revit` TFM has no entry in the translation table, rather than dispatching
+  an empty framework and building nothing.
 
 ### 4. WPF, WinForms, and WinUI Support
 
@@ -243,6 +254,95 @@ To automatically copy a package, set the `<RevitDeploy>` property. If this prope
   <RevitDeploy>System</RevitDeploy>
 </PropertyGroup>
 ```
+
+## Bootstrap
+
+The SDK is consumed from a feed inside this repository, `artifacts/feed`, declared in the root
+`NuGet.config`. That config clears the machine-wide sources, so the previously published
+`BimHouse.Revit.Sdk` on the local machine feed is deliberately invisible here.
+
+MSBuild resolves an SDK package before any project is evaluated, so the SDK has to be in the feed
+before anything else can restore:
+
+```powershell
+dotnet build build\BHS.Revit.Sdk\BHS.Revit.Sdk.csproj -c Release
+```
+
+`Pack` runs as part of that build and the `PushToRepoFeed` target copies the package into the feed.
+
+If you rebuild the SDK without bumping its version, delete the extracted copy under
+`%UserProfile%\.nuget\packages\bhs.revit.sdk` first, otherwise NuGet keeps serving the old one.
+
+## How the dispatch works
+
+### Two dispatchers, never both
+
+The outer build is whichever evaluation was not started by us (`_IsInnerRevitBuild` unset).
+
+* `TargetFramework` empty and `TargetFrameworks` set: `Microsoft.NET.Sdk.CrossTargeting.targets`.
+* `TargetFramework` set: `Microsoft.NET.Sdk.targets`.
+
+They define the same target names, so importing both would leave whichever was imported last
+silently in charge. The import conditions are mutually exclusive on purpose.
+
+### Hiding the custom moniker from the base SDK
+
+`Sdk.targets` presets `TargetFrameworkIdentifier`, `TargetFrameworkVersion` and, for .NET 5+,
+`TargetPlatformIdentifier` and `TargetPlatformVersion` whenever the outer build's `TargetFramework`
+carries a `-revit` suffix. Both inference blocks in
+`Microsoft.NET.TargetFrameworkInference.targets` are skipped when the properties they would compute
+are already set. Without this, `dotnet build -f net8.0-revit2025` fails with NETSDK1139 ("target
+platform identifier revit was not recognized") and `-f net10.0-revit2027` with NETSDK1140
+("2027.0.0.0 is not a valid TargetPlatformVersion").
+
+Rewriting `TargetFramework` instead is not an option: with `-f` it arrives as a global property, and
+a project-level assignment cannot override one.
+
+### Capture order
+
+`RevitTargetFrameworks` is captured in `Sdk.targets`, not `Sdk.props`. Props are imported at the top
+of the `.csproj`, before its body is evaluated, so `TargetFrameworks` is still empty there.
+
+`TargetFramework` is read first and `TargetFrameworks` second. When one framework is asked for
+explicitly the project still lists the others, and reading the list first made a `-f` build dispatch
+all of them at once, which the base SDK rejects with NETSDK1046.
+
+### Restore dispatch
+
+NuGet restores a project as a whole, so `Restore` is intercepted and split:
+
+1. Plain TFMs are handed back to the base SDK in one child invocation. It carries
+   `_IsStandardRestore=true`, which switches that child out of outer-build mode. Without it the
+   child re-enters this dispatcher and recurses until MSB4006.
+2. Each Revit TFM gets its own child invocation with the translated framework, writing into
+   `obj\RevitNNNN\`.
+
+Set `RevitSdkDiagnostics=true` to have the dispatcher print what it captured and how it classified
+each framework:
+
+```powershell
+dotnet restore -p:RevitSdkDiagnostics=true
+```
+
+### Why Revit 2024 needed no special machinery
+
+The older `BHS` solution keeps the custom moniker as the real `TargetFramework` and patches
+`TargetFrameworkProfile`, `FrameworkPathOverride` (via `ToolLocationHelper`) and
+`AssetTargetFallback` to make .NET Framework resolution work anyway. This SDK translates instead:
+the inner build compiles as plain `net48`, which the base SDK already resolves natively. None of
+that machinery applies here.
+
+What Revit 2024 does need is a .NET Framework 4.8 targeting pack on the build machine, either the
+installed one or the `Microsoft.NETFramework.ReferenceAssemblies` package.
+
+### Per-version output isolation
+
+`AppendTargetFrameworkToOutputPath` is off for Revit TFMs, and two Revit versions can share an inner
+moniker (2025 and 2026 are both `net8.0-windows`), so both intermediate and output directories are
+redirected to `RevitNNNN` subtrees. `DefaultItemExcludes` gains the `obj` and `bin` roots: the base
+SDK only excludes the current `BaseOutputPath` and `BaseIntermediateOutputPath`, so the sibling
+versions' generated `AssemblyInfo.cs` would otherwise be picked up by the default glob and fail
+with CS0579.
 
 ## Usage
 

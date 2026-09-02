@@ -1,2 +1,88 @@
 <Project>
+
+    <UsingTask TaskName="BHS.Revit.Sdk.GenerateRevitDefineConstants" AssemblyFile="$(BuildTasksAssembly)"/>
+    <UsingTask TaskName="BHS.Revit.Sdk.GenerateRevitAddIn" AssemblyFile="$(BuildTasksAssembly)"/>
+
+    <ItemDefinitionGroup>
+        <RevitAddIn>
+            <Visible>false</Visible>
+        </RevitAddIn>
+    </ItemDefinitionGroup>
+
+    <PropertyGroup>
+        <PublishRevitAddIn Condition="'$(PublishRevitAddIn)' == ''">false</PublishRevitAddIn>
+        <DeployRevitAddIn Condition="'$(DeployRevitAddIn)' == ''">false</DeployRevitAddIn>
+
+        <RevitVendorId Condition="'$(RevitVendorId)' == ''">UnknownVendor</RevitVendorId>
+        <RevitPackageName Condition="'$(RevitPackageName)' == ''">$(AssemblyName)</RevitPackageName>
+        <DeployRevitAddInScope Condition="'$(DeployRevitAddInScope)' == ''">Local</DeployRevitAddInScope>
+        <RevitPublishDirectory Condition="'$(RevitPublishDirectory)' == ''">$(TargetDir)publish\</RevitPublishDirectory>
+    </PropertyGroup>
+
+    <Target Name="_GenerateRevitConstants"
+            AfterTargets="AddImplicitDefineConstants"
+            Condition="'$(RevitVersion)' != ''">
+        <GenerateRevitDefineConstants
+                RevitVersion="$(RevitVersion)"
+                DefineConstants="$(DefineConstants)"
+                MinSupportedVersion="2024">
+
+            <Output TaskParameter="UpdatedDefineConstants" PropertyName="DefineConstants"/>
+        </GenerateRevitDefineConstants>
+    </Target>
+
+    <Target Name="_GenerateRevitAddInManifest"
+            AfterTargets="Build"
+            Condition="'$(RevitVersion)' != '' And '@(RevitAddIn)' != ''">
+
+        <!-- Defaults first. A metadata reference inside an item update element does not see a
+             value assigned earlier in that same element, so _AssemblyPathForManifest, which reads
+             Assembly, VendorId and AddInName, has to be computed in a later ItemGroup. Folding it
+             into the block below silently produced an empty Assembly and the task rejected it. -->
+        <ItemGroup>
+            <RevitAddIn>
+                <AddInOutputPath Condition="'%(Identity)' == ''">$(TargetDir)addin\$(AssemblyName).addin</AddInOutputPath>
+                <AddInOutputPath Condition="'%(Identity)' != ''">$(TargetDir)addin\%(Identity)</AddInOutputPath>
+                <Assembly Condition="'%(RevitAddIn.Assembly)' == ''">$(TargetFileName)</Assembly>
+                <AddInName Condition="'%(RevitAddIn.AddInName)' == ''">$(AssemblyName)</AddInName>
+                <VendorId Condition="'%(RevitAddIn.VendorId)' == ''">$(RevitVendorId)</VendorId>
+            </RevitAddIn>
+        </ItemGroup>
+
+        <ItemGroup>
+            <RevitAddIn>
+                <_AssemblyPathForManifest Condition="'$(PublishRevitAddIn)' != 'true'">%(RevitAddIn.Assembly)</_AssemblyPathForManifest>
+                <_AssemblyPathForManifest Condition="'$(PublishRevitAddIn)' == 'true'">%(RevitAddIn.VendorId)\%(RevitAddIn.AddInName)\Lib\%(RevitAddIn.Assembly)</_AssemblyPathForManifest>
+            </RevitAddIn>
+        </ItemGroup>
+
+        <ItemGroup>
+            <_RevitAddInTaskItem Include="%(RevitAddIn.AddInOutputPath)">
+                <Assembly>%(_AssemblyPathForManifest)</Assembly>
+                <FullClassName>%(RevitAddIn.FullClassName)</FullClassName>
+                <AddInId>%(RevitAddIn.AddInId)</AddInId>
+                <AddInName>%(RevitAddIn.AddInName)</AddInName>
+                <VendorId>%(RevitAddIn.VendorId)</VendorId>
+                <AddInType>%(RevitAddIn.AddInType)</AddInType>
+                <Description>%(RevitAddIn.Description)</Description>
+                <VendorDescription>%(RevitAddIn.VendorDescription)</VendorDescription>
+                <VisibilityMode>%(RevitAddIn.VisibilityMode)</VisibilityMode>
+                <AvailabilityClassName>%(RevitAddIn.AvailabilityClassName)</AvailabilityClassName>
+                <LanguageType>%(RevitAddIn.LanguageType)</LanguageType>
+                <LongDescription>%(RevitAddIn.LongDescription)</LongDescription>
+                <TooltipImage>%(RevitAddIn.TooltipImage)</TooltipImage>
+                <LargeImage>%(RevitAddIn.LargeImage)</LargeImage>
+                <Image>%(RevitAddIn.Image)</Image>
+                <AllowLoadIntoExistingSession>%(RevitAddIn.AllowLoadIntoExistingSession)</AllowLoadIntoExistingSession>
+                <UnifyInAddInManager>%(RevitAddIn.UnifyInAddInManager)</UnifyInAddInManager>
+                <UseRevitContext>%(RevitAddIn.UseRevitContext)</UseRevitContext>
+                <ContextName>%(RevitAddIn.ContextName)</ContextName>
+            </_RevitAddInTaskItem>
+        </ItemGroup>
+
+        <GenerateRevitAddIn
+            AddInDefinition="@(_RevitAddInTaskItem)"
+            RevitVersion="$(RevitVersion)"/>
+    </Target>
+
 </Project>

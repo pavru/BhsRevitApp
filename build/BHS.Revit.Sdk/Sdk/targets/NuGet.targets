@@ -2,44 +2,52 @@
     <!-- ======================================================================================= -->
     <!-- Dispatcher logic for NuGet Restore                                                      -->
     <!-- NuGet operates on the whole project (all TFMs) simultaneously, so we must intercept     -->
-    <!-- Restore targets and dispatch them selectively based on the TFM type.                  -->
+    <!-- Restore targets and dispatch them selectively based on the TFM type.                    -->
     <!-- ======================================================================================= -->
 
-    <Target Name="_PrepareRevitDispatchRestore" Condition="'$(IsRevitOuterBuild)' == 'true'">
-        <ItemGroup>
-            <_RevitTfmDispatch Include="$(RevitTargetFrameworks.Split(';'))">
-                <OriginalTfm>%(Identity)</OriginalTfm>
-                <InnerTfm Condition="$([System.String]::new('%(Identity)').Contains('-revit')) And $([System.String]::new('%(Identity)').StartsWith('net8.0'))">net8.0-windows</InnerTfm>
-                <InnerTfm Condition="$([System.String]::new('%(Identity)').Contains('-revit')) And $([System.String]::new('%(Identity)').StartsWith('net10.0'))">net10.0-windows</InnerTfm>
-                <InnerTfm Condition="!$([System.String]::new('%(Identity)').Contains('-revit'))">%(Identity)</InnerTfm>
-                <IsRevit Condition="$([System.String]::new('%(Identity)').Contains('-revit'))">true</IsRevit>
-            </_RevitTfmDispatch>
+    <Target Name="_PrepareRevitDispatchRestore"
+            DependsOnTargets="_MapRevitTargetFrameworks"
+            Condition="'$(IsRevitOuterBuild)' == 'true'">
 
-            <!-- Segregate TFMs into Standard and Revit-specific -->
-            <_StandardTfms Include="@(_RevitTfmDispatch)" Condition="'%(IsRevit)' != 'true'" />
-            <_RevitTfms Include="@(_RevitTfmDispatch)" Condition="'%(IsRevit)' == 'true'" />
+        <ItemGroup>
+            <!-- Segregate TFMs into standard ones, which NuGet can cross-target natively,
+                 and Revit ones, which have to be restored one inner build at a time. -->
+            <_StandardTfms Include="@(_RevitTfmMap)" Condition="'%(_RevitTfmMap.IsRevit)' != 'true'" />
+            <_RevitTfms Include="@(_RevitTfmMap)" Condition="'%(_RevitTfmMap.IsRevit)' == 'true'" />
         </ItemGroup>
+
+        <!-- An item list cannot be joined inside a task attribute: MSBuild rejects
+             Properties="TargetFrameworks=@(_StandardTfms, ';')" with MSB4012. It has to become a
+             property first, and that has to happen after the ItemGroup above has run. -->
+        <PropertyGroup>
+            <_StandardTfmList>@(_StandardTfms, ';')</_StandardTfmList>
+        </PropertyGroup>
+
+        <Message Condition="'$(RevitSdkDiagnostics)' == 'true'" Importance="high"
+                 Text="[Revit SDK] captured='$(RevitTargetFrameworks)' outer='$(IsRevitOuterBuild)' inner='$(_IsInnerRevitBuild)' standard='$(_StandardTfmList)' revit='@(_RevitTfms->'%(OriginalTfm)=>%(InnerTfm)')'"/>
     </Target>
 
     <!--
-      The main Restore target. 
+      The main Restore target.
       It runs in the Outer Build context. We split the execution into two phases.
     -->
     <Target Name="Restore" DependsOnTargets="_PrepareRevitDispatchRestore" Condition="'$(IsRevitOuterBuild)' == 'true'">
-        
+
         <!-- Phase 1: Restore Standard TFMs -->
-        <!-- We let the base SDK handle cross-targeting for standard TFMs natively -->
+        <!-- We let the base SDK handle cross-targeting for standard TFMs natively.
+             _IsStandardRestore switches the child out of outer-build mode, so it uses the base
+             Restore instead of re-entering this dispatcher and recursing until MSB4006. -->
         <MSBuild Projects="$(MSBuildProjectFullPath)"
                  Targets="Restore"
-                 Properties="TargetFrameworks=@(_StandardTfms, ';');_IsInnerRevitBuild=false"
-                 Condition="'@(_StandardTfms)' != ''" />
+                 Properties="TargetFrameworks=$(_StandardTfmList);TargetFramework=;_IsStandardRestore=true"
+                 Condition="'$(_StandardTfmList)' != ''" />
 
         <!-- Phase 2: Restore Custom Revit TFMs -->
         <!-- We trigger an explicit inner build for each Revit TFM.
              Before.Microsoft.NET.Sdk.props will catch _IsInnerRevitBuild=true and re-route outputs -->
         <MSBuild Projects="$(MSBuildProjectFullPath)"
                  Targets="Restore"
-                 Properties="_IsInnerRevitBuild=true;RevitInnerTfm=%(_RevitTfms.OriginalTfm);TargetFramework=%(_RevitTfms.InnerTfm)"
+                 Properties="_IsInnerRevitBuild=true;RevitInnerTfm=%(_RevitTfms.OriginalTfm);TargetFramework=%(_RevitTfms.InnerTfm);TargetFrameworks="
                  Condition="'@(_RevitTfms)' != ''" />
     </Target>
 
@@ -53,18 +61,18 @@
       We intercept it and ensure the paths reflect our inner build logic.
     -->
     <Target Name="_GenerateRestoreGraphProjectEntry" DependsOnTargets="_PrepareRevitDispatchRestore" Condition="'$(IsRevitOuterBuild)' == 'true'">
-        
+
         <!-- Standard TFMs Graph -->
-        <MSBuild Projects="$(MSBuildProjectFullPath)" 
-                 Targets="_GenerateRestoreProjectSpec" 
-                 Properties="_IsInnerRevitBuild=false;TargetFramework=%(_RevitTfmDispatch.OriginalTfm)"
-                 Condition="'%(_RevitTfmDispatch.IsRevit)' != 'true'"/>
+        <MSBuild Projects="$(MSBuildProjectFullPath)"
+                 Targets="_GenerateRestoreProjectSpec"
+                 Properties="_IsInnerRevitBuild=false;TargetFramework=%(_RevitTfmMap.OriginalTfm)"
+                 Condition="'%(_RevitTfmMap.IsRevit)' != 'true'"/>
 
         <!-- Revit TFMs Graph -->
-        <MSBuild Projects="$(MSBuildProjectFullPath)" 
-                 Targets="_GenerateRestoreProjectSpec" 
-                 Properties="_IsInnerRevitBuild=true;RevitInnerTfm=%(_RevitTfmDispatch.OriginalTfm);TargetFramework=%(_RevitTfmDispatch.InnerTfm)"
-                 Condition="'%(_RevitTfmDispatch.IsRevit)' == 'true'"/>
+        <MSBuild Projects="$(MSBuildProjectFullPath)"
+                 Targets="_GenerateRestoreProjectSpec"
+                 Properties="_IsInnerRevitBuild=true;RevitInnerTfm=%(_RevitTfmMap.OriginalTfm);TargetFramework=%(_RevitTfmMap.InnerTfm)"
+                 Condition="'%(_RevitTfmMap.IsRevit)' == 'true'"/>
     </Target>
 
 </Project>

@@ -1,2 +1,167 @@
 <Project>
+
+    <!--
+      Wrapper for Revit-Specific packages.
+      Packages an add-in for a specific Revit version.
+      Condition: PublishRevitAddIn is true, RevitVersion is defined, and RevitAddIn item exists.
+    -->
+    <Target Name="PublishRevitSpecificPackage"
+            AfterTargets="_GenerateRevitAddInManifest"
+            Condition="'$(PublishRevitAddIn)' == 'true' AND '$(RevitVersion)' != '' AND '@(RevitAddIn)' != ''">
+
+        <Message Importance="High" Text="Publishing Revit-Specific package for Revit $(RevitVersion)..." />
+
+        <!-- Validate required metadata -->
+        <Warning Condition="'%(RevitAddIn.VendorId)' == 'UnknownVendor'"
+                 Text="The 'VendorId' metadata on the 'RevitAddIn' item is not set. Defaulting to 'UnknownVendor'. It is recommended to set this value in your project file." />
+
+        <PropertyGroup>
+            <_RevitPublishDirectoryNormalized>$([MSBuild]::NormalizeDirectory('$(RevitPublishDirectory)'))</_RevitPublishDirectoryNormalized>
+            <_PublishRoot>$([System.IO.Path]::Combine('$(_RevitPublishDirectoryNormalized)', '$(RevitVersion)'))</_PublishRoot>
+            <_AddInDestinationFolder>$(_PublishRoot)</_AddInDestinationFolder>
+            <_VendorFolder>$([System.IO.Path]::Combine('$(_PublishRoot)', '%(RevitAddIn.VendorId)'))</_VendorFolder>
+            <_AddInFolder>$([System.IO.Path]::Combine('$(_VendorFolder)', '%(RevitAddIn.AddInName)'))</_AddInFolder>
+            <_PublishLibPath>$([System.IO.Path]::Combine('$(_AddInFolder)', 'Lib'))</_PublishLibPath>
+            <_PublishResourcesPath>$([System.IO.Path]::Combine('$(_AddInFolder)', 'Resources'))</_PublishResourcesPath>
+            <_PublishContentPath>$([System.IO.Path]::Combine('$(_AddInFolder)', 'Content'))</_PublishContentPath>
+        </PropertyGroup>
+
+        <ItemGroup>
+            <_LibFilesToPublish Include="$(TargetDir)**\*.*" Exclude="$(TargetDir)addin\**\*.*;$(TargetDir)publish\**\*.*" />
+        </ItemGroup>
+
+        <RemoveDir Directories="$(_PublishRoot)" Condition="Exists('$(_PublishRoot)')" />
+        
+        <MakeDir Directories="$(_AddInFolder)" />
+        <MakeDir Directories="$(_PublishLibPath)" />
+        <MakeDir Directories="$(_PublishResourcesPath)" Condition="'@(RevitAddInResources)' != ''" />
+        <MakeDir Directories="$(_PublishContentPath)" Condition="'@(RevitAddInContent)' != ''" />
+
+        <Copy SourceFiles="@(_LibFilesToPublish)" DestinationFolder="$(_PublishLibPath)%(RecursiveDir)" />
+        <Copy SourceFiles="@(RevitAddInResources)" DestinationFolder="$(_PublishResourcesPath)%(RecursiveDir)" Condition="'@(RevitAddInResources)' != ''"/>
+        <Copy SourceFiles="@(RevitAddInContent)" DestinationFolder="$(_PublishContentPath)%(RecursiveDir)" Condition="'@(RevitAddInContent)' != ''"/>
+
+        <Copy SourceFiles="%(RevitAddIn.AddInOutputPath)" DestinationFolder="$(_AddInDestinationFolder)" />
+        
+        <Message Importance="High" Text="Revit-Specific package published to: $(_PublishRoot)" />
+    </Target>
+
+    <!--
+      Wrapper for Revit-Common packages.
+      Packages a set of shared libraries and resources, independent of Revit version.
+      Condition: PublishRevitAddIn is true and RevitVersion is NOT defined.
+    -->
+    <!--
+      IsRevitOuterBuild excludes the dispatching build of a Revit project. RevitVersion is only set
+      in inner builds, so without it the outer build of a Revit-specific project looked like a
+      common package and published a stray copy into bin\<platform>\<config>\<custom tfm>\publish.
+      Non-Revit projects are unaffected: their inner builds have IsRevitOuterBuild false.
+    -->
+    <Target Name="PublishRevitCommonPackage"
+            AfterTargets="Build"
+            Condition="'$(PublishRevitAddIn)' == 'true' AND '$(RevitVersion)' == '' AND '$(IsRevitOuterBuild)' != 'true'">
+
+        <Message Importance="High" Text="Publishing Revit-Common package..." />
+
+        <!-- Validate required properties -->
+        <Warning Condition="'$(RevitVendorId)' == 'UnknownVendor'"
+                 Text="The 'RevitVendorId' property is not set. Defaulting to 'UnknownVendor'. It is recommended to set this property in your project file for common packages." />
+        <Warning Condition="'$(RevitPackageName)' == '$(AssemblyName)'"
+                 Text="The 'RevitPackageName' property is not set. Defaulting to the assembly name '$([System.IO.Path]::GetFileNameWithoutExtension('$(AssemblyName)'))'. It is recommended to set a unique package name in your project file." />
+
+        <PropertyGroup>
+            <_RevitPublishDirectoryNormalized>$([MSBuild]::NormalizeDirectory('$(RevitPublishDirectory)'))</_RevitPublishDirectoryNormalized>
+            <_PublishRoot>$(_RevitPublishDirectoryNormalized)</_PublishRoot>
+            <_VendorFolder>$([System.IO.Path]::Combine('$(_PublishRoot)', '$(RevitVendorId)'))</_VendorFolder>
+            <_PackageFolder>$([System.IO.Path]::Combine('$(_VendorFolder)', '$(RevitPackageName)'))</_PackageFolder>
+            <_AddInFolder>$(_PackageFolder)</_AddInFolder>
+            <_PublishLibPath>$([System.IO.Path]::Combine('$(_AddInFolder)', 'Lib'))</_PublishLibPath>
+            <_PublishResourcesPath>$([System.IO.Path]::Combine('$(_AddInFolder)', 'Resources'))</_PublishResourcesPath>
+            <_PublishContentPath>$([System.IO.Path]::Combine('$(_AddInFolder)', 'Content'))</_PublishContentPath>
+        </PropertyGroup>
+
+        <ItemGroup>
+            <_LibFilesToPublish Include="$(TargetDir)**\*.*" Exclude="$(TargetDir)addin\**\*.*;$(TargetDir)publish\**\*.*" />
+        </ItemGroup>
+
+        <RemoveDir Directories="$(_AddInFolder)" Condition="Exists('$(_AddInFolder)')" />
+
+        <MakeDir Directories="$(_AddInFolder)" />
+        <MakeDir Directories="$(_PublishLibPath)" />
+        <MakeDir Directories="$(_PublishResourcesPath)" Condition="'@(RevitAddInResources)' != ''" />
+        <MakeDir Directories="$(_PublishContentPath)" Condition="'@(RevitAddInContent)' != ''" />
+
+        <Copy SourceFiles="@(_LibFilesToPublish)" DestinationFolder="$(_PublishLibPath)%(RecursiveDir)" />
+        <Copy SourceFiles="@(RevitAddInResources)" DestinationFolder="$(_PublishResourcesPath)%(RecursiveDir)" Condition="'@(RevitAddInResources)' != ''"/>
+        <Copy SourceFiles="@(RevitAddInContent)" DestinationFolder="$(_PublishContentPath)%(RecursiveDir)" Condition="'@(RevitAddInContent)' != ''"/>
+
+        <Message Importance="High" Text="Revit-Common package published to: $(_AddInFolder)" />
+    </Target>
+
+    <!--
+      Deploy Target for Revit-Specific packages.
+    -->
+    <Target Name="DeployRevitSpecificPackage"
+            AfterTargets="PublishRevitSpecificPackage"
+            Condition="'$(RevitDeploy)' != '' AND '$(RevitVersion)' != ''">
+
+        <Message Importance="High" Text="Deploying Revit-Specific package to $(RevitDeploy) scope..." />
+
+        <Error Condition="'$(RevitDeploy)' != 'System' AND '$(RevitDeploy)' != 'Local'"
+               Text="Invalid RevitDeploy scope for a Revit-Specific package. Valid values are: System, Local." />
+
+        <PropertyGroup>
+            <_RevitPublishDirectoryNormalized>$([MSBuild]::NormalizeDirectory('$(RevitPublishDirectory)'))</_RevitPublishDirectoryNormalized>
+            <_PublishRoot>$([System.IO.Path]::Combine('$(_RevitPublishDirectoryNormalized)', '$(RevitVersion)'))</_PublishRoot>
+            
+            <_DeployDestinationRoot Condition="'$(RevitDeploy)' == 'System'">$(ProgramData)\Autodesk\Revit\Addins\$(RevitVersion)\</_DeployDestinationRoot>
+            <_DeployDestinationRoot Condition="'$(RevitDeploy)' == 'Local'">$(AppData)\Autodesk\Revit\Addins\$(RevitVersion)\</_DeployDestinationRoot>
+        </PropertyGroup>
+
+        <ItemGroup>
+            <_DeployFiles Include="$(_PublishRoot)\**\*.*" />
+        </ItemGroup>
+
+        <Message Importance="Normal" Text="Copying files from $(_PublishRoot) to $(_DeployDestinationRoot)" />
+
+        <Copy SourceFiles="@(_DeployFiles)" 
+              DestinationFiles="@(_DeployFiles->'$(_DeployDestinationRoot)%(RecursiveDir)%(Filename)%(Extension)')" 
+              SkipUnchangedFiles="true" />
+              
+        <Message Importance="High" Text="Deploy complete: $(_DeployDestinationRoot)" />
+    </Target>
+
+    <!--
+      Deploy Target for Revit-Common packages.
+    -->
+    <Target Name="DeployRevitCommonPackage"
+            AfterTargets="PublishRevitCommonPackage"
+            Condition="'$(RevitDeploy)' != '' AND '$(RevitVersion)' == '' AND '$(IsRevitOuterBuild)' != 'true'">
+
+        <Message Importance="High" Text="Deploying Revit-Common package to $(RevitDeploy) scope..." />
+
+        <Error Condition="'$(RevitDeploy)' != 'System' AND '$(RevitDeploy)' != 'Local'"
+               Text="Invalid RevitDeploy scope for a Revit-Common package. Valid values are: System, Local." />
+
+        <PropertyGroup>
+            <_RevitPublishDirectoryNormalized>$([MSBuild]::NormalizeDirectory('$(RevitPublishDirectory)'))</_RevitPublishDirectoryNormalized>
+            <_SourcePath>$([System.IO.Path]::Combine('$(_RevitPublishDirectoryNormalized)', '$(RevitVendorId)', '$(RevitPackageName)'))</_SourcePath>
+
+            <_DeployDestinationRoot Condition="'$(RevitDeploy)' == 'System'">$(ProgramFiles)</_DeployDestinationRoot>
+            <_DeployDestinationRoot Condition="'$(RevitDeploy)' == 'Local'">$(LocalAppData)</_DeployDestinationRoot>
+        </PropertyGroup>
+
+        <ItemGroup>
+            <_DeployFiles Include="$(_SourcePath)\**\*.*" />
+        </ItemGroup>
+
+        <Message Importance="Normal" Text="Copying files from $(_SourcePath) to $(_DeployDestinationRoot)\$(RevitVendorId)\$(RevitPackageName)" />
+
+        <Copy SourceFiles="@(_DeployFiles)" 
+              DestinationFolder="$([System.IO.Path]::Combine('$(_DeployDestinationRoot)', '$(RevitVendorId)', '$(RevitPackageName)'))\%(RecursiveDir)"
+              SkipUnchangedFiles="true" />
+              
+        <Message Importance="High" Text="Deploy complete: $(_DeployDestinationRoot)\$(RevitVendorId)\$(RevitPackageName)" />
+    </Target>
+
 </Project>

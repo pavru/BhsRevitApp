@@ -1,0 +1,55 @@
+<Project>
+    <!-- ======================================================================================= -->
+    <!-- Single source of truth for translating a custom Revit TFM into the standard TFM the     -->
+    <!-- inner build actually compiles against.                                                  -->
+    <!--                                                                                         -->
+    <!-- Every dispatcher (cross-targeting, single-target, restore) depends on this target, so a  -->
+    <!-- new Revit version is added here and nowhere else. Before this file existed the same      -->
+    <!-- mapping was copied into three files and they were already drifting apart.               -->
+    <!--                                                                                         -->
+    <!-- Input:  $(RevitTargetFrameworks) - captured in Sdk.targets from the project body.        -->
+    <!-- Output: @(_RevitTfmMap) with metadata OriginalTfm, InnerTfm, IsRevit.                    -->
+    <!-- ======================================================================================= -->
+
+    <Target Name="_MapRevitTargetFrameworks">
+
+        <Error Condition="'$(RevitTargetFrameworks)' == ''"
+               Text="[Revit SDK] No target frameworks were captured. Set TargetFramework or TargetFrameworks in the project. If this fires on a project that does set them, the capture in Sdk.targets ran too early."/>
+
+        <!-- Split first, transform second. Deriving metadata from %(Identity) inside the same
+             ItemGroup that creates the item does not evaluate reliably here; referencing a
+             qualified %(item.Identity) from a previously materialised list does. -->
+        <ItemGroup>
+            <_RevitRawTfm Include="$(RevitTargetFrameworks.Split(';'))"/>
+        </ItemGroup>
+
+        <ItemGroup>
+            <_RevitTfmMap Include="%(_RevitRawTfm.Identity)">
+                <OriginalTfm>%(_RevitRawTfm.Identity)</OriginalTfm>
+
+                <!-- Both branches are spelled out: an item missing this metadata breaks
+                     unqualified %(IsRevit) batching in the consumers with MSB4096. -->
+                <IsRevit Condition="$([System.String]::new('%(_RevitRawTfm.Identity)').Contains('-revit'))">true</IsRevit>
+                <IsRevit Condition="!$([System.String]::new('%(_RevitRawTfm.Identity)').Contains('-revit'))">false</IsRevit>
+
+                <!-- Revit 2024 runs on .NET Framework 4.8. There is no net48-windows moniker;
+                     plain net48 already implies Windows and WPF is available through UseWPF. -->
+                <InnerTfm Condition="$([System.String]::new('%(_RevitRawTfm.Identity)').Contains('-revit')) And $([System.String]::new('%(_RevitRawTfm.Identity)').StartsWith('net48'))">net48</InnerTfm>
+
+                <!-- Revit 2025 and 2026 run on .NET 8, Revit 2027 on .NET 10. -->
+                <InnerTfm Condition="$([System.String]::new('%(_RevitRawTfm.Identity)').Contains('-revit')) And $([System.String]::new('%(_RevitRawTfm.Identity)').StartsWith('net8.0'))">net8.0-windows</InnerTfm>
+                <InnerTfm Condition="$([System.String]::new('%(_RevitRawTfm.Identity)').Contains('-revit')) And $([System.String]::new('%(_RevitRawTfm.Identity)').StartsWith('net10.0'))">net10.0-windows</InnerTfm>
+
+                <!-- Anything without -revit is passed through untouched. -->
+                <InnerTfm Condition="!$([System.String]::new('%(_RevitRawTfm.Identity)').Contains('-revit'))">%(_RevitRawTfm.Identity)</InnerTfm>
+            </_RevitTfmMap>
+        </ItemGroup>
+
+        <!-- Without this an unknown Revit TFM would dispatch to an empty TargetFramework and the
+             build would quietly do nothing, which is exactly how the restore dispatcher used to fail. -->
+        <Error Condition="'%(_RevitTfmMap.IsRevit)' == 'true' And '%(_RevitTfmMap.InnerTfm)' == ''"
+               Text="[Revit SDK] Target framework '%(_RevitTfmMap.OriginalTfm)' has no .NET runtime mapping. Supported: net48-revit2024, net8.0-revit2025, net8.0-revit2026, net10.0-revit2027. Add the mapping in Sdk/targets/Revit.TfmMapping.targets."/>
+
+    </Target>
+
+</Project>

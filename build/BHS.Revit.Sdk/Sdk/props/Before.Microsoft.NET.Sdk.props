@@ -4,34 +4,59 @@
     </PropertyGroup>
 
     <PropertyGroup>
-        <SupportedTargetFrameworks>$(SupportedTargetFrameworks);net8.0-revit2025;net8.0-revit2026;net10.0-revit2027</SupportedTargetFrameworks>
+        <SupportedTargetFrameworks>$(SupportedTargetFrameworks);net48-revit2024;net8.0-revit2025;net8.0-revit2026;net10.0-revit2027</SupportedTargetFrameworks>
     </PropertyGroup>
 
-    <PropertyGroup Condition="'$(_IsInnerRevitBuild)' != 'true'">
+    <!-- _IsStandardRestore marks the child invocation that restores the plain, non-Revit TFMs.
+         It must not act as an outer build or it would re-enter the restore dispatcher forever. -->
+    <PropertyGroup Condition="'$(_IsInnerRevitBuild)' != 'true' And '$(_IsStandardRestore)' != 'true'">
         <IsRevitOuterBuild>true</IsRevitOuterBuild>
-        
-        <!-- If the IDE (e.g. Rider) passes a specific TargetFramework globally during a design-time build, 
-             this file will catch it. We spoof the identifiers early here as well to prevent crashes. -->
-        <TargetPlatformIdentifier Condition="'$(TargetFramework)' != '' And $(TargetFramework.Contains('-revit'))">Windows</TargetPlatformIdentifier>
-        <TargetFrameworkIdentifier Condition="'$(TargetFramework)' != '' And $(TargetFramework.Contains('-revit'))">.NETCoreApp</TargetFrameworkIdentifier>
     </PropertyGroup>
+
+    <!-- The custom moniker is hidden from the base SDK in Sdk.targets, which runs after the
+         project body and therefore sees TargetFramework however it was supplied. Nothing to do
+         here: TargetFrameworks is not visible yet, and a globally supplied TargetFramework
+         cannot be overridden from the project anyway. -->
 
     <PropertyGroup Condition="'$(_IsInnerRevitBuild)' == 'true'">
         <IsRevitOuterBuild>false</IsRevitOuterBuild>
-        
+
+        <!-- Clear TargetFrameworks so the base SDK treats this as a single-target build. -->
+        <TargetFrameworks/>
+
         <IsRevitTfm Condition="'$(RevitInnerTfm)' != '' And $(RevitInnerTfm.Contains('-revit'))">true</IsRevitTfm>
         <RevitVersion Condition="'$(IsRevitTfm)' == 'true'">$([System.Text.RegularExpressions.Regex]::Match('$(RevitInnerTfm)', `revit(\d+)`).Groups[1].Value)</RevitVersion>
-        
+
+        <!-- The TargetFramework passed by the dispatcher is a standard one (net48, net8.0-windows,
+             net10.0-windows), so the base SDK parses it natively. Nothing to spoof in the inner build. -->
+
         <AppendTargetFrameworkToOutputPath Condition="'$(IsRevitTfm)' == 'true'">false</AppendTargetFrameworkToOutputPath>
-        
+
+        <!-- Every Revit TFM gets its own obj/ and bin/ subtree. Without the bin/ half all Revit
+             TFMs would write into the same bin\$(Configuration) and overwrite each other, because
+             AppendTargetFrameworkToOutputPath is off and the inner TFMs are not unique either
+             (2025 and 2026 both compile as net8.0-windows). -->
         <_RevitTfmOutputPath Condition="'$(IsRevitTfm)' == 'true'">obj\Revit$(RevitVersion)\</_RevitTfmOutputPath>
-        
+
         <BaseIntermediateOutputPath Condition="'$(IsRevitTfm)' == 'true'">$(_RevitTfmOutputPath)</BaseIntermediateOutputPath>
         <MSBuildProjectExtensionsPath Condition="'$(IsRevitTfm)' == 'true'">$(_RevitTfmOutputPath)</MSBuildProjectExtensionsPath>
-        
+
         <RestoreOutputPath Condition="'$(IsRevitTfm)' == 'true'">$(_RevitTfmOutputPath)</RestoreOutputPath>
         <ProjectAssetsFile Condition="'$(IsRevitTfm)' == 'true'">$(RestoreOutputPath)project.assets.json</ProjectAssetsFile>
         <ProjectAssetsCacheFile Condition="'$(IsRevitTfm)' == 'true'">$(RestoreOutputPath)project.assets.cache</ProjectAssetsCacheFile>
+
+        <BaseOutputPath Condition="'$(IsRevitTfm)' == 'true'">bin\Revit$(RevitVersion)\</BaseOutputPath>
+        <IntermediateOutputPath Condition="'$(IsRevitTfm)' == 'true'">$(BaseIntermediateOutputPath)$(Configuration)\</IntermediateOutputPath>
+        <OutputPath Condition="'$(IsRevitTfm)' == 'true'">$(BaseOutputPath)$(Configuration)\</OutputPath>
+        <OutDir Condition="'$(IsRevitTfm)' == 'true'">$(OutputPath)</OutDir>
+
+        <!-- The base SDK only excludes $(BaseOutputPath) and $(BaseIntermediateOutputPath) from the
+             default **\*.cs glob. Those now point at one Revit version's subtree, so the sibling
+             versions' obj\RevitNNNN folders stay visible and their generated AssemblyInfo.cs gets
+             compiled in as well - CS0579, duplicate assembly attributes, once a second version has
+             been built. Excluding the roots covers every version at once.
+             Set here, before Microsoft.NET.Sdk.DefaultItems.props appends its own entries. -->
+        <DefaultItemExcludes Condition="'$(IsRevitTfm)' == 'true'">$(DefaultItemExcludes);obj\**;bin\**</DefaultItemExcludes>
     </PropertyGroup>
 
     <PropertyGroup>
