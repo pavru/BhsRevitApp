@@ -14,6 +14,10 @@
 
     <ItemGroup>
         <ProjectReference Include="..\..\Shared\BHS.Shared\BHS.Shared.csproj" />
+        <!-- A feature is handed settings and a log and nothing else, so the contract for them
+             belongs here. Both are package-free by design; see their readmes. -->
+        <ProjectReference Include="..\..\Shared\BHS.Settings\BHS.Settings.csproj"/>
+        <ProjectReference Include="..\..\Shared\BHS.Logging\BHS.Logging.csproj"/>
     </ItemGroup>
 
 </Project>

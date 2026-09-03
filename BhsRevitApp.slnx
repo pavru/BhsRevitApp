@@ -58,6 +58,9 @@
   <Folder Name="/Revit/">
     <Project Path="source/Revit/BHS.Revit.Abstractions/BHS.Revit.Abstractions.csproj" Type="C#" />
     <Project Path="source/Revit/BHS.Revit.Common/BHS.Revit.Common.csproj" Type="C#" />
+    <!-- The entry point an edition derives from, and everything between OnStartup and a usable
+         feature. Separate from Abstractions so that features never learn the host's insides. -->
+    <Project Path="source/Revit/BHS.Revit.Host/BHS.Revit.Host.csproj" Type="C#" />
 
     <!-- The verification pair: an add-in that reports what it sees, and the runner that starts
          Revit and asks it. The runner is not loaded into Revit and is not on the Revit axis; it
