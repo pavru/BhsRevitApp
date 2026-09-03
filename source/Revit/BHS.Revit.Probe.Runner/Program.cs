@@ -564,6 +564,7 @@ internal static class Program
 
         report.Check("Revit asks the availability class once its tab is shown", asked);
         Report.Note("availability calls", calls);
+
     }
 
     /// <summary>Where the call lands, and in which AppDomain the add-in is living.</summary>

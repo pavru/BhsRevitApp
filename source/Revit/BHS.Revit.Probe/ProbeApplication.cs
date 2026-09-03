@@ -296,6 +296,7 @@ public sealed class ProbeApplication : IExternalApplication
 
             panel.AddItem(button);
             ProbeLog.Write("ribbon: added a button with an availability class in the command's assembly");
+
         }
         catch (Exception error)
         {
