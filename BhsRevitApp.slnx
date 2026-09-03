@@ -40,6 +40,9 @@
     <!-- Starts a Revit and waits to be told it is ready. Extracted from the probe runner, which
          is still its test - four live releases beat any argument about how it should behave. -->
     <Project Path="source/WinSide/BHS.Revit.Launch/BHS.Revit.Launch.csproj" Type="C#" />
+    <!-- The companion process itself: serves the channel, keeps the register, starts and stops
+         Revit on request. A user process rather than a service - Revit needs a desktop. -->
+    <Project Path="source/WinSide/BHS.WinSide/BHS.WinSide.csproj" Type="C#" />
   </Folder>
 
   <!-- Revit-side framework: loaded into the Revit process, multi-targeted on the Revit axis. -->

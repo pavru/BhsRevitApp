@@ -1,0 +1,28 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+    <!--
+      The Win-side background application: the end of the channel that is not inside Revit.
+
+      A user process rather than a Windows service, and that was decided rather than defaulted. A
+      service cannot be what starts Revit: Revit needs an interactive session - a desktop and a
+      graphics pipeline - so a service would have to find a logged-on user, duplicate their token
+      and start the process as them, which is three API calls where Process.Start is one, and it
+      still cannot work when nobody is logged on. That last part was the only thing a service would
+      have bought, and it does not buy it. LocalSystem also cannot see the network shares the
+      models live on.
+    -->
+
+    <PropertyGroup>
+        <TargetFramework>net10.0-windows</TargetFramework>
+        <OutputType>Exe</OutputType>
+        <RootNamespace>BHS.WinSide</RootNamespace>
+        <IsPackable>false</IsPackable>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="..\..\Shared\BHS.Shared\BHS.Shared.csproj"/>
+        <ProjectReference Include="..\..\Shared\BHS.Transport\BHS.Transport.csproj"/>
+        <ProjectReference Include="..\BHS.Revit.Launch\BHS.Revit.Launch.csproj"/>
+    </ItemGroup>
+
+</Project>
