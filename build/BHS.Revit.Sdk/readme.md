@@ -6,7 +6,7 @@ package references, `.addin` manifest generation, and publishing.
 
 ## Version Information
 
-**Version:** 1.2.3
+**Version:** 1.3.0
 
 Bump this on every change, and update the `Sdk="BHS.Revit.Sdk/<version>"` attribute in the
 projects under `source/` with it. The package carries an MSBuild task assembly, so any process
@@ -26,9 +26,10 @@ changed without touching a package that has other consumers. The upstream reposi
     failed restore, because everything it needs happens inside a child build it never sees.
     The moniker is now the real `TargetFramework` and there is no dispatcher at all - see
     "How the moniker works".
-*   **Revit 2024 (`net48-revit2024`) is supported.** It is the reason the profile and
-    `FrameworkPathOverride` machinery exists: .NETFramework has no target platform, so the Revit
-    part of the moniker has to be carried as the framework profile.
+*   **Revit 2024 (`net48-revit2024`) is supported**, and needs nothing beyond
+    `AssetTargetFallback`. Carrying the release in `TargetFrameworkProfile` was tried and reverted:
+    it breaks every netstandard-only package, CommunityToolkit.Mvvm included. See
+    "Custom Target Framework Monikers".
 *   **`revit` is a real target platform on the .NET axis.** The release year is the platform
     version, which is what makes `net8.0-revit2025` and `net8.0-revit2026` two frameworks rather
     than two names for one. Carrying the release nowhere in the identity cost Revit 2026 its place
@@ -50,7 +51,7 @@ The SDK introduces TFMs that declare both the .NET version and the target Revit 
 
 | TFM | Revit | Built on | The release is carried as | Reference assemblies from |
 |---|---|---|---|---|
-| `net48-revit2024` | 2024 | .NET Framework 4.8 | framework profile `revit2024` | `net48` |
+| `net48-revit2024` | 2024 | .NET Framework 4.8 | nothing - see below | `net48` |
 | `net8.0-revit2025` | 2025 | .NET 8 | platform `revit` 2025.0 | `net8.0-windows7.0` |
 | `net8.0-revit2026` | 2026 | .NET 8 | platform `revit` 2026.0 | `net8.0-windows7.0` |
 | `net10.0-revit2027` | 2027 | .NET 10 | platform `revit` 2027.0 | `net10.0-windows7.0` |
@@ -58,11 +59,28 @@ The SDK introduces TFMs that declare both the .NET version and the target Revit 
 The moniker reaches the compiler unchanged. It is what the assembly is built as, what NuGet files
 the project under, and what names the output directory: `bin\Debug\net48-revit2024\`.
 
-The fourth column is the part that is easy to get wrong. The Revit release has to be *part of the
-framework identity*, not merely part of its name, because that identity is what an IDE keys its
-project model on. While the .NET axis declared platform `windows`, Revit 2025 and 2026 both came
-out as `.NETCoreApp,Version=v8.0 / windows10.0.17763` - the same framework twice - and Rider kept
-the first and dropped Revit 2026 from the solution altogether.
+The fourth column is the part that is easy to get wrong, in both directions.
+
+On the .NET axis the release has to be *part of the framework identity*, not merely part of its
+name, because that identity is what an IDE keys its project model on. While that axis declared
+platform `windows`, Revit 2025 and 2026 both came out as
+`.NETCoreApp,Version=v8.0 / windows10.0.17763` - the same framework twice - and Rider kept the
+first and dropped Revit 2026 from the solution altogether.
+
+On the .NET Framework axis the release is carried nowhere, and that is deliberate. The obvious
+substitute for a platform is `TargetFrameworkProfile`, and it works right up until a package ships
+only netstandard assemblies: NuGet maps netstandard onto .NETFramework only for a framework
+without a profile, so under `Profile=revit2024` the netstandard folder stops matching.
+`AssetTargetFallback` does not rescue it either - the package's netstandard *dependency* group
+still matches, so the package is judged compatible and simply ends up with an empty compile group.
+Measured on one restore targeting `net48` and `net48-revit2024` side by side: `netstandard2.0` for
+the first, nothing for the second. CommunityToolkit.Mvvm is exactly such a package.
+
+Losing the profile costs only a label. Revit 2024 is the sole release on .NET Framework and always
+will be, so `net48-revit2024` has no sibling to be confused with; its identity is plain
+`.NETFramework,Version=v4.8`, while the moniker still names the output directory and the assets
+entry. The one combination it rules out - a single project targeting `net48` and `net48-revit2024`
+at once - is meaningless anyway.
 
 Adding a Revit release is one row in `RevitSupportedReleases` in `Revit.Identity.targets`, written
 as `<year>=<plain moniker>`. The validation table and the list of declared platform versions are
@@ -314,13 +332,11 @@ body, which the props files are evaluated too early to see. One import covers al
 It sets `TargetFrameworkIdentifier` and `TargetFrameworkVersion` from the plain part of the
 moniker, and then, per axis:
 
-* **.NETFramework** - `TargetFrameworkProfile` becomes `revit2024`. That is not cosmetic:
-  `TargetFrameworkMoniker` is built from identifier, version and profile, and it is what NuGet
-  writes into the assets file. Leave the profile out and restore files the project under plain
-  `net48` while the build asks for `net48-revit2024`, which is NETSDK1005. A profile normally
-  implies a reference-assembly directory, and there is no `...\.NETFramework\v4.8\Profile\revit2024`,
-  so `FrameworkPathOverride` points resolution at the plain v4.8 directory and
-  `EnableFrameworkPathOverride=false` stops the base SDK computing its own.
+* **.NETFramework** - nothing beyond `AssetTargetFallback`. The identity stays plain
+  `.NETFramework,Version=v4.8`, so reference assemblies resolve natively and none of the
+  `FrameworkPathOverride` machinery the older `BHS` solution needed applies here. Why the release
+  is not carried in `TargetFrameworkProfile` is in "Custom Target Framework Monikers" above: it
+  costs every netstandard-only package.
 * **.NETCoreApp** - `TargetPlatformIdentifier` becomes `revit`, versioned by the release year.
   There is no profile to use here, and the release has to live somewhere in the identity or two
   releases on one .NET version become the same framework. Declaring a platform of our own means

@@ -45,22 +45,23 @@
     <!--
       .NET Framework axis - Revit 2024.
 
-      .NETFramework has no notion of a target platform, so the Revit part of the moniker is
-      carried as the framework profile instead. That is not cosmetic: TargetFrameworkMoniker is
-      built from identifier, version and profile, and it is what NuGet writes into the assets
-      file. Leave the profile out and restore files the project under plain net48 while the build
-      asks for net48-revit2024, which is NETSDK1005.
+      Nothing carries the release here, and that is deliberate. .NETFramework has no target
+      platform, and the obvious substitute - putting `revit2024` in TargetFrameworkProfile - breaks
+      every package that ships only netstandard assemblies, CommunityToolkit.Mvvm among them.
+      NuGet maps netstandard onto .NETFramework only for a framework without a profile, so under
+      `Profile=revit2024` the netstandard folder stops matching; and AssetTargetFallback does not
+      rescue it, because the package's netstandard *dependency* group still matches and the package
+      is therefore judged compatible, leaving an empty compile group instead of a fallback. Measured
+      on one restore that targeted net48 and net48-revit2024 side by side: netstandard2.0 for the
+      first, nothing for the second.
 
-      A profile normally means a real reference-assembly directory, and there is no
-      ...\.NETFramework\v4.8\Profile\revit2024. FrameworkPathOverride points reference resolution
-      at the plain v4.8 directory - note the empty profile argument - and
-      EnableFrameworkPathOverride=false stops the base SDK from computing its own.
+      Losing the profile costs only a label. Revit 2024 is the sole release on .NET Framework and
+      always will be, so `net48-revit2024` has no sibling to be confused with; its identity is
+      plain .NETFramework 4.8, and the moniker still names the output directory and the assets
+      entry. The one combination it rules out - one project targeting `net48` and `net48-revit2024`
+      at once - is meaningless anyway.
     -->
     <PropertyGroup Condition="'$(IsRevitTfm)' == 'true' And '$(TargetFrameworkIdentifier)' == '.NETFramework'">
-        <TargetFrameworkProfile>$(TargetFramework.Split('-')[1])</TargetFrameworkProfile>
-        <FrameworkPathOverride>$([Microsoft.Build.Utilities.ToolLocationHelper]::GetPathToStandardLibraries('$(TargetFrameworkIdentifier)', '$(TargetFrameworkVersion)', '', 'x64', '', ''))\</FrameworkPathOverride>
-        <EnableFrameworkPathOverride>false</EnableFrameworkPathOverride>
-
         <!-- Packages are published for the plain moniker, never for ours. -->
         <AssetTargetFallback>$(AssetTargetFallback);$(_RevitBaseTfm)</AssetTargetFallback>
 
