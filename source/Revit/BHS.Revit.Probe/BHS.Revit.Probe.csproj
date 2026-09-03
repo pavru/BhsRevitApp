@@ -31,6 +31,9 @@
         <RootNamespace>BHS.Revit.Probe</RootNamespace>
         <UseRevitApi>true</UseRevitApi>
         <UseRevitApiUi>true</UseRevitApiUi>
+        <!-- For the availability measurement: Revit only asks an availability class while the tab
+             holding the button is shown, and nothing shows it in an unattended run. -->
+        <UseRevitAdWindows>true</UseRevitAdWindows>
         <IsPackable>false</IsPackable>
 
         <!--

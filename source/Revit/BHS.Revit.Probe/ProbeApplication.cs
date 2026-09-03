@@ -97,6 +97,8 @@ public sealed class ProbeApplication : IExternalApplication
 
             ProbeLog.Write("startup: serving " + facts.PipeName);
 
+            BuildRibbon(application, facts);
+
             application.ControlledApplication.DocumentOpened += OnDocumentOpened;
 
             // Registration leaves the process, so it must not be what a cold Revit start waits on.
@@ -150,6 +152,8 @@ public sealed class ProbeApplication : IExternalApplication
             _facts?.SetDocument(document?.Title ?? string.Empty, document?.PathName ?? string.Empty);
             _channel?.Republish();
             ProbeLog.Write("document opened: " + (document?.Title ?? "(none)"));
+
+            ShowAddInsTab();
         }
         catch (Exception error)
         {
@@ -260,6 +264,84 @@ public sealed class ProbeApplication : IExternalApplication
         catch (Exception error)
         {
             ProbeLog.Write("could not reflect over SerializationContext", error);
+        }
+    }
+
+    /// <summary>
+    /// One panel with one button, so that the ribbon path is exercised rather than assumed.
+    /// </summary>
+    /// <remarks>
+    /// It also settled a question that decided the shape of the ribbon generator. The API help says
+    /// an <c>IExternalCommandAvailability</c> implementation "should share the same assembly with
+    /// add-in External Command"; a button pointing at a class in <c>BHS.Revit.Common</c> answered it
+    /// - Revit resolves the name inside the command's own assembly and nowhere else, so the type is
+    /// not found and a <c>TypeLoadException</c> reaches the user as a modal dialog. "Should" is
+    /// "must", and the failure is loud rather than a greyed-out button.
+    /// </remarks>
+    private static void BuildRibbon(UIControlledApplication application, ProbeFacts facts)
+    {
+        try
+        {
+            var panel = application.CreateRibbonPanel("BHS Probe");
+
+            var button = new PushButtonData(
+                "BHS.Probe.Command",
+                "Probe",
+                facts.AddInAssembly,
+                typeof(ProbeCommand).FullName)
+            {
+                AvailabilityClassName = typeof(LocalAvailability).FullName,
+                ToolTip = "Does nothing. Exists so that the ribbon path is exercised.",
+            };
+
+            panel.AddItem(button);
+            ProbeLog.Write("ribbon: added a button with an availability class in the command's assembly");
+        }
+        catch (Exception error)
+        {
+            // The interesting failure mode, and the one worth catching rather than throwing: Revit
+            // refusing the button outright is itself the answer.
+            ProbeLog.Write("ribbon: could not be built", error);
+        }
+    }
+
+    /// <summary>
+    /// Brings the tab holding our buttons to the front, so that Revit asks about them.
+    /// </summary>
+    /// <remarks>
+    /// Availability is queried while the tab is shown, and an unattended run shows nothing - which
+    /// is why the first two sweeps answered "Revit asked neither" and settled nothing. Switching
+    /// tabs is not a Revit API operation at all; it belongs to the WPF ribbon underneath, reached
+    /// through <c>AdWindows</c>, so it needs no transaction and no external event - but it does need
+    /// the UI thread, and <c>DocumentOpened</c> is on it.
+    /// </remarks>
+    private static void ShowAddInsTab()
+    {
+        try
+        {
+            var ribbon = Autodesk.Windows.ComponentManager.Ribbon;
+
+            if (ribbon is null)
+            {
+                ProbeLog.Write("ribbon: AdWindows has no ribbon yet");
+                return;
+            }
+
+            foreach (var tab in ribbon.Tabs)
+            {
+                if (tab.Panels.Any(panel => panel.Source?.Title == "BHS Probe"))
+                {
+                    ribbon.ActiveTab = tab;
+                    ProbeLog.Write($"ribbon: activated tab '{tab.Id}' to make Revit ask about availability");
+                    return;
+                }
+            }
+
+            ProbeLog.Write("ribbon: could not find the tab holding our panel");
+        }
+        catch (Exception error)
+        {
+            ProbeLog.Write("ribbon: could not activate the tab", error);
         }
     }
 

@@ -77,6 +77,11 @@ internal sealed class ProbeChannel : RevitSideChannel.RevitSideChannelBase
                     response.Values.Add("thread:api", _facts.ApiThreadId.ToString());
                     break;
 
+                case "ribbon":
+                    response.Values.Add("ribbon:availabilityCalls", LocalAvailability.Calls.ToString());
+                    response.Values.Add("ribbon:commandRuns", ProbeCommand.Runs.ToString());
+                    break;
+
                 case "log":
                     foreach (var pair in DescribeLog())
                         response.Values.Add(pair.Key, pair.Value);

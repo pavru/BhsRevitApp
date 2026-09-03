@@ -228,6 +228,12 @@ internal static class Program
 
         var documentArrived = !options.WithModel || await CheckDocumentAsync(client, model, report);
 
+        // After the document, never before it. Revit asks an availability class only while the tab
+        // holding the button is shown, and the probe brings that tab forward when a document opens.
+        // Asked earlier the counter reads zero and says nothing - which is how the first two runs of
+        // this measurement spent twenty minutes of Revit apiece proving nothing.
+        await CheckRibbonAsync(client, options, report);
+
         await CheckAssembliesAsync(client, installation, addInDirectory, report);
 
         if (options.KeepOpen)
@@ -515,6 +521,49 @@ internal static class Program
         }
 
         return arrived;
+    }
+
+    /// <summary>
+    /// How strict Revit is about where an availability class lives.
+    /// </summary>
+    /// <remarks>
+    /// The API help says an <c>IExternalCommandAvailability</c> implementation "should share the
+    /// same assembly with add-in External Command". Advice or rule decides whether the ribbon
+    /// generator has to emit a pair of thin classes per command into the edition assembly, or
+    /// whether the framework can supply predicates of its own - roughly half the work either way.
+    /// <para>
+    /// Reported as a measurement rather than a check, because both answers are legitimate; what is
+    /// not legitimate is deciding it by reading the sentence twice.
+    /// </para>
+    /// </remarks>
+    private static async Task CheckRibbonAsync(
+        RevitSideChannel.RevitSideChannelClient client,
+        Options options,
+        Report report)
+    {
+        var answer = await client.AskAsync(new AskRequest { Question = "ribbon" });
+        report.Check("the ribbon panel and button were built", answer.Values.ContainsKey("ribbon:availabilityCalls"));
+
+        // Only with a document: the probe activates its tab on DocumentOpened, and without one
+        // nothing ever shows the tab, so Revit never asks and a count of zero would be silence
+        // rather than an answer.
+        if (!options.WithModel)
+            return;
+
+        // Waited for, not read once. The probe republishes the document title before it activates
+        // the tab, so the moment this check becomes reachable is half a second before the answer
+        // exists - which is exactly how the previous run reported zero while the log said otherwise.
+        var calls = "0";
+
+        var asked = await WaitForAsync(() =>
+        {
+            calls = client.Ask(new AskRequest { Question = "ribbon" })
+                          .Values.GetValueOrDefault("ribbon:availabilityCalls") ?? "0";
+            return calls != "0";
+        }, 60_000);
+
+        report.Check("Revit asks the availability class once its tab is shown", asked);
+        Report.Note("availability calls", calls);
     }
 
     /// <summary>Where the call lands, and in which AppDomain the add-in is living.</summary>
