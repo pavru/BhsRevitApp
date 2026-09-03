@@ -271,12 +271,13 @@ public sealed class LogRouter : IDisposable
             {
                 sink.Emit(in entry);
             }
-            catch (Exception)
+            catch (Exception failure)
             {
                 // Deliberately every exception. A sink is a file on a share that went away, or a
                 // pipe whose other end just died; none of that is worth taking the caller down for,
                 // and the caller is often Revit's API thread.
-                Interlocked.Increment(ref _dropped);
+                if (Interlocked.Increment(ref _dropped) == 1)
+                    Complain(sink, failure);
             }
         }
     }
@@ -311,6 +312,35 @@ public sealed class LogRouter : IDisposable
         {
             // Opening a log must never be the thing that fails. Nothing is attached, every write
             // becomes a no-op, and the process carries on.
+        }
+    }
+
+    /// <summary>
+    /// Says out loud, once, that records have started going missing.
+    /// </summary>
+    /// <remarks>
+    /// Straight to <c>Trace</c> rather than through this router, and that is the whole point: the
+    /// reason a record was dropped is almost always the file system, and a complaint written to the
+    /// file would be lost the same way. <c>Trace</c> touches no disk, so it survives exactly the
+    /// failure worth hearing about.
+    /// <para>
+    /// Once, on the first one. A directory that has gone away stays gone, and a complaint per record
+    /// would bury the machine in the same message. The running total is <see cref="Dropped"/>, which
+    /// the hosts report when asked - because an empty log looks identical whether nothing happened
+    /// or nothing could be written.
+    /// </para>
+    /// </remarks>
+    private static void Complain(ILogSink sink, Exception failure)
+    {
+        try
+        {
+            System.Diagnostics.Trace.WriteLine(
+                "BHS.Logging: " + sink.GetType().Name + " is dropping records - " +
+                failure.GetType().Name + ": " + failure.Message);
+        }
+        catch (Exception)
+        {
+            // There is nowhere left to say it.
         }
     }
 

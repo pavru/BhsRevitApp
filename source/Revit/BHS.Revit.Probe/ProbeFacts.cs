@@ -121,6 +121,7 @@ internal sealed class ProbeFacts
     {
         ["appdomain:id"] = AppDomain.CurrentDomain.Id.ToString(CultureInfo.InvariantCulture),
         ["appdomain:name"] = AppDomain.CurrentDomain.FriendlyName,
+        ["loadcontext"] = LoadContext,
         ["appdomain:base"] = InstallDirectory,
         ["addin:directory"] = AddInDirectory,
         ["runtime"] = System.Runtime.InteropServices.RuntimeInformation.FrameworkDescription,
@@ -128,6 +129,34 @@ internal sealed class ProbeFacts
         ["revit:name"] = VersionName,
         ["revit:language"] = Language,
     };
+
+    /// <summary>
+    /// Which load context this assembly ended up in.
+    /// </summary>
+    /// <remarks>
+    /// The question AppDomain used to answer and no longer does. On .NET there is one AppDomain and
+    /// the isolation, where there is any, is an <c>AssemblyLoadContext</c>: Revit 2026 and later can
+    /// give an add-in one of its own, but only if the manifest asks. Without asking, an add-in lands
+    /// in <c>Default</c> alongside every other vendor - which is what this probe measured, and what
+    /// makes the loaded-assembly report worth reading.
+    /// <para>
+    /// On .NET Framework the concept does not exist at all, and saying so is the honest answer:
+    /// Revit 2024 has one AppDomain, no isolation of any kind, and that is the constraint the whole
+    /// dependency policy is built around.
+    /// </para>
+    /// </remarks>
+    private static string LoadContext
+    {
+        get
+        {
+#if REVIT2025_OR_GREATER
+            var context = System.Runtime.Loader.AssemblyLoadContext.GetLoadContext(typeof(ProbeFacts).Assembly);
+            return context is null ? "(unknown)" : context.Name ?? "(unnamed)";
+#else
+            return "(net48: no load contexts)";
+#endif
+        }
+    }
 
     private static string SafeLocation(Assembly assembly)
     {

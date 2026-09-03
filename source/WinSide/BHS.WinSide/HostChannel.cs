@@ -157,6 +157,16 @@ internal sealed class HostChannel : WinSideService
             index++;
         }
 
+        // An empty log looks the same whether nothing happened or nothing could be written. This
+        // is the only thing that tells the two apart from outside.
+        response.Values.Add("Log:Dropped", BHS.Logging.LogRouter.Default.Dropped.ToString(CultureInfo.InvariantCulture));
+
+        foreach (var sink in BHS.Logging.LogRouter.Default.Sinks)
+        {
+            if (sink is BHS.Logging.FileLogSink file)
+                response.Values.Add("Log:File", file.Path);
+        }
+
         var launch = _host.LaunchOptions();
         response.Values.Add("Launch:RegistrationTimeout", launch.RegistrationTimeout.ToString());
         response.Values.Add("Launch:ShutdownTimeout", launch.ShutdownTimeout.ToString());

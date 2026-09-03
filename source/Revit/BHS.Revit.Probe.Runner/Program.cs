@@ -413,6 +413,7 @@ internal static class Program
 
         Report.Note("threads", $"api {api}, call {calling}");
         Report.Note("appdomain", $"{context.Values["appdomain:name"]} (#{context.Values["appdomain:id"]})");
+        Report.Note("load context", context.Values.GetValueOrDefault("loadcontext") ?? "(not reported)");
         Report.Note("runtime", context.Values["runtime"]);
     }
 

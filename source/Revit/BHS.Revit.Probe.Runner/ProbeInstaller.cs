@@ -24,6 +24,20 @@ internal static class ProbeInstaller
     {
         var project = Path.Combine(repositoryRoot, ProbeDeployment.ProjectPath);
 
+        // Clear first, because deployment only ever copies.
+        //
+        // Found the hard way: the add-in folders still held BHS.Configuration.dll and
+        // GrpcDotNetNamedPipes.dll from renames weeks old, and Microsoft.Extensions.* from the day
+        // that reference was removed. Revit was loading a folder that no build had produced for a
+        // long time, so every measurement about "what the probe carries" was taken from bin while
+        // something else ran. Worse, RVTREF005 reads the build output rather than the deployed
+        // folder, so a banned assembly can outlive the rule that banned it.
+        foreach (var installation in installations)
+        {
+            if (Directory.Exists(ProbeDirectory(installation)))
+                Directory.Delete(ProbeDirectory(installation), recursive: true);
+        }
+
         Console.WriteLine("building and installing the probe for every supported release...");
 
         var startInfo = new ProcessStartInfo("dotnet")
