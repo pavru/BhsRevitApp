@@ -24,6 +24,7 @@
 
     <ItemGroup>
         <ProjectReference Include="..\BHS.Transport\BHS.Transport.csproj"/>
+        <ProjectReference Include="..\BHS.Transport.Configuration\BHS.Transport.Configuration.csproj"/>
     </ItemGroup>
 
 </Project>

@@ -18,7 +18,8 @@ build/
   Directory.Build.props        пустой намеренно — щит инструментов от корневых правил
 source/
   Shared/BHS.Shared           чистая ось .NET
-  Shared/BHS.Transport        канал Revit-side ↔ Win-side: .proto, имена каналов, фабрики
+  Shared/BHS.Transport        канал Revit-side ↔ Win-side: .proto, имена, доверие, издатель
+  Shared/BHS.Transport.Configuration  потребляющая половина: IConfigurationSource поверх канала
   Shared/BHS.Transport.Probe  живая проверка канала, по одному запуску на TFM
   Revit/BHS.Revit.Abstractions
   Revit/BHS.Revit.Common
@@ -386,11 +387,37 @@ MessagePack. Риск ограничен — 76 КБ под Apache 2.0, копи
 > Это и есть довод в пользу проверки в сборке против пиннинга пакетов: gRPC оказался чист,
 > а Newtonsoft — нет, и заранее это не было очевидно ни по одному признаку.
 
+#### Microsoft.Extensions.* — не запрещён, но у самого края
+
+Revit 2024, 2025 и 2027 возят собственные `Microsoft.Extensions.Configuration`,
+`.Configuration.Abstractions` и `Primitives`. У 2024 и 2025 это **2.2.0.0**, и `Revit.exe.config`
+содержит редиректы `0.0.0.0-2.2.0.0 → 2.2.0.0` для `Primitives`, `Options`, `Logging`,
+`Logging.Abstractions`, `DependencyInjection.Abstractions`, `Caching.*`.
+
+Спасает единственное обстоятельство: наши копии — 10.0.0.11, а диапазон редиректа кончается
+на 2.2.0.0, поэтому под него мы не попадаем и загружаемся рядом. Отсюда правило:
+
+> **В Revit-side нельзя брать `Microsoft.Extensions.*` версии 2.2 и ниже.** Такая сборка попадёт
+> в диапазон редиректа, молча уедет на ревитовскую 2.2.0.0 — и дальше это случай Newtonsoft.
+
+Проверено RefCheck: три сборки добавлены в watchlist, эталоны пересобраны, расхождений на
+используемой поверхности нет. Ещё раз довод в пользу проверки в сборке: найдено это не
+рассуждением, а `RVTREF004` на первом же публикуемом наборе.
+
+По той же причине потребляющая половина канала (`BHS.Transport.Configuration`) вынесена в
+отдельную сборку: тот, кто только **публикует** конфигурацию, не тащит `Microsoft.Extensions.*`
+в общий AppDomain Revit вовсе.
+
 ### Метрика для Revit-side
 
 На `net48` Revit 2024 грузит все add-in в **один AppDomain** — изоляции нет. Поэтому правильная
 метрика веса зависимости — **не мегабайты, а число полифиллов BCL**, вбрасываемых в общий
 AppDomain. Ориентиры: named pipes — 4, grpc-dotnet — 7, StreamJsonRpc — ~14 (29 сборок).
+
+Измерено на собранном наборе: `BHS.Transport` под `net48` — 4 сборки плюс ровно 4 полифилла
+(`System.Buffers`, `System.Memory`, `System.Numerics.Vectors`, `System.Runtime.CompilerServices.Unsafe`),
+то есть ориентир подтвердился. Добавление потребляющей половины доводит набор до 12 сборок —
+поэтому она и отдельная.
 
 ### Framework-минимум контракта
 
@@ -420,14 +447,17 @@ Win-side потребляет их как обычный `IConfigurationSource` 
 - **перезагрузка вместо снимка.** В BHS конфигурация вычислялась один раз в конструкторе.
   Правильно — стриминговый `WatchConfiguration`, поверх которого свой `IConfigurationProvider`
   на каждый снимок заполняет `Data` и вызывает `OnReload()`; дальше `IOptionsMonitor<T>` и change
-  tokens работают сами, как с `reloadOnChange: true` у файлового провайдера.
+  tokens работают сами, как с `reloadOnChange: true` у файлового провайдера. **Сделано и
+  проверено**: `PeerConfigurationSource` добавляется в `ConfigurationBuilder` наравне с
+  `appsettings.json`, а проба доказывает сквозной путь — публикация в дочернем процессе доезжает
+  до `IConfiguration` родителя и поднимает change token.
 
 > **Следствие:** стриминг нужен **с первого дня**, а не когда вернётся OData. Это единственный
 > аргумент за готовую RPC-библиотеку, который после отсрочки OData выглядел слабым, — и он
 > восстановлен.
 
 > **Статус.** Выбор сделан по статическому анализу метаданных и **подтверждён живым обменом**.
-> `BHS.Transport.Probe` — 17 проверок, зелёных на `net48`, `net8.0-windows` и `net10.0-windows`,
+> `BHS.Transport.Probe` — 20 проверок, зелёных на `net48`, `net8.0-windows` и `net10.0-windows`,
 > то есть на всех трёх рантаймах диапазона:
 >
 > - унарный вызов, `map<string,string>` в обе стороны, **серверный стриминг**;
@@ -435,7 +465,9 @@ Win-side потребляет их как обычный `IConfigurationSource` 
 >   отказ рукопожатия при чужой или неназванной версии контракта;
 > - **обмен между двумя процессами** — родитель поднимает дочерний, опознаёт его по PID через
 >   `GetNamedPipeServerProcessId`, стримит и гасит через `Shutdown`;
-> - отказ по дедлайну на отсутствующем сервере и обнаружение перечислением.
+> - отказ по дедлайну на отсутствующем сервере и обнаружение перечислением;
+> - **сквозной поток конфигурации**: публикация в дочернем процессе доезжает до `IConfiguration`
+>   родителя, поднимает change token и разбирается по секциям.
 >
 > Стриминг на `net48` и был главным вопросом: обычный gRPC на .NET Framework его не умеет вовсе.
 > Отдельно измерено, что опознание процесса **не тревожит сервер** — оно стоит отдельного
@@ -549,7 +581,8 @@ Revit* (жёстко привязаны к версии API), и внешние 
 | Каталог | Ось TFM | Роль |
 |---|---|---|
 | `Shared/BHS.Shared` | `net48;net8.0;net10.0` | код, не знающий ни о Revit, ни о стороне процесса |
-| `Shared/BHS.Transport` | `net48;net8.0;net10.0` | канал между сторонами: `.proto`, имена каналов, фабрики сервера и клиента |
+| `Shared/BHS.Transport` | `net48;net8.0-windows;net10.0-windows` | канал между сторонами: `.proto`, имена, три слоя доверия, издатель конфигурации |
+| `Shared/BHS.Transport.Configuration` | то же | `IConfigurationSource` поверх канала. Отдельно, чтобы издатель не тащил `Microsoft.Extensions.*` в AppDomain Revit |
 | `Revit/BHS.Revit.Abstractions` | Revit | контракты, за которыми прячутся различия версий API |
 | `Revit/BHS.Revit.Common` | Revit | базовые реализации и утилиты поверх Revit API |
 | `Frontend/WPF/BHS.UI.*` | чистая .NET | `Abstractions`, `Framework`, `UI`, `Translations` |

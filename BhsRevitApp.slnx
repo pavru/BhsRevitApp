@@ -28,6 +28,7 @@
   <Folder Name="/Shared/">
     <Project Path="source/Shared/BHS.Shared/BHS.Shared.csproj" Type="C#" />
     <Project Path="source/Shared/BHS.Transport/BHS.Transport.csproj" Type="C#" />
+    <Project Path="source/Shared/BHS.Transport.Configuration/BHS.Transport.Configuration.csproj" Type="C#" />
     <Project Path="source/Shared/BHS.Transport.Probe/BHS.Transport.Probe.csproj" Type="C#" />
   </Folder>
 

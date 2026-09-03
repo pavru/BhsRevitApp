@@ -1,8 +1,11 @@
 using System.Diagnostics;
 using System.Security.Principal;
 using BHS.Transport;
+using BHS.Transport.Configuration;
 using BHS.Transport.Protocol;
 using Grpc.Core;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Primitives;
 
 namespace BHS.Transport.Probe;
 
@@ -40,34 +43,45 @@ internal sealed class RevitSide : RevitSideChannel.RevitSideChannelBase
 {
     private readonly TaskCompletionSource<string> _shutdown = new();
 
+    public ConfigurationPublisher Publisher { get; } = new("revit-side-1");
+
     public Task<string> ShutdownRequested => _shutdown.Task;
 
-    public override async Task WatchConfiguration(
-        ConfigurationRequest request,
-        IServerStreamWriter<ConfigurationSnapshot> responseStream,
-        ServerCallContext context)
+    public RevitSide()
     {
-        for (ulong revision = 1; revision <= 3; revision++)
+        Publisher.Publish(new Dictionary<string, string>
         {
-            var snapshot = new ConfigurationSnapshot { InstanceId = "revit-side-1", Revision = revision };
-            snapshot.Values.Add("Revit:Release", "2026");
-            snapshot.Values.Add("Revit:Document:Title", $"model-{revision}.rvt");
-            await responseStream.WriteAsync(snapshot);
-        }
+            ["Revit:Release"] = "2026",
+            ["Revit:Document:Title"] = "initial.rvt",
+            ["Process:Id"] = Current.ProcessId.ToString(),
+        });
     }
 
-    public override Task<ConfigurationSnapshot> GetConfiguration(ConfigurationRequest request, ServerCallContext context)
-    {
-        var snapshot = new ConfigurationSnapshot { InstanceId = "revit-side-1", Revision = 1 };
-        snapshot.Values.Add("Revit:Release", "2026");
-        snapshot.Values.Add("Process:Id", Current.ProcessId.ToString());
-        return Task.FromResult(snapshot);
-    }
+    public override Task WatchConfiguration(
+        ConfigurationRequest request,
+        IServerStreamWriter<ConfigurationSnapshot> responseStream,
+        ServerCallContext context) =>
+        Publisher.WatchAsync(responseStream, context.CancellationToken);
+
+    public override Task<ConfigurationSnapshot> GetConfiguration(ConfigurationRequest request, ServerCallContext context) =>
+        Task.FromResult(Publisher.Current);
 
     public override Task<AskResponse> Ask(AskRequest request, ServerCallContext context)
     {
         var response = new AskResponse();
+
+        if (request.Question == "publish")
+        {
+            Publisher.Publish(new Dictionary<string, string>
+            {
+                ["Revit:Release"] = "2026",
+                ["Revit:Document:Title"] = request.Arguments["title"],
+                ["Process:Id"] = Current.ProcessId.ToString(),
+            });
+        }
+
         response.Values.Add("pid", Current.ProcessId.ToString());
+        response.Values.Add("revision", Publisher.Current.Revision.ToString());
         return Task.FromResult(response);
     }
 
@@ -127,8 +141,9 @@ internal static class Program
         WinSideChannel.BindService(winServer.ServiceBinder, winService);
         winServer.Start();
 
+        var revitService = new RevitSide();
         using var revitServer = PipeTransport.CreateServer(revitPipe);
-        RevitSideChannel.BindService(revitServer.ServiceBinder, new RevitSide());
+        RevitSideChannel.BindService(revitServer.ServiceBinder, revitService);
         revitServer.Start();
 
         var winClient = new WinSideChannel.WinSideChannelClient(PipeTransport.CreateClient(winPipe));
@@ -184,14 +199,22 @@ internal static class Program
         // .NET Framework gRPC cannot do over HTTP/2 at all.
         var revitClient = new RevitSideChannel.RevitSideChannelClient(PipeTransport.CreateClient(revitPipe));
         using var watch = revitClient.WatchConfiguration(new ConfigurationRequest());
-        var snapshots = new List<ConfigurationSnapshot>();
-        while (await watch.ResponseStream.MoveNext(CancellationToken.None))
-            snapshots.Add(watch.ResponseStream.Current);
+
+        var first = await watch.ResponseStream.MoveNext(CancellationToken.None)
+            ? watch.ResponseStream.Current
+            : null;
+
+        revitService.Publisher.Publish(new Dictionary<string, string> { ["Revit:Document:Title"] = "changed.rvt" });
+
+        var second = await watch.ResponseStream.MoveNext(CancellationToken.None)
+            ? watch.ResponseStream.Current
+            : null;
 
         Check(ref failures, "streaming WatchConfiguration",
-            snapshots.Count == 3
-            && snapshots[0].Revision == 1
-            && snapshots[2].Values["Revit:Document:Title"] == "model-3.rvt");
+            first is not null && second is not null
+            && first.Values["Revit:Document:Title"] == "initial.rvt"
+            && second.Values["Revit:Document:Title"] == "changed.rvt"
+            && second.Revision > first.Revision);
 
         // Layer two, server side: the account the call came from.
         Check(ref failures, "caller identified by impersonation",
@@ -280,15 +303,32 @@ internal static class Program
 
             var client = new RevitSideChannel.RevitSideChannelClient(PipeTransport.CreateClient(childPipe));
 
-            var configuration = await client.GetConfigurationAsync(new ConfigurationRequest());
+            var snapshot = await client.GetConfigurationAsync(new ConfigurationRequest());
             Check(ref failures, "cross-process: configuration answered by the child",
-                configuration.Values["Process:Id"] == child.Id.ToString());
+                snapshot.Values["Process:Id"] == child.Id.ToString());
 
-            using var watch = client.WatchConfiguration(new ConfigurationRequest());
-            var count = 0;
-            while (await watch.ResponseStream.MoveNext(CancellationToken.None))
-                count++;
-            Check(ref failures, "cross-process: streaming across the boundary", count == 3);
+            // The whole point of the channel: what the companion publishes shows up as ordinary
+            // configuration, and a change reaches it through the same reload path a file would.
+            var source = new PeerConfigurationSource { PipeName = childPipe };
+            var configuration = new ConfigurationBuilder().Add(source).Build();
+
+            var arrived = await WaitForAsync(() => configuration["Revit:Document:Title"] == "initial.rvt");
+            Check(ref failures, "cross-process: first snapshot arrives as configuration", arrived);
+
+            var reloaded = false;
+            using (ChangeToken.OnChange(configuration.GetReloadToken, () => reloaded = true))
+            {
+                var publish = new AskRequest { Question = "publish" };
+                publish.Arguments.Add("title", "renamed.rvt");
+                await client.AskAsync(publish);
+
+                var updated = await WaitForAsync(() => configuration["Revit:Document:Title"] == "renamed.rvt");
+                Check(ref failures, "cross-process: a change reaches the consumer", updated);
+                Check(ref failures, "cross-process: the change token fired", reloaded);
+            }
+
+            Check(ref failures, "cross-process: section binding works",
+                configuration.GetSection("Revit")["Release"] == "2026");
 
             await client.ShutdownAsync(new ShutdownRequest { Reason = "probe finished" });
 
@@ -336,6 +376,21 @@ internal static class Program
         catch (System.ComponentModel.Win32Exception)
         {
         }
+    }
+
+    private static async Task<bool> WaitForAsync(Func<bool> condition, int millisecondsTimeout = 10000)
+    {
+        var deadline = DateTime.UtcNow.AddMilliseconds(millisecondsTimeout);
+
+        while (DateTime.UtcNow < deadline)
+        {
+            if (condition())
+                return true;
+
+            await Task.Delay(50);
+        }
+
+        return condition();
     }
 
     private static void Check(ref int failures, string what, bool ok)
