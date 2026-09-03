@@ -314,7 +314,15 @@ internal static class Cli
         if (string.Equals(referenced, shipped.AssemblyVersion, StringComparison.Ordinal))
             return true;
 
-        if (!baseline.IsNetFramework || !Version.TryParse(referenced, out var wanted))
+        // On .NET a differing version does not mean two copies. One simple name per load context:
+        // whoever loaded first owns it, and the other file is never read. Measured both ways on the
+        // same axis - Revit 2026's Google.Protobuf 3.23.1 answered our 3.29.3 and worked, while its
+        // Configuration.Abstractions 2.0.0.0 refused our 10.0.0.0 outright. Either way exactly one
+        // assembly is in play, so comparing surfaces is the right question there.
+        if (!baseline.IsNetFramework)
+            return true;
+
+        if (!Version.TryParse(referenced, out var wanted))
             return false;
 
         foreach (var redirect in baseline.Redirects)

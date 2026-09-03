@@ -40,6 +40,25 @@
         -->
         <PackageVersion Include="System.Memory" Version="4.5.4"/>
 
+        <!--
+          The Revit-side UI set. Not referenced by anything yet; declared here so that the versions
+          are decided once and in the open.
+
+          WPF-UI is PINNED AT 4.0.3, and the pin is load-bearing. From 4.1.0 its net4x branch depends
+          on the System.Memory package 4.6.3, whose assembly version is 4.0.5.0 - while Revit 2024
+          ships 4.0.1.1 in its own directory, and that is the identity BHS.Grpc.NamedPipes was forked
+          to match. Measured: with 4.1.0 the output carries 4.0.5.0 and the polyfill count goes from
+          four to seven; with 4.0.3 all four polyfills come out identical to Revit's own copies, so
+          there is nothing left to collide.
+
+          Lift the pin when Revit 2024 leaves support, or when upstream drops the dependency -
+          whichever comes first. Stated as a condition rather than a prohibition, because a
+          prohibition with no expiry is one nobody dares to revisit.
+        -->
+        <PackageVersion Include="WPF-UI" Version="4.0.3"/>
+        <PackageVersion Include="Microsoft.Xaml.Behaviors.Wpf" Version="1.1.135"/>
+        <PackageVersion Include="Lepo.i18n.Wpf" Version="2.0.0"/>
+
         <!-- Consuming a companion's configuration. Referenced only by the consuming half, so a
              project that merely publishes does not carry it into the Revit AppDomain. -->
         <PackageVersion Include="Microsoft.Extensions.Configuration" Version="10.0.11"/>
