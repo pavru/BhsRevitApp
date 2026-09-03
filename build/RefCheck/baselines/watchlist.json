@@ -17,5 +17,14 @@
     "System.Runtime.CompilerServices.Unsafe",
     "System.Text.Json",
     "System.Threading.Tasks.Extensions"
+  ],
+  "deniedComment": "Simple names a Revit-side build must not ship, in any version. This is NOT a surface comparison: the failure happens one level below, when a name is bound to a file, and a matching surface does not prevent it. Measured twice - System.Memory on Revit 2024 and Microsoft.Extensions.Configuration on Revit 2026, where the add-in did not load at all. A name may appear here and in assemblies at the same time; the two lists answer different questions and this one wins. A trailing * matches a prefix. The BCL polyfills a net48 build legitimately carries - System.Buffers, System.Memory, System.Numerics.Vectors, System.Runtime.CompilerServices.Unsafe - are deliberately absent.",
+  "denied": [
+    "Microsoft.Extensions.*",
+    "Newtonsoft.Json",
+    "System.Text.Json",
+    "Serilog*",
+    "log4net",
+    "NLog*"
   ]
 }

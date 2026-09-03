@@ -1,6 +1,7 @@
 using System.Runtime.CompilerServices;
 using Autodesk.Revit.DB.Events;
 using Autodesk.Revit.UI;
+using BHS.Logging;
 using BHS.Transport;
 using BHS.Transport.Protocol;
 using Grpc.Core;
@@ -48,6 +49,11 @@ public sealed class ProbeApplication : IExternalApplication
     [MethodImpl(MethodImplOptions.NoInlining)]
     private Result Start(UIControlledApplication application)
     {
+        // First statement, before the first record. OnStartup runs on the API thread by definition,
+        // so this is both the earliest and the only place the answer is free - and without it the
+        // opening lines of every log would claim they were written somewhere else.
+        LogRouter.PrimaryThreadId = Environment.CurrentManagedThreadId;
+
         try
         {
             ProbeLog.Write("startup: begin");
@@ -63,7 +69,22 @@ public sealed class ProbeApplication : IExternalApplication
             // Read before anything is served, because that is the order the claim is about: a
             // side configures itself from disk and only then goes looking for a companion.
             var settings = new ProbeSettings(facts.Release);
+
+            if (settings.Settings is not null)
+            {
+                LogSetup.Start(
+                    LogRouter.Default,
+                    "revit" + facts.Release.ToString(System.Globalization.CultureInfo.InvariantCulture),
+                    settings.Settings,
+                    console: false,
+                    facts: facts.Snapshot());
+
+                LogRouter.Default.Add(new BHS.Revit.Common.JournalLogSink(application.ControlledApplication));
+                LogRouter.Default.Apply(settings.Settings);
+            }
+
             ProbeLog.Write("startup: settings product layer is " + BHS.Settings.SettingsLayout.ProductDirectory);
+            ProbeLog.Write("startup: logging to " + ProbeLog.Path);
 
             _exit = ExternalEvent.Create(new ExitRevitHandler());
             _channel = new ProbeChannel(facts, settings, _exit);

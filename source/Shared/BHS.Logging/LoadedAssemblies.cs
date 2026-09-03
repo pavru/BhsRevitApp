@@ -1,4 +1,4 @@
-namespace BHS.Revit.Probe;
+namespace BHS.Logging;
 
 /// <summary>
 /// Which copy of each interesting assembly this AppDomain actually ended up with.
@@ -14,8 +14,13 @@ namespace BHS.Revit.Probe;
 /// cannot say is which file is open at run time, and that is a question with a one-word answer
 /// only once something has asked the running process.
 /// </para>
+/// <para>
+/// It lives here rather than in the probe because <c>CLAUDE.md</c> asks for the loaded assemblies
+/// to be logged at startup, and that is the standing version of the same question. The probe is now
+/// a consumer of this rather than its owner.
+/// </para>
 /// </remarks>
-internal static class LoadedAssemblies
+public static class LoadedAssemblies
 {
     /// <summary>
     /// Names worth reporting. Anything whose simple name starts with one of these: the assemblies

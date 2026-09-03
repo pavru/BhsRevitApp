@@ -1,73 +1,42 @@
-using System.Diagnostics;
-using System.Globalization;
-using System.Text;
+using BHS.Logging;
 
 namespace BHS.Revit.Probe;
 
 /// <summary>
-/// A log file, because inside Revit there is no console and a failure that leaves no trace is a
-/// failure nobody can explain.
+/// The probe's own name for the framework log.
 /// </summary>
 /// <remarks>
-/// Written eagerly and flushed on every line: the interesting failures are the ones where the
-/// process is about to be killed by the runner, and a buffered log would lose exactly those.
+/// It used to be a file writer of its own, written before there was a logging layer, and its
+/// conclusions are the ones that layer was built on: write under <c>%LocalAppData%</c> rather than
+/// Revit's session temp folder, flush every line, and never let a failed write take the add-in
+/// down. Now it is eight lines over <see cref="Log"/>, which is the point - the probe should
+/// exercise what a real add-in uses, not a private arrangement that could drift from it.
+/// <para>
+/// <see cref="Log.For(string)"/> works from the first line of <c>OnStartup</c>, before settings
+/// have been read and before any host has configured anything, because the default router opens a
+/// file by itself. That is exactly the window the probe's own logger existed to cover.
+/// </para>
 /// </remarks>
 internal static class ProbeLog
 {
-    private static readonly object Gate = new();
+    private static readonly ILog Sink = Log.For("BHS.Revit.Probe");
 
-    /// <summary>Where this process writes. Reported to the runner so a failure can be read.</summary>
-    public static string Path { get; } = BuildPath();
-
-    public static void Write(string message)
+    /// <summary>Where this process is writing, so a failed run can still be read from outside.</summary>
+    public static string Path
     {
-        var line = string.Format(
-            CultureInfo.InvariantCulture,
-            "{0:HH:mm:ss.fff} [{1,2}] {2}",
-            DateTime.Now,
-            Environment.CurrentManagedThreadId,
-            message);
-
-        lock (Gate)
+        get
         {
-            try
+            foreach (var sink in LogRouter.Default.Sinks)
             {
-                File.AppendAllText(Path, line + Environment.NewLine, Encoding.UTF8);
+                if (sink is FileLogSink file)
+                    return file.Path;
             }
-            catch (IOException)
-            {
-                // A log that cannot be written must not take the add-in down with it.
-            }
-            catch (UnauthorizedAccessException)
-            {
-            }
+
+            return string.Empty;
         }
     }
 
-    public static void Write(string message, Exception error) =>
-        Write(message + ": " + error.GetType().Name + ": " + error.Message);
+    public static void Write(string message) => Sink.Info(message);
 
-    /// <remarks>
-    /// Under LocalApplicationData rather than the temp directory, and measured rather than assumed:
-    /// Revit gives each session a temp folder of its own with a GUID in the name, so a log written
-    /// there cannot be found from outside by a runner that never got a registration - which is
-    /// precisely the case the log exists for.
-    /// </remarks>
-    private static string BuildPath()
-    {
-        var directory = System.IO.Path.Combine(
-            Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
-            "BHS.Revit.Probe");
-
-        try
-        {
-            Directory.CreateDirectory(directory);
-        }
-        catch (IOException)
-        {
-        }
-
-        var pid = Process.GetCurrentProcess().Id.ToString(CultureInfo.InvariantCulture);
-        return System.IO.Path.Combine(directory, "probe." + pid + ".log");
-    }
+    public static void Write(string message, Exception error) => Sink.Error(error, "{0}", message);
 }

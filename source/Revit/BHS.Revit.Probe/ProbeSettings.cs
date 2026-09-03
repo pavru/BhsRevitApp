@@ -28,6 +28,9 @@ internal sealed class ProbeSettings
     private readonly LayeredSettings? _settings;
     private readonly string? _failure;
 
+    /// <summary>What was read, or null when it could not be. Logging configures itself on this.</summary>
+    public LayeredSettings? Settings => _settings;
+
     public ProbeSettings(int release)
     {
         try

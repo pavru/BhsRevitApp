@@ -1,4 +1,5 @@
 using Autodesk.Revit.UI;
+using BHS.Logging;
 using BHS.Transport;
 using BHS.Transport.Protocol;
 using Grpc.Core;
@@ -76,6 +77,11 @@ internal sealed class ProbeChannel : RevitSideChannel.RevitSideChannelBase
                     response.Values.Add("thread:api", _facts.ApiThreadId.ToString());
                     break;
 
+                case "log":
+                    foreach (var pair in DescribeLog())
+                        response.Values.Add(pair.Key, pair.Value);
+                    break;
+
                 case "settings":
                     foreach (var pair in _settings.Report())
                         response.Values.Add(pair.Key, pair.Value);
@@ -111,6 +117,34 @@ internal sealed class ProbeChannel : RevitSideChannel.RevitSideChannelBase
         response.Values["log"] = ProbeLog.Path;
 
         return Task.FromResult(response);
+    }
+
+    /// <summary>
+    /// What the logging layer came to inside this Revit.
+    /// </summary>
+    /// <remarks>
+    /// Reported rather than asserted here, because the interesting answers are the ones nobody can
+    /// predict from outside: which sinks actually attached, where the file ended up, and whether
+    /// anything is being dropped. The runner turns them into checks.
+    /// </remarks>
+    private IReadOnlyDictionary<string, string> DescribeLog()
+    {
+        var report = new Dictionary<string, string>(StringComparer.Ordinal)
+        {
+            ["log:file"] = ProbeLog.Path,
+            ["log:dropped"] = LogRouter.Default.Dropped.ToString(),
+            ["log:primaryThread"] = LogRouter.PrimaryThreadId.ToString(),
+        };
+
+        var index = 0;
+
+        foreach (var sink in LogRouter.Default.Sinks)
+        {
+            report["log:sink:" + index.ToString("D2")] = sink.GetType().Name + " >= " + sink.Minimum;
+            index++;
+        }
+
+        return report;
     }
 
     public override Task<ShutdownResponse> Shutdown(ShutdownRequest request, ServerCallContext context)

@@ -3,6 +3,7 @@ using System.Diagnostics;
 using System.Globalization;
 using BHS.Settings;
 using BHS.Settings.Configuration;
+using BHS.Logging;
 using BHS.Revit.Launch;
 using BHS.Transport;
 using BHS.Transport.Protocol;
@@ -32,6 +33,8 @@ public sealed class WinSideHost : IDisposable
     private readonly TaskCompletionSource<bool> _stopped = new(TaskCreationOptions.RunContinuationsAsynchronously);
     private readonly List<NamedPipeServer> _servers = new();
 
+    private readonly ILog _log;
+
     private MainInstanceElection? _election;
     private Timer? _sweep;
     private bool _disposed;
@@ -51,6 +54,11 @@ public sealed class WinSideHost : IDisposable
         // are. Sharing the instance rather than reading the files twice is what keeps the two
         // views reloading together.
         Configuration = new ConfigurationBuilder().AddBhsSettings(Settings).Build();
+
+        // Logging comes up on the settings, and before anything else uses them: the first thing
+        // worth recording is what this host decided its settings were.
+        LogSetup.Start(LogRouter.Default, "winside", Settings, console: true);
+        _log = Log.For<WinSideHost>();
 
         _registry = new RevitInstanceRegistry(
             Settings.Section("Registry").Duration("CheckTimeout", RevitInstanceRegistry.DefaultCheckTimeout));
@@ -131,17 +139,18 @@ public sealed class WinSideHost : IDisposable
                 if (session.Registered)
                 {
                     _sessions[session.Instance!.InstanceId] = session;
-                    Console.WriteLine($"  started Revit {installation.Release} as {session.Instance.InstanceId}"
-                                      + $" after {session.Elapsed.TotalSeconds.ToString("F1", CultureInfo.InvariantCulture)}s");
+                    _log.Info("started Revit {0} as {1} after {2:F1}s",
+                        installation.Release, session.Instance.InstanceId, session.Elapsed.TotalSeconds);
                 }
                 else
                 {
-                    Console.WriteLine($"  Revit {installation.Release} did not register: {session.Outcome}");
+                    _log.Warn("Revit {0} did not register: {1}", installation.Release, session.Outcome);
                     session.Dispose();
                 }
             }
             catch (Exception error)
             {
+                _log.Error(error, "could not start Revit {0}", installation.Release);
                 started.TrySetException(error);
                 session?.Dispose();
             }
@@ -186,12 +195,12 @@ public sealed class WinSideHost : IDisposable
     private void Serve(string pipeName)
     {
         var server = PipeTransport.CreateServer(pipeName);
-        server.Error += (_, error) => Console.WriteLine($"  channel error on {pipeName}: {error.Error.Message}");
+        server.Error += (_, error) => _log.Warn(error.Error, "channel error on {0}", pipeName);
         WinSideChannel.BindService(server.ServiceBinder, new HostChannel(this, _registry, InstanceId));
         server.Start();
 
         _servers.Add(server);
-        Console.WriteLine($"serving {pipeName}");
+        _log.Info("serving {0}", pipeName);
     }
 
     /// <summary>
@@ -202,19 +211,19 @@ public sealed class WinSideHost : IDisposable
     /// registration is a Revit announcing itself, a recovery is this host finding one that was
     /// already running. Only the first can be ours.
     /// </remarks>
-    private static void OnArrived(RevitInstance instance)
+    private void OnArrived(RevitInstance instance)
     {
         var how = instance.Origin == RevitInstanceOrigin.Recovered
             ? "found running"
             : instance.StartedByUs ? "ours" : "somebody else's";
 
-        Console.WriteLine($"  + Revit {instance.Release} pid {instance.ProcessId} ({how})"
-                          + (instance.Verified ? string.Empty : " UNVERIFIED"));
+        _log.Info("+ Revit {0} pid {1} ({2})", instance.Release, instance.ProcessId,
+            instance.Verified ? how : how + ", UNVERIFIED");
     }
 
     private void OnDeparted(RevitInstance instance)
     {
-        Console.WriteLine($"  - Revit {instance.Release} pid {instance.ProcessId} has gone");
+        _log.Info("- Revit {0} pid {1} has gone", instance.Release, instance.ProcessId);
 
         if (_sessions.TryRemove(instance.InstanceId, out var session))
             session.Dispose();

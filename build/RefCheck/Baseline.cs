@@ -67,6 +67,26 @@ internal sealed class Watchlist
 
     public List<string> Assemblies { get; set; } = [];
 
+    public string DeniedComment { get; set; } = "";
+
+    /// <summary>
+    /// Simple names that must not appear in a Revit-side output at all, in any version.
+    /// </summary>
+    /// <remarks>
+    /// A different question from <see cref="Assemblies"/>, and answered separately on purpose.
+    /// The watchlist asks "if Revit substitutes its copy for ours, is every member still there";
+    /// this asks "are we entitled to ship this assembly at all". A name may be on both lists
+    /// without contradiction, and this one wins: the surfaces of
+    /// <c>Microsoft.Extensions.Configuration</c> matched perfectly and the add-in still would not
+    /// load on Revit 2026, because the failure is in binding a name to a file, one level below
+    /// anything a surface comparison can see.
+    /// <para>
+    /// A trailing <c>*</c> matches a prefix; anything else is the whole name. Versions are not
+    /// consulted, and that is the point - whoever loads first owns the simple name.
+    /// </para>
+    /// </remarks>
+    public List<string> Denied { get; set; } = [];
+
     public static Watchlist Load(string path)
     {
         var watchlist = JsonSerializer.Deserialize<Watchlist>(File.ReadAllText(path), Baseline.JsonOptions)
@@ -75,6 +95,25 @@ internal sealed class Watchlist
     }
 
     public IReadOnlySet<string> ToSet() => new HashSet<string>(Assemblies, StringComparer.OrdinalIgnoreCase);
+
+    /// <summary>Whether one assembly's simple name is forbidden in a Revit-side output.</summary>
+    public bool IsDenied(string simpleName)
+    {
+        foreach (var pattern in Denied)
+        {
+            if (pattern.EndsWith("*", StringComparison.Ordinal))
+            {
+                if (simpleName.StartsWith(pattern[..^1], StringComparison.OrdinalIgnoreCase))
+                    return true;
+            }
+            else if (string.Equals(simpleName, pattern, StringComparison.OrdinalIgnoreCase))
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
 }
 
 /// <summary>Everything one Revit version ships, as of the moment it was collected.</summary>

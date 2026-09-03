@@ -44,6 +44,8 @@
     <ItemGroup>
         <ProjectReference Include="..\..\Shared\BHS.Transport\BHS.Transport.csproj"/>
         <ProjectReference Include="..\..\Shared\BHS.Settings\BHS.Settings.csproj"/>
+        <ProjectReference Include="..\..\Shared\BHS.Logging\BHS.Logging.csproj"/>
+        <ProjectReference Include="..\BHS.Revit.Common\BHS.Revit.Common.csproj"/>
     </ItemGroup>
 
     <ItemGroup>

@@ -22,6 +22,7 @@
     <ItemGroup>
         <ProjectReference Include="..\..\Shared\BHS.Shared\BHS.Shared.csproj"/>
         <ProjectReference Include="..\..\Shared\BHS.Settings\BHS.Settings.csproj"/>
+        <ProjectReference Include="..\..\Shared\BHS.Logging\BHS.Logging.csproj"/>
         <ProjectReference Include="..\..\Shared\BHS.Settings.Configuration\BHS.Settings.Configuration.csproj"/>
         <ProjectReference Include="..\..\Shared\BHS.Transport\BHS.Transport.csproj"/>
         <ProjectReference Include="..\BHS.Revit.Launch\BHS.Revit.Launch.csproj"/>

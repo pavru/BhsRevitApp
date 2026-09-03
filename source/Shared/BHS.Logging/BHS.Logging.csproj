@@ -1,0 +1,26 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <!--
+      Logging. Like BHS.Settings: the half that goes inside Revit, and therefore package-free.
+
+      The reason is measured rather than assumed. Every mainstream logging library already lives in
+      the Revit process, in incompatible versions at once: log4net 2.0.12 beside 3.0.3,
+      Microsoft.Extensions.Logging across 2.1 through 8.0, Serilog 2.0 beside 4.2, NLog 6.0 - and
+      some of those sit in Autodesk's own installation directory, so they load before any add-in
+      runs. On the .NET axis the simple name goes to whoever loaded first, and a request for a
+      higher version ends in FileLoadException. That already brought the probe down on Revit 2026.
+
+      The reference to BHS.Settings costs nothing: it goes into Revit anyway. There must be no
+      reference the other way - BHS.Settings does not log, it reports its errors as data.
+    -->
+
+    <PropertyGroup>
+        <TargetFrameworks>net48;net8.0;net10.0</TargetFrameworks>
+        <RootNamespace>BHS.Logging</RootNamespace>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="..\BHS.Settings\BHS.Settings.csproj"/>
+    </ItemGroup>
+
+</Project>

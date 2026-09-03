@@ -8,6 +8,7 @@ internal static class Cli
     private const string MissingMemberCode = "RVTREF002";
     private const string MissingOverloadCode = "RVTREF003";
     private const string UnwatchedCode = "RVTREF004";
+    private const string DeniedCode = "RVTREF005";
 
     public static int Run(string[] args)
     {
@@ -82,12 +83,24 @@ internal static class Cli
         var inputs = options.Values("input");
         if (inputs.Count == 0) throw new ArgumentException("At least one --input is required.");
 
+        // Optional so that `check` stays usable by hand against a folder, without the repository
+        // around it. The build always passes it.
+        var watchlistPath = options.Value("watchlist");
+        var watchlist = watchlistPath is null ? null : Watchlist.Load(watchlistPath);
+
         var findings = new List<Finding>();
+        var denied = new List<string>();
         var unwatched = new SortedSet<string>(StringComparer.OrdinalIgnoreCase);
         var checkedFiles = 0;
 
         foreach (var file in ExpandInputs(inputs))
         {
+            // Before anything is read out of it. This question is about the file being there at
+            // all, so a name is enough and a version is beside the point: the simple name belongs
+            // to whoever loaded it first, whatever version that was.
+            if (watchlist is not null && watchlist.IsDenied(Path.GetFileNameWithoutExtension(file)))
+                denied.Add(file);
+
             IReadOnlyList<MemberUse> uses;
             IReadOnlyDictionary<string, string> referencedVersions;
             try
@@ -146,16 +159,30 @@ internal static class Cli
             }
         }
 
-        Report(baseline, findings, unwatched, checkedFiles);
-        return findings.Count == 0 ? 0 : 1;
+        Report(baseline, findings, unwatched, denied, checkedFiles);
+        return findings.Count == 0 && denied.Count == 0 ? 0 : 1;
     }
 
     private static void Report(
         Baseline baseline,
         List<Finding> findings,
         SortedSet<string> unwatched,
+        List<string> denied,
         int checkedFiles)
     {
+        foreach (var file in denied)
+        {
+            var name = Path.GetFileNameWithoutExtension(file);
+            Console.Error.WriteLine(
+                $"{file} : error {DeniedCode}: a Revit-side build must not ship '{name}'. " +
+                "Assemblies on the denied list are ones other vendors ship too, and inside Revit " +
+                "the simple name belongs to whoever loaded it first - a request for a higher " +
+                "version then fails outright rather than binding low. Measured twice: System.Memory " +
+                "on Revit 2024 and Microsoft.Extensions.Configuration on Revit 2026, where the " +
+                "add-in did not load at all. Move whatever needs it to a Win-side assembly; the " +
+                "list is in build/RefCheck/baselines/watchlist.json.");
+        }
+
         foreach (var name in unwatched)
         {
             var shipped = baseline.ByName[name];
@@ -166,12 +193,15 @@ internal static class Cli
                 "and re-collect the baselines.");
         }
 
-        if (findings.Count == 0)
+        if (findings.Count == 0 && denied.Count == 0)
         {
             Console.WriteLine(
                 $"RefCheck: {checkedFiles} assemblies checked against Revit {baseline.RevitVersion}, no conflicts.");
             return;
         }
+
+        if (findings.Count == 0)
+            return;
 
         foreach (var finding in findings.DistinctBy(f => (f.File, f.Use.Key, f.Code)))
         {

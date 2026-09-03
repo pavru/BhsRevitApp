@@ -13,6 +13,9 @@
 
     <ItemGroup>
         <ProjectReference Include="..\BHS.Revit.Abstractions\BHS.Revit.Abstractions.csproj" />
+        <!-- The journal sink lives here rather than in a project of its own: one type and one
+             consumer is how Revit.Base in BimHouseApp ended up empty. -->
+        <ProjectReference Include="..\..\Shared\BHS.Logging\BHS.Logging.csproj" />
     </ItemGroup>
 
 </Project>

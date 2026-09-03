@@ -220,6 +220,7 @@ internal static class Program
         await CheckConfigurationFlowAsync(instance.PipeName, client, snapshot, report);
         await CheckContextAsync(client, report);
         await CheckSettingsAsync(client, installation, addInDirectory, report);
+        await CheckLoggingAsync(client, revit.Id, report);
         await CheckAssembliesAsync(client, installation, addInDirectory, report);
 
         if (options.KeepOpen)
@@ -323,6 +324,78 @@ internal static class Program
                                              .Where(pair => pair.Value.StartsWith("read", StringComparison.Ordinal)))
         {
             Report.Note("settings layer", layer.Value);
+        }
+    }
+
+    /// <summary>
+    /// The logging layer, running inside Revit.
+    /// </summary>
+    /// <remarks>
+    /// The file half of this could be checked anywhere. The journal sink could not: it needs a
+    /// <c>ControlledApplication</c>, it must attach during <c>OnStartup</c>, and its whole rule -
+    /// write only from Revit's API thread - is meaningless outside a process that has one.
+    /// <para>
+    /// The header is checked too, because it carries the standing requirement to record which copy
+    /// of each shared assembly actually loaded. That answer is only available from inside, and it is
+    /// the answer both of this repository's worst failures turned out to need.
+    /// </para>
+    /// </remarks>
+    private static async Task CheckLoggingAsync(
+        RevitSideChannel.RevitSideChannelClient client,
+        int processId,
+        Report report)
+    {
+        var answer = await client.AskAsync(new AskRequest { Question = "log" });
+        var path = answer.Values.GetValueOrDefault("log:file") ?? string.Empty;
+
+        var sinks = answer.Values.Where(pair => pair.Key.StartsWith("log:sink:", StringComparison.Ordinal))
+                                 .OrderBy(pair => pair.Key, StringComparer.Ordinal)
+                                 .Select(pair => pair.Value)
+                                 .ToList();
+
+        report.Check("the add-in writes a log file inside Revit",
+            !string.IsNullOrEmpty(path) && File.Exists(path));
+
+        report.Check("the file is the one findable by process id",
+            string.Equals(path, ProbeLogPath(processId), StringComparison.OrdinalIgnoreCase));
+
+        report.Check("the journal sink attached, which needs the API thread",
+            sinks.Any(sink => sink.StartsWith("JournalLogSink", StringComparison.Ordinal)));
+
+        report.Check("the journal takes warnings and worse only",
+            sinks.Any(sink => sink.StartsWith("JournalLogSink >= Warning", StringComparison.Ordinal)));
+
+        report.Check("nothing is being dropped",
+            answer.Values.GetValueOrDefault("log:dropped") == "0");
+
+        var text = ReadLog(path);
+
+        report.Check("the header records which assemblies actually loaded",
+            text.Contains("# assembly:BHS.Transport", StringComparison.Ordinal));
+
+        report.Check("records are marked with the thread they were written on",
+            text.Contains("*]", StringComparison.Ordinal));
+
+        Report.Note("log", path);
+        Report.Note("sinks", string.Join(", ", sinks));
+    }
+
+    /// <summary>Reads a log a live Revit still holds open.</summary>
+    /// <remarks>
+    /// Only possible because the sink opens the file with <c>FileShare.ReadWrite</c>, which is the
+    /// one thing that lets Win-side see a running Revit's log at all.
+    /// </remarks>
+    private static string ReadLog(string path)
+    {
+        try
+        {
+            using var stream = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.ReadWrite | FileShare.Delete);
+            using var reader = new StreamReader(stream);
+            return reader.ReadToEnd();
+        }
+        catch (Exception error) when (error is IOException or UnauthorizedAccessException or ArgumentException)
+        {
+            return string.Empty;
         }
     }
 
@@ -617,11 +690,33 @@ internal static class Program
     }
 
     /// <summary>Where the probe writes, worked out the same way the probe works it out.</summary>
-    private static string ProbeLogPath(int processId) =>
-        Path.Combine(
-            Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
-            "BHS.Revit.Probe",
-            $"probe.{processId.ToString(CultureInfo.InvariantCulture)}.log");
+    /// <summary>
+    /// The log a Revit process wrote, found by its process id.
+    /// </summary>
+    /// <remarks>
+    /// A pattern rather than a fixed name: the file also carries the moment the process started, so
+    /// that two runs of the same release cannot overwrite one another. The process id is what makes
+    /// it findable from outside, which matters most in the case this is used for - a Revit that
+    /// never registered and therefore never answered anything.
+    /// </remarks>
+    private static string ProbeLogPath(int processId)
+    {
+        var directory = Path.Combine(
+            Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "BHS", "Logs");
+
+        try
+        {
+            var match = Directory.EnumerateFiles(directory, $"*-{processId.ToString(CultureInfo.InvariantCulture)}-*.log")
+                                 .OrderByDescending(File.GetLastWriteTimeUtc)
+                                 .FirstOrDefault();
+
+            return match ?? Path.Combine(directory, $"(no log for pid {processId})");
+        }
+        catch (Exception error) when (error is IOException or UnauthorizedAccessException)
+        {
+            return directory;
+        }
+    }
 
     private static bool IsUnder(string path, string directory) =>
         !string.IsNullOrEmpty(path)

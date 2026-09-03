@@ -53,7 +53,7 @@
       error per finding, and the summary below says what to do about them.
     -->
     <Exec Condition="Exists('$(_RefCheckBaseline)')"
-          Command="dotnet &quot;$(RefCheckToolAssembly)&quot; check --baseline &quot;$(_RefCheckBaseline)&quot; --input &quot;$(TargetDir.TrimEnd('\'))&quot;"
+          Command="dotnet &quot;$(RefCheckToolAssembly)&quot; check --baseline &quot;$(_RefCheckBaseline)&quot; --watchlist &quot;$(RefCheckBaselineDirectory)watchlist.json&quot; --input &quot;$(TargetDir.TrimEnd('\'))&quot;"
           StandardOutputImportance="normal"
           IgnoreExitCode="true">
       <Output TaskParameter="ExitCode" PropertyName="_RefCheckExitCode" />
