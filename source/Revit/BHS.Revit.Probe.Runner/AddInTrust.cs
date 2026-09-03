@@ -44,8 +44,16 @@ internal static class AddInTrust
     /// </summary>
     /// <remarks>
     /// Both add-in folders, because Revit reads both: the per-user one under <c>%AppData%</c> and
-    /// the all-users one under <c>%ProgramData%</c>. Signed add-ins are not asked about, so the
-    /// Authenticode check comes first and keeps the answer to what would actually stop a start.
+    /// the all-users one under <c>%ProgramData%</c>.
+    /// <para>
+    /// Signed is treated as quiet here, and that is a simplification measured to be incomplete.
+    /// Revit has three security dialogs, not one: unsigned, signature that does not validate, and
+    /// valid signature in a folder it has not been told to trust. Only the first is answered by
+    /// the registry value this looks at; the other two are answered by the Windows certificate
+    /// stores - a chain that validates, and the publisher in <c>TrustedPublisher</c>. Judging
+    /// those from out here would mean reimplementing chain validation, so this reports what it can
+    /// prove and leaves the rest to the two-line remedy: sign, and trust the publisher once.
+    /// </para>
     /// </remarks>
     public static IReadOnlyList<UntrustedAddIn> Untrusted(RevitInstallation installation)
     {
