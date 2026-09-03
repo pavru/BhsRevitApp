@@ -1,7 +1,8 @@
-using System.Runtime.CompilerServices;
 using Autodesk.Revit.DB.Events;
 using Autodesk.Revit.UI;
 using BHS.Logging;
+using BHS.Revit.Abstractions;
+using BHS.Revit.Host;
 using BHS.Transport;
 using BHS.Transport.Protocol;
 using Grpc.Core;
@@ -25,105 +26,85 @@ namespace BHS.Revit.Probe;
 /// converts a measurement into a hang, so every failure is written to a log the runner reports and
 /// startup returns success regardless.
 /// </para>
+/// <para>
+/// It derives from <see cref="RevitAddInApplication"/> rather than implementing
+/// <c>IExternalApplication</c> itself, and that is deliberate on both sides. The probe stops being a
+/// second host that reads its own settings and raises its own logging in parallel with the real one;
+/// and the host stops being unexercised code, because the sweep that checks the probe on four live
+/// releases now checks the host with it.
+/// </para>
 /// </remarks>
-public sealed class ProbeApplication : IExternalApplication
+public sealed class ProbeApplication : RevitAddInApplication
 {
     private const int RegistrationAttempts = 5;
     private static readonly TimeSpan BetweenAttempts = TimeSpan.FromSeconds(2);
+
+    /// <summary>Must match the manifest: it is the key everything is filed under.</summary>
+    private static readonly Guid Id = new("6f2e17ae-5ff7-45b2-bb8b-3482446e9a67");
 
     private ProbeFacts? _facts;
     private ProbeChannel? _channel;
     private ExternalEvent? _exit;
     private NamedPipeServer? _server;
 
-    public Result OnStartup(UIControlledApplication application)
+    protected override Guid AddInId => Id;
+
+    protected override string Name => "BHS.Revit.Probe";
+
+    /// <summary>
+    /// Everything the probe adds on top of what the host already brought up.
+    /// </summary>
+    /// <remarks>
+    /// What is no longer here is the point: the API thread, the layered settings, the log, the
+    /// journal sink, the context and the pump all arrived before this runs. What remains is what
+    /// only the probe wants - a channel server, a registration, a ribbon and a way out.
+    /// </remarks>
+    protected override void OnStarted(IFeatureServices services, UIControlledApplication application)
     {
-        // An AppDomain.AssemblyResolve handler was tried here and removed. It did not help - the
-        // binding it was meant to correct succeeds, it just succeeds onto Revit's copy, and the
-        // handler only runs when binding fails. Worse, on Revit 2024 it would answer every failed
-        // resolve in an AppDomain shared with every other vendor, offering them our assemblies.
-        // The fix lives in BHS.Grpc.NamedPipes instead: agree with Revit on the version.
-        return Start(application);
+        ProbeLog.Write("startup: begin");
+
+        var facts = new ProbeFacts(services.Revit.Controlled);
+        _facts = facts;
+
+        ProbeLog.Write($"startup: Revit {facts.VersionNumber} build {facts.VersionBuild}, pid {facts.ProcessId}, api thread {facts.ApiThreadId}");
+        ProbeLog.Write($"startup: loaded from {facts.AddInAssembly}");
+        ProbeLog.Write("startup: settings product layer is " + BHS.Settings.SettingsLayout.ProductDirectory);
+        ProbeLog.Write("startup: logging to " + ProbeLog.Path);
+        ProbeLog.Write($"startup: host registry holds {HostRegistry.Count} edition(s)");
+
+        // Created here because an external event can only be created from an API context, and
+        // OnStarted is still inside the one OnStartup was given.
+        _exit = ExternalEvent.Create(new ExitRevitHandler());
+        _channel = new ProbeChannel(facts, Layers, services, _exit);
+
+        var server = PipeTransport.CreateServer(facts.PipeName);
+        server.Error += (_, error) => ProbeLog.Write("server error", error.Error);
+        RevitSideChannel.BindService(server.ServiceBinder, _channel);
+        server.Start();
+        _server = server;
+
+        ProbeLog.Write("startup: serving " + facts.PipeName);
+
+        BuildRibbon(application, facts);
+
+        services.Revit.Controlled.DocumentOpened += OnDocumentOpened;
+
+        // Registration leaves the process, so it must not be what a cold Revit start waits on.
+        var registration = new Thread(Register)
+        {
+            IsBackground = true,
+            Name = "BHS probe registration",
+        };
+
+        registration.Start();
     }
 
-    [MethodImpl(MethodImplOptions.NoInlining)]
-    private Result Start(UIControlledApplication application)
-    {
-        // First statement, before the first record. OnStartup runs on the API thread by definition,
-        // so this is both the earliest and the only place the answer is free - and without it the
-        // opening lines of every log would claim they were written somewhere else.
-        LogRouter.PrimaryThreadId = Environment.CurrentManagedThreadId;
-
-        try
-        {
-            ProbeLog.Write("startup: begin");
-
-            var facts = new ProbeFacts(application.ControlledApplication);
-            _facts = facts;
-
-            ProbeLog.Write($"startup: Revit {facts.VersionNumber} build {facts.VersionBuild}, pid {facts.ProcessId}, api thread {facts.ApiThreadId}");
-            ProbeLog.Write($"startup: loaded from {facts.AddInAssembly}");
-
-            // Created here because an external event can only be created from an API context, and
-            // this is the only API context the probe will ever be handed.
-            // Read before anything is served, because that is the order the claim is about: a
-            // side configures itself from disk and only then goes looking for a companion.
-            var settings = new ProbeSettings(facts.Release);
-
-            if (settings.Settings is not null)
-            {
-                LogSetup.Start(
-                    LogRouter.Default,
-                    "revit" + facts.Release.ToString(System.Globalization.CultureInfo.InvariantCulture),
-                    settings.Settings,
-                    console: false,
-                    facts: facts.Snapshot());
-
-                LogRouter.Default.Add(new BHS.Revit.Common.JournalLogSink(application.ControlledApplication));
-                LogRouter.Default.Apply(settings.Settings);
-            }
-
-            ProbeLog.Write("startup: settings product layer is " + BHS.Settings.SettingsLayout.ProductDirectory);
-            ProbeLog.Write("startup: logging to " + ProbeLog.Path);
-
-            _exit = ExternalEvent.Create(new ExitRevitHandler());
-            _channel = new ProbeChannel(facts, settings, _exit);
-
-            var server = PipeTransport.CreateServer(facts.PipeName);
-            server.Error += (_, error) => ProbeLog.Write("server error", error.Error);
-            RevitSideChannel.BindService(server.ServiceBinder, _channel);
-            server.Start();
-            _server = server;
-
-            ProbeLog.Write("startup: serving " + facts.PipeName);
-
-            BuildRibbon(application, facts);
-
-            application.ControlledApplication.DocumentOpened += OnDocumentOpened;
-
-            // Registration leaves the process, so it must not be what a cold Revit start waits on.
-            var registration = new Thread(Register)
-            {
-                IsBackground = true,
-                Name = "BHS probe registration",
-            };
-            registration.Start();
-        }
-        catch (Exception error)
-        {
-            ProbeLog.Write("startup failed", error);
-        }
-
-        // Always succeeded. A failed probe should leave Revit usable and leave a log behind; the
-        // runner decides what a missing registration means.
-        return Result.Succeeded;
-    }
-
-    public Result OnShutdown(UIControlledApplication application)
+    protected override void OnStopping()
     {
         try
         {
-            application.ControlledApplication.DocumentOpened -= OnDocumentOpened;
+            if (_facts is not null && Services is not null)
+                Services.Revit.Controlled.DocumentOpened -= OnDocumentOpened;
         }
         catch (Exception error)
         {
@@ -140,8 +121,6 @@ public sealed class ProbeApplication : IExternalApplication
         {
             ProbeLog.Write("shutdown: server would not stop", error);
         }
-
-        return Result.Succeeded;
     }
 
     private void OnDocumentOpened(object? sender, DocumentOpenedEventArgs args)

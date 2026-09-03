@@ -51,6 +51,17 @@ public abstract class RevitAddInApplication : IExternalApplication
     /// <summary>This edition's name, for the log and the settings section.</summary>
     protected abstract string Name { get; }
 
+    /// <summary>The layered settings, with their layers, for an edition that reports on them.</summary>
+    /// <remarks>
+    /// The merged view is on <see cref="IFeatureServices.Settings"/> and is what a feature wants.
+    /// This is the whole object, layer list and read errors included, and exists because "which file
+    /// should I have edited" is a question worth answering out loud.
+    /// </remarks>
+    protected LayeredSettings? Layers => _settings;
+
+    /// <summary>What was handed to the modules. Null until startup has got that far.</summary>
+    protected IFeatureServices? Services => _services;
+
     /// <summary>The modules this edition brings up eagerly. Most features need none.</summary>
     /// <remarks>
     /// Deliberately a list the edition writes rather than a directory it scans. Scanning means
@@ -98,8 +109,15 @@ public abstract class RevitAddInApplication : IExternalApplication
     /// <remarks>
     /// Where an edition builds its ribbon and does whatever else it needs. It runs inside the same
     /// guard as the rest of startup, so throwing here costs the edition and not Revit.
+    /// <para>
+    /// <paramref name="application"/> is passed rather than kept anywhere. Ribbon panels and
+    /// dockable panes are registered through <c>UIControlledApplication</c> and through nothing
+    /// else, but it is a startup object: valid for this call and not afterwards. Putting it in the
+    /// context would have made it look storable, which is the same mistake the context avoids with
+    /// <c>UIApplication</c>, one level up.
+    /// </para>
     /// </remarks>
-    protected virtual void OnStarted(IFeatureServices services)
+    protected virtual void OnStarted(IFeatureServices services, UIControlledApplication application)
     {
     }
 
@@ -154,7 +172,7 @@ public abstract class RevitAddInApplication : IExternalApplication
 
         StartModules();
 
-        OnStarted(_services);
+        OnStarted(_services, application);
 
         _log.Info("{0} started", Name);
         return Result.Succeeded;

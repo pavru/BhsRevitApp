@@ -48,7 +48,9 @@
         <ProjectReference Include="..\..\Shared\BHS.Transport\BHS.Transport.csproj"/>
         <ProjectReference Include="..\..\Shared\BHS.Settings\BHS.Settings.csproj"/>
         <ProjectReference Include="..\..\Shared\BHS.Logging\BHS.Logging.csproj"/>
-        <ProjectReference Include="..\BHS.Revit.Common\BHS.Revit.Common.csproj"/>
+        <ProjectReference Include="..\BHS.Revit.Host\BHS.Revit.Host.csproj"/>
+        <!-- Through the host, which is the point: the probe is no longer a second host, and
+             the sweep that checks it on four live releases now checks the host with it. -->
     </ItemGroup>
 
     <ItemGroup>

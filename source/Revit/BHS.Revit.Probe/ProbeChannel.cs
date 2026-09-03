@@ -22,10 +22,14 @@ internal sealed class ProbeChannel : RevitSideChannel.RevitSideChannelBase
     private readonly ExternalEvent _exit;
     private int _publishCount;
 
-    public ProbeChannel(ProbeFacts facts, ProbeSettings settings, ExternalEvent exit)
+    public ProbeChannel(
+        ProbeFacts facts,
+        BHS.Settings.LayeredSettings? layers,
+        BHS.Revit.Abstractions.IFeatureServices services,
+        ExternalEvent exit)
     {
+        _settings = new ProbeSettings(layers, services);
         _facts = facts;
-        _settings = settings;
         _exit = exit;
         Publisher = new ConfigurationPublisher(facts.InstanceId);
         Republish();

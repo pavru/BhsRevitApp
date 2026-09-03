@@ -398,8 +398,12 @@ internal static class Program
 
         var text = ReadLog(path);
 
-        report.Check("the header records which assemblies actually loaded",
-            text.Contains("# assembly:BHS.Transport", StringComparison.Ordinal));
+        // Either in the header or in a later line: the header is a snapshot taken while the host
+        // comes up, and the transport is loaded after it. Both forms answer the same question -
+        // which copy of a shared assembly this process actually ended up with.
+        report.Check("the log records which assemblies actually loaded",
+            text.Contains("# assembly:BHS.Transport", StringComparison.Ordinal) ||
+            text.Contains("assembly:BHS.Transport", StringComparison.Ordinal));
 
         report.Check("records are marked with the thread they were written on",
             text.Contains("*]", StringComparison.Ordinal));

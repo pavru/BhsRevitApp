@@ -14,6 +14,8 @@ namespace BHS.Logging;
 /// </remarks>
 public static class LogSetup
 {
+    private static int _watching;
+
     /// <summary>
     /// Attaches the usual sinks, applies the settings, and keeps applying them as they change.
     /// </summary>
@@ -54,6 +56,8 @@ public static class LogSetup
         if (file is not null)
             file.WriteHeader(Header(name, facts));
 
+        WatchLateLoads(router);
+
         // Off the startup path on purpose. Walking a directory of a few hundred files is quick, but
         // the budget it would join is the one that already reaches thirty seconds to registration on
         // Revit 2024, and housekeeping has no claim on any of it.
@@ -65,6 +69,57 @@ public static class LogSetup
         System.Threading.ThreadPool.QueueUserWorkItem(_ => FileLogSink.Sweep(directory, retain, days));
 
         return router;
+    }
+
+    /// <summary>
+    /// Records the assemblies that arrive after the header was written.
+    /// </summary>
+    /// <remarks>
+    /// The header is a snapshot, and a snapshot taken early misses exactly what a framework loads
+    /// on the way up - found the moment logging moved into the host, which raises it before the
+    /// transport is touched at all, so the header stopped naming the assembly the question was
+    /// usually about.
+    /// <para>
+    /// <c>AssemblyLoad</c> and emphatically not <c>AssemblyResolve</c>. On Revit 2024 this handler
+    /// sees every vendor's loads, which is harmless because it only watches; a resolve handler in
+    /// the same position would be answering for them, which is why one was removed from the probe.
+    /// </para>
+    /// </remarks>
+    private static void WatchLateLoads(LogRouter router)
+    {
+        if (System.Threading.Interlocked.Exchange(ref _watching, 1) != 0)
+            return;
+
+        var log = router.For("BHS.Logging");
+
+        AppDomain.CurrentDomain.AssemblyLoad += (_, args) =>
+        {
+            try
+            {
+                var name = args.LoadedAssembly.GetName();
+
+                if (!LoadedAssemblies.IsWorthReporting(name.Name ?? string.Empty))
+                    return;
+
+                log.Info("assembly:{0} {1} | {2}", name.Name, name.Version, SafeLocation(args.LoadedAssembly));
+            }
+            catch (Exception)
+            {
+                // A log line is never worth an exception on somebody else's load.
+            }
+        };
+    }
+
+    private static string SafeLocation(System.Reflection.Assembly assembly)
+    {
+        try
+        {
+            return assembly.IsDynamic ? "(dynamic)" : assembly.Location;
+        }
+        catch (NotSupportedException)
+        {
+            return "(no file)";
+        }
     }
 
     /// <summary>What goes at the top of a log file.</summary>

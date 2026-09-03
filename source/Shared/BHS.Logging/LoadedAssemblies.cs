@@ -94,6 +94,9 @@ public static class LoadedAssemblies
         return report;
     }
 
+    /// <summary>Whether an assembly is one of the ones collisions happen over.</summary>
+    public static bool IsWorthReporting(string simpleName) => IsInteresting(simpleName);
+
     private static bool IsInteresting(string simpleName)
     {
         foreach (var prefix in Interesting)
