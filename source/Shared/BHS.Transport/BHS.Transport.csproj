@@ -1,0 +1,26 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <!--
+      The channel between Revit-side and Win-side. Side-agnostic on purpose: both ends host a
+      server and both call the other, so there is one assembly rather than a matched pair.
+
+      It sits on the plain .NET axis. Revit projects reach it through the ordinary nearest-
+      framework negotiation - net48 for Revit 2024, net8.0 for 2025 and 2026, net10.0 for 2027 -
+      and it is restored once, on its own terms.
+    -->
+
+    <PropertyGroup>
+        <TargetFrameworks>net48;net8.0;net10.0</TargetFrameworks>
+        <RootNamespace>BHS.Transport</RootNamespace>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <PackageReference Include="GrpcDotNetNamedPipes"/>
+        <PackageReference Include="Grpc.Tools" PrivateAssets="all"/>
+    </ItemGroup>
+
+    <ItemGroup>
+        <Protobuf Include="Protocol\framework.proto" GrpcServices="Both"/>
+    </ItemGroup>
+
+</Project>

@@ -10,7 +10,19 @@
     -->
 
     <ItemGroup>
-        <!-- Populated as projects appear. -->
+        <!--
+          Transport between Revit-side and Win-side. GrpcDotNetNamedPipes keeps the gRPC
+          programming model and the .proto contracts but frames them over a named pipe instead of
+          HTTP/2, which is what makes the transport work on Revit 2024: there is no gRPC server for
+          .NET Framework at all.
+
+          Google.Protobuf and Grpc.Core.Api arrive through it and are deliberately not pinned -
+          Revit ships its own copies and pinning could only produce a downgrade (NU1605) whose
+          suppression would later hide a real one. The check that our copies do not clash with
+          Revit's is build/RefCheck, not a version here.
+        -->
+        <PackageVersion Include="GrpcDotNetNamedPipes" Version="3.1.0"/>
+        <PackageVersion Include="Grpc.Tools" Version="2.83.0"/>
     </ItemGroup>
 
 </Project>

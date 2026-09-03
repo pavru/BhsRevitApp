@@ -18,6 +18,8 @@ build/
   Directory.Build.props        пустой намеренно — щит инструментов от корневых правил
 source/
   Shared/BHS.Shared           чистая ось .NET
+  Shared/BHS.Transport        канал Revit-side ↔ Win-side: .proto, имена каналов, фабрики
+  Shared/BHS.Transport.Probe  живая проверка канала, по одному запуску на TFM
   Revit/BHS.Revit.Abstractions
   Revit/BHS.Revit.Common
 artifacts/feed/               репозиторный NuGet-фид, в git не попадает
@@ -424,8 +426,15 @@ Win-side потребляет их как обычный `IConfigurationSource` 
 > аргумент за готовую RPC-библиотеку, который после отсрочки OData выглядел слабым, — и он
 > восстановлен.
 
-> **Статус.** Выбор сделан по статическому анализу метаданных. **Живой обмен по каналу внутри
-> Revit ещё не проверялся.**
+> **Статус.** Выбор сделан по статическому анализу метаданных и **подтверждён живым обменом**:
+> `BHS.Transport.Probe` поднимает оба сервера на настоящих именованных каналах и проходит
+> унарный вызов, `map<string,string>` в обе стороны, **серверный стриминг**, отказ по дедлайну
+> на отсутствующем сервере и обнаружение перечислением. Зелено на `net48`, `net8.0` и `net10.0` —
+> то есть на всех трёх рантаймах диапазона. Стриминг на `net48` и был главным вопросом: обычный
+> gRPC на .NET Framework его не умеет вовсе.
+>
+> **Что ещё не проверено — обмен внутри процесса Revit.** Проба гоняет оба конца в одном обычном
+> процессе; отдельные процессы, чужой пользователь, холодный старт Revit и слои доверия впереди.
 
 ## Известные проблемы окружения
 
@@ -481,8 +490,13 @@ dotnet build BhsRevitApp.slnx -c Release
 # сборка под одну версию Revit (мультитаргет-проект)
 dotnet build -c Debug -f net8.0-revit2026
 
-# что SDK захватил и как классифицировал TFM — при непонятном поведении диспетчера
+# что SDK сделал из моникёра — когда сборка ведёт себя не так, как объясняет файл проекта
 dotnet build -p:RevitSdkDiagnostics=true
+
+# живая проверка канала — по одному запуску на рантайм, код возврата = число провалов
+dotnet run --project source\Shared\BHS.Transport.Probe -f net48
+dotnet run --project source\Shared\BHS.Transport.Probe -f net8.0
+dotnet run --project source\Shared\BHS.Transport.Probe -f net10.0
 
 # проверить сборки на конфликт с копиями, которые возит сам Revit
 dotnet run --project build\RefCheck -c Release -- check `
@@ -528,6 +542,7 @@ Revit* (жёстко привязаны к версии API), и внешние 
 | Каталог | Ось TFM | Роль |
 |---|---|---|
 | `Shared/BHS.Shared` | `net48;net8.0;net10.0` | код, не знающий ни о Revit, ни о стороне процесса |
+| `Shared/BHS.Transport` | `net48;net8.0;net10.0` | канал между сторонами: `.proto`, имена каналов, фабрики сервера и клиента |
 | `Revit/BHS.Revit.Abstractions` | Revit | контракты, за которыми прячутся различия версий API |
 | `Revit/BHS.Revit.Common` | Revit | базовые реализации и утилиты поверх Revit API |
 | `Frontend/WPF/BHS.UI.*` | чистая .NET | `Abstractions`, `Framework`, `UI`, `Translations` |

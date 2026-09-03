@@ -1,0 +1,114 @@
+syntax = "proto3";
+
+// Editions are deliberately not used, and proto3 is a rule rather than a default. Code generated
+// for editions references Reflection.Edition and Features, which do not exist in the
+// Google.Protobuf 3.23.1 that Revit 2025 ships and loads before any add-in. On Revit 2025 that is
+// a TypeLoadException on the first call, not a build error.
+
+package bhs.framework.v1;
+
+option csharp_namespace = "BHS.Transport.Protocol";
+
+// ---------------------------------------------------------------------------------------------
+// The framework minimum: five methods, one of them streaming. Configuration exchange is part of
+// the framework rather than a feature, so the transport has to carry it from the first day.
+//
+// Roles are symmetric - either side can be the one that starts the conversation - so both sides
+// host a server, and both serve Ask and Shutdown. What differs is who owns the answer:
+// registration is Win-side's to record, configuration is Revit-side's to publish.
+// ---------------------------------------------------------------------------------------------
+
+// Hosted by Win-side on the well-known pipe. One per machine that matters, though instances with
+// a pid suffix may coexist.
+service WinSideChannel {
+  // A Revit process announcing itself. This is the supported way to be found; enumerating the
+  // pipe namespace is for recovery and diagnostics only.
+  rpc Register (RegisterRequest) returns (RegisterResponse);
+
+  rpc Ask (AskRequest) returns (AskResponse);
+  rpc Shutdown (ShutdownRequest) returns (ShutdownResponse);
+}
+
+// Hosted by every Revit process, on a pipe named after its own process.
+service RevitSideChannel {
+  // What this Revit instance publishes about itself: release, paths, the open document.
+  rpc GetConfiguration (ConfigurationRequest) returns (ConfigurationSnapshot);
+
+  // The same, and then again on every change. A snapshot per change is what lets the consumer
+  // build an IConfigurationProvider that calls OnReload, which is what makes IOptionsMonitor and
+  // change tokens work exactly as they do with a file provider - the reason a streaming method is
+  // needed on day one rather than when OData returns.
+  rpc WatchConfiguration (ConfigurationRequest) returns (stream ConfigurationSnapshot);
+
+  rpc Ask (AskRequest) returns (AskResponse);
+  rpc Shutdown (ShutdownRequest) returns (ShutdownResponse);
+}
+
+// ---------------------------------------------------------------------------------------------
+// Messages
+// ---------------------------------------------------------------------------------------------
+
+message RegisterRequest {
+  // Protocol version of the caller. The third layer of trust, after the pipe ACL and the check of
+  // the process on the other end.
+  string contract_version = 1;
+
+  // Identifies this Revit instance for the life of the process.
+  string instance_id = 2;
+
+  // Set when Win-side started this Revit itself. Passed to the process in an environment variable
+  // rather than on the command line, which any user on the machine can read through WMI. Matching
+  // by process id would not do: Revit.exe looks like a launcher, and the process that ends up
+  // hosting the add-in need not be the one that was started.
+  string correlation_token = 3;
+
+  // Where to call this instance back. Full pipe name without the \\.\pipe\ prefix.
+  string pipe_name = 4;
+
+  int32 revit_version = 5;
+  int32 process_id = 6;
+}
+
+message RegisterResponse {
+  string contract_version = 1;
+  string instance_id = 2;
+}
+
+message ConfigurationRequest {
+  // Configuration section to read, in the ':'-separated form Microsoft.Extensions.Configuration
+  // uses. Empty means everything the publisher offers.
+  string section = 1;
+}
+
+message ConfigurationSnapshot {
+  string instance_id = 1;
+
+  // Increases with every change. A consumer that has seen this revision has nothing to do.
+  uint64 revision = 2;
+
+  // Microsoft.Extensions.Configuration is itself a flat string-to-string store with ':'-separated
+  // keys, so a map is an exact representation of IConfigurationProvider.Data rather than an
+  // approximation. It is also what keeps JSON, and with it Newtonsoft, out of the configuration
+  // path entirely - Revit ships a Newtonsoft 13.0.1 that wins every load and is missing members
+  // the current package has.
+  //
+  // The transport is typed; the key space is not. Versioning discipline is still needed, it is
+  // just about keys now.
+  map<string, string> values = 3;
+}
+
+message AskRequest {
+  string question = 1;
+  map<string, string> arguments = 2;
+}
+
+message AskResponse {
+  map<string, string> values = 1;
+}
+
+message ShutdownRequest {
+  string reason = 1;
+}
+
+message ShutdownResponse {
+}
