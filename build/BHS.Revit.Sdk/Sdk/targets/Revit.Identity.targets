@@ -40,6 +40,20 @@
         <!-- Both attributes would be stamped with a moniker no runtime has heard of. -->
         <GenerateTargetFrameworkAttribute>false</GenerateTargetFrameworkAttribute>
         <GenerateSupportedRuntime>false</GenerateSupportedRuntime>
+
+        <!--
+          A Revit add-in is a class library that nothing references: Revit loads it by path from a
+          folder it was copied into, and whatever is not in that folder is not there at run time.
+          On the .NET axis a library does not copy its package dependencies to the output at all -
+          only deps.json records them, and deps.json means nothing to a host that is not a .NET
+          application. On .NET Framework the copy happens anyway, so this changes nothing there.
+
+          Measured rather than reasoned about: the first probe deployed to Revit 2026 carried only
+          its own assembly and BHS.Transport, and failed to load before a line of its code ran.
+          Package assets that are reference-only - the Revit API packages themselves - stay out,
+          because they are excluded from runtime assets and this copies only runtime assets.
+        -->
+        <CopyLocalLockFileAssemblies Condition="'$(CopyLocalLockFileAssemblies)' == ''">true</CopyLocalLockFileAssemblies>
     </PropertyGroup>
 
     <!--

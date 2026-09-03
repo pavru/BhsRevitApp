@@ -1,0 +1,57 @@
+<Project Sdk="BHS.Revit.Sdk/1.3.2">
+
+    <!--
+      A minimal add-in whose only job is to be reachable and to report what it sees.
+
+      Everything about the channel has so far been proven outside Revit, and the two things that
+      could not be were the two that matter most: whether a pipe server can live inside the Revit
+      process at all, and which copy of Google.Protobuf wins when Revit has already loaded its own.
+      Neither is answerable by reading metadata, so this exists to answer them by running.
+
+      It is a probe, not a feature: it draws nothing, changes no document and is deployed on
+      purpose rather than shipped. Its counterpart is BHS.Revit.Probe.Runner, which starts Revit
+      and drives it.
+
+      It references BHS.Transport and deliberately not BHS.Transport.Configuration: publishing
+      needs no configuration library, and the point of that split is that the publisher does not
+      drag Microsoft.Extensions.* into the AppDomain that Revit 2024 shares between every vendor's
+      add-in. What the probe carries into Revit is what a real Revit-side assembly would carry.
+    -->
+
+    <PropertyGroup>
+        <TargetFrameworks>net48-revit2024;net8.0-revit2025;net8.0-revit2026;net10.0-revit2027</TargetFrameworks>
+        <RootNamespace>BHS.Revit.Probe</RootNamespace>
+        <UseRevitApi>true</UseRevitApi>
+        <UseRevitApiUi>true</UseRevitApiUi>
+        <IsPackable>false</IsPackable>
+
+        <!--
+          Deploying is what makes the probe useful, so packaging is on by default here rather than
+          being remembered on the command line. RevitDeploy stays off: writing into
+          %AppData%\Autodesk\Revit\Addins should be asked for, not inherited.
+        -->
+        <PublishRevitAddIn>true</PublishRevitAddIn>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="..\..\Shared\BHS.Transport\BHS.Transport.csproj"/>
+    </ItemGroup>
+
+    <ItemGroup>
+        <!--
+          No ManifestSettings on purpose. UseRevitContext=False would isolate the add-in on Revit
+          2026 and later and hide the assembly conflict this probe exists to measure; the probe
+          should see what an ordinary add-in sees.
+        -->
+        <RevitAddIn Include="BHS.Revit.Probe.addin">
+            <AddInType>Application</AddInType>
+            <AddInName>BHS.Revit.Probe</AddInName>
+            <FullClassName>BHS.Revit.Probe.ProbeApplication</FullClassName>
+            <AddInId>6f2e17ae-5ff7-45b2-bb8b-3482446e9a67</AddInId>
+            <VendorId>$(RevitVendorId)</VendorId>
+            <VendorDescription>$(RevitVendorDescription)</VendorDescription>
+            <Description>Verification probe: reports what a Revit-side assembly actually sees.</Description>
+        </RevitAddIn>
+    </ItemGroup>
+
+</Project>

@@ -1,0 +1,32 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <!--
+      Drives the probe: starts each installed Revit, waits to be registered, asks its questions and
+      closes it again.
+
+      Not a Revit-side project despite living beside one - it is never loaded into Revit, references
+      no Revit API and has one target framework rather than four. It sits here because the two
+      halves are one instrument, and separating them by folder would only hide that.
+
+      It is the consuming half of the channel, so unlike the add-in it does reference
+      BHS.Transport.Configuration: proving that what Revit publishes arrives as ordinary
+      IConfiguration is one of the things being measured.
+
+      Verification cannot run on hosted CI - Revit needs an interactive session and a licence - so
+      this is a command a person runs, and its exit code is the number of failed checks.
+    -->
+
+    <PropertyGroup>
+        <TargetFramework>net10.0-windows</TargetFramework>
+        <OutputType>Exe</OutputType>
+        <RootNamespace>BHS.Revit.Probe.Runner</RootNamespace>
+        <IsPackable>false</IsPackable>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="..\..\Shared\BHS.Shared\BHS.Shared.csproj"/>
+        <ProjectReference Include="..\..\Shared\BHS.Transport\BHS.Transport.csproj"/>
+        <ProjectReference Include="..\..\Shared\BHS.Transport.Configuration\BHS.Transport.Configuration.csproj"/>
+    </ItemGroup>
+
+</Project>

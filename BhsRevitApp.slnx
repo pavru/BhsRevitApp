@@ -36,6 +36,12 @@
   <Folder Name="/Revit/">
     <Project Path="source/Revit/BHS.Revit.Abstractions/BHS.Revit.Abstractions.csproj" Type="C#" />
     <Project Path="source/Revit/BHS.Revit.Common/BHS.Revit.Common.csproj" Type="C#" />
+
+    <!-- The verification pair: an add-in that reports what it sees, and the runner that starts
+         Revit and asks it. The runner is not loaded into Revit and is not on the Revit axis; it
+         sits here because the two halves are one instrument. -->
+    <Project Path="source/Revit/BHS.Revit.Probe/BHS.Revit.Probe.csproj" Type="C#" />
+    <Project Path="source/Revit/BHS.Revit.Probe.Runner/BHS.Revit.Probe.Runner.csproj" Type="C#" />
   </Folder>
 
 </Solution>
