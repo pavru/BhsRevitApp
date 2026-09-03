@@ -100,12 +100,15 @@ internal static class Program
     {
         Report.Heading($"Revit {installation.Release} - {installation.ExecutablePath}");
 
+        var model = options.WithModel ? TakeModelCopy(installation, report) : null;
+
         using var session = await launcher.LaunchAsync(
             installation,
             new RevitLaunchOptions
             {
                 RegistrationTimeout = options.RegistrationTimeout,
                 ShutdownTimeout = options.ShutdownTimeout,
+                ModelPath = model,
             });
 
         if (session.Process is not null)
@@ -121,7 +124,7 @@ internal static class Program
 
             Report.Note("registered after", session.Elapsed.TotalSeconds.ToString("F1", CultureInfo.InvariantCulture) + "s");
 
-            await InspectAsync(installation, registry, session, options, report);
+            await InspectAsync(installation, registry, session, options, model, report);
         }
         finally
         {
@@ -171,6 +174,7 @@ internal static class Program
         RevitInstanceRegistry registry,
         RevitSession session,
         Options options,
+        string? model,
         Report report)
     {
         var instance = session.Instance!;
@@ -221,11 +225,29 @@ internal static class Program
         await CheckContextAsync(client, report);
         await CheckSettingsAsync(client, installation, addInDirectory, report);
         await CheckLoggingAsync(client, revit.Id, report);
+
+        var documentArrived = !options.WithModel || await CheckDocumentAsync(client, model, report);
+
         await CheckAssembliesAsync(client, installation, addInDirectory, report);
 
         if (options.KeepOpen)
         {
             Report.Note("left running", "pid " + revit.Id.ToString(CultureInfo.InvariantCulture));
+            return;
+        }
+
+        // Never ask a Revit that is still opening something to close.
+        //
+        // Measured, and it cost a modal dialog on a run nobody was supposed to be watching: the exit
+        // command goes into the external event queue, Revit reaches it in the middle of the document
+        // it is opening, and asks whether to cancel the operation. Nothing outside the process can
+        // answer that, so an unattended sweep would sit in front of it until the deadline - the same
+        // failure as the unsigned add-in dialog, arrived at from the other side.
+        if (!documentArrived)
+        {
+            Report.Note("not asking it to close", "the document never arrived, and a request now would land mid-operation");
+            session.Kill();
+            report.Check("the Revit that would not open its model could be killed", !session.IsRunning);
             return;
         }
 
@@ -397,6 +419,102 @@ internal static class Program
         {
             return string.Empty;
         }
+    }
+
+    /// <summary>
+    /// A copy of the release's empty model, for this run only.
+    /// </summary>
+    /// <remarks>
+    /// A copy, because opening a model can rewrite it - a file from an older release is upgraded on
+    /// open - and the originals in <c>testdata</c> should survive being used. Per release, because
+    /// which release a model belongs to is not a detail: giving 2027 the 2024 file would upgrade it
+    /// and prove nothing about opening.
+    /// </remarks>
+    private static string? TakeModelCopy(RevitInstallation installation, Report report)
+    {
+        var year = installation.Release.Year.ToString(CultureInfo.InvariantCulture);
+        var root = ProbeInstaller.FindRepositoryRoot();
+
+        if (root is null)
+        {
+            report.Check($"a test model for Revit {year} is available", false);
+            return null;
+        }
+
+        var source = Path.Combine(root, "testdata", $"Empty Revit Model {year}.rvt");
+
+        if (!File.Exists(source))
+        {
+            report.Check($"a test model for Revit {year} is available", false);
+            Report.Note("expected at", source);
+            Report.Note("how to make one", "see testdata/readme.md - they are deliberately not in git");
+            return null;
+        }
+
+        try
+        {
+            var copy = Path.Combine(Path.GetTempPath(), $"bhs-sweep-{year}-{Guid.NewGuid():N}.rvt");
+            File.Copy(source, copy, overwrite: true);
+            return copy;
+        }
+        catch (Exception error) when (error is IOException or UnauthorizedAccessException)
+        {
+            report.Check($"a test model for Revit {year} could be copied", false);
+            Report.Note("why", error.Message);
+            return null;
+        }
+    }
+
+    /// <summary>
+    /// The second half of registration: the document, which arrives after it.
+    /// </summary>
+    /// <remarks>
+    /// <c>OnStartup</c> has no document, so registration cannot carry one; what a Revit is working
+    /// on comes later, over <c>DocumentOpened</c>, and reaches a consumer as a fresh configuration
+    /// snapshot. Nothing else in the sweep exercises that path, and its budget is not the
+    /// registration budget - a cold Revit registers long before it has opened anything.
+    /// </remarks>
+    private static async Task<bool> CheckDocumentAsync(
+        RevitSideChannel.RevitSideChannelClient client,
+        string? model,
+        Report report)
+    {
+        if (model is null)
+            return true;
+
+        var expected = Path.GetFileNameWithoutExtension(model);
+        var title = string.Empty;
+        var started = DateTime.UtcNow;
+
+        // Five minutes, and measured rather than guessed. On Revit 2026 an empty model given on the
+        // command line finished opening 3 minutes 51 seconds after the add-in registered - the
+        // add-in is up early in startup, the document is opened at the end of it. A two-minute
+        // budget failed this check while the model was opening perfectly well.
+        var arrived = await WaitForAsync(() =>
+        {
+            title = Value(client.GetConfiguration(new ConfigurationRequest()), "Document:Title");
+            return !string.IsNullOrEmpty(title);
+        }, 300_000);
+
+        report.Check("the model given on the command line is opened and reported", arrived);
+
+        report.Check("and it is the one that was asked for",
+            string.Equals(title, expected, StringComparison.OrdinalIgnoreCase));
+
+        Report.Note("document", string.IsNullOrEmpty(title) ? "(none)" : title);
+        Report.Note("opened after registration",
+            (DateTime.UtcNow - started).TotalSeconds.ToString("F1", CultureInfo.InvariantCulture) + "s");
+
+        try
+        {
+            File.Delete(model);
+        }
+        catch (Exception error) when (error is IOException or UnauthorizedAccessException)
+        {
+            // Revit still has it open; the temp directory keeps it.
+        }
+
+        return arrived;
     }
 
     /// <summary>Where the call lands, and in which AppDomain the add-in is living.</summary>

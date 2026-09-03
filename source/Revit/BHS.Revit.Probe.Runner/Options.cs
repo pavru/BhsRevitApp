@@ -51,6 +51,23 @@ internal sealed class Options
     /// </remarks>
     public TimeSpan ShutdownTimeout { get; set; } = TimeSpan.FromSeconds(240);
 
+    /// <summary>
+    /// Open a model on start, and check that the probe sees it.
+    /// </summary>
+    /// <remarks>
+    /// Off by default, because it costs time and most of what the sweep checks needs no document.
+    /// With it, the sweep exercises the half of registration that has no other test: registration
+    /// happens in <c>OnStartup</c> where there is no document yet, and what a document is comes
+    /// second, through <c>DocumentOpened</c>. The two have different budgets and only this proves
+    /// the second one arrives at all.
+    /// <para>
+    /// A model belongs to a release: opening a 2024 file in 2027 upgrades it and writes it back.
+    /// So the sweep takes a copy per run rather than opening the file in <c>testdata</c>, and picks
+    /// the copy matching the release it is starting.
+    /// </para>
+    /// </remarks>
+    public bool WithModel { get; set; }
+
     public static Options? Parse(string[] args)
     {
         var options = new Options();
@@ -70,6 +87,10 @@ internal sealed class Options
 
                 case "--undeploy":
                     options.Undeploy = true;
+                    break;
+
+                case "--with-model":
+                    options.WithModel = true;
                     break;
 
                 case "--keep-open":
@@ -103,6 +124,7 @@ internal sealed class Options
               --release <year>   only this release; may be repeated. Default: every one installed.
               --deploy           build the probe and install it into %AppData% first.
               --undeploy         remove the installed probe and stop.
+              --with-model       open a model from testdata and check the probe reports it.
               --keep-open        leave Revit running after the checks.
               --allow-untrusted  launch even when an installed add-in is unsigned and untrusted;
                                  you will have to answer Revit's dialogs by hand.
