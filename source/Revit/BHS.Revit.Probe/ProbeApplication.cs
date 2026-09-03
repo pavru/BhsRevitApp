@@ -228,7 +228,16 @@ public sealed class ProbeApplication : IExternalApplication
     {
         const string token = "Culture=neutral, PublicKeyToken=cc7b13ffcd2ddd51";
 
-        foreach (var wanted in new[] { "System.Memory, Version=4.0.1.1, " + token, "System.Memory, Version=4.0.2.0, " + token })
+        // 4.0.5.0 is what the accepted Revit-side UI set asks for: WPF-UI 4.1.0 on net4x depends on
+        // the System.Memory package 4.6.3, whose assembly version that is. Revit 2024 ships 4.0.1.1
+        // and Revit.exe.config carries no redirect for this assembly, so whether a 4.0.5.0 reference
+        // can bind at all inside Revit 2024 is the whole question - and only the binder can answer.
+        foreach (var wanted in new[]
+                 {
+                     "System.Memory, Version=4.0.1.1, " + token,
+                     "System.Memory, Version=4.0.2.0, " + token,
+                     "System.Memory, Version=4.0.5.0, " + token,
+                 })
         {
             try
             {

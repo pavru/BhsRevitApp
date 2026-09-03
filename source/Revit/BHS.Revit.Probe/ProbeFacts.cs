@@ -41,7 +41,7 @@ internal sealed class ProbeFacts
 
         var probe = typeof(ProbeFacts).Assembly;
         AddInAssembly = SafeLocation(probe);
-        AddInDirectory = string.IsNullOrEmpty(AddInAssembly) ? string.Empty : Path.GetDirectoryName(AddInAssembly) ?? string.Empty;
+        AddInDirectory = string.IsNullOrEmpty(AddInAssembly) ? string.Empty : System.IO.Path.GetDirectoryName(AddInAssembly) ?? string.Empty;
 
         CorrelationToken = global::BHS.Transport.CorrelationToken.FromEnvironment();
         PipeName = PipeNames.RevitSideInstance(ProcessId, Release);

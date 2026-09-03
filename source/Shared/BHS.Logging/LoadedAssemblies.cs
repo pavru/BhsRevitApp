@@ -78,7 +78,16 @@ public static class LoadedAssemblies
                 location = "(no file)";
             }
 
-            report["assembly:" + simpleName] = name.Version + " | " + location;
+            // Keyed by identity rather than by name, because the case worth catching is two copies
+            // of one assembly loaded at once. Keying by simple name would collapse exactly that into
+            // a single entry and hide it - and a second System.Memory in Revit 2024 is the failure
+            // this repository has already paid for once.
+            var key = "assembly:" + simpleName;
+
+            if (report.ContainsKey(key))
+                key = "assembly:" + simpleName + " (" + name.Version + ")";
+
+            report[key] = name.Version + " | " + location;
         }
 
         report["assembly:count"] = total.ToString();
