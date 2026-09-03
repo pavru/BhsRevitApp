@@ -23,6 +23,8 @@ source/
   Shared/BHS.Transport.Probe  живая проверка канала, по одному запуску на TFM
   Revit/BHS.Revit.Abstractions
   Revit/BHS.Revit.Common
+  Revit/BHS.Revit.Probe        add-in, докладывающий изнутри Revit, что он видит
+  Revit/BHS.Revit.Probe.Runner прогон: поднимает каждый Revit, ждёт регистрации, спрашивает, гасит
 artifacts/feed/               репозиторный NuGet-фид, в git не попадает
 ```
 
@@ -64,7 +66,7 @@ Revit-side проекты собираются нашим **`BHS.Revit.Sdk`** и
 проекта и берётся из репозиторного фида `artifacts/feed`:
 
 ```xml
-<Project Sdk="BHS.Revit.Sdk/1.3.1">
+<Project Sdk="BHS.Revit.Sdk/1.3.2">
   <PropertyGroup>
     <TargetFrameworks>net48-revit2024;net8.0-revit2025;net8.0-revit2026;net10.0-revit2027</TargetFrameworks>
   </PropertyGroup>
@@ -101,6 +103,12 @@ Revit-side проекты собираются нашим **`BHS.Revit.Sdk`** и
   `net48-revit2024` вопрос не возникает — WPF и WinForms там в коробке; на оси .NET SDK включает
   `ImportWindowsDesktopTargets` тем проектам, которые их запросили, и снимает проверку базового
   SDK «платформа обязана быть Windows» (у нас платформа — `revit`).
+- **Зависимости кладутся рядом с add-in**: `CopyLocalLockFileAssemblies` включается на всех
+  Revit-TFM. Библиотека на оси .NET по умолчанию не копирует пакетные сборки в вывод — их
+  перечисляет `deps.json`, который ничего не значит для хоста, не являющегося .NET-приложением.
+  Измерено: первая проба, развёрнутая в Revit 2026, везла только себя и `BHS.Transport` и не
+  загрузилась вовсе. Reference-only пакеты Revit API внутрь не попадают — они исключены из
+  runtime-ассетов.
 - **Манифест `.addin`** генерируется задачей `GenerateRevitAddIn` из item-группы `RevitAddIn`
   (`FullClassName`, `AddInId`, `VendorId`, для 2025+ — `AllowLoadIntoExistingSession`, для 2026+ —
   `UnifyInAddInManager`, `UseRevitContext`, `ContextName`).
@@ -366,8 +374,20 @@ MessagePack. Риск ограничен — 76 КБ под Apache 2.0, копи
 сборок add-in две загрузились из `C:\Program Files\Autodesk\Revit 2025`. Побеждает
 загрузившийся первым, а Revit грузится раньше add-in.
 
-Окно проблемы — **только Revit 2025**: на 2024 конфликта нет, на 2026+ спасает изоляция
-(`UseRevitContext=False` + `ContextName` в манифесте).
+Про окно проблемы здесь **дважды стояло неверное утверждение**, и оба раза его снял живой
+замер пробой (`source/Revit/BHS.Revit.Probe`):
+
+- «на 2026+ спасает изоляция» — спасает, **только если её попросить**. Обычный add-in на
+  Revit 2026 живёт в `DefaultDomain`, и его `Google.Protobuf` и `Grpc.Core.Api` — ревитовские,
+  из `C:\Program Files\Autodesk\Revit 2026`. Изоляция включается `UseRevitContext=False` +
+  `ContextName` в манифесте и по умолчанию не действует;
+- «на 2024 конфликта нет» — конфликта с `Grpc.*` действительно нет, потому что Revit 2024 их не
+  возит. Но там **фатальный конфликт по `System.Memory`**, и он ломает канал целиком: см. ниже.
+
+Замеренная подмена на 2025 и 2026 (`Google.Protobuf` 3.23.1, `Grpc.Core.Api` 2.0.0.0 — обе
+ревитовские вместо наших) **работе не помешала**: 20 с лишним проверок канала внутри Revit
+зелёные на обеих версиях. То есть анализ метаданных, обещавший ноль расхождений на используемой
+поверхности, подтверждён исполнением.
 
 Проверено анализом метаданных: `GrpcDotNetNamedPipes` 3.1.0 обращается к 55 типам и 79 членам
 ревитовских сборок, расхождений — ноль. Поверхности `Grpc.Core.Api` 2.59 и 2.67 **идентичны**
@@ -388,6 +408,52 @@ MessagePack. Риск ограничен — 76 КБ под Apache 2.0, копи
   `System.Runtime.CompilerServices.Unsafe` (4.0.4.1 против 6.0.0.0), `System.Collections.Immutable`
   (1.2.5.0), причём `Revit.exe.config` для них binding-redirect'ов не содержит.
 - **Логировать на старте** фактически загруженные сборки с путём и версией.
+
+#### Revit 2024: канал внутри процесса **не работает**
+
+Измерено пробой, не выведено. `BHS.Transport` зелёный на `net48` как консольное приложение и
+падает внутри Revit 2024 на первом же вызове:
+
+```
+MissingMethodException: Method not found:
+  'System.Buffers.IBufferWriter`1<Byte> Grpc.Core.SerializationContext.GetBufferWriter()'
+```
+
+Цепочка причин, каждое звено проверено на живом процессе:
+
+1. `Grpc.Core.Api` собран против `System.Memory` **4.0.1.1** — так во всех версиях пакета,
+   от 2.46 до 2.83; `GrpcDotNetNamedPipes` 3.1.0 — против **4.0.2.0**. Пакеты между собой
+   не согласованы и рассчитывают на binding redirect.
+2. Revit 2024 **возит собственную `System.Memory` 4.0.1.1** в каталоге установки, то есть в
+   application base. Ссылка на 4.0.1.1 связывается там и до нашего каталога не доходит; ссылка
+   на 4.0.2.0 берёт нашу копию. `System.Buffers.IBufferWriter<byte>` оказывается **двумя
+   разными типами**, и сигнатура метода перестаёт совпадать.
+3. Обычное лекарство — `bindingRedirect` — **add-in'у недоступно**. Свой `.config` он иметь не
+   может, конфигурацией правит `Revit.exe.config`, а редиректов для `System.Memory` там нет.
+   Именно этот редирект SDK генерирует в `.exe.config` консольной пробы, и только поэтому та
+   зелёная: `0.0.0.0-4.0.5.0 → 4.0.5.0`.
+4. `AppDomain.AssemblyResolve` **не помогает** — он вызывается только когда связывание
+   провалилось, а здесь оно успешно, просто не туда. Проверено: обработчик за весь запуск ни
+   разу не спросили про `System.Memory`.
+5. Убрать наши полифиллы из поставки тоже не помогает: тогда 4.0.2.0 уезжает на **третью** копию,
+   `Revit 2024\AddIns\PnIDModeler\System.Memory.dll`, и типы по-прежнему разные.
+
+**Следствие для выбора транспорта.** `GrpcDotNetNamedPipes` выбирался ради Revit 2024 — на
+`net48` настоящего gRPC-сервера нет вовсе. Ровно на 2024 он и не работает. Варианты, в порядке
+предпочтения:
+
+- **пересобрать `GrpcDotNetNamedPipes` из исходников** против той же `System.Memory` 4.0.1.1,
+  что возит Revit. 76 КБ под Apache 2.0 — форк был предусмотрен как запасной путь, и это самый
+  дешёвый выход: ссылки сойдутся, редирект станет не нужен;
+- **свой тонкий RPC на `System.IO.Pipes`** без полифилльных зависимостей вообще. Тот же запасной
+  вариант, но дороже, и `map<string,string>` + стриминг придётся написать руками;
+- **отказаться от канала внутри Revit 2024** и оставить его версиям 2025+. Это молчаливое
+  сужение диапазона поддержки, а такое решение принимается отдельно.
+
+> Это самый весомый довод в пользу метрики «число полифиллов BCL, а не мегабайты». Каждый
+> полифилл на `net48` — это ссылка, которую кто-то в общем AppDomain уже связал по-своему, и
+> ни компилятор, ни RefCheck этого не видят: RefCheck сверяет нашу поверхность с ревитовской,
+> а здесь ломается совпадение сигнатур **между двумя нашими же пакетами**.
 
 #### Newtonsoft.Json — запрещён во framework-слое Revit-side
 
@@ -498,7 +564,21 @@ Win-side потребляет их как обычный `IConfigurationSource` 
 > Отдельно измерено, что опознание процесса **не тревожит сервер** — оно стоит отдельного
 > подключения, потому что библиотека не отдаёт хэндл канала.
 >
-> **Что ещё не проверено — обмен внутри процесса Revit** и под чужой учётной записью.
+> **Обмен внутри процесса Revit теперь тоже измерен** — пробой `BHS.Revit.Probe` и прогоном
+> `BHS.Revit.Probe.Runner`. На Revit **2025 и 2026 канал работает целиком**: сервер живёт внутри
+> процесса Revit, опознание процесса по каналу совпадает с запущенным PID, `GetConfiguration`
+> отвечает изнутри, стриминговый `WatchConfiguration` доводит изменение до `IConfiguration`
+> родителя и поднимает change token, секции разбираются. Revit закрывается изнутри
+> `PostableCommand.ExitRevit` — 9 с на 2025, 31 с на 2026.
+>
+> На **Revit 2024 не работает** — конфликт `System.Memory`, разобран выше. **Revit 2027 ещё не
+> прогонялся.** Под чужой учётной записью по-прежнему не проверено.
+>
+> Попутно измерено: вызов приходит **не на API-поток** Revit (поток API — 1, вызов — 32), поэтому
+> всё, что трогает Revit API, обязано идти через `ExternalEvent`; add-in живёт в `DefaultDomain`,
+> если не попросить изоляцию; регистрация доезжает через **26,7 с** после запуска 2026 — вдвое
+> раньше, чем появляется пригодное главное окно, так что готовность правильно ждать по каналу,
+> а не по окнам.
 
 ## Известные проблемы окружения
 
@@ -562,6 +642,13 @@ dotnet run --project source\Shared\BHS.Transport.Probe -f net48
 dotnet run --project source\Shared\BHS.Transport.Probe -f net8.0
 dotnet run --project source\Shared\BHS.Transport.Probe -f net10.0
 
+# прогон внутри Revit: поставить пробу и пройти по всем установленным версиям
+#   --deploy ставит add-in во все четыре %AppData% и записывает доверие (иначе Revit покажет
+#   модальное окно «Невозможно проверить разработчика» с ответом «Не загружать» по умолчанию)
+dotnet run --project source\Revit\BHS.Revit.Probe.Runner -- --deploy
+dotnet run --project source\Revit\BHS.Revit.Probe.Runner -- --release 2026 --keep-open
+dotnet run --project source\Revit\BHS.Revit.Probe.Runner -- --undeploy
+
 # проверить сборки на конфликт с копиями, которые возит сам Revit
 dotnet run --project build\RefCheck -c Release -- check `
     --baseline build\RefCheck\baselines\revit-2025.json --input <путь к каталогу или dll>
@@ -610,6 +697,8 @@ Revit* (жёстко привязаны к версии API), и внешние 
 | `Shared/BHS.Transport.Configuration` | то же | `IConfigurationSource` поверх канала. Отдельно, чтобы издатель не тащил `Microsoft.Extensions.*` в AppDomain Revit |
 | `Revit/BHS.Revit.Abstractions` | Revit | контракты, за которыми прячутся различия версий API |
 | `Revit/BHS.Revit.Common` | Revit | базовые реализации и утилиты поверх Revit API |
+| `Revit/BHS.Revit.Probe` | Revit | проба: служит канал изнутри Revit и докладывает, что в его AppDomain |
+| `Revit/BHS.Revit.Probe.Runner` | `net10.0-windows` | прогон пробы. Не грузится в Revit и не на оси Revit; лежит рядом, потому что две половины — один инструмент |
 | `Frontend/WPF/BHS.UI.*` | чистая .NET | `Abstractions`, `Framework`, `UI`, `Translations` |
 | `Features/<Домен>/BHS.<Домен>*` | Revit | плагины как feature-модули |
 | `BHS.<Издание>` (корень `source/`) | Revit | host-проект, точка входа `IExternalApplication` |
