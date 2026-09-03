@@ -104,8 +104,8 @@ internal sealed class Options
               --deploy           build the probe and install it into %AppData% first.
               --undeploy         remove the installed probe and stop.
               --keep-open        leave Revit running after the checks.
-              --allow-untrusted  launch even when the probe is not recorded as trusted; you
-                                 will have to answer Revit's dialog by hand.
+              --allow-untrusted  launch even when an installed add-in is unsigned and untrusted;
+                                 you will have to answer Revit's dialogs by hand.
               --timeout <sec>    how long to wait for a registration. Default 240.
 
             The exit code is the number of failed checks.

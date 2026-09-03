@@ -48,7 +48,9 @@ internal static class Program
             return 1;
 
         var report = new Report();
-        var channel = new RunnerChannel(() => LaunchClock.Elapsed);
+
+        using var registry = new RevitInstanceRegistry();
+        var channel = new RunnerChannel(registry);
 
         using var server = PipeTransport.CreateServer(PipeNames.WinSide);
         server.Error += (_, error) => Console.WriteLine($"       win-side server error: {error.Error.Message}");
@@ -60,18 +62,20 @@ internal static class Program
         try
         {
             foreach (var installation in selected)
-                await RunAsync(installation, channel, options, report);
+                await RunAsync(installation, registry, options, report);
         }
         finally
         {
             server.Kill();
         }
 
-        foreach (var stranger in channel.Unexpected)
+        // Anything still here either was never ours or never left, and the two are worth telling
+        // apart: a stranger is somebody's own Revit, a leftover is a registry that missed a death.
+        foreach (var left in registry.Instances)
         {
             Report.Note(
-                "another Revit registered without a token of ours",
-                $"release {stranger.RevitVersion}, pid {stranger.ProcessId} - left alone");
+                left.StartedByUs ? "still registered after the sweep" : "another Revit registered without a token of ours",
+                $"release {left.Release}, pid {left.ProcessId} - left alone");
         }
 
         report.Summarise();
@@ -81,14 +85,17 @@ internal static class Program
     /// <summary>One release: start it, drive it, close it.</summary>
     private static async Task RunAsync(
         RevitInstallation installation,
-        RunnerChannel channel,
+        RevitInstanceRegistry registry,
         Options options,
         Report report)
     {
         Report.Heading($"Revit {installation.Release} - {installation.ExecutablePath}");
 
         var token = CorrelationToken.New();
-        var expectation = channel.Expect(token);
+
+        // Before the process, not after: a Revit that registered unusually fast would otherwise
+        // arrive before anybody was listening for its token.
+        var expectation = registry.Expect(token);
 
         var startInfo = new ProcessStartInfo(installation.ExecutablePath)
         {
@@ -118,9 +125,10 @@ internal static class Program
 
         try
         {
-            var registration = await WaitForRegistrationAsync(expectation, revit, options.RegistrationTimeout);
+            var instance = await WaitForRegistrationAsync(expectation, revit, options.RegistrationTimeout);
+            var elapsed = LaunchClock.Elapsed;
 
-            if (!report.Check("the add-in registers over the well-known pipe", registration is not null))
+            if (!report.Check("the add-in registers over the well-known pipe", instance is not null))
             {
                 // The one path the runner has to know without being told, because a probe that
                 // never registered never got to tell it anything.
@@ -129,11 +137,13 @@ internal static class Program
                 return;
             }
 
-            await InspectAsync(installation, registration!, revit, options, report);
+            Report.Note("registered after", elapsed.TotalSeconds.ToString("F1", CultureInfo.InvariantCulture) + "s");
+
+            await InspectAsync(installation, registry, instance!, revit, options, report);
         }
         finally
         {
-            channel.Forget(token);
+            registry.StopExpecting(token);
             Finish(revit, options, report);
         }
     }
@@ -141,32 +151,38 @@ internal static class Program
     /// <summary>Everything worth asking a Revit that has announced itself.</summary>
     private static async Task InspectAsync(
         RevitInstallation installation,
-        Registration registration,
+        RevitInstanceRegistry registry,
+        RevitInstance instance,
         Process revit,
         Options options,
         Report report)
     {
-        var request = registration.Request;
-        Report.Note("registered after", registration.Elapsed.TotalSeconds.ToString("F1", CultureInfo.InvariantCulture) + "s");
-
         // The launcher question, settled from the inside this time: the process that reports for
         // duty is the process that was started.
-        report.Check("the registering process is the one that was launched", request.ProcessId == revit.Id);
-        report.Check("the registration names the right release", request.RevitVersion == installation.Release.Year);
+        report.Check("the registering process is the one that was launched", instance.ProcessId == revit.Id);
+        report.Check("the registration names the right release", instance.Release == installation.Release.Year);
         report.Check(
             "the caller is this account",
-            string.Equals(registration.CallerAccount, CurrentUser, StringComparison.OrdinalIgnoreCase));
+            string.Equals(instance.Account, CurrentUser, StringComparison.OrdinalIgnoreCase));
 
-        // Layer two from the client side: who answers to the name the add-in gave us.
+        // Layer two, as the registry applied it: a peer is recorded verified only when the
+        // operating system agrees the pipe it named is served by the process it claimed.
+        report.Check("the registry verified the peer against its pipe", instance.Verified);
+        report.Check("the registry knows it was started by us", instance.StartedByUs);
+        report.Check("the registry is watching it for exit", registry.Watched.Any(one => one.InstanceId == instance.InstanceId));
+
+        // Layer two again, from the client side, on the raw name rather than through the registry.
         var served = PeerIdentity.TryGetServerProcess(
-            request.PipeName, TimeSpan.FromSeconds(5), out var serverPid, out var image);
+            instance.PipeName, TimeSpan.FromSeconds(5), out var serverPid, out var image);
 
         report.Check("a pipe server lives inside the Revit process", served && serverPid == revit.Id);
         report.Check(
             "its image is the Revit that was started",
             image is not null && string.Equals(image, installation.ExecutablePath, StringComparison.OrdinalIgnoreCase));
 
-        var client = new RevitSideChannel.RevitSideChannelClient(PipeTransport.CreateClient(request.PipeName));
+        await CheckRecoveryAsync(instance, report);
+
+        var client = new RevitSideChannel.RevitSideChannelClient(PipeTransport.CreateClient(instance.PipeName));
 
         var snapshot = await client.GetConfigurationAsync(new ConfigurationRequest());
         report.Check(
@@ -180,7 +196,9 @@ internal static class Program
         Report.Note("loaded from", addInDirectory);
         Report.Note("probe log", Value(snapshot, "AddIn:Log"));
 
-        await CheckConfigurationFlowAsync(request.PipeName, client, snapshot, report);
+        report.Check("the snapshot names the contract it speaks", snapshot.ContractVersion == Handshake.ContractVersion);
+
+        await CheckConfigurationFlowAsync(instance.PipeName, client, snapshot, report);
         await CheckContextAsync(client, report);
         await CheckAssembliesAsync(client, installation, addInDirectory, report);
 
@@ -190,7 +208,7 @@ internal static class Program
             return;
         }
 
-        await CloseAsync(client, revit, options, report);
+        await CloseAsync(client, registry, instance, revit, options, report);
     }
 
     /// <summary>
@@ -316,9 +334,43 @@ internal static class Program
             Report.Note("substituted but not on the watchlist", name);
     }
 
+    /// <summary>
+    /// What a Win-side that lost its registry can rebuild, while the instance is still running.
+    /// </summary>
+    /// <remarks>
+    /// A second registry, deliberately empty, standing in for a restarted Win-side. It is the only
+    /// way to exercise the recovery path against a real Revit: enumeration, the check that the
+    /// name is served by the process it is named after, and the call that makes a live peer say
+    /// which contract it speaks.
+    /// </remarks>
+    private static async Task CheckRecoveryAsync(RevitInstance instance, Report report)
+    {
+        using var restarted = new RevitInstanceRegistry();
+        var found = await restarted.RecoverAsync();
+
+        var recovered = restarted.Instances.FirstOrDefault(one => one.ProcessId == instance.ProcessId);
+
+        report.Check("a registry that lost everything finds it again by enumeration", recovered is not null);
+
+        if (recovered is null)
+            return;
+
+        report.Check("the recovered instance is the same one", recovered.InstanceId == instance.InstanceId);
+        report.Check("recovery reads the release out of the pipe name", recovered.Release == instance.Release);
+
+        // The token lives in the registration message and in the started process's environment,
+        // and enumeration reaches neither. Recovering an instance therefore cannot recover the
+        // claim that we started it - which is the point of checking rather than assuming.
+        report.Check("a recovered instance is never claimed as ours", !recovered.StartedByUs);
+
+        Report.Note("recovered by enumeration", found.ToString(CultureInfo.InvariantCulture) + " instance(s)");
+    }
+
     /// <summary>Close it the way it is meant to be closed, and measure how long that takes.</summary>
     private static async Task CloseAsync(
         RevitSideChannel.RevitSideChannelClient client,
+        RevitInstanceRegistry registry,
+        RevitInstance instance,
         Process revit,
         Options options,
         Report report)
@@ -337,8 +389,15 @@ internal static class Program
         var exited = await WaitForExitAsync(revit, options.ShutdownTimeout);
         report.Check("Revit closes on an ExitRevit posted from inside", exited);
 
-        if (exited)
-            Report.Note("closed after", closing.Elapsed.TotalSeconds.ToString("F1", CultureInfo.InvariantCulture) + "s");
+        if (!exited)
+            return;
+
+        Report.Note("closed after", closing.Elapsed.TotalSeconds.ToString("F1", CultureInfo.InvariantCulture) + "s");
+
+        // Nothing told the registry; it was watching the process. A departure that has to be swept
+        // for is a departure nobody hears about until somebody asks.
+        var dropped = await WaitForAsync(() => !registry.TryGet(instance.InstanceId, out _), 10000);
+        report.Check("the registry drops it when the process goes", dropped);
     }
 
     private static HashSet<string> ShippedAssemblies(RevitInstallation installation)
@@ -363,8 +422,8 @@ internal static class Program
     /// startup" into four minutes of waiting per release. Watching the handle turns it into a
     /// failure at the moment it happens.
     /// </remarks>
-    private static async Task<Registration?> WaitForRegistrationAsync(
-        Task<Registration> expectation,
+    private static async Task<RevitInstance?> WaitForRegistrationAsync(
+        Task<RevitInstance> expectation,
         Process revit,
         TimeSpan timeout)
     {
@@ -474,22 +533,41 @@ internal static class Program
             return new List<RevitInstallation>();
         }
 
-        // Checked rather than assumed, because the failure is silent from out here: an untrusted
-        // add-in makes Revit raise a modal dialog whose default answer is "do not load", and the
-        // sweep would simply wait out its deadline in front of it.
-        var untrusted = selected.Where(installation => !installation.IsProbeTrusted).ToList();
-        if (untrusted.Count == 0)
+        // Checked rather than assumed, because the failure is silent from out here: an unsigned
+        // add-in Revit has not been told to trust brings up a modal dialog whose default answer is
+        // "do not load", before any add-in gets its OnStartup. The sweep would wait out its whole
+        // deadline in front of it and report that the probe never registered.
+        //
+        // Not only our own add-in. The dialog belongs to whichever add-in is untrusted, and a
+        // machine somebody actually works on collects them.
+        var blocked = selected
+            .Select(installation => (Installation: installation, Untrusted: AddInTrust.Untrusted(installation)))
+            .Where(pair => pair.Untrusted.Count > 0)
+            .ToList();
+
+        if (blocked.Count == 0)
             return selected;
+
+        foreach (var (installation, untrusted) in blocked)
+        {
+            Console.WriteLine($"Revit {installation.Release} would stop and ask about:");
+
+            foreach (var addIn in untrusted)
+            {
+                var ours = string.Equals(addIn.AddInId, ProbeDeployment.AddInId, StringComparison.OrdinalIgnoreCase);
+                Console.WriteLine($"  {addIn}{(ours ? "  <- ours, run --deploy" : string.Empty)}");
+            }
+        }
 
         if (options.AllowUntrusted)
         {
-            Console.WriteLine("not trusted for " + string.Join(", ", untrusted.Select(one => one.Release))
-                              + " - answer Revit's dialog with \"Always load\" when it appears.");
+            Console.WriteLine("continuing anyway - answer each dialog with \"Always load\" as it appears.");
             return selected;
         }
 
-        Console.WriteLine("The probe is not trusted for: " + string.Join(", ", untrusted.Select(one => one.Release)));
-        Console.WriteLine("Revit would stop at its unsigned-add-in dialog. Run --deploy to record the trust.");
+        Console.WriteLine();
+        Console.WriteLine("Trust them in Revit (\"Always load\"), uninstall them, or pass --allow-untrusted");
+        Console.WriteLine("to answer the dialogs by hand.");
         return new List<RevitInstallation>();
     }
 

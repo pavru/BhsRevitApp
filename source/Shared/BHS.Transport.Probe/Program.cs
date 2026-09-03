@@ -92,6 +92,29 @@ internal sealed class RevitSide : RevitSideChannel.RevitSideChannelBase
     }
 }
 
+/// <summary>
+/// A Revit-side end that answers, but will not say which contract it speaks.
+/// </summary>
+/// <remarks>
+/// The impostor recovery has to refuse. Everything about it is right - the name parses, the
+/// process serving it is the one the name is written for - and the only thing wrong is the one
+/// thing a handshake would have caught, which on the recovery path there is no handshake to catch.
+/// </remarks>
+internal sealed class MuteRevitSide : RevitSideChannel.RevitSideChannelBase
+{
+    public override Task<ConfigurationSnapshot> GetConfiguration(ConfigurationRequest request, ServerCallContext context) =>
+        Task.FromResult(new ConfigurationSnapshot { InstanceId = "mute", Revision = 1 });
+}
+
+/// <summary>The Win-side end the registry checks use: registration handled by the framework.</summary>
+internal sealed class RegistryWinSide : WinSideService
+{
+    public RegistryWinSide(RevitInstanceRegistry registry)
+        : base(registry, "win-side-registry")
+    {
+    }
+}
+
 internal static class Current
 {
     public static int ProcessId { get; } = Process.GetCurrentProcess().Id;
@@ -119,6 +142,7 @@ internal static class Program
         var suffix = Guid.NewGuid().ToString("N").Substring(0, 8);
 
         failures += await InProcessAsync(suffix);
+        failures += await RegistryAsync(suffix);
         failures += await CrossProcessAsync(suffix);
 
         Console.WriteLine(failures == 0 ? "== all checks passed" : $"== {failures} check(s) FAILED");
@@ -261,6 +285,148 @@ internal static class Program
         return failures;
     }
 
+    /// <summary>
+    /// The register Win-side keeps of the Revit processes it can talk to.
+    /// </summary>
+    /// <remarks>
+    /// Everything here except a process actually dying, which needs a second process and is
+    /// checked in <see cref="CrossProcessAsync"/>. Worth doing on every runtime rather than only
+    /// where Win-side runs: the transport is built for .NET Framework as well, and a registry that
+    /// quietly stops compiling or working there would be found by a Revit sweep at the earliest.
+    /// </remarks>
+    private static async Task<int> RegistryAsync(string suffix)
+    {
+        var failures = 0;
+
+        // Named the way a real Revit-side names itself. Recovery reads a process id and a release
+        // back out of the name, and a name with a probe suffix on it does not parse.
+        var revitPipe = PipeNames.RevitSideInstance(Current.ProcessId, 2026);
+        var mutePipe = PipeNames.RevitSideInstance(Current.ProcessId, 2099);
+        var ghostPipe = PipeNames.RevitSideInstance(Current.ProcessId, 2098);
+        var winPipe = PipeNames.WinSide + ".registry." + suffix;
+
+        // Short on purpose: everything here is in one process, and one check runs against a name
+        // nobody serves, where the timeout is what is being waited out.
+        using var registry = new RevitInstanceRegistry(TimeSpan.FromMilliseconds(700));
+
+        var arrived = new System.Collections.Concurrent.ConcurrentBag<RevitInstance>();
+        var departed = new System.Collections.Concurrent.ConcurrentBag<RevitInstance>();
+        registry.Arrived += (_, e) => arrived.Add(e.Instance);
+        registry.Departed += (_, e) => departed.Add(e.Instance);
+
+        using var winServer = PipeTransport.CreateServer(winPipe);
+        WinSideChannel.BindService(winServer.ServiceBinder, new RegistryWinSide(registry));
+        winServer.Start();
+
+        using var revitServer = PipeTransport.CreateServer(revitPipe);
+        RevitSideChannel.BindService(revitServer.ServiceBinder, new RevitSide());
+        revitServer.Start();
+
+        using var muteServer = PipeTransport.CreateServer(mutePipe);
+        RevitSideChannel.BindService(muteServer.ServiceBinder, new MuteRevitSide());
+        muteServer.Start();
+
+        var client = new WinSideChannel.WinSideChannelClient(PipeTransport.CreateClient(winPipe));
+
+        // Expect before register, the way the runner does it before starting a process.
+        var token = "registry-" + suffix;
+        var expectation = registry.Expect(token);
+
+        await client.RegisterAsync(new RegisterRequest
+        {
+            ContractVersion = Handshake.ContractVersion,
+            InstanceId = "revit-side-1",
+            CorrelationToken = token,
+            PipeName = revitPipe,
+            RevitVersion = 2026,
+            ProcessId = Current.ProcessId,
+        });
+
+        var claimed = await Task.WhenAny(expectation, Task.Delay(5000)) == expectation ? await expectation : null;
+        Check(ref failures, "registry: an expected token completes when it arrives", claimed is not null);
+
+        if (claimed is not null)
+        {
+            Check(ref failures, "registry: the instance is the one that was expected",
+                claimed.CorrelationToken == token && claimed.StartedByUs && claimed.Release == 2026);
+
+            // Layer two applied by the registry rather than merely available to it.
+            Check(ref failures, "registry: the peer is verified against its own pipe", claimed.Verified);
+
+            Check(ref failures, "registry: the caller account is recorded",
+                string.Equals(claimed.Account, Current.UserName, StringComparison.OrdinalIgnoreCase));
+
+            Check(ref failures, "registry: it is watched for exit",
+                registry.Watched.Any(one => one.InstanceId == claimed.InstanceId));
+        }
+
+        Check(ref failures, "registry: lookup by correlation token",
+            registry.ByCorrelationToken(token)?.InstanceId == "revit-side-1");
+
+        // A registration nobody started. This is the ordinary case - most Revit sessions begin
+        // with somebody double-clicking - and the registry has to record it without claiming it.
+        await client.RegisterAsync(new RegisterRequest
+        {
+            ContractVersion = Handshake.ContractVersion,
+            InstanceId = "revit-side-nobodys",
+            PipeName = mutePipe,
+            RevitVersion = 2099,
+            ProcessId = Current.ProcessId,
+        });
+
+        Check(ref failures, "registry: an untokened instance is recorded but not claimed",
+            registry.TryGet("revit-side-nobodys", out var strangers) && strangers is { StartedByUs: false });
+
+        // A peer whose pipe nobody serves. Recorded, because a momentarily busy companion is not
+        // an impostor - and marked, because an impostor is what it might be.
+        await client.RegisterAsync(new RegisterRequest
+        {
+            ContractVersion = Handshake.ContractVersion,
+            InstanceId = "revit-side-ghost",
+            PipeName = ghostPipe,
+            RevitVersion = 2098,
+            ProcessId = Current.ProcessId,
+        });
+
+        Check(ref failures, "registry: a peer that cannot be verified is recorded unverified",
+            registry.TryGet("revit-side-ghost", out var ghost) && ghost is { Verified: false });
+
+        Check(ref failures, "registry: three instances, one arrival event each",
+            registry.Instances.Count == 3 && arrived.Count == 3);
+
+        // A Win-side that restarted: nothing in hand, everything to be found again.
+        using (var restarted = new RevitInstanceRegistry(TimeSpan.FromMilliseconds(700)))
+        {
+            await restarted.RecoverAsync();
+
+            var recovered = restarted.Instances.FirstOrDefault(one => one.PipeName == revitPipe);
+
+            Check(ref failures, "registry: enumeration recovers a live instance",
+                recovered is { Origin: RevitInstanceOrigin.Recovered, Verified: true }
+                && recovered.InstanceId == "revit-side-1"
+                && recovered.Release == 2026);
+
+            Check(ref failures, "registry: a recovered instance is never claimed as ours",
+                recovered is { StartedByUs: false });
+
+            // The one thing recovery has no handshake for, so the snapshot has to carry it.
+            Check(ref failures, "registry: recovery refuses a peer that names no contract",
+                restarted.Instances.All(one => one.PipeName != mutePipe));
+        }
+
+        var dropped = await registry.SweepAsync();
+        Check(ref failures, "registry: a sweep drops what no longer answers",
+            dropped == 1 && !registry.TryGet("revit-side-ghost", out _));
+
+        Check(ref failures, "registry: departure is announced",
+            departed.Any(one => one.InstanceId == "revit-side-ghost"));
+
+        Check(ref failures, "registry: forgetting an instance twice is not an error",
+            registry.Forget("revit-side-nobodys") && !registry.Forget("revit-side-nobodys"));
+
+        return failures;
+    }
+
     /// <summary>The real shape: two processes, one pipe between them.</summary>
     private static async Task<int> CrossProcessAsync(string suffix)
     {
@@ -301,6 +467,24 @@ internal static class Program
             Check(ref failures, "cross-process: peer is the child process",
                 found && serverPid == child.Id && !string.IsNullOrEmpty(image));
 
+            // The one thing a single process cannot check: a registered instance dying. Nothing
+            // tells the registry - it watches the process it was given, which is the only way a
+            // departure is noticed at the moment it happens rather than at the next sweep.
+            using var registry = new RevitInstanceRegistry(TimeSpan.FromSeconds(2));
+            var recorded = registry.Record(
+                new RegisterRequest
+                {
+                    ContractVersion = Handshake.ContractVersion,
+                    InstanceId = "child-" + suffix,
+                    PipeName = childPipe,
+                    RevitVersion = 2026,
+                    ProcessId = child.Id,
+                },
+                Current.UserName);
+
+            Check(ref failures, "cross-process: another process verifies as itself",
+                recorded.Verified && registry.Watched.Count == 1);
+
             var client = new RevitSideChannel.RevitSideChannelClient(PipeTransport.CreateClient(childPipe));
 
             var snapshot = await client.GetConfigurationAsync(new ConfigurationRequest());
@@ -334,6 +518,9 @@ internal static class Program
 
             var exited = child.WaitForExit(5000);
             Check(ref failures, "cross-process: child exits on Shutdown", exited && child.ExitCode == 0);
+
+            var forgotten = await WaitForAsync(() => !registry.TryGet("child-" + suffix, out _), 5000);
+            Check(ref failures, "cross-process: the registry drops it when the process goes", forgotten);
         }
         finally
         {

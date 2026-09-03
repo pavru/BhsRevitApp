@@ -53,9 +53,11 @@ public static class Handshake
 /// Ties a Revit process that Win-side started to the registration that eventually arrives from it.
 /// </summary>
 /// <remarks>
-/// Matching by process id would be the obvious thing and does not work: <c>Revit.exe</c> is around
-/// 1.6 MB and behaves like a launcher, so the process id handed back by <c>Process.Start</c> need
-/// not be the process that ends up hosting the add-in.
+/// Matching by process id looked like it would not work, and measurement says otherwise:
+/// <c>Revit.exe</c> is around 1.6 MB and behaves like a launcher, but on all four releases the
+/// process handed back by <c>Process.Start</c> is the one that ends up hosting the add-in. The
+/// token is still needed, for a different reason - it is what tells one of several Revits running
+/// at once from another, and what separates a Revit this side started from one a person opened.
 /// <para>
 /// The token travels in an environment variable rather than on the command line, because a command
 /// line is readable through WMI by any user on the machine, and a token that others can read is

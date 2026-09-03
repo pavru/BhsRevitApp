@@ -57,9 +57,9 @@ message RegisterRequest {
   string instance_id = 2;
 
   // Set when Win-side started this Revit itself. Passed to the process in an environment variable
-  // rather than on the command line, which any user on the machine can read through WMI. Matching
-  // by process id would not do: Revit.exe looks like a launcher, and the process that ends up
-  // hosting the add-in need not be the one that was started.
+  // rather than on the command line, which any user on the machine can read through WMI. It is
+  // what tells one of several Revits running at once from another - measurement settled the
+  // launcher question the other way, and process ids do match.
   string correlation_token = 3;
 
   // Where to call this instance back. Full pipe name without the \\.\pipe\ prefix.
@@ -95,6 +95,11 @@ message ConfigurationSnapshot {
   // The transport is typed; the key space is not. Versioning discipline is still needed, it is
   // just about keys now.
   map<string, string> values = 3;
+
+  // Protocol version of the publisher, for the one path that has no handshake message: Win-side
+  // rebuilding its registry by enumerating the pipe namespace has no RegisterRequest to inspect,
+  // and has to learn the contract from the first thing it can ask for.
+  string contract_version = 4;
 }
 
 message AskRequest {

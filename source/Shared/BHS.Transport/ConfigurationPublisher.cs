@@ -33,7 +33,12 @@ public sealed class ConfigurationPublisher
             throw new ArgumentException("An instance id is required.", nameof(instanceId));
 
         _instanceId = instanceId;
-        _current = new ConfigurationSnapshot { InstanceId = instanceId, Revision = 0 };
+        _current = new ConfigurationSnapshot
+        {
+            InstanceId = instanceId,
+            Revision = 0,
+            ContractVersion = Handshake.ContractVersion,
+        };
     }
 
     /// <summary>What a caller asking right now would be told.</summary>
@@ -68,6 +73,10 @@ public sealed class ConfigurationPublisher
             {
                 InstanceId = _instanceId,
                 Revision = _current.Revision + 1,
+
+                // On every snapshot, not only on the handshake: a consumer that found this
+                // publisher by enumeration never saw a handshake.
+                ContractVersion = Handshake.ContractVersion,
             };
 
             foreach (var pair in values)
