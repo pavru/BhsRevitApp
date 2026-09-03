@@ -1,4 +1,4 @@
-<Project Sdk="BHS.Revit.Sdk/1.3.5">
+<Project Sdk="BHS.Revit.Sdk/1.3.7">
 
     <!--
       Utilities over the Revit API, written against the contracts. Exists to prove and to hold

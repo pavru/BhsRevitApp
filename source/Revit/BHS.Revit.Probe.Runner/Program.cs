@@ -1,6 +1,7 @@
 using System.Diagnostics;
 using System.Globalization;
 using System.Security.Principal;
+using BHS.Revit.Launch;
 using BHS.Transport;
 using BHS.Transport.Configuration;
 using BHS.Transport.Protocol;
@@ -12,7 +13,6 @@ namespace BHS.Revit.Probe.Runner;
 
 internal static class Program
 {
-    private static readonly Stopwatch LaunchClock = new();
     private static readonly string CurrentUser = WindowsIdentity.GetCurrent().Name;
 
     private static async Task<int> Main(string[] args)
@@ -59,10 +59,12 @@ internal static class Program
 
         Console.WriteLine($"serving {PipeNames.WinSide} as {CurrentUser}");
 
+        var launcher = new RevitLauncher(registry);
+
         try
         {
             foreach (var installation in selected)
-                await RunAsync(installation, registry, options, report);
+                await RunAsync(installation, launcher, registry, options, report);
         }
         finally
         {
@@ -83,68 +85,83 @@ internal static class Program
     }
 
     /// <summary>One release: start it, drive it, close it.</summary>
+    /// <remarks>
+    /// Starting, waiting and closing all belong to <see cref="RevitLauncher"/> now. They were
+    /// written here first and moved out once they worked, which is why the sweep is still their
+    /// test: whatever Win-side eventually does with them, this exercises them against four live
+    /// Revit releases.
+    /// </remarks>
     private static async Task RunAsync(
         RevitInstallation installation,
+        RevitLauncher launcher,
         RevitInstanceRegistry registry,
         Options options,
         Report report)
     {
         Report.Heading($"Revit {installation.Release} - {installation.ExecutablePath}");
 
-        var token = CorrelationToken.New();
+        using var session = await launcher.LaunchAsync(
+            installation,
+            new RevitLaunchOptions
+            {
+                RegistrationTimeout = options.RegistrationTimeout,
+                ShutdownTimeout = options.ShutdownTimeout,
+            });
 
-        // Before the process, not after: a Revit that registered unusually fast would otherwise
-        // arrive before anybody was listening for its token.
-        var expectation = registry.Expect(token);
-
-        var startInfo = new ProcessStartInfo(installation.ExecutablePath)
-        {
-            WorkingDirectory = installation.InstallDirectory,
-            UseShellExecute = false,
-        };
-
-        // /nosplash is accepted everywhere and honoured on 2026 and later only; on 2024 and 2025
-        // the splash window appears regardless. Harmless either way - nothing here waits on a
-        // window, which is the point of registering over the channel instead.
-        startInfo.ArgumentList.Add("/nosplash");
-
-        // In the environment rather than on the command line: any user on this machine can read
-        // another's command line through WMI, and a token that others can read is not a token.
-        startInfo.Environment[CorrelationToken.EnvironmentVariable] = token;
-
-        LaunchClock.Restart();
-
-        using var revit = Process.Start(startInfo);
-        if (revit is null)
-        {
-            report.Check($"Revit {installation.Release} starts", false);
-            return;
-        }
-
-        Report.Note("launched", "pid " + revit.Id.ToString(CultureInfo.InvariantCulture));
+        if (session.Process is not null)
+            Report.Note("launched", "pid " + session.Process.Id.ToString(CultureInfo.InvariantCulture));
 
         try
         {
-            var instance = await WaitForRegistrationAsync(expectation, revit, options.RegistrationTimeout);
-            var elapsed = LaunchClock.Elapsed;
-
-            if (!report.Check("the add-in registers over the well-known pipe", instance is not null))
+            if (!report.Check("the add-in registers over the well-known pipe", session.Registered))
             {
-                // The one path the runner has to know without being told, because a probe that
-                // never registered never got to tell it anything.
-                Report.Note("probe log", ProbeLogPath(revit.Id));
-                Report.Note("no log there means", "the add-in was never loaded - check the Revit journal");
+                ExplainFailedLaunch(session);
                 return;
             }
 
-            Report.Note("registered after", elapsed.TotalSeconds.ToString("F1", CultureInfo.InvariantCulture) + "s");
+            Report.Note("registered after", session.Elapsed.TotalSeconds.ToString("F1", CultureInfo.InvariantCulture) + "s");
 
-            await InspectAsync(installation, registry, instance!, revit, options, report);
+            await InspectAsync(installation, registry, session, options, report);
         }
         finally
         {
-            registry.StopExpecting(token);
-            Finish(revit, options, report);
+            Finish(session, options, report);
+        }
+    }
+
+    /// <summary>Says what to look at when a Revit never announced itself.</summary>
+    /// <remarks>
+    /// The one path the runner has to explain without being told anything, because a probe that
+    /// never registered never got to tell it anything.
+    /// </remarks>
+    private static void ExplainFailedLaunch(RevitSession session)
+    {
+        switch (session.Outcome)
+        {
+            case RevitLaunchOutcome.NotStarted:
+                Report.Note("Revit would not start at all", session.Installation.ExecutablePath);
+                break;
+
+            case RevitLaunchOutcome.ExitedBeforeRegistering:
+                Report.Note("Revit exited before registering", "exit code " + ExitCode(session));
+                break;
+
+            default:
+                Report.Note("probe log", ProbeLogPath(session.Process?.Id ?? 0));
+                Report.Note("no log there means", "the add-in was never loaded - check the Revit journal");
+                break;
+        }
+    }
+
+    private static string ExitCode(RevitSession session)
+    {
+        try
+        {
+            return session.Process?.ExitCode.ToString(CultureInfo.InvariantCulture) ?? "unknown";
+        }
+        catch (InvalidOperationException)
+        {
+            return "unknown";
         }
     }
 
@@ -152,11 +169,13 @@ internal static class Program
     private static async Task InspectAsync(
         RevitInstallation installation,
         RevitInstanceRegistry registry,
-        RevitInstance instance,
-        Process revit,
+        RevitSession session,
         Options options,
         Report report)
     {
+        var instance = session.Instance!;
+        var revit = session.Process!;
+
         // The launcher question, settled from the inside this time: the process that reports for
         // duty is the process that was started.
         report.Check("the registering process is the one that was launched", instance.ProcessId == revit.Id);
@@ -208,7 +227,7 @@ internal static class Program
             return;
         }
 
-        await CloseAsync(client, registry, instance, revit, options, report);
+        await CloseAsync(session, registry, options, report);
     }
 
     /// <summary>
@@ -368,25 +387,15 @@ internal static class Program
 
     /// <summary>Close it the way it is meant to be closed, and measure how long that takes.</summary>
     private static async Task CloseAsync(
-        RevitSideChannel.RevitSideChannelClient client,
+        RevitSession session,
         RevitInstanceRegistry registry,
-        RevitInstance instance,
-        Process revit,
         Options options,
         Report report)
     {
+        var instance = session.Instance!;
         var closing = Stopwatch.StartNew();
 
-        try
-        {
-            await client.ShutdownAsync(new ShutdownRequest { Reason = "probe sweep finished" });
-        }
-        catch (RpcException error)
-        {
-            Report.Note("shutdown call failed", error.Status.Detail);
-        }
-
-        var exited = await WaitForExitAsync(revit, options.ShutdownTimeout);
+        var exited = await session.CloseAsync(options.ShutdownTimeout, "probe sweep finished");
         report.Check("Revit closes on an ExitRevit posted from inside", exited);
 
         if (!exited)
@@ -402,7 +411,7 @@ internal static class Program
 
     private static HashSet<string> ShippedAssemblies(RevitInstallation installation)
     {
-        var lib = Path.Combine(installation.ProbeDirectory, "Lib");
+        var lib = Path.Combine(ProbeInstaller.ProbeDirectory(installation), "Lib");
         var shipped = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
 
         if (!Directory.Exists(lib))
@@ -414,51 +423,12 @@ internal static class Program
         return shipped;
     }
 
-    /// <summary>
-    /// Waits for a registration, watching the process rather than only the clock.
-    /// </summary>
+    /// <summary>Polls until a condition holds, or until the time runs out.</summary>
     /// <remarks>
-    /// A cold Revit start is around a minute, so a plain timeout would turn "it crashed on
-    /// startup" into four minutes of waiting per release. Watching the handle turns it into a
-    /// failure at the moment it happens.
+    /// For the things that happen a moment after something else - configuration arriving, an
+    /// instance leaving the registry. Everything worth waiting minutes for has a handle to watch
+    /// instead, and that waiting lives in <see cref="RevitLauncher"/>.
     /// </remarks>
-    private static async Task<RevitInstance?> WaitForRegistrationAsync(
-        Task<RevitInstance> expectation,
-        Process revit,
-        TimeSpan timeout)
-    {
-        var deadline = DateTime.UtcNow + timeout;
-
-        while (DateTime.UtcNow < deadline)
-        {
-            if (await Task.WhenAny(expectation, Task.Delay(500)) == expectation)
-                return await expectation;
-
-            if (revit.HasExited)
-            {
-                Report.Note("Revit exited before registering", "exit code " + revit.ExitCode.ToString(CultureInfo.InvariantCulture));
-                return null;
-            }
-        }
-
-        return null;
-    }
-
-    private static async Task<bool> WaitForExitAsync(Process process, TimeSpan timeout)
-    {
-        using var cancellation = new CancellationTokenSource(timeout);
-
-        try
-        {
-            await process.WaitForExitAsync(cancellation.Token);
-            return true;
-        }
-        catch (OperationCanceledException)
-        {
-            return false;
-        }
-    }
-
     private static async Task<bool> WaitForAsync(Func<bool> condition, int millisecondsTimeout = 15000)
     {
         var deadline = DateTime.UtcNow.AddMilliseconds(millisecondsTimeout);
@@ -475,27 +445,15 @@ internal static class Program
     }
 
     /// <summary>Kills a Revit that would otherwise be left behind holding a licence seat.</summary>
-    private static void Finish(Process revit, Options options, Report report)
+    private static void Finish(RevitSession session, Options options, Report report)
     {
-        if (options.KeepOpen)
+        if (options.KeepOpen || !session.IsRunning)
             return;
 
-        try
-        {
-            if (revit.HasExited)
-                return;
+        Report.Note("killing", "pid " + (session.Process?.Id.ToString(CultureInfo.InvariantCulture) ?? "?")
+                               + " - it did not close on its own");
 
-            Report.Note("killing", "pid " + revit.Id.ToString(CultureInfo.InvariantCulture) + " - it did not close on its own");
-            revit.Kill(entireProcessTree: true);
-            revit.WaitForExit(10000);
-        }
-        catch (InvalidOperationException)
-        {
-        }
-        catch (System.ComponentModel.Win32Exception error)
-        {
-            report.Check("the leftover Revit could be killed: " + error.Message, false);
-        }
+        report.Check("the leftover Revit could be killed", session.Kill());
     }
 
     private static bool TryDeploy(IReadOnlyList<RevitInstallation> installed)
@@ -524,7 +482,7 @@ internal static class Program
         foreach (var asked in options.Releases.Where(asked => selected.All(found => found.Release != asked)))
             Console.WriteLine($"Revit {asked} is not installed.");
 
-        var missing = selected.Where(installation => !installation.IsProbeDeployed).ToList();
+        var missing = selected.Where(installation => !ProbeInstaller.IsDeployed(installation)).ToList();
         if (missing.Count > 0)
         {
             Console.WriteLine("The probe is not installed for: " + string.Join(", ", missing.Select(one => one.Release)));

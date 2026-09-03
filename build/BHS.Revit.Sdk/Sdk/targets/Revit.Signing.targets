@@ -37,7 +37,10 @@
         -->
         <RevitSignTimestampServer Condition="'$(RevitSignTimestampServer)' == ''"></RevitSignTimestampServer>
 
-        <_RevitSigningScript>$(MSBuildThisFileDirectory)..\tools\Sign-RevitAddIn.ps1</_RevitSigningScript>
+        <!-- scripts\ rather than tools\, which NuGet reserves for its own install scripts. It
+             warns about a packaged .ps1 wherever it sits, so the warning is suppressed in the SDK
+             project instead; the folder name is just honesty about what this is. -->
+        <_RevitSigningScript>$(MSBuildThisFileDirectory)..\scripts\Sign-RevitAddIn.ps1</_RevitSigningScript>
     </PropertyGroup>
 
     <!--

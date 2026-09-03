@@ -1,0 +1,27 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+    <!--
+      Starting Revit from outside it, and being told when it is ready.
+
+      Win-side, not Revit-side: never loaded into Revit, references no Revit API, one target
+      framework rather than four. It knows where Revit is installed and how to start it, which is
+      knowledge the process inside Revit has no use for.
+
+      Extracted from the probe runner rather than written for a future caller. Everything here was
+      already working there - the correlation token, the wait that watches the process handle, the
+      shutdown from inside - and the runner still uses it, so it keeps a consumer that is exercised
+      against four live Revit releases rather than against an idea of one.
+    -->
+
+    <PropertyGroup>
+        <TargetFramework>net10.0-windows</TargetFramework>
+        <RootNamespace>BHS.Revit.Launch</RootNamespace>
+        <IsPackable>false</IsPackable>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="..\..\Shared\BHS.Shared\BHS.Shared.csproj"/>
+        <ProjectReference Include="..\..\Shared\BHS.Transport\BHS.Transport.csproj"/>
+    </ItemGroup>
+
+</Project>

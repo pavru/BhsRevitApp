@@ -35,6 +35,13 @@
     <Project Path="source/Shared/BHS.Transport.Probe/BHS.Transport.Probe.csproj" Type="C#" />
   </Folder>
 
+  <!-- Win-side: separate processes that know about Revit but are never loaded into it. -->
+  <Folder Name="/WinSide/">
+    <!-- Starts a Revit and waits to be told it is ready. Extracted from the probe runner, which
+         is still its test - four live releases beat any argument about how it should behave. -->
+    <Project Path="source/WinSide/BHS.Revit.Launch/BHS.Revit.Launch.csproj" Type="C#" />
+  </Folder>
+
   <!-- Revit-side framework: loaded into the Revit process, multi-targeted on the Revit axis. -->
   <Folder Name="/Revit/">
     <Project Path="source/Revit/BHS.Revit.Abstractions/BHS.Revit.Abstractions.csproj" Type="C#" />

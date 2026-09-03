@@ -1,4 +1,5 @@
 using System.Diagnostics;
+using BHS.Revit.Launch;
 using Microsoft.Win32;
 
 namespace BHS.Revit.Probe.Runner;
@@ -58,15 +59,15 @@ internal static class ProbeInstaller
         {
             var removed = false;
 
-            if (File.Exists(installation.ManifestPath))
+            if (File.Exists(ManifestPath(installation)))
             {
-                File.Delete(installation.ManifestPath);
+                File.Delete(ManifestPath(installation));
                 removed = true;
             }
 
-            if (Directory.Exists(installation.ProbeDirectory))
+            if (Directory.Exists(ProbeDirectory(installation)))
             {
-                Directory.Delete(installation.ProbeDirectory, recursive: true);
+                Directory.Delete(ProbeDirectory(installation), recursive: true);
                 removed = true;
             }
 
@@ -114,6 +115,22 @@ internal static class ProbeInstaller
         using var key = Registry.CurrentUser.OpenSubKey(installation.TrustKeyPath);
         return key?.GetValue(ProbeDeployment.AddInId) is int allowed && allowed == 1;
     }
+
+    /// <summary>Where the SDK puts the probe manifest for one release.</summary>
+    /// <remarks>
+    /// Worked out the same way the SDK works it out, rather than read back from it. A wrong value
+    /// fails visibly at the deployment check instead of quietly at launch.
+    /// </remarks>
+    public static string ManifestPath(RevitInstallation installation) =>
+        Path.Combine(installation.AddInsDirectory, ProbeDeployment.ManifestFileName);
+
+    /// <summary>The folder the probe and its dependencies are laid out in.</summary>
+    public static string ProbeDirectory(RevitInstallation installation) =>
+        Path.Combine(installation.AddInsDirectory, ProbeDeployment.VendorId, ProbeDeployment.AddInName);
+
+    /// <summary>True when both halves of an installation are present.</summary>
+    public static bool IsDeployed(RevitInstallation installation) =>
+        File.Exists(ManifestPath(installation)) && Directory.Exists(ProbeDirectory(installation));
 
     /// <summary>The repository this build came from, or null when it was copied elsewhere.</summary>
     public static string? FindRepositoryRoot()

@@ -1,10 +1,10 @@
 using System.Xml.Linq;
 using Microsoft.Win32;
 
-namespace BHS.Revit.Probe.Runner;
+namespace BHS.Revit.Launch;
 
 /// <summary>An add-in that will stop a headless start, and where it was found.</summary>
-internal sealed class UntrustedAddIn
+public sealed class UntrustedAddIn
 {
     public UntrustedAddIn(string name, string addInId, string manifestPath)
     {
@@ -37,7 +37,7 @@ internal sealed class UntrustedAddIn
 /// question before starting Revit turns four minutes of silence into one line.
 /// </para>
 /// </remarks>
-internal static class AddInTrust
+public static class AddInTrust
 {
     /// <summary>
     /// Every add-in installed for this release that is neither signed nor trusted.
