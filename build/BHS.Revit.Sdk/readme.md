@@ -6,7 +6,7 @@ package references, `.addin` manifest generation, and publishing.
 
 ## Version Information
 
-**Version:** 1.3.0
+**Version:** 1.3.1
 
 Bump this on every change, and update the `Sdk="BHS.Revit.Sdk/<version>"` attribute in the
 projects under `source/` with it. The package carries an MSBuild task assembly, so any process

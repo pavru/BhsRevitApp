@@ -119,10 +119,18 @@
 
         <AssetTargetFallback>$(AssetTargetFallback);$(_RevitBaseTfm)-windows10.0.22000.0;$(_RevitBaseTfm)</AssetTargetFallback>
 
-        <!-- Fires once per framework on the [SupportedOSPlatform("revit2026.0")] attribute the SDK
-             generates for us. Suppressing it also stops CA1416 from reasoning about Windows-only
-             APIs, which costs nothing here: everything Revit-side is Windows. -->
-        <NoWarn>$(NoWarn);CA1418</NoWarn>
+        <!--
+          Both are the platform analyser meeting a platform it has never heard of.
+
+          CA1418 fires once per framework on the [SupportedOSPlatform("revit2026.0")] attribute the
+          SDK generates for us.
+
+          CA1416 fires on every call into anything annotated for Windows - "this call site is
+          reachable on 'revit' 2026.0 and later; the member is only supported on 'Windows'" - and
+          there is no way to tell the analyser that `revit` implies Windows. Revit-side code is
+          Windows by definition, so there is no mistake here for the rule to catch.
+        -->
+        <NoWarn>$(NoWarn);CA1416;CA1418</NoWarn>
     </PropertyGroup>
 
     <ItemGroup Condition="'$(IsRevitTfm)' == 'true' And '$(TargetFrameworkIdentifier)' == '.NETCoreApp'">

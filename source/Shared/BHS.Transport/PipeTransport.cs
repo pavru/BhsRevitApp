@@ -46,7 +46,15 @@ public static class PipeTransport
         if (string.IsNullOrEmpty(pipeName))
             throw new ArgumentException("A pipe name is required.", nameof(pipeName));
 
-        return new NamedPipeServer(pipeName);
+        var options = new NamedPipeServerOptions
+        {
+            // An explicit descriptor rather than the library's CurrentUserOnly switch: the switch
+            // rests on PipeOptions.CurrentUserOnly, which is .NET 6 and later, so on Revit 2024 it
+            // has nothing to rest on. A descriptor is written the same way everywhere.
+            PipeSecurity = PipeAccess.CurrentUserOnly(),
+        };
+
+        return new NamedPipeServer(pipeName, options);
     }
 
     /// <summary>

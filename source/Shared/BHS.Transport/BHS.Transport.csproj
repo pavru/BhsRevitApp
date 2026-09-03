@@ -4,13 +4,17 @@
       The channel between Revit-side and Win-side. Side-agnostic on purpose: both ends host a
       server and both call the other, so there is one assembly rather than a matched pair.
 
-      It sits on the plain .NET axis. Revit projects reach it through the ordinary nearest-
-      framework negotiation - net48 for Revit 2024, net8.0 for 2025 and 2026, net10.0 for 2027 -
-      and it is restored once, on its own terms.
+      Windows-only, and says so: named pipe descriptors and process inspection are Windows APIs,
+      and a plain net8.0 assembly calling them is a CA1416 waiting to happen. Nothing is lost by
+      admitting it - Revit is Windows-only and so is Win-side.
+
+      Revit projects reach it through the ordinary nearest-framework negotiation, measured rather
+      than assumed: net48-revit2024 binds net48, both net8.0-revit TFMs bind net8.0-windows, and
+      net10.0-revit2027 binds net10.0-windows. It is restored once, on its own terms.
     -->
 
     <PropertyGroup>
-        <TargetFrameworks>net48;net8.0;net10.0</TargetFrameworks>
+        <TargetFrameworks>net48;net8.0-windows;net10.0-windows</TargetFrameworks>
         <RootNamespace>BHS.Transport</RootNamespace>
     </PropertyGroup>
 
