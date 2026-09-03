@@ -1,7 +1,7 @@
 {
   "revitVersion": "2025",
-  "sourcePath": "C:\\Program Files\\Autodesk\\Revit 2025",
-  "collectedUtc": "2026-09-03T02:44:09.7587417Z",
+  "sourcePath": "C:/Program Files/Autodesk/Revit 2025",
+  "collectedUtc": "2026-09-03T21:32:04.9286305Z",
   "hostVendorMarker": "Autodesk",
   "assemblies": [
     {
@@ -9121,6 +9121,113 @@
       "fileVersion": "2.1.7",
       "vendor": "Xceed Software Inc.",
       "members": []
+    }
+  ],
+  "redirects": [
+    {
+      "name": "Microsoft.Extensions.Caching.Abstractions",
+      "publicKeyToken": "adb9793829ddae60",
+      "oldVersionLow": "0.0.0.0",
+      "oldVersionHigh": "2.2.0.0",
+      "newVersion": "2.2.0.0"
+    },
+    {
+      "name": "Microsoft.Extensions.Caching.Memory",
+      "publicKeyToken": "adb9793829ddae60",
+      "oldVersionLow": "0.0.0.0",
+      "oldVersionHigh": "2.2.0.0",
+      "newVersion": "2.2.0.0"
+    },
+    {
+      "name": "Microsoft.Extensions.Primitives",
+      "publicKeyToken": "adb9793829ddae60",
+      "oldVersionLow": "0.0.0.0",
+      "oldVersionHigh": "2.2.0.0",
+      "newVersion": "2.2.0.0"
+    },
+    {
+      "name": "Microsoft.Extensions.DependencyInjection.Abstractions",
+      "publicKeyToken": "adb9793829ddae60",
+      "oldVersionLow": "0.0.0.0",
+      "oldVersionHigh": "2.2.0.0",
+      "newVersion": "2.2.0.0"
+    },
+    {
+      "name": "Microsoft.Extensions.Options",
+      "publicKeyToken": "adb9793829ddae60",
+      "oldVersionLow": "0.0.0.0",
+      "oldVersionHigh": "2.2.0.0",
+      "newVersion": "2.2.0.0"
+    },
+    {
+      "name": "Microsoft.Extensions.Logging.Abstractions",
+      "publicKeyToken": "adb9793829ddae60",
+      "oldVersionLow": "0.0.0.0",
+      "oldVersionHigh": "2.2.0.0",
+      "newVersion": "2.2.0.0"
+    },
+    {
+      "name": "Microsoft.Extensions.Logging",
+      "publicKeyToken": "adb9793829ddae60",
+      "oldVersionLow": "0.0.0.0",
+      "oldVersionHigh": "2.2.0.0",
+      "newVersion": "2.2.0.0"
+    },
+    {
+      "name": "Microsoft.Practices.Unity",
+      "publicKeyToken": "31bf3856ad364e35",
+      "oldVersionLow": "0.0.0.0",
+      "oldVersionHigh": "3.5.0.0",
+      "newVersion": "3.5.0.0"
+    },
+    {
+      "name": "Microsoft.Practices.Unity.Configuration",
+      "publicKeyToken": "31bf3856ad364e35",
+      "oldVersionLow": "0.0.0.0",
+      "oldVersionHigh": "3.5.0.0",
+      "newVersion": "3.5.0.0"
+    },
+    {
+      "name": "Newtonsoft.Json",
+      "publicKeyToken": "30ad4fe6b2a6aeed",
+      "oldVersionLow": "0.0.0.0",
+      "oldVersionHigh": "13.0.0.0",
+      "newVersion": "13.0.0.0"
+    },
+    {
+      "name": "System.Net.Http.Formatting",
+      "publicKeyToken": "31bf3856ad364e35",
+      "oldVersionLow": "0.0.0.0",
+      "oldVersionHigh": "5.2.9.0",
+      "newVersion": "5.2.9.0"
+    },
+    {
+      "name": "System.Diagnostics.DiagnosticSource",
+      "publicKeyToken": "cc7b13ffcd2ddd51",
+      "oldVersionLow": "0.0.0.0",
+      "oldVersionHigh": "4.0.1.0",
+      "newVersion": "4.0.1.0"
+    },
+    {
+      "name": "System.ComponentModel.Annotations",
+      "publicKeyToken": "b03f5f7f11d50a3a",
+      "oldVersionLow": "0.0.0.0",
+      "oldVersionHigh": "4.2.1.0",
+      "newVersion": "4.2.1.0"
+    },
+    {
+      "name": "RestSharp",
+      "publicKeyToken": "598062e77f915f75",
+      "oldVersionLow": "0.0.0.0",
+      "oldVersionHigh": "108.0.1.0",
+      "newVersion": "108.0.1.0"
+    },
+    {
+      "name": "System.Reflection.TypeExtensions",
+      "publicKeyToken": "b03f5f7f11d50a3a",
+      "oldVersionLow": "0.0.0.0",
+      "oldVersionHigh": "4.1.1.0",
+      "newVersion": "4.1.1.0"
     }
   ]
 }

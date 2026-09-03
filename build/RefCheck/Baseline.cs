@@ -58,6 +58,45 @@ internal sealed class BaselineAssembly
 }
 
 /// <summary>
+/// One <c>bindingRedirect</c> out of <c>Revit.exe.config</c>.
+/// </summary>
+/// <remarks>
+/// Part of the model rather than a detail, because without redirects the diagnosis is wrong in both
+/// directions. Measured twice on Revit 2024: <c>Newtonsoft.Json</c> is dangerous <em>because</em> a
+/// redirect collapses both copies onto one identity, and <c>System.ComponentModel.Annotations</c> is
+/// safe <em>because</em> a redirect covers it - a tool that reads neither calls the first harmless
+/// and the second broken.
+/// <para>
+/// Only meaningful on the .NET Framework axis. Revit 2025 and later run on .NET, where there are no
+/// redirects at all and the simple name goes to whoever loaded it first.
+/// </para>
+/// </remarks>
+internal sealed class BaselineRedirect
+{
+    public string Name { get; set; } = "";
+
+    public string PublicKeyToken { get; set; } = "";
+
+    public string OldVersionLow { get; set; } = "";
+
+    public string OldVersionHigh { get; set; } = "";
+
+    public string NewVersion { get; set; } = "";
+
+    /// <summary>Whether a reference to <paramref name="version"/> is caught by this redirect.</summary>
+    public bool Covers(string name, Version version)
+    {
+        if (!string.Equals(name, Name, StringComparison.OrdinalIgnoreCase))
+            return false;
+
+        return Version.TryParse(OldVersionLow, out var low)
+               && Version.TryParse(OldVersionHigh, out var high)
+               && version >= low
+               && version <= high;
+    }
+}
+
+/// <summary>
 /// The assemblies whose member surface is worth storing: the ones a Revit-side project
 /// actually redistributes. Shared by every Revit version, so it lives in its own file.
 /// </summary>
@@ -130,6 +169,22 @@ internal sealed class Baseline
 
     public List<BaselineAssembly> Assemblies { get; set; } = [];
 
+    /// <summary>Binding redirects from <c>Revit.exe.config</c>. Empty on the .NET axis.</summary>
+    public List<BaselineRedirect> Redirects { get; set; } = [];
+
+    /// <summary>
+    /// Whether this release runs on .NET Framework, where the binding rules are different.
+    /// </summary>
+    /// <remarks>
+    /// The two axes fail differently and the conclusion does not carry across, which is measured:
+    /// on .NET a request for a higher version is refused outright - that is what stopped an add-in
+    /// loading on Revit 2026 - while on .NET Framework the binder answered a request for
+    /// <c>System.Memory</c> 4.0.2.0 with a 4.0.1.1 file out of another vendor's add-in folder.
+    /// </remarks>
+    [JsonIgnore]
+    public bool IsNetFramework =>
+        int.TryParse(RevitVersion, out var year) && year <= 2024;
+
     [JsonIgnore]
     public Dictionary<string, BaselineAssembly> ByName { get; private set; } = new(StringComparer.OrdinalIgnoreCase);
 
@@ -167,6 +222,43 @@ internal sealed class Baseline
     /// every managed assembly; the member surface only for those named in <paramref name="watched"/>,
     /// because indexing all of them costs megabytes for assemblies no add-in would ever redistribute.
     /// </summary>
+    /// <summary>Reads the <c>bindingRedirect</c> elements out of Revit's own configuration.</summary>
+    private static IEnumerable<BaselineRedirect> ReadRedirects(string configPath)
+    {
+        if (!File.Exists(configPath)) yield break;
+
+        System.Xml.Linq.XDocument document;
+        try
+        {
+            document = System.Xml.Linq.XDocument.Load(configPath);
+        }
+        catch (System.Xml.XmlException)
+        {
+            yield break;
+        }
+
+        System.Xml.Linq.XNamespace ns = "urn:schemas-microsoft-com:asm.v1";
+
+        foreach (var dependent in document.Descendants(ns + "dependentAssembly"))
+        {
+            var identity = dependent.Element(ns + "assemblyIdentity");
+            var redirect = dependent.Element(ns + "bindingRedirect");
+
+            if (identity is null || redirect is null) continue;
+
+            var range = (redirect.Attribute("oldVersion")?.Value ?? "").Split('-');
+
+            yield return new BaselineRedirect
+            {
+                Name = identity.Attribute("name")?.Value ?? "",
+                PublicKeyToken = identity.Attribute("publicKeyToken")?.Value ?? "",
+                OldVersionLow = range.Length > 0 ? range[0] : "",
+                OldVersionHigh = range.Length > 1 ? range[1] : (range.Length > 0 ? range[0] : ""),
+                NewVersion = redirect.Attribute("newVersion")?.Value ?? ""
+            };
+        }
+    }
+
     public static Baseline Collect(
         string revitDirectory,
         string revitVersion,
@@ -180,6 +272,8 @@ internal sealed class Baseline
             CollectedUtc = DateTime.UtcNow.ToString("O"),
             HostVendorMarker = hostVendorMarker
         };
+
+        baseline.Redirects.AddRange(ReadRedirects(Path.Combine(revitDirectory, "Revit.exe.config")));
 
         var files = Directory
             .EnumerateFiles(revitDirectory, "*.dll", SearchOption.TopDirectoryOnly)

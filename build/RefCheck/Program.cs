@@ -9,6 +9,7 @@ internal static class Cli
     private const string MissingOverloadCode = "RVTREF003";
     private const string UnwatchedCode = "RVTREF004";
     private const string DeniedCode = "RVTREF005";
+    private const string TwoCopiesCode = "RVTREF006";
 
     public static int Run(string[] args)
     {
@@ -90,6 +91,7 @@ internal static class Cli
 
         var findings = new List<Finding>();
         var denied = new List<string>();
+        var twoCopies = new SortedSet<(string Name, string Ours, string Revits)>();
         var unwatched = new SortedSet<string>(StringComparer.OrdinalIgnoreCase);
         var checkedFiles = 0;
 
@@ -123,6 +125,29 @@ internal static class Cli
                 // never to the file sitting in the Revit folder. Nothing to conflict with.
                 if (shipped.TypeForwarderOnly) continue;
 
+                // Before comparing surfaces at all: does Revit's copy actually replace ours?
+                //
+                // The tool used to assume it always does, and that assumption is wrong often enough
+                // to matter. Substitution happens when the two carry the same AssemblyVersion, or
+                // when a redirect in Revit.exe.config maps ours onto Revit's - and only then is a
+                // surface comparison meaningful. When the versions differ and nothing maps them,
+                // both files load, our code binds to ours, and every finding here is noise. That
+                // case is not hypothetical: Grpc.Core.Api asking for System.Memory 4.0.1.1 and
+                // GrpcDotNetNamedPipes asking for 4.0.2.0 loaded both copies, and it cost a fork.
+                referencedVersions.TryGetValue(use.Assembly, out var referenced);
+
+                if (!Substitutes(baseline, shipped, referenced))
+                {
+                    // Host-vendor assemblies are excluded here rather than reported: RevitAPI and
+                    // its neighbours are reference-only, resolved from the API packages and never
+                    // redistributed, so two versions of them never meet at run time. The old code
+                    // reached the same conclusion one test later, by way of SurfaceIndexed.
+                    if (!shipped.Vendor.Contains(baseline.HostVendorMarker, StringComparison.OrdinalIgnoreCase))
+                        twoCopies.Add((shipped.Name, referenced ?? "unknown", shipped.AssemblyVersion));
+
+                    continue;
+                }
+
                 if (!shipped.SurfaceIndexed)
                 {
                     // Revit ships this assembly too, but its surface was never indexed,
@@ -132,7 +157,7 @@ internal static class Cli
                     continue;
                 }
 
-                referencedVersions.TryGetValue(use.Assembly, out var ourVersion);
+                var ourVersion = referenced;
 
                 if (!shipped.TypeSet.Contains(use.Type) && !shipped.MemberNameSet.Contains(use.NameKey))
                 {
@@ -159,7 +184,7 @@ internal static class Cli
             }
         }
 
-        Report(baseline, findings, unwatched, denied, checkedFiles);
+        Report(baseline, findings, unwatched, denied, twoCopies, checkedFiles);
         return findings.Count == 0 && denied.Count == 0 ? 0 : 1;
     }
 
@@ -168,8 +193,29 @@ internal static class Cli
         List<Finding> findings,
         SortedSet<string> unwatched,
         List<string> denied,
+        SortedSet<(string Name, string Ours, string Revits)> twoCopies,
         int checkedFiles)
     {
+        // Stated, not warned about.
+        //
+        // Every one of these is true and none of them is actionable on its own: System.Numerics.Vectors
+        // has loaded twice in this repository for months without harm. A warning on every build for a
+        // condition that is usually fine is how a build log stops being read, and this tool has one
+        // job that depends on being read. What it is here for is the hour somebody is staring at a
+        // MissingMethodException between two of our own assemblies - and then this list is the answer.
+        if (twoCopies.Count > 0)
+        {
+            Console.WriteLine(
+                $"RefCheck: {twoCopies.Count} assembly(ies) will be loaded twice - ours beside Revit " +
+                $"{baseline.RevitVersion}'s, with nothing mapping one onto the other. Not a conflict " +
+                "with Revit: our code binds to our copy, and their surfaces were not compared. It is a " +
+                "seam - a Span, a Memory or an IBufferWriter from one of these, passed between two of " +
+                "our own assemblies that bound to different copies, is a different type on each side.");
+
+            foreach (var (name, ours, revits) in twoCopies)
+                Console.WriteLine($"  {TwoCopiesCode}: {name}  ours {ours}  Revit's {revits}");
+        }
+
         foreach (var file in denied)
         {
             var name = Path.GetFileNameWithoutExtension(file);
@@ -246,6 +292,40 @@ internal static class Cli
     }
 
     private static string Or(string value, string fallback) => string.IsNullOrEmpty(value) ? fallback : value;
+
+    /// <summary>
+    /// Whether Revit's copy actually takes the place of ours.
+    /// </summary>
+    /// <remarks>
+    /// Three outcomes are possible and only the first makes a surface comparison mean anything:
+    /// <list type="bullet">
+    /// <item>the identities match, or a redirect maps ours onto Revit's - Revit's file loads and
+    /// ours is ignored, so every member we use had better exist over there;</item>
+    /// <item>they differ and nothing maps them - both load, and the comparison is answering a
+    /// question nobody asked;</item>
+    /// <item>on .NET there are no redirects at all, so identity is all there is.</item>
+    /// </list>
+    /// </remarks>
+    private static bool Substitutes(Baseline baseline, BaselineAssembly shipped, string? referenced)
+    {
+        if (string.IsNullOrEmpty(referenced) || string.IsNullOrEmpty(shipped.AssemblyVersion))
+            return true; // Nothing to tell them apart with; keep the old, stricter behaviour.
+
+        if (string.Equals(referenced, shipped.AssemblyVersion, StringComparison.Ordinal))
+            return true;
+
+        if (!baseline.IsNetFramework || !Version.TryParse(referenced, out var wanted))
+            return false;
+
+        foreach (var redirect in baseline.Redirects)
+        {
+            if (redirect.Covers(shipped.Name, wanted) &&
+                string.Equals(redirect.NewVersion, shipped.AssemblyVersion, StringComparison.Ordinal))
+                return true;
+        }
+
+        return false;
+    }
 
     private static IEnumerable<string> ExpandInputs(IReadOnlyList<string> inputs)
     {
