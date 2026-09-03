@@ -24,6 +24,7 @@
     <Import Project="$(_RevitTargetsDir)Revit.Platform.targets" Condition="'$(IsRevitTfm)' == 'true' And Exists('$(_RevitTargetsDir)Revit.Platform.targets')"/>
     <Import Project="$(_RevitTargetsDir)Revit.Validation.targets" Condition="'$(IsRevitTfm)' == 'true' And Exists('$(_RevitTargetsDir)Revit.Validation.targets')"/>
     <Import Project="$(_RevitTargetsDir)Revit.Tasks.targets" Condition="Exists('$(_RevitTargetsDir)Revit.Tasks.targets')"/>
+    <Import Project="$(_RevitTargetsDir)Revit.Signing.targets" Condition="Exists('$(_RevitTargetsDir)Revit.Signing.targets')"/>
     <Import Project="$(_RevitTargetsDir)Revit.Publish.targets" Condition="Exists('$(_RevitTargetsDir)Revit.Publish.targets')"/>
 
 </Project>

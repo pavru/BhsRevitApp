@@ -298,6 +298,41 @@ To automatically copy a package, set the `<RevitDeploy>` property. If this prope
 </PropertyGroup>
 ```
 
+### 9. Authenticode signing
+
+Revit refuses to finish starting until somebody answers a modal dialog about an add-in it has not
+been told to trust. There are three such dialogs and they are answered in different places: an
+unsigned add-in by a registry value keyed by `AddInId`, one per add-in per Revit release; a valid
+signature by trusting the **publisher's certificate** in Windows. The second is the better deal by
+a wide margin - trust attaches to the publisher, not to the file or the id, so it survives a
+rebuild and covers every add-in and every Revit release at once.
+
+Off unless asked, so a production build is unsigned and none of this runs.
+
+| Property | Default | Meaning |
+|---|---|---|
+| `RevitSignWith` | `$(BHS_REVIT_SIGN_WITH)` | Certificate thumbprint. Empty means do not sign. |
+| `RevitSignCertificateStore` | `Cert:\CurrentUser\My` | Where to look the certificate up. |
+| `RevitSignHashAlgorithm` | `SHA256` | |
+| `RevitSignTimestampServer` | empty | A timestamp outlives the certificate; it also puts the network on every build. |
+
+The thumbprint belongs to the machine, not to the repository, so it defaults to the environment
+variable `BHS_REVIT_SIGN_WITH` and should not be committed. Per build:
+
+```powershell
+dotnet build <project> -c Release -f net8.0-revit2026 -p:RevitSignWith=<thumbprint>
+```
+
+Only the assembly named in the `RevitAddIn` manifest is signed, because it is the only one Revit
+asks about - measured on Revit 2027, with everything beside it in `Lib` left unsigned and no dialog
+appearing. Signing happens to the **intermediate** assembly, before `CopyFilesToOutputDirectory`,
+so output, publish and deploy all inherit it; signing the output copy instead is silently undone by
+the next build, which restores it from `obj` along with its timestamp.
+
+A signature that does not validate is worse than none - Revit answers it with a dialog whose default
+is "do not load", and trusting the add-in does not silence that one. The build says so as
+`RVTSIGN001` rather than leaving it to be found at start-up.
+
 ## Bootstrap
 
 The SDK is consumed from a feed inside this repository, `artifacts/feed`, declared in the root

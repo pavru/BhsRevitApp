@@ -1,0 +1,83 @@
+﻿<Project>
+
+    <!--
+      Authenticode signing for the assembly Revit checks.
+
+      Why this exists at all. Revit raises a modal dialog for an add-in it has not been told to
+      trust, before any add-in gets OnStartup, and from outside the process that is
+      indistinguishable from a Revit that is merely slow. There are three such dialogs, and they
+      are answered in different places: an unsigned add-in is answered by a registry value keyed
+      by AddInId - one per add-in per Revit release, and easy to lose - while a valid signature is
+      answered by trusting the publisher's certificate in Windows. Publisher trust is the better
+      deal by a wide margin: it is not about the file and not about the AddInId, so it survives a
+      rebuild and covers every add-in and every Revit release at once. Measured: a freshly built,
+      freshly signed assembly with no registry entry at all loads with no dialog and no human.
+
+      Off unless asked. RevitSignWith is empty by default, so a production build is unsigned and
+      nothing here runs. The thumbprint is a property of the machine rather than of the repository,
+      so it is read from the environment by default and should not be committed.
+    -->
+
+    <PropertyGroup>
+        <!--
+          Thumbprint of the certificate to sign with. Empty means do not sign. Set it per machine
+          in BHS_REVIT_SIGN_WITH, or per build with -p:RevitSignWith=<thumbprint>.
+        -->
+        <RevitSignWith Condition="'$(RevitSignWith)' == ''">$(BHS_REVIT_SIGN_WITH)</RevitSignWith>
+
+        <!-- Where to look the certificate up. The per-user store needs no elevation. -->
+        <RevitSignCertificateStore Condition="'$(RevitSignCertificateStore)' == ''">Cert:\CurrentUser\My</RevitSignCertificateStore>
+
+        <RevitSignHashAlgorithm Condition="'$(RevitSignHashAlgorithm)' == ''">SHA256</RevitSignHashAlgorithm>
+
+        <!--
+          Empty by default. A timestamp is what keeps a signature valid after the certificate
+          expires, which matters for something shipped and not for a development certificate; and
+          reaching a timestamp server would make every build depend on the network.
+        -->
+        <RevitSignTimestampServer Condition="'$(RevitSignTimestampServer)' == ''"></RevitSignTimestampServer>
+
+        <_RevitSigningScript>$(MSBuildThisFileDirectory)..\tools\Sign-RevitAddIn.ps1</_RevitSigningScript>
+    </PropertyGroup>
+
+    <!--
+      Only the assembly named in the manifest is signed, because that is the only one Revit asks
+      about. Measured on Revit 2027: with it signed and everything beside it in Lib unsigned, no
+      dialog appears. Signing the rest would be churn that proves nothing.
+
+      The intermediate assembly is signed, not the one in the output folder. Signing the output
+      copy looks right and is not: CopyFilesToOutputDirectory restores it from obj on the next
+      build, and it copies the intermediate's timestamp along with it, so an incremental check
+      against the output file cannot even tell that the signature is gone. Measured - a build,
+      then a deploy, and the deployed assembly was unsigned while the target reported itself
+      up-to-date. Signing before that copy puts the signature on the file everything downstream
+      is made from: output, publish, and deploy all carry it without knowing about any of this.
+    -->
+    <Target Name="SignRevitAddInAssembly"
+            AfterTargets="CoreCompile"
+            BeforeTargets="CopyFilesToOutputDirectory"
+            Condition="'$(RevitSignWith)' != '' AND '$(IsRevitTfm)' == 'true' AND '$(IsRevitOuterBuild)' != 'true' AND '@(RevitAddIn)' != ''"
+            Inputs="@(IntermediateAssembly)"
+            Outputs="$(IntermediateOutputPath)$(TargetFileName).$(RevitSignWith).signed">
+
+        <Error Condition="!Exists('@(IntermediateAssembly)')"
+               Text="RevitSignWith is set but there is nothing to sign at '@(IntermediateAssembly)'." />
+
+        <Message Importance="High" Text="Signing $(TargetFileName) with certificate $(RevitSignWith)..." />
+
+        <!--
+          PSModulePath is reset first, and that is not defensive decoration. It is inherited, and a
+          build started from a PowerShell 7 terminal - Rider's, or any other - inherits a value
+          that puts PowerShell 7's own modules first. Windows PowerShell then tries to load its
+          Microsoft.PowerShell.Security from there, fails, and Set-AuthenticodeSignature and the
+          Cert: drive both disappear. Measured, with an error that names neither cause nor cure.
+        -->
+        <Exec Command="set &quot;PSModulePath=$(ProgramFiles)\WindowsPowerShell\Modules;$(SystemRoot)\System32\WindowsPowerShell\v1.0\Modules&quot; &amp;&amp; powershell.exe -NoProfile -NonInteractive -ExecutionPolicy Bypass -File &quot;$(_RevitSigningScript)&quot; -Path &quot;@(IntermediateAssembly->'%(FullPath)')&quot; -Thumbprint $(RevitSignWith) -Store &quot;$(RevitSignCertificateStore)&quot; -HashAlgorithm $(RevitSignHashAlgorithm) -TimestampServer &quot;$(RevitSignTimestampServer)&quot;"
+              StandardOutputImportance="high" />
+
+        <Touch Files="$(IntermediateOutputPath)$(TargetFileName).$(RevitSignWith).signed" AlwaysCreate="true">
+            <Output TaskParameter="TouchedFiles" ItemName="FileWrites" />
+        </Touch>
+    </Target>
+
+</Project>

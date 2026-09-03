@@ -1,4 +1,4 @@
-<Project Sdk="BHS.Revit.Sdk/1.3.2">
+<Project Sdk="BHS.Revit.Sdk/1.3.5">
 
     <!--
       A minimal add-in whose only job is to be reachable and to report what it sees.
