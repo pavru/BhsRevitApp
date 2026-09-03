@@ -141,6 +141,7 @@ internal static class Program
         var failures = 0;
         var suffix = Guid.NewGuid().ToString("N").Substring(0, 8);
 
+        failures += await SettingsChecks.RunAsync(suffix);
         failures += await InProcessAsync(suffix);
         failures += await RegistryAsync(suffix);
         failures += await CrossProcessAsync(suffix);
@@ -565,7 +566,7 @@ internal static class Program
         }
     }
 
-    private static async Task<bool> WaitForAsync(Func<bool> condition, int millisecondsTimeout = 10000)
+    internal static async Task<bool> WaitForAsync(Func<bool> condition, int millisecondsTimeout = 10000)
     {
         var deadline = DateTime.UtcNow.AddMilliseconds(millisecondsTimeout);
 
@@ -580,7 +581,7 @@ internal static class Program
         return condition();
     }
 
-    private static void Check(ref int failures, string what, bool ok)
+    internal static void Check(ref int failures, string what, bool ok)
     {
         Console.WriteLine($"  [{(ok ? "ok" : "FAIL")}] {what}");
         if (!ok) failures++;

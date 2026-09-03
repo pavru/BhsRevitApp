@@ -44,6 +44,9 @@ internal static class Program
             ? "this instance is the main one"
             : $"another instance holds the well-known name; serving only {PipeNames.WinSideInstance(host.ProcessId)}");
 
+        foreach (var layer in host.Settings.Layers.Where(one => one.Exists))
+            Console.WriteLine($"settings from {layer.Path}");
+
         var recovered = await host.RecoverAsync();
         if (recovered > 0)
             Console.WriteLine($"recovered {recovered} Revit instance(s) by enumeration");
@@ -68,6 +71,10 @@ internal static class Program
         {
             case "--status":
                 await StatusAsync(client);
+                return 0;
+
+            case "--settings":
+                await SettingsAsync(client);
                 return 0;
 
             case "--launch" when args.Length >= 2:
@@ -106,6 +113,28 @@ internal static class Program
                                              .OrderBy(one => one.Key, StringComparer.Ordinal))
         {
             Console.WriteLine($"  {pair.Key.Substring("instance:".Length)}  {pair.Value}");
+        }
+    }
+
+    /// <summary>Where the running host reads its settings from, and what it read.</summary>
+    private static async Task SettingsAsync(WinSideChannel.WinSideChannelClient client)
+    {
+        var settings = await AskAsync(client, "settings");
+
+        Console.WriteLine("layers, least specific first:");
+
+        foreach (var pair in settings.Values.Where(one => one.Key.StartsWith("layer:", StringComparison.Ordinal))
+                                            .OrderBy(one => one.Key, StringComparer.Ordinal))
+        {
+            Console.WriteLine("  " + pair.Value);
+        }
+
+        Console.WriteLine("in effect:");
+
+        foreach (var pair in settings.Values.Where(one => !one.Key.StartsWith("layer:", StringComparison.Ordinal))
+                                            .OrderBy(one => one.Key, StringComparer.Ordinal))
+        {
+            Console.WriteLine($"  {pair.Key} = {pair.Value}");
         }
     }
 
@@ -175,6 +204,7 @@ internal static class Program
             Revit instances, and starts or closes them on request.
 
               --status                 what a running host knows
+              --settings               where it reads its settings, and what they say
               --launch <year> [model]  ask it to start a Revit, and wait for it to register
               --close <instance>       ask one Revit to close itself
               --recover                rebuild the register by enumerating the pipe namespace

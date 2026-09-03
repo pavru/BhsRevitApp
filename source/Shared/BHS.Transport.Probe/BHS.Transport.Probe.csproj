@@ -1,7 +1,8 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
     <!--
-      Runs a real conversation over a real named pipe and reports what worked. Not a unit test: it
+      Runs a real conversation over a real named pipe, reads a real settings file, and reports
+      what worked. Not a unit test: it
       exists because the choice of transport was made by reading metadata, and a claim that gRPC
       framing over a named pipe carries server streaming on .NET Framework 4.8 is worth nothing
       until something has actually done it.
@@ -25,6 +26,8 @@
     <ItemGroup>
         <ProjectReference Include="..\BHS.Transport\BHS.Transport.csproj"/>
         <ProjectReference Include="..\BHS.Transport.Configuration\BHS.Transport.Configuration.csproj"/>
+        <ProjectReference Include="..\BHS.Settings\BHS.Settings.csproj"/>
+        <ProjectReference Include="..\BHS.Settings.Configuration\BHS.Settings.Configuration.csproj"/>
     </ItemGroup>
 
 </Project>

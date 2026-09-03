@@ -21,6 +21,7 @@
 
     <ItemGroup>
         <ProjectReference Include="..\..\Shared\BHS.Shared\BHS.Shared.csproj"/>
+        <ProjectReference Include="..\..\Shared\BHS.Settings\BHS.Settings.csproj"/>
         <ProjectReference Include="..\..\Shared\BHS.Transport\BHS.Transport.csproj"/>
     </ItemGroup>
 

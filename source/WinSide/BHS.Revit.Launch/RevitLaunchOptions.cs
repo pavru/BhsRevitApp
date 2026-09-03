@@ -1,8 +1,13 @@
+using BHS.Settings;
+
 namespace BHS.Revit.Launch;
 
 /// <summary>How to start one Revit.</summary>
 public sealed class RevitLaunchOptions
 {
+    /// <summary>The configuration section these are read from.</summary>
+    public const string SectionName = "Launch";
+
     /// <summary>
     /// How long to wait for the started Revit to register.
     /// </summary>
@@ -57,4 +62,48 @@ public sealed class RevitLaunchOptions
 
     /// <summary>Extra environment variables for the started process.</summary>
     public IDictionary<string, string> Environment { get; } = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+
+    /// <summary>
+    /// Reads what the layered settings say, leaving anything unstated at its default.
+    /// </summary>
+    /// <remarks>
+    /// Every default here was measured rather than chosen, so a settings file that says nothing is
+    /// the right settings file. What it is for is the case the measurements warn about: a 2024 that
+    /// took 208 seconds to close where the previous worst was 62, against a budget of 240. Raising
+    /// that budget should not need a build.
+    /// <para>
+    /// Read from a section rather than from the root, so the same values can be layered by release:
+    /// <c>appsettings.revit2024.json</c> is read by Revit-side, but a Win-side host holding several
+    /// releases at once needs its own way to say "on 2024, wait longer", and a section per release
+    /// under <c>Launch</c> is where that will go.
+    /// </para>
+    /// </remarks>
+    public static RevitLaunchOptions ReadFrom(ISettings settings)
+    {
+        if (settings is null)
+            throw new ArgumentNullException(nameof(settings));
+
+        var section = settings.Section(SectionName);
+        var options = new RevitLaunchOptions();
+
+        options.RegistrationTimeout = section.Duration("RegistrationTimeout", options.RegistrationTimeout);
+        options.ShutdownTimeout = section.Duration("ShutdownTimeout", options.ShutdownTimeout);
+        options.NoSplash = section.Flag("NoSplash", options.NoSplash);
+        options.ModelPath = section.Text("ModelPath");
+        options.Language = section.Text("Language");
+
+        // Arrays flatten to Arguments:0, Arguments:1 and so on, so they come back in order by
+        // asking for each in turn until one is missing.
+        for (var index = 0; ; index++)
+        {
+            var argument = section.Text("Arguments:" + index.ToString(System.Globalization.CultureInfo.InvariantCulture));
+
+            if (argument is null)
+                break;
+
+            options.Arguments.Add(argument);
+        }
+
+        return options;
+    }
 }

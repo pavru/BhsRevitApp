@@ -1,0 +1,26 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <!--
+      The layered settings both sides read from disk, so neither has to wait for the other to start.
+      Plain .NET axis: a Revit-side add-in and a Win-side process read the same files, and one of
+      them has never heard of Revit.
+
+      It has no package references at all, and that is the point rather than an accident. This is
+      the half that goes inside Revit, where an assembly we ship is an assembly twenty other vendors
+      may also ship. Measured on Revit 2026: DynamoForRevit, in Revit's own installation directory,
+      loads Microsoft.Extensions.Configuration.Abstractions 2.0.0.0 before any add-in runs, and our
+      request for 10.0.0.0 then fails with FileLoadException - not a silent downgrade, a probe that
+      would not load at all. Twenty-two other copies of that assembly are installed for 2026 on this
+      machine. The JSON reader here is hand-written for the same reason.
+
+      Whoever wants Microsoft.Extensions.Configuration over these files adds BHS.Settings.Configuration,
+      which is Win-side. The split is the same one BHS.Transport and BHS.Transport.Configuration make,
+      for the same reason.
+    -->
+
+    <PropertyGroup>
+        <TargetFrameworks>net48;net8.0;net10.0</TargetFrameworks>
+        <RootNamespace>BHS.Settings</RootNamespace>
+    </PropertyGroup>
+
+</Project>

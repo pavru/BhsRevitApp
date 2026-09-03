@@ -1,0 +1,30 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <!--
+      The layered files from BHS.Settings, offered as an ordinary IConfigurationSource.
+
+      Separate from BHS.Settings for the reason that assembly has no packages at all: this one
+      carries Microsoft.Extensions.Configuration, and that must not go inside Revit. Measured on
+      Revit 2026 - DynamoForRevit loads Microsoft.Extensions.Configuration.Abstractions 2.0.0.0
+      from Revit's own installation directory before any add-in runs, and our 10.0.0.0 then does
+      not load at all.
+
+      Win-side is where it belongs, and where it earns its keep: there the disk layers and what a
+      Revit publishes over the channel go into one builder, and IOptionsMonitor, change tokens and
+      section binding work over both without knowing which is which.
+    -->
+
+    <PropertyGroup>
+        <TargetFrameworks>net48;net8.0;net10.0</TargetFrameworks>
+        <RootNamespace>BHS.Settings.Configuration</RootNamespace>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <PackageReference Include="Microsoft.Extensions.Configuration"/>
+    </ItemGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="..\BHS.Settings\BHS.Settings.csproj"/>
+    </ItemGroup>
+
+</Project>

@@ -219,6 +219,7 @@ internal static class Program
 
         await CheckConfigurationFlowAsync(instance.PipeName, client, snapshot, report);
         await CheckContextAsync(client, report);
+        await CheckSettingsAsync(client, installation, addInDirectory, report);
         await CheckAssembliesAsync(client, installation, addInDirectory, report);
 
         if (options.KeepOpen)
@@ -266,6 +267,62 @@ internal static class Program
         finally
         {
             (configuration as IDisposable)?.Dispose();
+        }
+    }
+
+    /// <summary>
+    /// The other half of configuration: what a Revit-side assembly reads from disk, read inside Revit.
+    /// </summary>
+    /// <remarks>
+    /// Worth a live check rather than a unit test for one reason above the others. The product
+    /// layer is meant to be the add-in's own folder, and inside Revit the obvious ways of finding
+    /// it - the entry assembly, <c>AppContext.BaseDirectory</c> - both name Revit's installation
+    /// directory instead. Nothing outside Revit can tell whether that was got right.
+    /// <para>
+    /// The two files the runner laid down at deployment say which layer won: the common one names
+    /// itself, the per-release one overrules it, and the answer has to name the release this Revit
+    /// actually is.
+    /// </para>
+    /// </remarks>
+    private static async Task CheckSettingsAsync(
+        RevitSideChannel.RevitSideChannelClient client,
+        RevitInstallation installation,
+        string addInDirectory,
+        Report report)
+    {
+        var settings = await client.AskAsync(new AskRequest { Question = "settings" });
+
+        if (settings.Values.TryGetValue("settings:error", out var failure))
+        {
+            report.Check("settings are read from disk inside Revit", false);
+            Report.Note("settings failed", failure);
+            return;
+        }
+
+        var release = installation.Release.Year.ToString(CultureInfo.InvariantCulture);
+
+        report.Check(
+            "the product layer is the add-in's own folder, not Revit's",
+            string.Equals(settings.Values.GetValueOrDefault("settings:product"), addInDirectory, StringComparison.OrdinalIgnoreCase));
+
+        report.Check(
+            "a settings file on disk is read inside Revit",
+            settings.Values.GetValueOrDefault("value:Probe:Marker") == "product");
+
+        report.Check(
+            "the release-specific layer overrules the common one",
+            settings.Values.GetValueOrDefault("value:Probe:Layer") == "revit" + release);
+
+        // Nine files - three directories, three names each - and the environment on top of them.
+        report.Check(
+            "nine files and the environment are looked at, existing or not",
+            settings.Values.Count(pair => pair.Key.StartsWith("layer:", StringComparison.Ordinal)) == 10);
+
+        foreach (var layer in settings.Values.Where(pair => pair.Key.StartsWith("layer:", StringComparison.Ordinal))
+                                             .OrderBy(pair => pair.Key, StringComparer.Ordinal)
+                                             .Where(pair => pair.Value.StartsWith("read", StringComparison.Ordinal)))
+        {
+            Report.Note("settings layer", layer.Value);
         }
     }
 

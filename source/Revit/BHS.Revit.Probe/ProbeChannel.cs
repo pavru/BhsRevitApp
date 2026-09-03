@@ -17,12 +17,14 @@ namespace BHS.Revit.Probe;
 internal sealed class ProbeChannel : RevitSideChannel.RevitSideChannelBase
 {
     private readonly ProbeFacts _facts;
+    private readonly ProbeSettings _settings;
     private readonly ExternalEvent _exit;
     private int _publishCount;
 
-    public ProbeChannel(ProbeFacts facts, ExternalEvent exit)
+    public ProbeChannel(ProbeFacts facts, ProbeSettings settings, ExternalEvent exit)
     {
         _facts = facts;
+        _settings = settings;
         _exit = exit;
         Publisher = new ConfigurationPublisher(facts.InstanceId);
         Republish();
@@ -72,6 +74,11 @@ internal sealed class ProbeChannel : RevitSideChannel.RevitSideChannelBase
                     // put it, and the API thread is whichever one OnStartup ran on.
                     response.Values.Add("thread:calling", Environment.CurrentManagedThreadId.ToString());
                     response.Values.Add("thread:api", _facts.ApiThreadId.ToString());
+                    break;
+
+                case "settings":
+                    foreach (var pair in _settings.Report())
+                        response.Values.Add(pair.Key, pair.Value);
                     break;
 
                 case "publish":

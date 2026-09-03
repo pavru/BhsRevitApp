@@ -1,10 +1,13 @@
 using System.Collections.Concurrent;
 using System.Diagnostics;
 using System.Globalization;
+using BHS.Settings;
+using BHS.Settings.Configuration;
 using BHS.Revit.Launch;
 using BHS.Transport;
 using BHS.Transport.Protocol;
 using GrpcDotNetNamedPipes;
+using Microsoft.Extensions.Configuration;
 
 namespace BHS.WinSide;
 
@@ -24,7 +27,7 @@ namespace BHS.WinSide;
 /// </remarks>
 public sealed class WinSideHost : IDisposable
 {
-    private readonly RevitInstanceRegistry _registry = new();
+    private readonly RevitInstanceRegistry _registry;
     private readonly ConcurrentDictionary<string, RevitSession> _sessions = new(StringComparer.Ordinal);
     private readonly TaskCompletionSource<bool> _stopped = new(TaskCreationOptions.RunContinuationsAsynchronously);
     private readonly List<NamedPipeServer> _servers = new();
@@ -37,7 +40,27 @@ public sealed class WinSideHost : IDisposable
     {
         ProcessId = Process.GetCurrentProcess().Id;
         InstanceId = "winside-" + ProcessId.ToString(CultureInfo.InvariantCulture);
+
+        // Before anything else, and from disk alone. Nothing here waits for a Revit to exist, which
+        // is the whole point of the file being the source of truth: the two sides start in either
+        // order because neither asks the other for the settings it needs to start.
+        Settings = LayeredSettings.Read(new SettingsOptions { Side = ProcessSide.WinSide });
+
+        // The same object seen twice: read directly where a value is wanted, and through
+        // IConfiguration where a section, an options monitor or the peer's own published values
+        // are. Sharing the instance rather than reading the files twice is what keeps the two
+        // views reloading together.
+        Configuration = new ConfigurationBuilder().AddBhsSettings(Settings).Build();
+
+        _registry = new RevitInstanceRegistry(
+            Settings.Section("Registry").Duration("CheckTimeout", RevitInstanceRegistry.DefaultCheckTimeout));
     }
+
+    /// <summary>The layered files, reloaded when one of them changes.</summary>
+    public LayeredSettings Settings { get; }
+
+    /// <summary>The same settings as configuration, for whatever wants a section or a change token.</summary>
+    public IConfigurationRoot Configuration { get; }
 
     public int ProcessId { get; }
 
@@ -64,7 +87,8 @@ public sealed class WinSideHost : IDisposable
         // The fallback the registry documents: an instance whose process handle could not be
         // opened leaves only when somebody looks. Cheap - a dead process leaves no pipe name
         // behind, so the question is answered by the operating system rather than by a call.
-        _sweep = new Timer(_ => _ = _registry.SweepAsync(), null, TimeSpan.FromMinutes(1), TimeSpan.FromMinutes(1));
+        var interval = Settings.Section("Registry").Duration("SweepInterval", TimeSpan.FromMinutes(1));
+        _sweep = new Timer(_ => _ = _registry.SweepAsync(), null, interval, interval);
     }
 
     /// <summary>
@@ -132,7 +156,7 @@ public sealed class WinSideHost : IDisposable
         if (_sessions.TryRemove(instanceId, out var session))
         {
             using (session)
-                return await session.CloseAsync(TimeSpan.FromSeconds(240)).ConfigureAwait(false);
+                return await session.CloseAsync(LaunchOptions().ShutdownTimeout).ConfigureAwait(false);
         }
 
         // Not one of ours - recovered, or somebody's own Revit. It can still be asked, because the
@@ -151,6 +175,13 @@ public sealed class WinSideHost : IDisposable
             return false;
         }
     }
+
+    /// <summary>What the settings currently say about starting Revit.</summary>
+    /// <remarks>
+    /// Read at each use rather than kept, so a file edited while the host runs takes effect on the
+    /// next launch instead of the next restart. That is what the reload is for.
+    /// </remarks>
+    public RevitLaunchOptions LaunchOptions() => RevitLaunchOptions.ReadFrom(Settings);
 
     private void Serve(string pipeName)
     {
@@ -209,5 +240,6 @@ public sealed class WinSideHost : IDisposable
 
         _registry.Dispose();
         _election?.Dispose();
+        Settings.Dispose();
     }
 }

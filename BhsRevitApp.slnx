@@ -30,6 +30,12 @@
     <!-- GrpcDotNetNamedPipes, vendored and rebuilt so its System.Memory reference matches the
          one Revit 2024 ships. Its readme carries the measurement. -->
     <Project Path="source/Shared/BHS.Grpc.NamedPipes/BHS.Grpc.NamedPipes.csproj" Type="C#" />
+    <!-- The layered settings both sides read from disk, so neither waits for the other to start.
+         No packages at all, and a hand-written reader: it is the half that goes inside Revit. -->
+    <Project Path="source/Shared/BHS.Settings/BHS.Settings.csproj" Type="C#" />
+    <!-- The same files as an IConfigurationSource, for the side that may carry
+         Microsoft.Extensions.Configuration. Win-side only, on purpose. -->
+    <Project Path="source/Shared/BHS.Settings.Configuration/BHS.Settings.Configuration.csproj" Type="C#" />
     <Project Path="source/Shared/BHS.Transport/BHS.Transport.csproj" Type="C#" />
     <Project Path="source/Shared/BHS.Transport.Configuration/BHS.Transport.Configuration.csproj" Type="C#" />
     <Project Path="source/Shared/BHS.Transport.Probe/BHS.Transport.Probe.csproj" Type="C#" />

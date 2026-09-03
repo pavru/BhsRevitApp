@@ -60,8 +60,13 @@ public sealed class ProbeApplication : IExternalApplication
 
             // Created here because an external event can only be created from an API context, and
             // this is the only API context the probe will ever be handed.
+            // Read before anything is served, because that is the order the claim is about: a
+            // side configures itself from disk and only then goes looking for a companion.
+            var settings = new ProbeSettings(facts.Release);
+            ProbeLog.Write("startup: settings product layer is " + BHS.Settings.SettingsLayout.ProductDirectory);
+
             _exit = ExternalEvent.Create(new ExitRevitHandler());
-            _channel = new ProbeChannel(facts, _exit);
+            _channel = new ProbeChannel(facts, settings, _exit);
 
             var server = PipeTransport.CreateServer(facts.PipeName);
             server.Error += (_, error) => ProbeLog.Write("server error", error.Error);

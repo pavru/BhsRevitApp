@@ -12,6 +12,9 @@ internal static class ProbeDeployment
     public const string AddInName = "BHS.Revit.Probe";
     public const string ManifestFileName = AddInName + ".addin";
 
+    /// <summary>The subfolder the SDK lays the assemblies into, as named in the manifest.</summary>
+    public const string LibDirectoryName = "Lib";
+
     /// <summary>The probe's own <c>AddInId</c>, as written into the manifest by the SDK.</summary>
     public const string AddInId = "6f2e17ae-5ff7-45b2-bb8b-3482446e9a67";
 

@@ -1,4 +1,5 @@
 using System.Diagnostics;
+using System.Globalization;
 using BHS.Revit.Launch;
 using Microsoft.Win32;
 
@@ -47,7 +48,10 @@ internal static class ProbeInstaller
             return false;
 
         foreach (var installation in installations)
+        {
             Trust(installation);
+            WriteSettings(installation);
+        }
 
         Console.WriteLine("recorded the probe as trusted for: " + string.Join(", ", installations.Select(one => one.Release)));
         return true;
@@ -76,6 +80,42 @@ internal static class ProbeInstaller
 
             Console.WriteLine($"  Revit {installation.Release}: {(removed ? "removed" : "nothing to remove")}");
         }
+    }
+
+    /// <summary>
+    /// Lays two settings files into the probe's own folder, so the sweep can prove they are read.
+    /// </summary>
+    /// <remarks>
+    /// The product layer only, and inside the folder <c>--undeploy</c> removes. Writing into
+    /// <c>%ProgramData%\BHS</c> or <c>%AppData%\BHS</c> would prove the same thing and leave a
+    /// file behind in a place a person is going to want to edit themselves.
+    /// <para>
+    /// Two files rather than one, because one would only show that a file is read. The pair shows
+    /// which one wins: the common file names the layer, the release-specific file overrules it, and
+    /// what comes back has to be the release the probe is running under.
+    /// </para>
+    /// </remarks>
+    public static void WriteSettings(RevitInstallation installation)
+    {
+        var directory = ProbeLibDirectory(installation);
+
+        if (!Directory.Exists(directory))
+            return;
+
+        var release = installation.Release.Year.ToString(CultureInfo.InvariantCulture);
+
+        File.WriteAllText(Path.Combine(directory, "appsettings.json"), """
+            {
+              // written by the probe runner; removed with --undeploy
+              "Probe": { "Marker": "product", "Layer": "common" }
+            }
+            """);
+
+        File.WriteAllText(Path.Combine(directory, "appsettings.revit" + release + ".json"), $$"""
+            {
+              "Probe": { "Layer": "revit{{release}}" }
+            }
+            """);
     }
 
     /// <summary>
@@ -124,13 +164,26 @@ internal static class ProbeInstaller
     public static string ManifestPath(RevitInstallation installation) =>
         Path.Combine(installation.AddInsDirectory, ProbeDeployment.ManifestFileName);
 
-    /// <summary>The folder the probe and its dependencies are laid out in.</summary>
+    /// <summary>The folder the whole deployment lives under, and the one that is removed.</summary>
     public static string ProbeDirectory(RevitInstallation installation) =>
         Path.Combine(installation.AddInsDirectory, ProbeDeployment.VendorId, ProbeDeployment.AddInName);
 
+    /// <summary>
+    /// Where the assembly itself lands, one level further down.
+    /// </summary>
+    /// <remarks>
+    /// The distinction cost a sweep. The manifest names
+    /// <c>BimHouseSoftware\BHS.Revit.Probe\Lib\BHS.Revit.Probe.dll</c>, so anything meant to sit
+    /// beside the add-in - a settings file, above all - belongs in <c>Lib</c> and not in the folder
+    /// above it. Written one level too high, the files existed, were never read, and the checks
+    /// failed for a reason that looked like the reader.
+    /// </remarks>
+    public static string ProbeLibDirectory(RevitInstallation installation) =>
+        Path.Combine(ProbeDirectory(installation), ProbeDeployment.LibDirectoryName);
+
     /// <summary>True when both halves of an installation are present.</summary>
     public static bool IsDeployed(RevitInstallation installation) =>
-        File.Exists(ManifestPath(installation)) && Directory.Exists(ProbeDirectory(installation));
+        File.Exists(ManifestPath(installation)) && Directory.Exists(ProbeLibDirectory(installation));
 
     /// <summary>The repository this build came from, or null when it was copied elsewhere.</summary>
     public static string? FindRepositoryRoot()

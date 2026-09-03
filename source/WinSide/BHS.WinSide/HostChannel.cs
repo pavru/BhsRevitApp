@@ -53,6 +53,10 @@ internal sealed class HostChannel : WinSideService
                 await CloseAsync(request, response).ConfigureAwait(false);
                 break;
 
+            case "settings":
+                Settings(response);
+                break;
+
             case "recover":
                 var found = await Registry.RecoverAsync().ConfigureAwait(false);
                 response.Values.Add("recovered", found.ToString(CultureInfo.InvariantCulture));
@@ -123,7 +127,7 @@ internal sealed class HostChannel : WinSideService
                 "Revit would stop and ask about: " + string.Join(", ", blocked.Select(one => one.ToString()))));
         }
 
-        var options = new RevitLaunchOptions();
+        var options = _host.LaunchOptions();
 
         if (request.Arguments.TryGetValue("model", out var model) && !string.IsNullOrEmpty(model))
             options.ModelPath = model;
@@ -132,6 +136,31 @@ internal sealed class HostChannel : WinSideService
 
         response.Values.Add("token", token);
         response.Values.Add("release", release.Year.ToString(CultureInfo.InvariantCulture));
+    }
+
+    /// <summary>
+    /// Where the settings came from and what they came to.
+    /// </summary>
+    /// <remarks>
+    /// The layers are listed whether or not they exist, because the useful question is almost
+    /// always "which file should I have edited" rather than "which one did you read".
+    /// </remarks>
+    private void Settings(AskResponse response)
+    {
+        var index = 0;
+
+        foreach (var layer in _host.Settings.Layers)
+        {
+            response.Values.Add(
+                "layer:" + index.ToString("D2", CultureInfo.InvariantCulture),
+                layer.ToString());
+            index++;
+        }
+
+        var launch = _host.LaunchOptions();
+        response.Values.Add("Launch:RegistrationTimeout", launch.RegistrationTimeout.ToString());
+        response.Values.Add("Launch:ShutdownTimeout", launch.ShutdownTimeout.ToString());
+        response.Values.Add("Launch:NoSplash", launch.NoSplash ? "True" : "False");
     }
 
     private async Task CloseAsync(AskRequest request, AskResponse response)

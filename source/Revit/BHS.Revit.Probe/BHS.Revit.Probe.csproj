@@ -14,8 +14,16 @@
 
       It references BHS.Transport and deliberately not BHS.Transport.Configuration: publishing
       needs no configuration library, and the point of that split is that the publisher does not
-      drag Microsoft.Extensions.* into the AppDomain that Revit 2024 shares between every vendor's
+      drag the consuming half into the AppDomain that Revit 2024 shares between every vendor's
       add-in. What the probe carries into Revit is what a real Revit-side assembly would carry.
+
+      BHS.Settings is carried on purpose: reading layered settings from disk is not optional for a
+      Revit-side assembly - it is how a side starts without waiting for the other - so what the
+      probe measures has to include it. It carries no packages at all, which is not tidiness. The
+      first version of this used Microsoft.Extensions.Configuration and the probe stopped loading on
+      Revit 2026: DynamoForRevit had already loaded Configuration.Abstractions 2.0.0.0 from Revit's
+      own directory, and the request for 10.0.0.0 failed with FileLoadException. Whoever wants
+      IConfiguration over these files adds BHS.Settings.Configuration, on the Win-side of the line.
     -->
 
     <PropertyGroup>
@@ -35,6 +43,7 @@
 
     <ItemGroup>
         <ProjectReference Include="..\..\Shared\BHS.Transport\BHS.Transport.csproj"/>
+        <ProjectReference Include="..\..\Shared\BHS.Settings\BHS.Settings.csproj"/>
     </ItemGroup>
 
     <ItemGroup>
