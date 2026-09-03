@@ -1,0 +1,86 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+    <!--
+      GrpcDotNetNamedPipes, vendored and rebuilt. Sources are upstream 3.1.0 unmodified, at commit
+      da307b551a9d56b62f5780e91a2d95a699f32430; readme.md says why the fork exists and what is
+      different. Everything different is in this file.
+
+      The reason is one line further down: System.Memory. The published net462 build is compiled
+      against 4.0.2.0 while Grpc.Core.Api and Google.Protobuf are compiled against 4.0.1.1, and
+      Revit 2024 ships 4.0.1.1 in its own directory. The two references therefore land on two
+      different assemblies, System.Buffers.IBufferWriter<byte> stops being one type, and the first
+      call fails with MissingMethodException. A binding redirect would reconcile them and a Revit
+      add-in cannot have one - which is why the same code is green on net48 as a console
+      application, where the SDK writes the redirect into the .exe.config.
+    -->
+
+    <PropertyGroup>
+        <TargetFrameworks>net48;net8.0-windows;net10.0-windows</TargetFrameworks>
+
+        <!--
+          Renamed, deliberately. Revit 2024 loads every add-in into one AppDomain, so an assembly
+          called GrpcDotNetNamedPipes would collide with any other vendor shipping the stock
+          package - and ours differs from the stock one, which is the whole point. The namespace is
+          left alone so the vendored sources stay byte-for-byte upstream.
+        -->
+        <AssemblyName>BHS.Grpc.NamedPipes</AssemblyName>
+        <RootNamespace>GrpcDotNetNamedPipes</RootNamespace>
+        <IsPackable>false</IsPackable>
+
+        <!--
+          Upstream signs with a public-only key for reproducible builds and warns on its own code
+          under our stricter settings. Neither is ours to carry: nothing binds to this by strong
+          name, and vendored sources should not be edited to silence warnings.
+        -->
+        <SignAssembly>false</SignAssembly>
+
+        <!--
+          Upstream does not enable nullable reference types and this repository does, which turns
+          the vendored sources into 130 warnings about code that is not ours to change. Matching
+          upstream is what keeps `git diff` against a new release meaningful.
+        -->
+        <Nullable>disable</Nullable>
+        <NoWarn>$(NoWarn);CA1416;CA2022</NoWarn>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <PackageReference Include="Google.Protobuf"/>
+        <PackageReference Include="Grpc.Core.Api"/>
+        <PackageReference Include="Grpc.Tools" PrivateAssets="all"/>
+    </ItemGroup>
+
+    <!--
+      The fix. 4.5.4 is the package whose assembly version is 4.0.1.1 - the one Revit 2024 ships
+      and the one Grpc.Core.Api and Google.Protobuf are built against. Not a downgrade: both
+      packages ask for 4.5.3 or later.
+
+      net48 only. On the .NET axis System.Memory is part of the runtime, there is no second copy to
+      disagree with, and the probe measured all three references resolving to
+      Microsoft.NETCore.App.
+    -->
+    <ItemGroup Condition="'$(TargetFramework)' == 'net48'">
+        <PackageReference Include="System.Memory"/>
+    </ItemGroup>
+
+    <ItemGroup>
+        <Using Include="System"/>
+        <Using Include="System.Buffers"/>
+        <Using Include="System.Collections.Generic"/>
+        <Using Include="System.Diagnostics"/>
+        <Using Include="System.IO"/>
+        <Using Include="System.IO.Pipes"/>
+        <Using Include="System.Linq"/>
+        <Using Include="System.Threading"/>
+        <Using Include="System.Threading.Tasks"/>
+        <Using Include="Grpc.Core"/>
+        <Using Include="GrpcDotNetNamedPipes.Generated"/>
+        <Using Include="GrpcDotNetNamedPipes.Internal"/>
+        <Using Include="GrpcDotNetNamedPipes.Internal.Helpers"/>
+        <Using Include="GrpcDotNetNamedPipes.Internal.Protocol"/>
+    </ItemGroup>
+
+    <ItemGroup>
+        <Protobuf Include="**/*.proto" Access="Internal"/>
+    </ItemGroup>
+
+</Project>

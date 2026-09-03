@@ -37,11 +37,11 @@ public sealed class ProbeApplication : IExternalApplication
 
     public Result OnStartup(UIControlledApplication application)
     {
-        // Nothing from a redirected assembly may be named in this method. The JIT resolves every
-        // type a method mentions before running its first line, so naming one here would load it
-        // under the host's binding rules - the very thing the redirect exists to correct.
-        AssemblyRedirect.Install();
-
+        // An AppDomain.AssemblyResolve handler was tried here and removed. It did not help - the
+        // binding it was meant to correct succeeds, it just succeeds onto Revit's copy, and the
+        // handler only runs when binding fails. Worse, on Revit 2024 it would answer every failed
+        // resolve in an AppDomain shared with every other vendor, offering them our assemblies.
+        // The fix lives in BHS.Grpc.NamedPipes instead: agree with Revit on the version.
         return Start(application);
     }
 

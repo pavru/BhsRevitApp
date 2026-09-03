@@ -19,7 +19,13 @@
     </PropertyGroup>
 
     <ItemGroup>
-        <PackageReference Include="GrpcDotNetNamedPipes"/>
+        <!--
+          The vendored rebuild rather than the package. Its readme carries the measurement: the
+          published net462 build is compiled against a System.Memory that Grpc.Core.Api is not,
+          and inside Revit 2024 that is fatal with no way to write the binding redirect that would
+          reconcile them.
+        -->
+        <ProjectReference Include="..\BHS.Grpc.NamedPipes\BHS.Grpc.NamedPipes.csproj"/>
         <PackageReference Include="Grpc.Tools" PrivateAssets="all"/>
     </ItemGroup>
 

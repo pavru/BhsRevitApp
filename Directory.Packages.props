@@ -21,8 +21,24 @@
           suppression would later hide a real one. The check that our copies do not clash with
           Revit's is build/RefCheck, not a version here.
         -->
-        <PackageVersion Include="GrpcDotNetNamedPipes" Version="3.1.0"/>
         <PackageVersion Include="Grpc.Tools" Version="2.83.0"/>
+
+        <!--
+          Direct now, because GrpcDotNetNamedPipes is no longer a package: it is vendored and
+          rebuilt in source/Shared/BHS.Grpc.NamedPipes, and its readme says why. Pinning these two
+          is not the pinning the note above warns against - the versions are exactly what the
+          package resolved on its own, so nothing is downgraded and no NU1605 is being hidden.
+        -->
+        <PackageVersion Include="Google.Protobuf" Version="3.29.3"/>
+        <PackageVersion Include="Grpc.Core.Api" Version="2.67.0"/>
+
+        <!--
+          4.5.4 is the package whose assembly version is 4.0.1.1 - the copy Revit 2024 ships, and
+          the one Grpc.Core.Api and Google.Protobuf are built against. Referenced only on net48,
+          where a second copy can exist at all. Both packages ask for 4.5.3 or later, so this is
+          not a downgrade.
+        -->
+        <PackageVersion Include="System.Memory" Version="4.5.4"/>
 
         <!-- Consuming a companion's configuration. Referenced only by the consuming half, so a
              project that merely publishes does not carry it into the Revit AppDomain. -->

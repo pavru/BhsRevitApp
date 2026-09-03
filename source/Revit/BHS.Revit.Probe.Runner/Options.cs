@@ -39,8 +39,17 @@ internal sealed class Options
     /// </remarks>
     public TimeSpan RegistrationTimeout { get; set; } = TimeSpan.FromSeconds(240);
 
-    /// <summary>How long to wait for Revit to close after the command has been posted.</summary>
-    public TimeSpan ShutdownTimeout { get; set; } = TimeSpan.FromSeconds(90);
+    /// <summary>
+    /// How long to wait for Revit to close.
+    /// </summary>
+    /// <remarks>
+    /// Generous because two waits are stacked inside it. The probe registers long before Revit is
+    /// idle - 18s against about 72s to a usable window on 2024 - so the external event carrying
+    /// the exit command sits in the queue until startup finishes; measured at 25 seconds on 2024.
+    /// Only then does the teardown itself begin, and that alone was 9s on 2025 and 70s on 2027.
+    /// A tighter budget does not fail the close, it just kills Revit in the middle of one.
+    /// </remarks>
+    public TimeSpan ShutdownTimeout { get; set; } = TimeSpan.FromSeconds(240);
 
     public static Options? Parse(string[] args)
     {

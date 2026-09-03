@@ -27,6 +27,9 @@
   <!-- Side-agnostic code: plain .NET axis, knows nothing about a Revit version. -->
   <Folder Name="/Shared/">
     <Project Path="source/Shared/BHS.Shared/BHS.Shared.csproj" Type="C#" />
+    <!-- GrpcDotNetNamedPipes, vendored and rebuilt so its System.Memory reference matches the
+         one Revit 2024 ships. Its readme carries the measurement. -->
+    <Project Path="source/Shared/BHS.Grpc.NamedPipes/BHS.Grpc.NamedPipes.csproj" Type="C#" />
     <Project Path="source/Shared/BHS.Transport/BHS.Transport.csproj" Type="C#" />
     <Project Path="source/Shared/BHS.Transport.Configuration/BHS.Transport.Configuration.csproj" Type="C#" />
     <Project Path="source/Shared/BHS.Transport.Probe/BHS.Transport.Probe.csproj" Type="C#" />
