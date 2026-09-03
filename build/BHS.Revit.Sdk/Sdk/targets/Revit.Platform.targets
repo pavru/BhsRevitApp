@@ -1,0 +1,33 @@
+<Project>
+
+    <!-- ======================================================================================= -->
+    <!-- Base-SDK behaviour that does not apply once `revit` is the target platform.             -->
+    <!--                                                                                        -->
+    <!-- Imported from Sdk.targets AFTER the base Sdk.targets - a target has to be redefined     -->
+    <!-- later than the definition it replaces - and only for Revit frameworks, so a plain       -->
+    <!-- framework in the same project keeps the base behaviour untouched.                       -->
+    <!-- ======================================================================================= -->
+
+    <!--
+      The base SDK requires the target platform to be Windows before it will allow UseWPF or
+      UseWindowsForms. On a Revit framework the platform is `revit`, and the check has no way to
+      know that Revit-side code is Windows desktop by definition. What the check guards is supplied
+      instead by ImportWindowsDesktopTargets in Revit.Identity.targets, which is what actually
+      brings in the WPF targets and the Microsoft.WindowsDesktop.App reference.
+    -->
+    <Target Name="_CheckForInvalidWindowsDesktopTargetingConfiguration"/>
+
+    <!--
+      A target platform earns automatic preprocessor constants: REVIT, REVIT2026_0, and a
+      REVIT2024_0_OR_GREATER ladder built from SdkSupportedTargetPlatformVersion. They say the
+      right thing in the wrong spelling - the release year is a platform version here, so it comes
+      out as `2026_0` - and they would sit alongside the REVIT2026 / REVIT2026_OR_GREATER family
+      that GenerateRevitDefineConstants produces in Revit.Tasks.targets.
+
+      Two families for one fact is worse than either, so the automatic ones are switched off and
+      the SDK's own task stays authoritative.
+    -->
+    <Target Name="GenerateTargetPlatformDefineConstants"/>
+    <Target Name="GeneratePlatformCompatibleDefineConstants"/>
+
+</Project>

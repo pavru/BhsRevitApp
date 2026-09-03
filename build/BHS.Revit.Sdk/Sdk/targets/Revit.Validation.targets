@@ -5,42 +5,32 @@
       covered too: the implicit Revit API references are versioned from the release in the moniker,
       so an unsupported release surfaces as NU1102 on a package that was never going to exist, long
       before the build could say anything more useful.
+
+      Both checks read RevitSupportedReleases from Revit.Identity.targets, which holds the matrix as
+      `<year>=<plain moniker>` rows. Adding a Revit release is one edit, there.
     -->
     <Target Name="_ValidateRevitTfmConfiguration" BeforeTargets="BeforeBuild;BeforeCompile;CollectPackageReferences" Condition="'$(IsRevitTfm)' == 'true'">
 
-        <!-- Check supported Revit version -->
         <PropertyGroup>
             <_IsSupportedRevitVersion>false</_IsSupportedRevitVersion>
-            <_IsSupportedRevitVersion Condition="'$(RevitVersion)' == '2024' Or '$(RevitVersion)' == '2025' Or '$(RevitVersion)' == '2026' Or '$(RevitVersion)' == '2027'">true</_IsSupportedRevitVersion>
+            <_IsSupportedRevitVersion Condition="$([System.String]::new(';$(RevitSupportedReleases);').Contains(';$(RevitVersion)='))">true</_IsSupportedRevitVersion>
+
+            <!-- The pairing of Revit release and .NET version is fixed by Autodesk; there is no
+                 free product of the two axes. -->
+            <_IsNetVersionMismatch>true</_IsNetVersionMismatch>
+            <_IsNetVersionMismatch Condition="$([System.String]::new(';$(RevitSupportedReleases);').Contains(';$(RevitVersion)=$(_RevitBaseTfm);'))">false</_IsNetVersionMismatch>
+
+            <!-- What the release should have been built on, for the message. -->
+            <_ExpectedBaseTfm>$([System.Text.RegularExpressions.Regex]::Match(';$(RevitSupportedReleases)', ';$(RevitVersion)=([^;]*)').Groups[1].Value)</_ExpectedBaseTfm>
+            <_SupportedReleaseList>$([System.Text.RegularExpressions.Regex]::Replace('$(RevitSupportedReleases)', '=[^;]*', '').Replace(';', ', '))</_SupportedReleaseList>
         </PropertyGroup>
 
-        <!-- Check match between Revit version and base .NET version.
-             The pairing is fixed by Autodesk; there is no free product of the two axes. -->
-        <PropertyGroup>
-            <_IsNetVersionMismatch>false</_IsNetVersionMismatch>
-
-            <!-- Revit 2024 requires .NET Framework 4.8 -->
-            <_IsNetVersionMismatch Condition="'$(RevitVersion)' == '2024' And !$(TargetFramework.StartsWith('net48'))">true</_IsNetVersionMismatch>
-
-            <!-- Revit 2025 and 2026 require .NET 8.0 -->
-            <_IsNetVersionMismatch Condition="('$(RevitVersion)' == '2025' Or '$(RevitVersion)' == '2026') And !$(TargetFramework.StartsWith('net8.0'))">true</_IsNetVersionMismatch>
-
-            <!-- Revit 2027 requires .NET 10.0 -->
-            <_IsNetVersionMismatch Condition="'$(RevitVersion)' == '2027' And !$(TargetFramework.StartsWith('net10.0'))">true</_IsNetVersionMismatch>
-        </PropertyGroup>
-
-        <!-- Throw errors. The Error tag immediately aborts the build (if Condition == true) -->
         <Error Condition="'$(_IsSupportedRevitVersion)' == 'false'"
-               Text="[Revit SDK] Unsupported Revit version: '$(RevitVersion)'. The SDK only supports versions: 2024, 2025, 2026, 2027."/>
+               Text="[Revit SDK] Unsupported Revit version: '$(RevitVersion)'. The SDK only supports versions: $(_SupportedReleaseList)."/>
 
-        <Error Condition="'$(_IsNetVersionMismatch)' == 'true' And '$(RevitVersion)' == '2024'"
-               Text="[Revit SDK] .NET version mismatch. Revit $(RevitVersion) requires 'net48', but '$(TargetFramework.Split('-')[0])' is being used."/>
-
-        <Error Condition="'$(_IsNetVersionMismatch)' == 'true' And ('$(RevitVersion)' == '2025' Or '$(RevitVersion)' == '2026')"
-               Text="[Revit SDK] .NET version mismatch. Revit $(RevitVersion) requires 'net8.0', but '$(TargetFramework.Split('-')[0])' is being used."/>
-
-        <Error Condition="'$(_IsNetVersionMismatch)' == 'true' And '$(RevitVersion)' == '2027'"
-               Text="[Revit SDK] .NET version mismatch. Revit $(RevitVersion) requires 'net10.0', but '$(TargetFramework.Split('-')[0])' is being used."/>
+        <Error Condition="'$(_IsSupportedRevitVersion)' == 'true' And '$(_IsNetVersionMismatch)' == 'true'"
+               Text="[Revit SDK] .NET version mismatch. Revit $(RevitVersion) requires '$(_ExpectedBaseTfm)', but '$(_RevitBaseTfm)' is being used."/>
 
     </Target>
+
 </Project>

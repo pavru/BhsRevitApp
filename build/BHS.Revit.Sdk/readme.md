@@ -6,7 +6,7 @@ package references, `.addin` manifest generation, and publishing.
 
 ## Version Information
 
-**Version:** 1.1.2
+**Version:** 1.2.3
 
 Bump this on every change, and update the `Sdk="BHS.Revit.Sdk/<version>"` attribute in the
 projects under `source/` with it. The package carries an MSBuild task assembly, so any process
@@ -29,6 +29,10 @@ changed without touching a package that has other consumers. The upstream reposi
 *   **Revit 2024 (`net48-revit2024`) is supported.** It is the reason the profile and
     `FrameworkPathOverride` machinery exists: .NETFramework has no target platform, so the Revit
     part of the moniker has to be carried as the framework profile.
+*   **`revit` is a real target platform on the .NET axis.** The release year is the platform
+    version, which is what makes `net8.0-revit2025` and `net8.0-revit2026` two frameworks rather
+    than two names for one. Carrying the release nowhere in the identity cost Revit 2026 its place
+    in the IDE's project model entirely - see "Custom Target Framework Monikers" below.
 *   **Restore works.** It never did. `RevitTargetFrameworks`, which the old restore dispatcher
     read, was assigned nowhere, so both dispatch phases were skipped by their own conditions and
     `Restore` reported success without writing `project.assets.json`. The dispatcher it belonged
@@ -44,21 +48,26 @@ The SDK introduces TFMs that declare both the .NET version and the target Revit 
 
 **Supported TFMs:**
 
-| TFM | Revit | Built on | Reference assemblies from |
-|---|---|---|---|
-| `net48-revit2024` | 2024 | .NET Framework 4.8 | `net48` |
-| `net8.0-revit2025` | 2025 | .NET 8 | `net8.0-windows7.0` |
-| `net8.0-revit2026` | 2026 | .NET 8 | `net8.0-windows7.0` |
-| `net10.0-revit2027` | 2027 | .NET 10 | `net10.0-windows7.0` |
+| TFM | Revit | Built on | The release is carried as | Reference assemblies from |
+|---|---|---|---|---|
+| `net48-revit2024` | 2024 | .NET Framework 4.8 | framework profile `revit2024` | `net48` |
+| `net8.0-revit2025` | 2025 | .NET 8 | platform `revit` 2025.0 | `net8.0-windows7.0` |
+| `net8.0-revit2026` | 2026 | .NET 8 | platform `revit` 2026.0 | `net8.0-windows7.0` |
+| `net10.0-revit2027` | 2027 | .NET 10 | platform `revit` 2027.0 | `net10.0-windows7.0` |
 
 The moniker reaches the compiler unchanged. It is what the assembly is built as, what NuGet files
-the project under, and what names the output directory: `bin\Debug\net48-revit2024\`. Two Revit
-releases that share a .NET version stay distinct all the way through, so nothing has to be
-redirected to keep them apart.
+the project under, and what names the output directory: `bin\Debug\net48-revit2024\`.
 
-Adding a Revit release means one row in the validation table in `Revit.Validation.targets`, plus a
-platform version in `Revit.Identity.targets` if that release wants a different Windows SDK. The
-framework identity itself is derived from the moniker and needs no table.
+The fourth column is the part that is easy to get wrong. The Revit release has to be *part of the
+framework identity*, not merely part of its name, because that identity is what an IDE keys its
+project model on. While the .NET axis declared platform `windows`, Revit 2025 and 2026 both came
+out as `.NETCoreApp,Version=v8.0 / windows10.0.17763` - the same framework twice - and Rider kept
+the first and dropped Revit 2026 from the solution altogether.
+
+Adding a Revit release is one row in `RevitSupportedReleases` in `Revit.Identity.targets`, written
+as `<year>=<plain moniker>`. The validation table and the list of declared platform versions are
+both derived from it; the framework identity is derived from the moniker itself.
+
 ### 2. IDE Contexts & Preprocessor Directives
 
 When a Revit TFM is used, the SDK automatically generates preprocessor constants corresponding to the target
@@ -87,25 +96,34 @@ The SDK ensures configuration consistency, before the build and before restore c
 
 ### 4. WPF, WinForms, and WinUI Support
 
-`<UseWPF>`, `<UseWindowsForms>` and `<UseWinUI>` work on Revit TFMs without hitting NETSDK1136,
-because a Revit TFM on .NET 5+ declares `windows` as its target platform for real rather than
-pretending to during validation. On `net48-revit2024` the question does not arise: .NET Framework
-carries WPF and WinForms in the box.
+`<UseWPF>` and `<UseWindowsForms>` work on Revit TFMs, XAML markup compilation included. On
+`net48-revit2024` the question does not arise: .NET Framework carries WPF and WinForms in the box.
 
-`<UseWinUI>` additionally gets defaults for `TargetPlatformMinVersion`, `RuntimeIdentifiers` and
-`EnableMsixTooling`. Note that Windows App SDK needs .NET 6 or later, so WinUI is not available on
-Revit 2024 at all.
+On the .NET axis it takes two things, because the target platform is `revit` rather than `windows`.
+`ImportWindowsDesktopTargets` is switched on for exactly the projects that ask for WPF or WinForms
+- without it the markup compiler never runs and every code-behind fails on `InitializeComponent`,
+and with it on for everyone else the build warns NETSDK1106. And the base SDK's check that the
+platform must be Windows is switched off in `Revit.Platform.targets`; Revit-side code is Windows
+desktop by definition, and the check has no way to know that.
+
+`<UseWinUI>` gets defaults for `TargetPlatformMinVersion`, `RuntimeIdentifiers` and
+`EnableMsixTooling`, but it is untested on a Revit TFM. Note that Windows App SDK needs .NET 6 or
+later, so WinUI is not available on Revit 2024 at all.
 
 ### 5. Warnings the SDK suppresses
 
-Two, both about the same thing, and both unavoidable:
+Three, all of them consequences of the design rather than anything a project can act on:
 
 * **NU1701** - a package was restored through `AssetTargetFallback`.
 * **NU1702** - a project reference was resolved through it.
+* **CA1418** - `revit` is not a platform name the analyser has heard of. It fires on the
+  `[SupportedOSPlatform("revit2026.0")]` attribute the SDK generates for us, once per framework.
+  Suppressing it also stops CA1416 reasoning about Windows-only APIs, which costs nothing here:
+  everything Revit-side is Windows.
 
 Nobody publishes packages for `net48-revit2024`, so the fallback is how a Revit TFM consumes
-anything at all. See "How packages resolve" for why these are suppressed unconditionally rather
-than only on Revit frameworks.
+anything at all. See "How packages resolve" for why the NuGet pair is suppressed unconditionally
+rather than only on Revit frameworks.
 
 **NU1202 is not suppressed**, although the previous design suppressed it. It means a package has
 nothing for this framework, and that is worth failing on.
@@ -303,21 +321,38 @@ moniker, and then, per axis:
   implies a reference-assembly directory, and there is no `...\.NETFramework\v4.8\Profile\revit2024`,
   so `FrameworkPathOverride` points resolution at the plain v4.8 directory and
   `EnableFrameworkPathOverride=false` stops the base SDK computing its own.
-* **.NETCoreApp** - `TargetPlatformIdentifier` becomes `windows`, with the Windows SDK version the
-  corresponding Revit release ships with. Revit is Windows-only, the API packages publish their
-  reference assemblies under `net8.0-windows7.0` and `net10.0-windows7.0`, and `UseWPF` refuses to
-  work without a Windows platform (NETSDK1136).
+* **.NETCoreApp** - `TargetPlatformIdentifier` becomes `revit`, versioned by the release year.
+  There is no profile to use here, and the release has to live somewhere in the identity or two
+  releases on one .NET version become the same framework. Declaring a platform of our own means
+  declaring the things a Windows platform would have implied:
+
+  | Property | Why |
+  |---|---|
+  | `TargetPlatformSupported` | the base SDK knows Windows and the workload platforms, and errors NETSDK1139 on anything else |
+  | `SdkSupportedTargetPlatformVersion` | the sanctioned way to say which platform versions exist; without it NETSDK1140 rejects the release year |
+  | `ImportWindowsDesktopTargets` | brings in the WPF targets, for projects that ask for WPF or WinForms |
 
 Both inference blocks in `Microsoft.NET.TargetFrameworkInference.targets` are skipped when the
 properties they would compute are already set. Without that, `net8.0-revit2025` fails with
 NETSDK1139 ("target platform identifier revit was not recognized") and `net10.0-revit2027` with
-NETSDK1140, because `2027` is read as a Windows platform version.
+NETSDK1140, because `2027` is read as a platform version nobody declared.
+
+Two base-SDK targets are switched off for Revit frameworks in `Revit.Platform.targets`: the check
+that WPF needs a Windows platform, and the automatic platform preprocessor constants, which would
+otherwise put a second `REVIT2026_0` family alongside the `REVIT2026` one the SDK's own task
+generates.
 
 ### How packages resolve
 
-`AssetTargetFallback` gains the plain moniker. Nobody publishes packages for `net48-revit2024`, so
-restore is told it may fall back to `net48` - and to `net8.0` and `net10.0` on the other axis. That
-is all that was ever needed; the translate-and-dispatch restore existed to avoid this one property.
+`AssetTargetFallback` gains the plain moniker: nobody publishes packages for `net48-revit2024`, so
+restore is told it may fall back to `net48`. On the .NET axis it gains a Windows-flavoured entry
+first - the Revit API packages publish their reference assemblies under `net8.0-windows7.0` and
+`net10.0-windows7.0`, which a `revit`-platform project cannot consume directly. The Windows version
+in that entry is a ceiling for resolution, high enough to also cover packages that ask for a
+specific Windows SDK; it is not a claim about the project.
+
+Between them these two properties are all that was ever needed; the translate-and-dispatch restore
+existed to avoid them.
 
 `NU1701` and `NU1702`, the notices that the fallback was used, are suppressed. They have to be
 suppressed unconditionally in `Before.Microsoft.NET.Sdk.props` rather than alongside the rest of

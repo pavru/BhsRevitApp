@@ -61,7 +61,7 @@ Revit-side проекты собираются нашим **`BHS.Revit.Sdk`** и
 проекта и берётся из репозиторного фида `artifacts/feed`:
 
 ```xml
-<Project Sdk="BHS.Revit.Sdk/1.1.2">
+<Project Sdk="BHS.Revit.Sdk/1.2.3">
   <PropertyGroup>
     <TargetFrameworks>net48-revit2024;net8.0-revit2025;net8.0-revit2026;net10.0-revit2027</TargetFrameworks>
   </PropertyGroup>
@@ -94,9 +94,10 @@ Revit-side проекты собираются нашим **`BHS.Revit.Sdk`** и
   `UseRevitApi` (по умолчанию `true`), `UseRevitApiUi`, `UseRevitAdWindows`, `UseRevitApiIfc`,
   `UseRevitUiFramework`, `UseRevitAddInUtility`, `UserRevitTUnit`. Версии выравниваются по TFM —
   **не** прописывайте их вручную.
-- **WPF/WinForms/WinUI** работают через `UseWPF`/`UseWindowsForms`/`UseWinUI` без `NETSDK1136`:
-  Revit-TFM поверх .NET объявляет платформу `windows` по-настоящему. На `net48-revit2024` вопрос
-  не возникает — WPF и WinForms там в коробке.
+- **WPF/WinForms** работают через `UseWPF`/`UseWindowsForms`, включая компиляцию XAML. На
+  `net48-revit2024` вопрос не возникает — WPF и WinForms там в коробке; на оси .NET SDK включает
+  `ImportWindowsDesktopTargets` тем проектам, которые их запросили, и снимает проверку базового
+  SDK «платформа обязана быть Windows» (у нас платформа — `revit`).
 - **Манифест `.addin`** генерируется задачей `GenerateRevitAddIn` из item-группы `RevitAddIn`
   (`FullClassName`, `AddInId`, `VendorId`, для 2025+ — `AllowLoadIntoExistingSession`, для 2026+ —
   `UnifyInAddInManager`, `UseRevitContext`, `ContextName`).
@@ -136,20 +137,25 @@ Revit-side проекты собираются нашим **`BHS.Revit.Sdk`** и
 Соответствие фиксировано Autodesk, свободного произведения двух осей не существует.
 Проверено по `ref/`-папкам пакетов `Nice3point.Revit.Api.RevitAPI` в кэше NuGet:
 
-| Revit | Рантайм | TFM проекта | Ссылки берутся из | Версия пакета API |
-|---|---|---|---|---|
-| 2024 | .NET Framework 4.8 | `net48-revit2024` | `net48` | 2024.3.60 |
-| 2025 | .NET 8 | `net8.0-revit2025` | `net8.0-windows7.0` | 2025.4.60 |
-| 2026 | .NET 8 | `net8.0-revit2026` | `net8.0-windows7.0` | 2026.4.10 |
-| 2027 | .NET 10 | `net10.0-revit2027` | `net10.0-windows7.0` | 2027.2.0 |
+| Revit | Рантайм | TFM проекта | Год едет в | Ссылки берутся из | Версия пакета API |
+|---|---|---|---|---|---|
+| 2024 | .NET Framework 4.8 | `net48-revit2024` | профиле `revit2024` | `net48` | 2024.3.60 |
+| 2025 | .NET 8 | `net8.0-revit2025` | платформе `revit` 2025.0 | `net8.0-windows7.0` | 2025.4.60 |
+| 2026 | .NET 8 | `net8.0-revit2026` | платформе `revit` 2026.0 | `net8.0-windows7.0` | 2026.4.10 |
+| 2027 | .NET 10 | `net10.0-revit2027` | платформе `revit` 2027.0 | `net10.0-windows7.0` | 2027.2.0 |
 
-Четвёртая колонка — не во что превращается моникёр, а откуда `AssetTargetFallback` берёт
-содержимое пакетов: под сам Revit-моникёр никто ничего не публикует.
+Пятая колонка — не во что превращается моникёр, а откуда `AssetTargetFallback` берёт содержимое
+пакетов: под сам Revit-моникёр никто ничего не публикует.
 
-Все четыре поддержаны и проверены сборкой. Добавление новой версии Revit — строка в таблице
-валидации `build/BHS.Revit.Sdk/Sdk/targets/Revit.Validation.targets` и, если этой версии нужен
-другой Windows SDK, версия платформы в `Revit.Identity.targets`. Личность фреймворка выводится
-из моникёра и таблицы не требует.
+Четвёртая важнее, чем кажется. **Год Revit обязан входить в личность фреймворка**, а не только
+в его имя: именно по личности IDE строит модель проекта. Пока ось .NET объявляла платформу
+`windows`, 2025 и 2026 давали одну и ту же личность `.NETCoreApp,Version=v8.0 / windows10.0.17763`,
+и Rider оставлял первую, а Revit 2026 из решения исчезал совсем.
+
+Все четыре поддержаны и проверены сборкой. Добавление новой версии Revit — **одна строка**
+`RevitSupportedReleases` в `build/BHS.Revit.Sdk/Sdk/targets/Revit.Identity.targets` вида
+`<год>=<чистый моникёр>`; таблица валидации и список объявленных версий платформы выводятся
+из неё.
 
 Реальная вторая ось мультитаргетинга — **сторона процесса**, а не версия .NET:
 Revit-side сборки собираются по Revit-TFM, а общий код и UI — по чистой оси `net48;net8.0;net10.0`.
