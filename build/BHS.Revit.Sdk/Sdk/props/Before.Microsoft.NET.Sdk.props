@@ -1,85 +1,33 @@
 <Project>
-    <PropertyGroup>
-        <NoWarn>$(NoWarn);NU1701;NU1202</NoWarn>
-    </PropertyGroup>
+
+    <!-- Loaded before Microsoft.NET.Sdk. Nothing here may depend on TargetFramework: in a
+         cross-targeting outer build it is empty, and in a single-targeting project that declares
+         it in the body it is not visible yet. Everything Revit-specific therefore lives in
+         targets/Revit.Identity.targets, which runs at the first point where the framework is
+         known however it was supplied. -->
 
     <PropertyGroup>
         <SupportedTargetFrameworks>$(SupportedTargetFrameworks);net48-revit2024;net8.0-revit2025;net8.0-revit2026;net10.0-revit2027</SupportedTargetFrameworks>
     </PropertyGroup>
 
-    <!-- _IsStandardRestore marks the child invocation that restores the plain, non-Revit TFMs.
-         It must not act as an outer build or it would re-enter the restore dispatcher forever. -->
-    <PropertyGroup Condition="'$(_IsInnerRevitBuild)' != 'true' And '$(_IsStandardRestore)' != 'true'">
-        <IsRevitOuterBuild>true</IsRevitOuterBuild>
-    </PropertyGroup>
-
-    <!-- The custom moniker is hidden from the base SDK in Sdk.targets, which runs after the
-         project body and therefore sees TargetFramework however it was supplied. Nothing to do
-         here: TargetFrameworks is not visible yet, and a globally supplied TargetFramework
-         cannot be overridden from the project anyway. -->
-
-    <PropertyGroup Condition="'$(_IsInnerRevitBuild)' == 'true'">
-        <IsRevitOuterBuild>false</IsRevitOuterBuild>
-
-        <!-- Clear TargetFrameworks so the base SDK treats this as a single-target build. -->
-        <TargetFrameworks/>
-
-        <!--
-          The dispatcher hands the framework over as _RevitInnerTargetFramework, not as
-          TargetFramework, and it becomes TargetFramework here - a project-level property.
-
-          This is the whole point. A global property is viral: it flows into every project reached
-          through ProjectReference, so a global TargetFramework made a referenced library evaluate
-          and restore as net8.0-windows or net48 simply because that is what the referencing
-          project compiles as. Its assets file ended up with one wrong target (NETSDK1005), or with
-          none at all when the value was empty (MSB3992). A normal single-targeting project sets
-          TargetFramework in its own file, where it does not propagate; this reproduces that.
-        -->
-        <TargetFramework Condition="'$(_RevitInnerTargetFramework)' != ''">$(_RevitInnerTargetFramework)</TargetFramework>
-
-        <IsRevitTfm Condition="'$(RevitInnerTfm)' != '' And $(RevitInnerTfm.Contains('-revit'))">true</IsRevitTfm>
-        <RevitVersion Condition="'$(IsRevitTfm)' == 'true'">$([System.Text.RegularExpressions.Regex]::Match('$(RevitInnerTfm)', `revit(\d+)`).Groups[1].Value)</RevitVersion>
-
-        <!-- The TargetFramework passed by the dispatcher is a standard one (net48, net8.0-windows,
-             net10.0-windows), so the base SDK parses it natively. Nothing to spoof in the inner build. -->
-
-        <AppendTargetFrameworkToOutputPath Condition="'$(IsRevitTfm)' == 'true'">false</AppendTargetFrameworkToOutputPath>
-
-        <!-- Every Revit TFM gets its own obj/ and bin/ subtree. Without the bin/ half all Revit
-             TFMs would write into the same bin\$(Configuration) and overwrite each other, because
-             AppendTargetFrameworkToOutputPath is off and the inner TFMs are not unique either
-             (2025 and 2026 both compile as net8.0-windows). -->
-        <_RevitTfmOutputPath Condition="'$(IsRevitTfm)' == 'true'">obj\Revit$(RevitVersion)\</_RevitTfmOutputPath>
-
-        <BaseIntermediateOutputPath Condition="'$(IsRevitTfm)' == 'true'">$(_RevitTfmOutputPath)</BaseIntermediateOutputPath>
-        <MSBuildProjectExtensionsPath Condition="'$(IsRevitTfm)' == 'true'">$(_RevitTfmOutputPath)</MSBuildProjectExtensionsPath>
-
-        <RestoreOutputPath Condition="'$(IsRevitTfm)' == 'true'">$(_RevitTfmOutputPath)</RestoreOutputPath>
-        <ProjectAssetsFile Condition="'$(IsRevitTfm)' == 'true'">$(RestoreOutputPath)project.assets.json</ProjectAssetsFile>
-        <ProjectAssetsCacheFile Condition="'$(IsRevitTfm)' == 'true'">$(RestoreOutputPath)project.assets.cache</ProjectAssetsCacheFile>
-
-        <BaseOutputPath Condition="'$(IsRevitTfm)' == 'true'">bin\Revit$(RevitVersion)\</BaseOutputPath>
-        <IntermediateOutputPath Condition="'$(IsRevitTfm)' == 'true'">$(BaseIntermediateOutputPath)$(Configuration)\</IntermediateOutputPath>
-        <OutputPath Condition="'$(IsRevitTfm)' == 'true'">$(BaseOutputPath)$(Configuration)\</OutputPath>
-        <OutDir Condition="'$(IsRevitTfm)' == 'true'">$(OutputPath)</OutDir>
-
-        <!-- The base SDK only excludes $(BaseOutputPath) and $(BaseIntermediateOutputPath) from the
-             default **\*.cs glob. Those now point at one Revit version's subtree, so the sibling
-             versions' obj\RevitNNNN folders stay visible and their generated AssemblyInfo.cs gets
-             compiled in as well - CS0579, duplicate assembly attributes, once a second version has
-             been built. Excluding the roots covers every version at once.
-             Set here, before Microsoft.NET.Sdk.DefaultItems.props appends its own entries. -->
-        <DefaultItemExcludes Condition="'$(IsRevitTfm)' == 'true'">$(DefaultItemExcludes);obj\**;bin\**</DefaultItemExcludes>
-    </PropertyGroup>
-
     <!--
-      Nothing is undefined at the ProjectReference boundary on purpose. The framework is a
-      project-level property here, not a global one, so it does not propagate by itself and the
-      standard reference protocol applies: the referenced project reports what it targets and
-      MSBuild negotiates the nearest match. Undefining TargetFramework here broke that negotiation
-      and the reference resolved to nothing.
-    -->
+      A Revit framework resolves packages and project references through AssetTargetFallback, and
+      NU1701/NU1702 are the notices that it did. They are the design working, not something anyone
+      can act on.
 
+      This is one of the few things that cannot wait for Revit.Identity.targets, and it cannot be
+      conditioned on the framework at all: NuGet records the warning properties once per project,
+      taken from the cross-targeting outer build, which has no Revit framework of its own. Written
+      conditionally the warnings escaped to the solution level, where nothing suppressed them.
+
+      NU1202 is deliberately not in this list - see Revit.Identity.targets.
+    -->
+    <PropertyGroup>
+        <NoWarn>$(NoWarn);NU1701;NU1702</NoWarn>
+    </PropertyGroup>
+
+    <!-- Where the SDK's own MSBuild tasks live. The package carries both flavours because MSBuild
+         runs either on .NET Framework (Visual Studio, Rider) or on .NET (dotnet build). -->
     <PropertyGroup>
         <BuildTasksDirectoryRoot>$(MSBuildThisFileDirectory)..\..\tasks\</BuildTasksDirectoryRoot>
         <BuildTasksTFM Condition=" '$(MSBuildRuntimeType)' == 'Core'">net10.0</BuildTasksTFM>

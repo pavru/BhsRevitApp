@@ -1,113 +1,28 @@
 <Project>
 
-    <!-- ======================================================================================= -->
-    <!-- Capture the target frameworks the project actually asked for.                           -->
-    <!--                                                                                         -->
-    <!-- TargetFrameworks is declared in the project body, so it can only be read here:           -->
-    <!-- Sdk.props is imported at the TOP of the .csproj, before the body is evaluated, while     -->
-    <!-- Sdk.targets is imported at the BOTTOM. A single TargetFramework passed globally is       -->
-    <!-- captured earlier, in Before.Microsoft.NET.Sdk.props, where it is already visible.        -->
-    <!--                                                                                         -->
-    <!-- The restore dispatcher in NuGet.targets reads this property. It was never assigned       -->
-    <!-- anywhere, so both restore phases were skipped by their own conditions and Restore        -->
-    <!-- reported success without producing project.assets.json.                                  -->
-    <!-- ======================================================================================= -->
-    <PropertyGroup Condition="'$(_IsInnerRevitBuild)' != 'true' And '$(_IsStandardRestore)' != 'true'">
-        <!-- TargetFramework first: when one framework is asked for explicitly, with -f or in the
-             project body, that is the whole job even though TargetFrameworks also lists the others.
-             Reading the list here made a -f build dispatch every framework at once, and the base
-             SDK rejected the joined value with NETSDK1046. -->
-        <RevitTargetFrameworks Condition="'$(RevitTargetFrameworks)' == '' And '$(TargetFramework)' != ''">$(TargetFramework)</RevitTargetFrameworks>
-        <RevitTargetFrameworks Condition="'$(RevitTargetFrameworks)' == '' And '$(TargetFrameworks)' != ''">$(TargetFrameworks)</RevitTargetFrameworks>
-    </PropertyGroup>
-
-    <!-- ======================================================================================= -->
-    <!-- Outer build asked for one custom TFM: `dotnet build -f net8.0-revit2025`, a project that -->
-    <!-- sets TargetFramework rather than TargetFrameworks, or an IDE design-time build.          -->
-    <!--                                                                                         -->
-    <!-- The base SDK cannot parse the moniker. Microsoft.NET.TargetFrameworkInference.targets    -->
-    <!-- reads 'revit' as a target platform identifier and fails with NETSDK1139, or reads 2027   -->
-    <!-- as a Windows platform version and fails with NETSDK1140. Both inference blocks are       -->
-    <!-- skipped when the properties they compute are already set, so setting all four here is    -->
-    <!-- what keeps the outer build alive until our dispatcher can hand the inner build a         -->
-    <!-- standard moniker.                                                                        -->
-    <!--                                                                                          -->
-    <!-- Rewriting TargetFramework itself is not an option: with -f it arrives as a global         -->
-    <!-- property, and a project-level assignment cannot override one.                             -->
-    <!-- ======================================================================================= -->
-    <PropertyGroup Condition="'$(_IsInnerRevitBuild)' != 'true' And '$(_IsStandardRestore)' != 'true' And '$(TargetFramework)' != '' And $(TargetFramework.Contains('-revit'))">
-        <IsRevitOuterBuild>true</IsRevitOuterBuild>
-    </PropertyGroup>
-
     <!--
-      The identity fix-up itself is deliberately NOT tied to inner or outer. Any evaluation that
-      ends up holding a custom moniker in TargetFramework needs it, and there are more of those
-      than the dispatcher creates: the base cross-targeting GetTargetFrameworks splits
-      TargetFrameworks and re-evaluates this project once per entry, inheriting _IsInnerRevitBuild
-      from the enclosing dispatch. Guarding on that flag left those evaluations unpatched and they
-      failed with NETSDK1139.
-
-      An evaluation the dispatcher really did start carries _RevitInnerTargetFramework, and by this
-      point Before.Microsoft.NET.Sdk.props has already replaced TargetFramework with the standard
-      moniker, so the condition below is false there and nothing is disturbed.
+      The Revit moniker is made whole before the base SDK is imported, and then the base SDK does
+      all the rest: cross-targeting, restore, compilation, design-time builds. Nothing here
+      intercepts Build, Restore or any design-time target, which is the point - an outer build that
+      dispatches into a child MSBuild call is invisible to an IDE, and that is what made Rider show
+      these projects with one bogus framework and no source files.
     -->
-    <PropertyGroup Condition="'$(TargetFramework)' != '' And $(TargetFramework.Contains('-revit'))">
-        <_RevitOuterBaseTfm>$(TargetFramework.Split('-')[0])</_RevitOuterBaseTfm>
-        <TargetFrameworkIdentifier>$([MSBuild]::GetTargetFrameworkIdentifier('$(_RevitOuterBaseTfm)'))</TargetFrameworkIdentifier>
-        <TargetFrameworkVersion>v$([MSBuild]::GetTargetFrameworkVersion('$(_RevitOuterBaseTfm)', 2))</TargetFrameworkVersion>
-
-        <!-- Only .NET 5+ goes through the platform check. Revit 2024 is .NETFramework, where the
-             suffix is treated as a profile and no platform is parsed. Any valid Windows version
-             does here: the outer build never compiles, it only dispatches. -->
-        <TargetPlatformIdentifier Condition="'$(TargetFrameworkIdentifier)' == '.NETCoreApp'">Windows</TargetPlatformIdentifier>
-        <TargetPlatformVersion Condition="'$(TargetFrameworkIdentifier)' == '.NETCoreApp'">7.0</TargetPlatformVersion>
-    </PropertyGroup>
-
-    <PropertyGroup Condition="'$(TargetFramework)' == '' And '$(TargetFrameworks)' != '' And '$(_IsInnerRevitBuild)' != 'true' And '$(_IsStandardRestore)' != 'true'">
-        <IsRevitOuterBuild>true</IsRevitOuterBuild>
-    </PropertyGroup>
-
-    <!--
-      An inner build compiles exactly one framework. Before.Microsoft.NET.Sdk.props already clears
-      TargetFrameworks, but the project body re-declares it afterwards, so it has to be cleared
-      again here, after the body and before the base SDK decides whether this is a cross-targeting
-      build.
-
-      This used to be handled by passing TargetFramework as a global property, which outranks the
-      body. That is no longer done - a global TargetFramework leaks into referenced projects - so
-      the clearing has to be explicit. Without it the inner restore produced a spec covering all
-      four Revit frameworks and applied one Revit version's packages to all of them (NU1202).
-    -->
-    <PropertyGroup Condition="'$(_IsInnerRevitBuild)' == 'true' And '$(_RevitInnerTargetFramework)' != ''">
-        <TargetFrameworks/>
-    </PropertyGroup>
-
-    <!-- Import base Sdk.targets from Microsoft.NET.Sdk -->
-    <Import Project="Sdk.targets" Sdk="Microsoft.NET.Sdk"/>
-
     <PropertyGroup>
         <_RevitTargetsDir>$(MSBuildThisFileDirectory)targets\</_RevitTargetsDir>
     </PropertyGroup>
 
-    <!-- Shared TFM translation. Must be imported before any dispatcher that depends on it. -->
-    <Import Project="$(_RevitTargetsDir)Revit.TfmMapping.targets" Condition="Exists('$(_RevitTargetsDir)Revit.TfmMapping.targets')"/>
+    <Import Project="$(_RevitTargetsDir)Revit.Identity.targets" Condition="Exists('$(_RevitTargetsDir)Revit.Identity.targets')"/>
 
-    <!-- Validation logic (Inner Build only) -->
+    <Import Project="Sdk.targets" Sdk="Microsoft.NET.Sdk"/>
+
+    <!-- Kept as the name the publishing targets use to exclude the cross-targeting build, where
+         there is no single framework to publish and RevitVersion is empty. -->
+    <PropertyGroup>
+        <IsRevitOuterBuild Condition="'$(IsCrossTargetingBuild)' == 'true'">true</IsRevitOuterBuild>
+    </PropertyGroup>
+
     <Import Project="$(_RevitTargetsDir)Revit.Validation.targets" Condition="'$(IsRevitTfm)' == 'true' And Exists('$(_RevitTargetsDir)Revit.Validation.targets')"/>
-
-    <!-- Dispatcher Logic (Outer Build). Exactly one of the two must be imported: they define the
-         same target names, so importing both would leave whichever came last silently in charge.
-         A single framework asked for globally wins over the project's TargetFrameworks list. -->
-    <Import Project="$(_RevitTargetsDir)Microsoft.NET.Sdk.CrossTargeting.targets" Condition="'$(IsRevitOuterBuild)' == 'true' And '$(TargetFramework)' == '' And '$(TargetFrameworks)' != '' And Exists('$(_RevitTargetsDir)Microsoft.NET.Sdk.CrossTargeting.targets')" />
-    <Import Project="$(_RevitTargetsDir)Microsoft.NET.Sdk.targets" Condition="'$(IsRevitOuterBuild)' == 'true' And '$(TargetFramework)' != '' And Exists('$(_RevitTargetsDir)Microsoft.NET.Sdk.targets')"/>
-
-    <!-- Framework resolution bypass (Inner Build) -->
-    <Import Project="$(_RevitTargetsDir)Microsoft.NET.Sdk.FrameworkReferenceResolution.targets" Condition="'$(IsRevitTfm)' == 'true' And Exists('$(_RevitTargetsDir)Microsoft.NET.Sdk.FrameworkReferenceResolution.targets')"/>
-
-    <!-- NuGet Restore Overrides (Outer Build) -->
-    <Import Project="$(_RevitTargetsDir)NuGet.targets" Condition="'$(IsRevitOuterBuild)' == 'true' And Exists('$(_RevitTargetsDir)NuGet.targets')"/>
-
-    <!-- Final tasks (Inner Build or outer build depending on condition) -->
     <Import Project="$(_RevitTargetsDir)Revit.Tasks.targets" Condition="Exists('$(_RevitTargetsDir)Revit.Tasks.targets')"/>
     <Import Project="$(_RevitTargetsDir)Revit.Publish.targets" Condition="Exists('$(_RevitTargetsDir)Revit.Publish.targets')"/>
+
 </Project>

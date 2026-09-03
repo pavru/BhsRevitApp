@@ -1,54 +1,30 @@
 <Project>
+
+    <!-- Loaded after Microsoft.NET.Sdk's own props, so Directory.Build.props and
+         Directory.Packages.props have already been read. Still no TargetFramework here - see the
+         note in Before.Microsoft.NET.Sdk.props. -->
+
     <PropertyGroup Condition="'$(UseWinUI)' == 'true'">
         <TargetPlatformMinVersion Condition="'$(TargetPlatformMinVersion)' == ''">10.0.17763.0</TargetPlatformMinVersion>
         <RuntimeIdentifiers Condition="'$(RuntimeIdentifiers)' == ''">win10-x64</RuntimeIdentifiers>
         <EnableMsixTooling Condition="'$(EnableMsixTooling)' == ''">true</EnableMsixTooling>
     </PropertyGroup>
 
-    <!-- Windows platform versions apply to the .NET Core TFMs only. Revit 2024 compiles as plain
-         net48, where TargetPlatformVersion has no meaning and setting it derails the base SDK. -->
-    <PropertyGroup Condition="'$(IsRevitTfm)' == 'true' And '$(RevitVersion)' != '2024'">
-        <!-- The TargetFramework (e.g. net8.0-windows) is parsed naturally by the base SDK.
-             We only override the TargetPlatformVersion if we need to force a specific SDK version based on Revit version. -->
-        <TargetPlatformVersion Condition="'$(RevitVersion)' == '2025' Or '$(RevitVersion)' == '2026'">10.0.17763.0</TargetPlatformVersion>
-        <TargetPlatformVersion Condition="'$(RevitVersion)' &gt; '2026'">10.0.22000.0</TargetPlatformVersion>
-        <TargetPlatformVersion Condition="'$(TargetPlatformVersion)' == '' or '$(TargetPlatformVersion)' == '0.0'">7.0</TargetPlatformVersion>
-    </PropertyGroup>
-
-    <PropertyGroup Condition="'$(_IsInnerRevitBuild)' == 'true'">
-        <!-- MSBuild uses this to determine if it should parse inner dependencies -->
-        <IsCrossTargetingBuild>false</IsCrossTargetingBuild>
-    </PropertyGroup>
-
-    <!-- On .NET Framework the compiler defaults to C# 7.3, so Nullable=enable fails with CS8630.
-         A net48-revit TFM exists precisely to write modern code against an old framework, so the
-         SDK supplies the language version rather than making every project repeat it.
-
-         A default, not an override: a project that sets LangVersion itself keeps its value.
-         Note that `latest` only unlocks the syntax. Features needing runtime support - records,
-         init accessors, index and range - still want a polyfill package on net48. -->
-    <PropertyGroup Condition="'$(IsRevitTfm)' == 'true' And '$(TargetFramework)' != '' And $(TargetFramework.StartsWith('net4')) And '$(LangVersion)' == ''">
-        <LangVersion>latest</LangVersion>
-    </PropertyGroup>
-
     <!--
       Under Central Package Management the implicit Revit API references come with a floating
-      PackageVersion pinned to the Revit target framework, and NuGet rejects a floating version on
-      a PackageVersion item with NU1011 unless this is on.
+      PackageVersion pinned to the Revit release, and NuGet rejects a floating version on a
+      PackageVersion item with NU1011 unless this is on.
 
-      It has to be set here rather than in Revit.Packages.props: that file is only imported for
-      Revit target frameworks, while the outer build - which is where restore validates the
-      collected items - has no Revit TFM of its own. Directory.Build.props has been imported by
-      now, so ManagePackageVersionsCentrally is already known.
+      It belongs here rather than next to the package items: restore validates the collected items
+      in the cross-targeting outer build, which has no Revit framework of its own and therefore
+      never reaches targets/Revit.Packages.targets.
 
-      It is a default: set the property in Directory.Build.props to take the decision away from
-      the SDK. Note this permits floating central versions for the whole project, including ones
-      the project declares itself.
+      It is a default: set the property in Directory.Build.props to take the decision away from the
+      SDK. Note this permits floating central versions for the whole project, including ones the
+      project declares itself.
     -->
     <PropertyGroup Condition="'$(ManagePackageVersionsCentrally)' == 'true' And '$(CentralPackageFloatingVersionsEnabled)' == ''">
         <CentralPackageFloatingVersionsEnabled>true</CentralPackageFloatingVersionsEnabled>
     </PropertyGroup>
 
-    <!-- Packages -->
-    <Import Project="$(MSBuildThisFileDirectory)Revit.Packages.props" Condition="'$(IsRevitTfm)' == 'true' And Exists('$(MSBuildThisFileDirectory)Revit.Packages.props')"/>
 </Project>

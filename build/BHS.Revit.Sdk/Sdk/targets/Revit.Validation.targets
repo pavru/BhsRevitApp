@@ -1,7 +1,12 @@
 <Project>
 
-    <!-- Execute validation before compilation and build -->
-    <Target Name="_ValidateRevitTfmConfiguration" BeforeTargets="BeforeBuild;BeforeCompile" Condition="'$(IsRevitTfm)' == 'true'">
+    <!--
+      Validation runs before the build and before restore collects packages. Restore has to be
+      covered too: the implicit Revit API references are versioned from the release in the moniker,
+      so an unsupported release surfaces as NU1102 on a package that was never going to exist, long
+      before the build could say anything more useful.
+    -->
+    <Target Name="_ValidateRevitTfmConfiguration" BeforeTargets="BeforeBuild;BeforeCompile;CollectPackageReferences" Condition="'$(IsRevitTfm)' == 'true'">
 
         <!-- Check supported Revit version -->
         <PropertyGroup>

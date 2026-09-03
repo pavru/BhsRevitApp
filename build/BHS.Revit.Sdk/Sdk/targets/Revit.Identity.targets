@@ -1,0 +1,111 @@
+<Project>
+    <!-- ======================================================================================= -->
+    <!-- Everything that turns a custom Revit moniker into a target framework the rest of the    -->
+    <!-- toolchain accepts. This is the whole of the moniker support; there is no dispatcher.    -->
+    <!--                                                                                        -->
+    <!-- The moniker stays the real TargetFramework. `net48-revit2024` compiles, restores and    -->
+    <!-- lands in bin\...\net48-revit2024\ under that name, and the base SDK's own               -->
+    <!-- cross-targeting machinery drives the inner builds. An IDE therefore sees an ordinary    -->
+    <!-- multi-targeting project: this file exists because the earlier design translated the     -->
+    <!-- moniker and dispatched the real work into a child MSBuild call, which left Rider and    -->
+    <!-- Visual Studio with an empty shell - no frameworks, no source files, no restore.         -->
+    <!--                                                                                        -->
+    <!-- Imported from Sdk.targets BEFORE the base Sdk.targets, which is the earliest point      -->
+    <!-- where TargetFramework is known however it was supplied: as a global property from the   -->
+    <!-- cross-targeting dispatcher or `dotnet build -f`, or from the project body. Properties   -->
+    <!-- the base SDK would otherwise infer are all set here, which is what keeps                -->
+    <!-- Microsoft.NET.TargetFrameworkInference.targets from choking on the `-revit` suffix.     -->
+    <!-- ======================================================================================= -->
+
+    <PropertyGroup Condition="'$(TargetFramework)' != '' And $(TargetFramework.Contains('-revit'))">
+        <IsRevitTfm>true</IsRevitTfm>
+        <RevitVersion>$([System.Text.RegularExpressions.Regex]::Match('$(TargetFramework)', `revit(\d+)`).Groups[1].Value)</RevitVersion>
+
+        <!-- The plain moniker the Revit one is built on: net48, net8.0, net10.0. -->
+        <_RevitBaseTfm>$(TargetFramework.Split('-')[0])</_RevitBaseTfm>
+
+        <TargetFrameworkIdentifier>$([MSBuild]::GetTargetFrameworkIdentifier('$(_RevitBaseTfm)'))</TargetFrameworkIdentifier>
+        <TargetFrameworkVersion>v$([MSBuild]::GetTargetFrameworkVersion('$(_RevitBaseTfm)', 2))</TargetFrameworkVersion>
+
+        <!--
+          Packages are published for the plain moniker, never for ours, so restore has to be told
+          it may fall back to it. This is what replaces the old translate-and-dispatch restore:
+          NuGet resolves net48-revit2024 against net48 assets natively, and NU1701/NU1702 - the
+          notices that a fallback was used - are the expected outcome rather than a problem.
+        -->
+        <AssetTargetFallback>$(AssetTargetFallback);$(_RevitBaseTfm)</AssetTargetFallback>
+
+        <!-- Both attributes would be stamped with a moniker no runtime has heard of. -->
+        <GenerateTargetFrameworkAttribute>false</GenerateTargetFrameworkAttribute>
+        <GenerateSupportedRuntime>false</GenerateSupportedRuntime>
+    </PropertyGroup>
+
+    <!--
+      .NET Framework axis - Revit 2024.
+
+      .NETFramework has no notion of a target platform, so the Revit part of the moniker is
+      carried as the framework profile instead. That is not cosmetic: TargetFrameworkMoniker is
+      built from identifier, version and profile, and it is what NuGet writes into the assets
+      file. Leave the profile out and restore files the project under plain net48 while the build
+      asks for net48-revit2024, which is NETSDK1005.
+
+      A profile normally means a real reference-assembly directory, and there is no
+      ...\.NETFramework\v4.8\Profile\revit2024. FrameworkPathOverride points reference resolution
+      at the plain v4.8 directory - note the empty profile argument - and
+      EnableFrameworkPathOverride=false stops the base SDK from computing its own.
+    -->
+    <PropertyGroup Condition="'$(IsRevitTfm)' == 'true' And '$(TargetFrameworkIdentifier)' == '.NETFramework'">
+        <TargetFrameworkProfile>$(TargetFramework.Split('-')[1])</TargetFrameworkProfile>
+        <FrameworkPathOverride>$([Microsoft.Build.Utilities.ToolLocationHelper]::GetPathToStandardLibraries('$(TargetFrameworkIdentifier)', '$(TargetFrameworkVersion)', '', 'x64', '', ''))\</FrameworkPathOverride>
+        <EnableFrameworkPathOverride>false</EnableFrameworkPathOverride>
+
+        <!-- On .NET Framework the compiler defaults to C# 7.3, so Nullable=enable fails with
+             CS8630. A net48-revit moniker exists precisely to write modern code against an old
+             framework, so the SDK supplies the language version rather than making every project
+             repeat it. A default, not an override: a project that sets LangVersion keeps it.
+             Note that `latest` only unlocks syntax - records, init accessors, indices and ranges
+             still want a polyfill package on net48. -->
+        <LangVersion Condition="'$(LangVersion)' == ''">latest</LangVersion>
+    </PropertyGroup>
+
+    <!--
+      .NET axis - Revit 2025 and later.
+
+      Here the platform is a real concept, and Revit is Windows-only: the API packages ship their
+      reference assemblies under net8.0-windows7.0 and net10.0-windows7.0, and UseWPF refuses to
+      work without a Windows platform (NETSDK1136). Declaring the platform explicitly also keeps
+      framework inference away from reading `revit` as a platform identifier (NETSDK1139) or the
+      release year as a platform version (NETSDK1140).
+
+      The platform version is the Windows SDK to build against, not a Revit fact; it follows what
+      the corresponding Revit release ships with.
+    -->
+    <PropertyGroup Condition="'$(IsRevitTfm)' == 'true' And '$(TargetFrameworkIdentifier)' == '.NETCoreApp'">
+        <TargetPlatformIdentifier>windows</TargetPlatformIdentifier>
+        <TargetPlatformVersion Condition="'$(RevitVersion)' == '2025' Or '$(RevitVersion)' == '2026'">10.0.17763.0</TargetPlatformVersion>
+        <TargetPlatformVersion Condition="'$(TargetPlatformVersion)' == '' Or '$(TargetPlatformVersion)' == '0.0'">10.0.22000.0</TargetPlatformVersion>
+    </PropertyGroup>
+
+    <!--
+      NU1701 and NU1702, the notices that AssetTargetFallback was used, are suppressed in
+      Before.Microsoft.NET.Sdk.props - they have to be, because NuGet records them once per
+      project rather than per framework.
+
+      NU1202 is deliberately NOT suppressed, although the previous design did. It needed to,
+      because a translated moniker made genuinely incompatible packages look resolvable. With the
+      moniker kept real NU1202 means what it says - the package has nothing for this framework -
+      and hiding it would only defer the failure to run time.
+    -->
+
+    <!-- What the SDK made of the moniker, for when a build behaves in a way the project file does
+         not explain. `dotnet build -p:RevitSdkDiagnostics=true`. -->
+    <Target Name="_ReportRevitIdentity" BeforeTargets="BeforeBuild" Condition="'$(RevitSdkDiagnostics)' == 'true'">
+        <Message Importance="high"
+                 Text="[Revit SDK] $(MSBuildProjectName): tfm='$(TargetFramework)' revit='$(RevitVersion)' identity='$(TargetFrameworkIdentifier) $(TargetFrameworkVersion) $(TargetFrameworkProfile)' platform='$(TargetPlatformIdentifier) $(TargetPlatformVersion)' fallback='$(AssetTargetFallback)'"/>
+    </Target>
+
+    <!-- Implicit Revit API packages. Imported here rather than from the props files because it
+         reads IsRevitTfm and RevitVersion, which are only known once TargetFramework is. -->
+    <Import Project="$(MSBuildThisFileDirectory)Revit.Packages.targets" Condition="'$(IsRevitTfm)' == 'true' And Exists('$(MSBuildThisFileDirectory)Revit.Packages.targets')"/>
+
+</Project>

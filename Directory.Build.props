@@ -41,8 +41,9 @@
     </PropertyGroup>
 
     <!--
-      Output paths are left to BHS.Revit.Sdk, which already redirects obj and bin per Revit
-      version (obj\RevitNNNN\, bin\RevitNNNN\). Redirecting them again here would collide.
+      Output paths are left alone. Every Revit target framework has its own moniker, so the
+      ordinary bin\<Configuration>\<tfm>\ layout already keeps the versions apart and there is
+      nothing to redirect.
     -->
 
 </Project>
