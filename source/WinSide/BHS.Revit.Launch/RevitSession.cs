@@ -117,20 +117,62 @@ public sealed class RevitSession : IDisposable
         if (process is null)
             return true;
 
-        if (instance is not null)
+        if (instance is null)
+            return await WaitAsync(process, timeout).ConfigureAwait(false);
+
+        // Asked more than once, and that is not belt and braces.
+        //
+        // The exit travels as PostCommand(ExitRevit) from inside, and Revit drops a posted command
+        // it is not ready for - silently, with no error anywhere. Measured three times: each failure
+        // came within a second or two of heavy document work, and each time the add-in's own
+        // OnShutdown never ran at all, so Revit had not begun leaving. The first reading was
+        // mistaken for a slow shutdown and answered with a bigger budget; the second landed on the
+        // release that normally leaves in three seconds, which is what a lost message looks like
+        // and not what a slow one does.
+        var deadline = DateTime.UtcNow + timeout;
+        var attempt = 0;
+
+        while (DateTime.UtcNow < deadline)
         {
+            attempt++;
+
             try
             {
                 var client = new RevitSideChannel.RevitSideChannelClient(PipeTransport.CreateClient(instance.PipeName));
-                await client.ShutdownAsync(new ShutdownRequest { Reason = reason });
+                await client.ShutdownAsync(new ShutdownRequest { Reason = reason }).ConfigureAwait(false);
             }
             catch (RpcException)
             {
-                // It may have gone already, or be too busy to answer. The wait below decides.
+                // Gone already, or too busy to answer. Either way the wait below decides.
             }
+
+            var left = deadline - DateTime.UtcNow;
+            var slice = left < RetryAfter ? left : RetryAfter;
+
+            if (slice <= TimeSpan.Zero)
+                break;
+
+            if (await WaitAsync(process, slice).ConfigureAwait(false))
+                return true;
+
+            // Still there. Either it is leaving slowly, in which case asking again costs nothing,
+            // or the request was dropped, in which case asking again is the only thing that helps.
         }
 
-        using var cancellation = new CancellationTokenSource(timeout);
+        return process.HasExited;
+    }
+
+    /// <summary>How long to give one request before asking again.</summary>
+    /// <remarks>
+    /// Long enough that an ordinary shutdown finishes inside the first slice - measured at 3 to 40
+    /// seconds across the releases - and short enough that a dropped request is not paid for in
+    /// minutes.
+    /// </remarks>
+    private static readonly TimeSpan RetryAfter = TimeSpan.FromSeconds(45);
+
+    private static async Task<bool> WaitAsync(System.Diagnostics.Process process, TimeSpan window)
+    {
+        using var cancellation = new CancellationTokenSource(window);
 
         try
         {

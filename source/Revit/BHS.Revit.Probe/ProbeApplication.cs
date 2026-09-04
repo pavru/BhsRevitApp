@@ -132,12 +132,16 @@ public sealed class ProbeApplication : RevitAddInApplication
             _channel?.Republish();
             ProbeLog.Write("document opened: " + (document?.Title ?? "(none)"));
 
-            // Posted, not done here. DocumentOpened runs in the middle of Revit opening a model,
-            // and switching tabs on the WPF ribbon there is UI work inside somebody else's
-            // operation - on a loaded machine that showed up as Revit asking whether to cancel the
-            // operation, a modal dialog in a sweep nobody is watching. The pump exists exactly for
-            // work that can wait for Revit to be idle, and this can.
-            Services?.Pump.Post("probe: show the Add-Ins tab", _ => ShowAddInsTab());
+            // Off unless asked for. Switching the ribbon tab is what made Revit put up
+            // "stop the current operation?" - its own journal names the trigger, ProgressCancelled,
+            // in the middle of loading the model - and a modal dialog in an unattended sweep is the
+            // failure this whole runner exists to avoid. Moving it onto the pump was not enough:
+            // Revit reports itself idle between phases of a load that is still running.
+            //
+            // The question it existed to answer is answered and written down, so the sweep no longer
+            // pays for it. BHS_PROBE_SHOW_TAB=1 brings it back for whoever wants to ask again.
+            if (Environment.GetEnvironmentVariable("BHS_PROBE_SHOW_TAB") == "1")
+                Services?.Pump.Post("probe: show the Add-Ins tab", _ => ShowAddInsTab());
         }
         catch (Exception error)
         {
