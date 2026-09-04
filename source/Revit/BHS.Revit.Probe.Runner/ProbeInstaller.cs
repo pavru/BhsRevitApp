@@ -121,7 +121,10 @@ internal static class ProbeInstaller
         File.WriteAllText(Path.Combine(directory, "appsettings.json"), """
             {
               // written by the probe runner; removed with --undeploy
-              "Probe": { "Marker": "product", "Layer": "common" }
+              "Probe": { "Marker": "product", "Layer": "common" },
+              // A project-scoped key set by the vendor, so that the sweep can prove a project
+              // removes it rather than merely overriding it.
+              "Model": { "Probe": { "Cleared": "set-by-the-product-layer" } }
             }
             """);
 

@@ -605,6 +605,16 @@ internal static class Program
         report.Check("a key without the project prefix is not taken from the model",
             answer.Values.GetValueOrDefault("model:userScoped") != "written-by-the-probe");
 
+        // The subtle half, and the reason the schema has a third field: Extensible Storage refuses
+        // a null, so a removed key travels as a name in a list and is unfolded back into key -> null
+        // on reading. Without this the overlay would let a cleared value fall through to the layer
+        // below and the mechanism would look like it worked.
+        report.Check("the product layer really did set the key that is about to be cleared",
+            answer.Values.GetValueOrDefault("model:clearedBefore") == "set-by-the-product-layer");
+
+        report.Check("and a project can clear what the vendor's own file set",
+            answer.Values.GetValueOrDefault("model:clearedAfter") == "(unset)");
+
         // The sweep must leave nothing behind to be asked about. A written document is a modified
         // one, and Revit asks whether to save it on the way out - which nothing outside the process
         // can answer.

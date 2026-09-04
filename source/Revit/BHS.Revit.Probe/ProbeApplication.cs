@@ -132,7 +132,12 @@ public sealed class ProbeApplication : RevitAddInApplication
             _channel?.Republish();
             ProbeLog.Write("document opened: " + (document?.Title ?? "(none)"));
 
-            ShowAddInsTab();
+            // Posted, not done here. DocumentOpened runs in the middle of Revit opening a model,
+            // and switching tabs on the WPF ribbon there is UI work inside somebody else's
+            // operation - on a loaded machine that showed up as Revit asking whether to cancel the
+            // operation, a modal dialog in a sweep nobody is watching. The pump exists exactly for
+            // work that can wait for Revit to be idle, and this can.
+            Services?.Pump.Post("probe: show the Add-Ins tab", _ => ShowAddInsTab());
         }
         catch (Exception error)
         {
@@ -292,8 +297,10 @@ public sealed class ProbeApplication : RevitAddInApplication
     /// Availability is queried while the tab is shown, and an unattended run shows nothing - which
     /// is why the first two sweeps answered "Revit asked neither" and settled nothing. Switching
     /// tabs is not a Revit API operation at all; it belongs to the WPF ribbon underneath, reached
-    /// through <c>AdWindows</c>, so it needs no transaction and no external event - but it does need
-    /// the UI thread, and <c>DocumentOpened</c> is on it.
+    /// through <c>AdWindows</c>, so it needs no transaction. It does need the UI thread, and it
+    /// needs Revit not to be in the middle of something - which is why it is posted to the pump
+    /// rather than run from <c>DocumentOpened</c>, where it once provoked a cancel-the-operation
+    /// dialog on a loaded machine.
     /// </remarks>
     private static void ShowAddInsTab()
     {

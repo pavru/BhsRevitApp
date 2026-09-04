@@ -206,9 +206,19 @@ internal sealed class ProbeChannel : RevitSideChannel.RevitSideChannelBase
             using var group = new Autodesk.Revit.DB.TransactionGroup(document, "BHS probe: model settings");
             group.Start();
 
+            const string cleared = "Model:Probe:Cleared";
+
+            // What the product layer put there, before the model has said anything.
+            answer["model:clearedBefore"] = _services.ModelSettings.For(document)[cleared] ?? "(unset)";
+
             _services.ModelSettings.Write(document, new Dictionary<string, string?>
             {
                 [key] = "written-by-the-probe",
+
+                // Null means remove, not "set to empty". The subtle half of the mechanism: a project
+                // takes away what the vendor's own file set, and the consumer falls back to its own
+                // default rather than ours.
+                [cleared] = null,
             });
 
             var after = _services.ModelSettings.For(document);
@@ -218,6 +228,7 @@ internal sealed class ProbeChannel : RevitSideChannel.RevitSideChannelBase
             // The other half of the rule: a key without the project prefix must not come from the
             // model at all, and must still answer from the ordinary chain.
             answer["model:userScoped"] = after["Probe:Marker"] ?? "(unset)";
+            answer["model:clearedAfter"] = after[cleared] ?? "(unset)";
 
             group.RollBack();
             answer["model:clean"] = document.IsModified ? "False" : "True";
