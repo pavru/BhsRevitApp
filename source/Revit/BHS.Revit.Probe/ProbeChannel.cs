@@ -1,4 +1,4 @@
-using Autodesk.Revit.UI;
+﻿using Autodesk.Revit.UI;
 using BHS.Logging;
 using BHS.Transport;
 using BHS.Transport.Protocol;
@@ -19,7 +19,7 @@ internal sealed class ProbeChannel : RevitSideChannel.RevitSideChannelBase
 {
     private readonly ProbeFacts _facts;
     private readonly ProbeSettings _settings;
-    private readonly BHS.Revit.Abstractions.IFeatureServices _services;
+    private readonly BHS.Revit.Abstractions.IUiFeatureServices _services;
     private readonly ExternalEvent _exit;
     private readonly ExternalEvent _press;
     private int _publishCount;
@@ -27,7 +27,7 @@ internal sealed class ProbeChannel : RevitSideChannel.RevitSideChannelBase
     public ProbeChannel(
         ProbeFacts facts,
         BHS.Settings.LayeredSettings? layers,
-        BHS.Revit.Abstractions.IFeatureServices services,
+        BHS.Revit.Abstractions.IUiFeatureServices services,
         ExternalEvent exit,
         ExternalEvent press)
     {
@@ -103,6 +103,33 @@ internal sealed class ProbeChannel : RevitSideChannel.RevitSideChannelBase
 
                 case "press":
                     _press.Raise();
+                    break;
+
+                // The other half of the add-in, which has no channel of its own on purpose: two
+                // servers in one process would race for one pipe name, and the question here is
+                // about the host, not the transport.
+                case "dbhost":
+                    response.Values.Add("db:started", ProbeDbApplication.Started ? "True" : "False");
+                    response.Values.Add("db:addInId", ProbeDbApplication.AddInIdSeen);
+                    response.Values.Add("db:initializedAtStart", ProbeDbApplication.InitializedAtStart ? "True" : "False");
+                    response.Values.Add("db:settings", ProbeDbApplication.SettingsSeen);
+                    response.Values.Add("db:uiRefusal", ProbeDbApplication.UiRefusal);
+                    response.Values.Add("db:hostsRegistered", BHS.Revit.Abstractions.HostRegistry.Count.ToString());
+                    response.Values.Add("db:apiThread", ProbeDbApplication.ApiThreadId.ToString());
+                    response.Values.Add("db:uiApiThread", _services.Revit.ApiThreadId.ToString());
+                    response.Values.Add("db:moduleStarted", ProbeDbModule.Started ? "True" : "False");
+                    response.Values.Add("db:moduleSection", ProbeDbModule.SectionSeen);
+
+                    // Both looked up by id, and asked whether they are the same object. "At least
+                    // two are registered" would also pass if one host had registered twice.
+                    var ui = BHS.Revit.Abstractions.HostRegistry.Find(ProbeApplication.Id);
+                    var db = BHS.Revit.Abstractions.HostRegistry.Find(ProbeDbApplication.Id);
+
+                    response.Values.Add("db:foundBoth", ui is not null && db is not null ? "True" : "False");
+                    response.Values.Add("db:distinct", ui is not null && db is not null && !ReferenceEquals(ui, db) ? "True" : "False");
+                    response.Values.Add("db:uiHasPump", ui is BHS.Revit.Abstractions.IUiFeatureServices ? "True" : "False");
+                    response.Values.Add("db:dbHasPump", db is BHS.Revit.Abstractions.IUiFeatureServices ? "True" : "False");
+                    response.Values.Add("db:initialized", ProbeDbApplication.Initialized ? "True" : "False");
                     break;
 
                 case "log":

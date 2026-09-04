@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Xml.Linq;
@@ -38,11 +38,13 @@ namespace BHS.Revit.Sdk;
 public class GenerateRevitAddIn : Task
 {
     /// <summary>
-    ///     An MSBuild item that defines the properties of the Revit AddIn.
-    ///     The item's Include (ItemSpec) is used as the absolute or relative destination file path for the .addin manifest.
+    ///     The MSBuild items that define the Revit add-ins this project declares.
+    ///     Each item's Include (ItemSpec) is the destination file path of the .addin manifest; items sharing a path
+    ///     are written into that one file as several <c>&lt;AddIn&gt;</c> elements, which is what Revit's format allows
+    ///     and what an edition that is both an <c>Application</c> and a <c>DBApplication</c> needs.
     /// </summary>
     [Required]
-    public ITaskItem? AddInDefinition { get; set; }
+    public ITaskItem[]? AddInDefinition { get; set; }
 
     /// <summary>
     ///     The target Revit version (e.g., "2024", "2025", "2026") extracted from the project's TargetFramework.
@@ -55,28 +57,101 @@ public class GenerateRevitAddIn : Task
     {
         try
         {
-            if (AddInDefinition == null)
+            if (AddInDefinition == null || AddInDefinition.Length == 0)
             {
                 Log.LogError("AddInDefinition item is not provided.");
                 return false;
             }
 
-            if (!TryValidateInput(AddInDefinition, out var currentVersion, out var addInType))
+            // Grouped by destination, because a manifest is a file with a list in it and not a file
+            // per add-in. An edition that offers both an Application - with its ribbon - and a
+            // DBApplication for the part of itself that needs no window declares two, and Revit
+            // reads them from one file. Declaring them separately would work too, and would mean
+            // two files the deployment has to keep in step.
+            var byFile = new Dictionary<string, List<ITaskItem>>(StringComparer.OrdinalIgnoreCase);
+            var order = new List<string>();
+
+            foreach (var item in AddInDefinition)
             {
-                return false;
+                if (!byFile.TryGetValue(item.ItemSpec, out var group))
+                {
+                    byFile[item.ItemSpec] = group = new List<ITaskItem>();
+                    order.Add(item.ItemSpec);
+                }
+
+                group.Add(item);
             }
 
-            var doc = GenerateXml(AddInDefinition, currentVersion, addInType);
+            var ids = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
 
-            var addInFilePath = AddInDefinition.ItemSpec;
-            var dir = Path.GetDirectoryName(addInFilePath);
-            if (!string.IsNullOrEmpty(dir) && !Directory.Exists(dir))
+            foreach (var addInFilePath in order)
             {
-                Directory.CreateDirectory(dir);
-            }
+                var elements = new List<XElement>();
+                XElement? manifestSettings = null;
 
-            doc.Save(addInFilePath);
-            Log.LogMessage(MessageImportance.Normal, $"Successfully generated Revit AddIn manifest at: {addInFilePath}");
+                foreach (var item in byFile[addInFilePath])
+                {
+                    if (!TryValidateInput(item, out var currentVersion, out var addInType))
+                    {
+                        return false;
+                    }
+
+                    // Two add-ins sharing an id are not a duplicate manifest entry: Revit files
+                    // trust, isolation and the add-in manager by this value, and the host registry
+                    // here is keyed by it as well. A collision would make one of them unreachable
+                    // in a way that looks like it simply did not start.
+                    var addInId = item.GetMetadata("AddInId");
+
+                    if (ids.TryGetValue(addInId, out var taken))
+                    {
+                        Log.LogError($"AddInId '{addInId}' is declared twice: by '{taken}' and by " +
+                                     $"'{item.GetMetadata("FullClassName")}'. Every add-in needs its own.");
+                        return false;
+                    }
+
+                    ids[addInId] = item.GetMetadata("FullClassName");
+
+                    elements.Add(GenerateAddInElement(item, currentVersion, addInType));
+
+                    var settings = BuildManifestSettings(item, currentVersion);
+
+                    if (settings == null)
+                    {
+                        continue;
+                    }
+
+                    if (manifestSettings == null)
+                    {
+                        manifestSettings = settings;
+                    }
+                    else if (!XNode.DeepEquals(manifestSettings, settings))
+                    {
+                        Log.LogError($"The add-ins written into '{addInFilePath}' ask for different ManifestSettings. " +
+                                     "They share one manifest, so they share one isolation context; declare the same " +
+                                     "settings on each, or put them in separate manifests.");
+                        return false;
+                    }
+                }
+
+                var root = new XElement("RevitAddIns", elements);
+
+                if (manifestSettings != null)
+                {
+                    root.Add(manifestSettings);
+                }
+
+                var doc = new XDocument(new XDeclaration("1.0", "utf-8", "true"), root);
+
+                var dir = Path.GetDirectoryName(addInFilePath);
+                if (!string.IsNullOrEmpty(dir) && !Directory.Exists(dir))
+                {
+                    Directory.CreateDirectory(dir);
+                }
+
+                doc.Save(addInFilePath);
+                Log.LogMessage(MessageImportance.Normal,
+                    $"Successfully generated Revit AddIn manifest at: {addInFilePath} ({elements.Count} add-in(s))");
+            }
 
             return true;
         }
@@ -158,7 +233,8 @@ public class GenerateRevitAddIn : Task
         return isValid;
     }
 
-    private XDocument GenerateXml(ITaskItem addInDefinition, int currentVersion, string addInType)
+    /// <summary>Builds one <c>&lt;AddIn&gt;</c> element. Manifest-wide settings are not its business.</summary>
+    private XElement GenerateAddInElement(ITaskItem addInDefinition, int currentVersion, string addInType)
     {
         var assembly = addInDefinition.GetMetadata("Assembly");
         var fullClassName = addInDefinition.GetMetadata("FullClassName");
@@ -177,10 +253,6 @@ public class GenerateRevitAddIn : Task
         var largeImage = addInDefinition.GetMetadata("LargeImage");
         var image = addInDefinition.GetMetadata("Image");
         var allowLoadIntoExistingSession = addInDefinition.GetMetadata("AllowLoadIntoExistingSession");
-
-        var unifyInAddInManager = addInDefinition.GetMetadata("UnifyInAddInManager");
-        var useRevitContext = addInDefinition.GetMetadata("UseRevitContext");
-        var contextName = addInDefinition.GetMetadata("ContextName");
 
         var addInElement = new XElement("AddIn", new XAttribute("Type", addInType),
             new XElement(addInType.Equals("Command", StringComparison.OrdinalIgnoreCase) ? "Text" : "Name", addInName),
@@ -215,7 +287,22 @@ public class GenerateRevitAddIn : Task
             }
         }
 
-        var revitAddInsElement = new XElement("RevitAddIns", addInElement);
+        return addInElement;
+    }
+
+    /// <summary>
+    ///     Builds the manifest-wide <c>&lt;ManifestSettings&gt;</c> element, or null when nothing asks for one.
+    /// </summary>
+    /// <remarks>
+    ///     It sits beside the <c>&lt;AddIn&gt;</c> elements rather than inside one, so it describes the file and
+    ///     everything declared in it. Two add-ins written into one manifest therefore share an isolation context,
+    ///     which is the right answer for two halves of one edition and the reason they are worth keeping together.
+    /// </remarks>
+    private XElement? BuildManifestSettings(ITaskItem addInDefinition, int currentVersion)
+    {
+        var unifyInAddInManager = addInDefinition.GetMetadata("UnifyInAddInManager");
+        var useRevitContext = addInDefinition.GetMetadata("UseRevitContext");
+        var contextName = addInDefinition.GetMetadata("ContextName");
 
         if (currentVersion >= 2026)
         {
@@ -241,13 +328,13 @@ public class GenerateRevitAddIn : Task
                 manifestSettingsElements.Add(new XElement("ContextName", contextName));
 
             if (manifestSettingsElements.Count > 0)
-                revitAddInsElement.Add(new XElement("ManifestSettings", manifestSettingsElements));
+                return new XElement("ManifestSettings", manifestSettingsElements);
         }
         else if (!string.IsNullOrWhiteSpace(unifyInAddInManager) || !string.IsNullOrWhiteSpace(useRevitContext) || !string.IsNullOrWhiteSpace(contextName))
         {
             Log.LogWarning("ManifestSettings (UnifyInAddInManager, UseRevitContext, ContextName) are only supported for Revit 2026 and newer. These settings will be ignored.");
         }
 
-        return new XDocument(new XDeclaration("1.0", "utf-8", "true"), revitAddInsElement);
+        return null;
     }
 }

@@ -1,4 +1,4 @@
-using Autodesk.Revit.DB;
+﻿using Autodesk.Revit.DB;
 using Autodesk.Revit.UI;
 using BHS.Logging;
 
@@ -9,10 +9,16 @@ namespace BHS.Revit.Abstractions;
 /// The difference is that this one can be given things. Revit constructs an
 /// <c>IExternalCommand</c> from a class name and cannot pass it anything; this is constructed by
 /// the entry point, which has the host.
+/// <para>
+/// It is handed <see cref="IUiFeatureServices"/> rather than the narrower surface, and that is
+/// exact rather than generous: a command is reached by pressing something, so the host that owns it
+/// has a user interface by definition. Anything reachable from a <c>DBApplication</c> add-in is a
+/// module, not a command.
+/// </para>
 /// </remarks>
 public interface IFeatureCommand
 {
-    Result Execute(IFeatureServices services, ExternalCommandData data, ElementSet elements, ref string message);
+    Result Execute(IUiFeatureServices services, ExternalCommandData data, ElementSet elements, ref string message);
 }
 
 /// <summary>
@@ -98,13 +104,13 @@ public abstract class CommandEntryPoint<TCommand> : IExternalCommand
     /// measured from inside a command, and this repository has learned what documented-but-unmeasured
     /// is worth.
     /// </remarks>
-    private IFeatureServices? Locate(ExternalCommandData commandData)
+    private IUiFeatureServices? Locate(ExternalCommandData commandData)
     {
         try
         {
             var addInId = commandData?.Application?.ActiveAddInId?.GetGUID();
 
-            if (addInId is { } id && HostRegistry.Find(id) is { } found)
+            if (addInId is { } id && HostRegistry.Find(id) is IUiFeatureServices found)
                 return found;
         }
         catch (Exception)
@@ -112,7 +118,10 @@ public abstract class CommandEntryPoint<TCommand> : IExternalCommand
             // Asking must never be worse than not knowing.
         }
 
-        return HostRegistry.FindByAssembly(typeof(TCommand).Assembly)
-               ?? HostRegistry.FindByAssembly(GetType().Assembly);
+        // Narrowed rather than cast: a host found here that has no user interface is a
+        // DBApplication add-in whose assembly also carries a command, which is a deployment
+        // mistake. It reads as "no host" and gets the message below, which says what to do.
+        return HostRegistry.FindByAssembly(typeof(TCommand).Assembly) as IUiFeatureServices
+               ?? HostRegistry.FindByAssembly(GetType().Assembly) as IUiFeatureServices;
     }
 }

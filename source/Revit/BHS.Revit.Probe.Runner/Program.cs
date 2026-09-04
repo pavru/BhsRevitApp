@@ -237,6 +237,11 @@ internal static class Program
         if (options.WithModel)
             await CheckModelSettingsAsync(client, report);
 
+        // After the ribbon and the model, because one of its questions is about an event that only
+        // arrives once Revit has finished starting - and asking a thing that has not happened yet
+        // measures the clock, not the thing.
+        await CheckDbHostAsync(client, report);
+
         await CheckAssembliesAsync(client, installation, addInDirectory, report);
 
         if (options.KeepOpen)
@@ -390,8 +395,14 @@ internal static class Program
         report.Check("the file is the one findable by process id",
             string.Equals(path, ProbeLogPath(processId), StringComparison.OrdinalIgnoreCase));
 
+        // One, not one per host. The probe now runs two hosts in one process and the first run with
+        // both doubled every journal warning - the router is additive on purpose, so a sink it
+        // cannot deduplicate has to be guarded by whoever adds it.
         report.Check("the journal sink attached, which needs the API thread",
             sinks.Any(sink => sink.StartsWith("JournalLogSink", StringComparison.Ordinal)));
+
+        report.Check("the journal sink attached exactly once, however many hosts",
+            sinks.Count(sink => sink.StartsWith("JournalLogSink", StringComparison.Ordinal)) == 1);
 
         report.Check("the journal takes warnings and worse only",
             sinks.Any(sink => sink.StartsWith("JournalLogSink >= Warning", StringComparison.Ordinal)));
@@ -499,15 +510,21 @@ internal static class Program
         var title = string.Empty;
         var started = DateTime.UtcNow;
 
-        // Five minutes, and measured rather than guessed. On Revit 2026 an empty model given on the
-        // command line finished opening 3 minutes 51 seconds after the add-in registered - the
-        // add-in is up early in startup, the document is opened at the end of it. A two-minute
-        // budget failed this check while the model was opening perfectly well.
+        // Fifteen minutes, and every raise of this number has been paid for by a failure that was
+        // not one. Two minutes failed while Revit 2026 was opening the model perfectly well - it
+        // finished at 3 minutes 51 seconds. Five minutes then failed on Revit 2024 on a machine that
+        // had already started Revit four times that hour: the add-in log timestamps the document at
+        // 11 minutes 36 seconds after registration, so the work had started, was running, and
+        // finished - the budget was simply shorter than the machine.
+        //
+        // The rule this keeps costing to relearn: before raising a timeout, ask whether the work
+        // being waited for ever began. The answer is in the add-in's log and in Revit's journal, not
+        // in the stopwatch. It began every time.
         var arrived = await WaitForAsync(() =>
         {
             title = Value(client.GetConfiguration(new ConfigurationRequest()), "Document:Title");
             return !string.IsNullOrEmpty(title);
-        }, 300_000);
+        }, 900_000);
 
         report.Check("the model given on the command line is opened and reported", arrived);
 
@@ -543,6 +560,81 @@ internal static class Program
     /// not legitimate is deciding it by reading the sentence twice.
     /// </para>
     /// </remarks>
+    /// <summary>
+    /// The other shape of add-in: an application with no user interface.
+    /// </summary>
+    /// <remarks>
+    /// Everything said about this form until now came from metadata. Ordinary interactive Revit
+    /// loads a <c>DBApplication</c> manifest as readily as an <c>Application</c> one, so this costs
+    /// the sweep nothing and no headless engine is involved - and it puts both forms in one process
+    /// at once, which is the case the host registry actually has to survive.
+    /// </remarks>
+    private static async Task CheckDbHostAsync(RevitSideChannel.RevitSideChannelClient client, Report report)
+    {
+        var answer = await client.AskAsync(new AskRequest { Question = "dbhost" });
+        var values = answer.Values;
+
+        report.Check("a DBApplication add-in starts the same host",
+            values.GetValueOrDefault("db:started") == "True");
+
+        report.Check("and it is keyed by its own add-in id, beside the interface one",
+            string.Equals(values.GetValueOrDefault("db:addInId"), ProbeDeployment.DbAddInId,
+                StringComparison.OrdinalIgnoreCase));
+
+        // Looked up by id and compared, not counted. A count of two would also be satisfied by one
+        // host that registered twice, which is the failure this is here to catch.
+        _ = int.TryParse(values.GetValueOrDefault("db:hostsRegistered"), out var hosts);
+
+        report.Check("both add-in ids are found in the registry",
+            values.GetValueOrDefault("db:foundBoth") == "True");
+
+        report.Check("and they are two hosts, not one answering twice",
+            values.GetValueOrDefault("db:distinct") == "True");
+
+        // The narrowing is a fact about the host, not a convention: the same registry hands out one
+        // with a way onto the API thread and one without, and each is what its form can offer.
+        report.Check("the interface host offers the API thread and the DB host does not",
+            values.GetValueOrDefault("db:uiHasPump") == "True"
+            && values.GetValueOrDefault("db:dbHasPump") == "False");
+
+        report.Check("both forms were called on the same API thread",
+            values.GetValueOrDefault("db:apiThread") == values.GetValueOrDefault("db:uiApiThread"));
+
+        report.Check("a module starts in the DB host too",
+            values.GetValueOrDefault("db:moduleStarted") == "True");
+
+        report.Check("and it is given its own settings section",
+            values.GetValueOrDefault("db:moduleSection") == "product");
+
+        report.Check("startup there is not yet Revit having started, as in the interface form",
+            values.GetValueOrDefault("db:initializedAtStart") == "False");
+
+        report.Check("settings from disk are read there too",
+            values.GetValueOrDefault("db:settings") == "product");
+
+        // The whole argument for a separate interface over a nullable member: the mismatch has to
+        // say what is wrong where it happens, not throw a NullReferenceException somewhere later.
+        var refusal = values.GetValueOrDefault("db:uiRefusal") ?? string.Empty;
+
+        report.Check("asking for the API thread there is refused, in a sentence",
+            refusal.Contains("no user interface", StringComparison.OrdinalIgnoreCase)
+            && refusal.Contains("DBApplication", StringComparison.Ordinal));
+
+        // Waited for rather than read once - the rule this repository bought with three wrong
+        // measurements of the availability class. It was a note until it was measured; the answer
+        // was yes, and it cost the context a member name: what fires here has nothing to do with a
+        // session, so the framework calls it "initialized" and raises it for both forms.
+        var initialized = await WaitForAsync(
+            () => client.Ask(new AskRequest { Question = "dbhost" })
+                        .Values.GetValueOrDefault("db:initialized") == "True",
+            30_000);
+
+        report.Check("and Revit tells it that it has finished starting, session or no session",
+            initialized);
+
+        Report.Note("db host", $"add-in {values.GetValueOrDefault("db:addInId")}, {hosts} host(s) registered");
+    }
+
     private static async Task CheckRibbonAsync(
         RevitSideChannel.RevitSideChannelClient client,
         Options options,
@@ -821,6 +913,17 @@ internal static class Program
         // for is a departure nobody hears about until somebody asks.
         var dropped = await WaitForAsync(() => !registry.TryGet(instance.InstanceId, out _), 10000);
         report.Check("the registry drops it when the process goes", dropped);
+
+        // Only readable now, and only from the file: OnShutdown runs while Revit is leaving, so
+        // there is no channel left to ask over. The DB form's way down is the half of its life that
+        // nothing else in this sweep touches.
+        var log = ReadLog(ProbeLogPath(instance.ProcessId));
+
+        report.Check("the DB host is taken down on the way out, like the interface one",
+            log.Contains("BHS.Revit.Probe.Db stopped", StringComparison.Ordinal));
+
+        report.Check("and its module is stopped with it",
+            log.Contains("the DB half's module stopped", StringComparison.Ordinal));
     }
 
     private static HashSet<string> ShippedAssemblies(RevitInstallation installation)
@@ -926,7 +1029,7 @@ internal static class Program
 
             foreach (var addIn in untrusted)
             {
-                var ours = string.Equals(addIn.AddInId, ProbeDeployment.AddInId, StringComparison.OrdinalIgnoreCase);
+                var ours = ProbeDeployment.AddInIds.Contains(addIn.AddInId, StringComparer.OrdinalIgnoreCase);
                 Console.WriteLine($"  {addIn}{(ours ? "  <- ours, run --deploy" : string.Empty)}");
             }
         }

@@ -1,4 +1,4 @@
-<Project Sdk="BHS.Revit.Sdk/1.3.7">
+﻿<Project Sdk="BHS.Revit.Sdk/1.4.1">
 
     <!--
       A minimal add-in whose only job is to be reachable and to report what it sees.
@@ -70,6 +70,26 @@
             <VendorId>$(RevitVendorId)</VendorId>
             <VendorDescription>$(RevitVendorDescription)</VendorDescription>
             <Description>Verification probe: reports what a Revit-side assembly actually sees.</Description>
+        </RevitAddIn>
+
+        <!--
+          The same file, a second entry: the DB form of the host, measured rather than declared.
+          Revit's manifest format takes a list, and ordinary interactive Revit loads a DBApplication
+          entry as readily as an Application one - so the sweep that checks the interface form checks
+          this one in the same run, with no headless engine involved.
+
+          Its own AddInId, because that is what Revit files trust and isolation by and what the host
+          registry is keyed on; sharing one would make a host unreachable in a way that looks like it
+          never started. The SDK now refuses a duplicate outright.
+        -->
+        <RevitAddIn Include="BHS.Revit.Probe.addin">
+            <AddInType>DBApplication</AddInType>
+            <AddInName>BHS.Revit.Probe.Db</AddInName>
+            <FullClassName>BHS.Revit.Probe.ProbeDbApplication</FullClassName>
+            <AddInId>79613878-acf3-4f56-83fc-11412bb53c24</AddInId>
+            <VendorId>$(RevitVendorId)</VendorId>
+            <VendorDescription>$(RevitVendorDescription)</VendorDescription>
+            <Description>The same framework in an add-in that has no user interface.</Description>
         </RevitAddIn>
     </ItemGroup>
 

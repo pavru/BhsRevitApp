@@ -1,4 +1,4 @@
-<Project>
+﻿<Project>
 
     <UsingTask TaskName="BHS.Revit.Sdk.GenerateRevitDefineConstants" AssemblyFile="$(BuildTasksAssembly)"/>
     <UsingTask TaskName="BHS.Revit.Sdk.GenerateRevitAddIn" AssemblyFile="$(BuildTasksAssembly)"/>
@@ -52,7 +52,9 @@
         <ItemGroup>
             <RevitAddIn>
                 <_AssemblyPathForManifest Condition="'$(PublishRevitAddIn)' != 'true'">%(RevitAddIn.Assembly)</_AssemblyPathForManifest>
-                <_AssemblyPathForManifest Condition="'$(PublishRevitAddIn)' == 'true'">%(RevitAddIn.VendorId)\%(RevitAddIn.AddInName)\Lib\%(RevitAddIn.Assembly)</_AssemblyPathForManifest>
+                <!-- Where the publish target actually puts the files, named the same way it names
+                     them: by package, not by add-in. Several add-ins in one project share one Lib. -->
+                <_AssemblyPathForManifest Condition="'$(PublishRevitAddIn)' == 'true'">$(RevitVendorId)\$(RevitPackageName)\Lib\%(RevitAddIn.Assembly)</_AssemblyPathForManifest>
             </RevitAddIn>
         </ItemGroup>
 

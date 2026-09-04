@@ -1,4 +1,4 @@
-using Autodesk.Revit.ApplicationServices;
+﻿using Autodesk.Revit.ApplicationServices;
 using BHS.Shared;
 
 namespace BHS.Revit.Abstractions;
@@ -37,15 +37,22 @@ public interface IRevitContext
     ControlledApplication Controlled { get; }
 
     /// <summary>
-    /// Whether Revit has a session - a <c>UIApplication</c> - rather than only a starting process.
+    /// Whether Revit has finished starting, rather than only having called us.
     /// </summary>
     /// <remarks>
     /// A real distinction, not a formality: measured, our registration reaches a companion about
     /// twice as early as a usable main window exists. A module that wants to act "when Revit is
     /// there" means this, not the end of <c>OnStartup</c>.
+    /// <para>
+    /// <b>It was called <c>IsSessionReady</c>, and the name was wrong.</b> It is raised from
+    /// <c>ControlledApplication.ApplicationInitialized</c>, and that event was measured arriving in
+    /// a <c>DBApplication</c> add-in too - which has no session and never will. The name promised
+    /// a user interface while the mechanism promised nothing of the kind; this one says what
+    /// actually happened.
+    /// </para>
     /// </remarks>
-    bool IsSessionReady { get; }
+    bool IsInitialized { get; }
 
-    /// <summary>Raised once, on the API thread, when the session appears.</summary>
-    event EventHandler? SessionReady;
+    /// <summary>Raised once, on the API thread, when Revit says it has finished starting.</summary>
+    event EventHandler? Initialized;
 }

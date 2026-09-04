@@ -40,7 +40,7 @@ public sealed class ProbeApplication : RevitAddInApplication
     private static readonly TimeSpan BetweenAttempts = TimeSpan.FromSeconds(2);
 
     /// <summary>Must match the manifest: it is the key everything is filed under.</summary>
-    private static readonly Guid Id = new("6f2e17ae-5ff7-45b2-bb8b-3482446e9a67");
+    internal static readonly Guid Id = new("6f2e17ae-5ff7-45b2-bb8b-3482446e9a67");
 
     private ProbeFacts? _facts;
     private ProbeChannel? _channel;
@@ -60,7 +60,7 @@ public sealed class ProbeApplication : RevitAddInApplication
     /// journal sink, the context and the pump all arrived before this runs. What remains is what
     /// only the probe wants - a channel server, a registration, a ribbon and a way out.
     /// </remarks>
-    protected override void OnStarted(IFeatureServices services, UIControlledApplication application)
+    protected override void OnStarted(IUiFeatureServices services, UIControlledApplication application)
     {
         ProbeLog.Write("startup: begin");
 
@@ -143,7 +143,7 @@ public sealed class ProbeApplication : RevitAddInApplication
             // The question it existed to answer is answered and written down, so the sweep no longer
             // pays for it. BHS_PROBE_SHOW_TAB=1 brings it back for whoever wants to ask again.
             if (Environment.GetEnvironmentVariable("BHS_PROBE_SHOW_TAB") == "1")
-                Services?.Pump.Post("probe: show the Add-Ins tab", _ => ShowAddInsTab());
+                Services?.Ui().Pump.Post("probe: show the Add-Ins tab", _ => ShowAddInsTab());
         }
         catch (Exception error)
         {

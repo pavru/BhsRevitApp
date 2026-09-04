@@ -24,7 +24,7 @@ public sealed class PingCommand : IFeatureCommand
     public const string RanVariable = "BHS_PROBE_PING_RAN";
     public const string ServicesVariable = "BHS_PROBE_PING_SERVICES";
 
-    public Result Execute(IFeatureServices services, ExternalCommandData data, ElementSet elements, ref string message)
+    public Result Execute(IUiFeatureServices services, ExternalCommandData data, ElementSet elements, ref string message)
     {
         var count = int.TryParse(Environment.GetEnvironmentVariable(RanVariable), out var previous) ? previous : 0;
         Environment.SetEnvironmentVariable(RanVariable, (count + 1).ToString());

@@ -1,4 +1,4 @@
-<Project>
+﻿<Project>
 
     <!--
       Wrapper for Revit-Specific packages.
@@ -12,15 +12,29 @@
         <Message Importance="High" Text="Publishing Revit-Specific package for Revit $(RevitVersion)..." />
 
         <!-- Validate required metadata -->
-        <Warning Condition="'%(RevitAddIn.VendorId)' == 'UnknownVendor'"
-                 Text="The 'VendorId' metadata on the 'RevitAddIn' item is not set. Defaulting to 'UnknownVendor'. It is recommended to set this value in your project file." />
+        <Warning Condition="'$(RevitVendorId)' == 'UnknownVendor'"
+                 Text="The 'RevitVendorId' property is not set. Defaulting to 'UnknownVendor'. It is recommended to set this value in your project file." />
 
+        <!--
+          Properties, never item metadata. A %(...) reference inside a PropertyGroup batches the
+          whole target, and this one begins by deleting the publish root: a project declaring two
+          add-ins - an Application with a ribbon and a DBApplication beside it - would publish the
+          first and then have it removed by the second pass. Found the day the second manifest was
+          added, and it is not a case anyone would have thought to test for.
+
+          The folder is a property of the package, not of an add-in, which is the deeper reason:
+          one project builds one assembly and publishes one folder, whatever it declares inside.
+          RevitPackageName is what the common package and both deploys already use, so this also
+          removes a disagreement that was only invisible while AddInName happened to equal the
+          assembly name - and stops a display name, which may contain anything, from naming a
+          directory.
+        -->
         <PropertyGroup>
             <_RevitPublishDirectoryNormalized>$([MSBuild]::NormalizeDirectory('$(RevitPublishDirectory)'))</_RevitPublishDirectoryNormalized>
             <_PublishRoot>$([System.IO.Path]::Combine('$(_RevitPublishDirectoryNormalized)', '$(RevitVersion)'))</_PublishRoot>
             <_AddInDestinationFolder>$(_PublishRoot)</_AddInDestinationFolder>
-            <_VendorFolder>$([System.IO.Path]::Combine('$(_PublishRoot)', '%(RevitAddIn.VendorId)'))</_VendorFolder>
-            <_AddInFolder>$([System.IO.Path]::Combine('$(_VendorFolder)', '%(RevitAddIn.AddInName)'))</_AddInFolder>
+            <_VendorFolder>$([System.IO.Path]::Combine('$(_PublishRoot)', '$(RevitVendorId)'))</_VendorFolder>
+            <_AddInFolder>$([System.IO.Path]::Combine('$(_VendorFolder)', '$(RevitPackageName)'))</_AddInFolder>
             <_PublishLibPath>$([System.IO.Path]::Combine('$(_AddInFolder)', 'Lib'))</_PublishLibPath>
             <_PublishResourcesPath>$([System.IO.Path]::Combine('$(_AddInFolder)', 'Resources'))</_PublishResourcesPath>
             <_PublishContentPath>$([System.IO.Path]::Combine('$(_AddInFolder)', 'Content'))</_PublishContentPath>
