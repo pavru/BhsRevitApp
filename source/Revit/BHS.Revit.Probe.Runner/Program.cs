@@ -234,6 +234,9 @@ internal static class Program
         // this measurement spent twenty minutes of Revit apiece proving nothing.
         await CheckRibbonAsync(client, options, report);
 
+        if (options.WithModel)
+            await CheckModelSettingsAsync(client, report);
+
         await CheckAssembliesAsync(client, installation, addInDirectory, report);
 
         if (options.KeepOpen)
@@ -569,6 +572,46 @@ internal static class Program
         report.Check("Revit asks the availability class once its tab is shown", asked);
         Report.Note("availability calls", calls);
 
+    }
+
+    /// <summary>
+    /// Settings that belong to the document, written into it and read back.
+    /// </summary>
+    /// <remarks>
+    /// The whole path in one check: a channel call reaching the API thread through the pump, a
+    /// transaction, Extensible Storage written and read, and the project chain preferring what the
+    /// model says. None of it can be measured from outside Revit, and the storage half cannot be
+    /// measured without a document, which is why this runs only with one open.
+    /// </remarks>
+    private static async Task CheckModelSettingsAsync(
+        RevitSideChannel.RevitSideChannelClient client,
+        Report report)
+    {
+        var answer = await client.AskAsync(new AskRequest { Question = "model" });
+        var document = answer.Values.GetValueOrDefault("model:document") ?? "(none)";
+
+        if (!report.Check("the pump reaches the API thread and finds the open document", document != "(none)"))
+            return;
+
+        report.Check("a project setting starts unset in a fresh model",
+            answer.Values.GetValueOrDefault("model:before") == "(unset)");
+
+        report.Check("it is written into the model and read back",
+            answer.Values.GetValueOrDefault("model:after") == "written-by-the-probe");
+
+        report.Check("and the model is then named as where it came from",
+            answer.Values.GetValueOrDefault("model:origin") == "Model");
+
+        report.Check("a key without the project prefix is not taken from the model",
+            answer.Values.GetValueOrDefault("model:userScoped") != "written-by-the-probe");
+
+        // The sweep must leave nothing behind to be asked about. A written document is a modified
+        // one, and Revit asks whether to save it on the way out - which nothing outside the process
+        // can answer.
+        report.Check("and the document is left unmodified, so nothing is asked on the way out",
+            answer.Values.GetValueOrDefault("model:clean") == "True");
+
+        Report.Note("model settings", $"document {document}, origin {answer.Values.GetValueOrDefault("model:origin")}");
     }
 
     /// <summary>Where the call lands, and in which AppDomain the add-in is living.</summary>

@@ -15,11 +15,17 @@ namespace BHS.Revit.Host;
 /// </remarks>
 internal sealed class FeatureServices : IFeatureServices
 {
-    public FeatureServices(IRevitContext revit, IRevitApiPump pump, ISettings settings, string name)
+    public FeatureServices(
+        IRevitContext revit,
+        IRevitApiPump pump,
+        ISettings settings,
+        IModelSettingsSource modelSettings,
+        string name)
     {
         Revit = revit;
         Pump = pump;
         Settings = settings;
+        ModelSettings = modelSettings;
         Log = Logging.Log.For(name);
     }
 
@@ -29,6 +35,8 @@ internal sealed class FeatureServices : IFeatureServices
 
     public ISettings Settings { get; }
 
+    public IModelSettingsSource ModelSettings { get; }
+
     public ILog Log { get; }
 
     /// <summary>The same services, narrowed to one module's settings section and log category.</summary>
@@ -37,5 +45,5 @@ internal sealed class FeatureServices : IFeatureServices
     /// over a key, and its own log category so that a shared file says who wrote each line.
     /// </remarks>
     public IFeatureServices For(string moduleId) =>
-        new FeatureServices(Revit, Pump, Settings.Section(moduleId), moduleId);
+        new FeatureServices(Revit, Pump, Settings.Section(moduleId), ModelSettings, moduleId);
 }

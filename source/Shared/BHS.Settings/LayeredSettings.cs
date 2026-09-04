@@ -71,6 +71,8 @@ public sealed class LayeredSettings : ISettings, IDisposable
     private readonly object _gate = new();
 
     private Dictionary<string, string?> _merged = new(StringComparer.OrdinalIgnoreCase);
+    private Dictionary<string, string?> _belowUser = new(StringComparer.OrdinalIgnoreCase);
+    private Dictionary<string, string?> _process = new(StringComparer.OrdinalIgnoreCase);
 
     private LayeredSettings(SettingsOptions options)
     {
@@ -128,6 +130,35 @@ public sealed class LayeredSettings : ISettings, IDisposable
 
     public ISettings Section(string name) => new SettingsSection(this, name);
 
+    /// <summary>
+    /// The same files without the user's layer, and without the process layer on top.
+    /// </summary>
+    /// <remarks>
+    /// The middle of a second chain rather than a curiosity. A setting has one scope, and scope is a
+    /// property of the key rather than of a layer: a project rule must not be overridable by the
+    /// person using the model, and the language of the interface must not be settable by the model.
+    /// Those are different keys, so they read different chains - and in the project one the user's
+    /// layer does not lose the argument, it never joins it.
+    /// <para>
+    /// Whoever composes the project chain puts what the model says, and then the process layer, on
+    /// top of this. Kept here because only this class knows which values came from which file.
+    /// </para>
+    /// </remarks>
+    public IReadOnlyDictionary<string, string?> BelowUser
+    {
+        get { lock (_gate) return _belowUser; }
+    }
+
+    /// <summary>Environment and host overrides, which sit above everything in every chain.</summary>
+    /// <remarks>
+    /// The emergency lever and the path automation takes; it has to be able to do anything, in any
+    /// chain, or it is not a lever.
+    /// </remarks>
+    public IReadOnlyDictionary<string, string?> Process
+    {
+        get { lock (_gate) return _process; }
+    }
+
     /// <summary>Raised after any layer has been re-read.</summary>
     public event EventHandler? Changed;
 
@@ -143,24 +174,38 @@ public sealed class LayeredSettings : ISettings, IDisposable
     private void Merge(bool raise)
     {
         var merged = new Dictionary<string, string?>(StringComparer.OrdinalIgnoreCase);
+        var belowUser = new Dictionary<string, string?>(StringComparer.OrdinalIgnoreCase);
+        var process = new Dictionary<string, string?>(StringComparer.OrdinalIgnoreCase);
 
         foreach (var file in _files)
         {
             foreach (var pair in file.Values)
+            {
                 merged[pair.Key] = pair.Value;
+
+                if (file.Layer.Kind != SettingsLayerKind.User)
+                    belowUser[pair.Key] = pair.Value;
+            }
         }
 
         if (_options.IncludeEnvironment)
         {
             foreach (var pair in ReadEnvironment(_options.EnvironmentPrefix))
-                merged[pair.Key] = pair.Value;
+                process[pair.Key] = pair.Value;
         }
 
         foreach (var pair in _options.Overrides)
+            process[pair.Key] = pair.Value;
+
+        foreach (var pair in process)
             merged[pair.Key] = pair.Value;
 
         lock (_gate)
+        {
             _merged = merged;
+            _belowUser = belowUser;
+            _process = process;
+        }
 
         if (raise)
             Changed?.Invoke(this, EventArgs.Empty);

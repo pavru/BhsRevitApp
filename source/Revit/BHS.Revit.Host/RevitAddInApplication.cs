@@ -43,6 +43,7 @@ public abstract class RevitAddInApplication : IExternalApplication
     private ExternalEvent? _pumpEvent;
     private LayeredSettings? _settings;
     private FeatureServices? _services;
+    private ModelSettingsSource? _models;
     private ILog _log = Log.For<RevitAddInApplication>();
 
     /// <summary>This edition's add-in id. Must match the manifest: it is the registry key.</summary>
@@ -159,7 +160,8 @@ public abstract class RevitAddInApplication : IExternalApplication
         _pumpEvent = ExternalEvent.Create(_pump);
         _pump.Attach(_pumpEvent);
 
-        _services = new FeatureServices(_context, _pump, _settings, Name);
+        _models = new ModelSettingsSource(_settings);
+        _services = new FeatureServices(_context, _pump, _settings, _models, Name);
 
         // Before the modules: a module may reach a command in Start, and a command looks itself up
         // here. Additive and keyed, so a second edition in this AppDomain neither sees this nor is
@@ -169,6 +171,10 @@ public abstract class RevitAddInApplication : IExternalApplication
         // The moment a UIApplication becomes legitimate. It goes inside the pump rather than into
         // the context, because a session handed out is a session used from the wrong thread.
         controlled.ApplicationInitialized += OnApplicationInitialized;
+
+        // While the document still exists: DocumentClosedEventArgs carries only an int id - checked
+        // against the metadata - so there would be nothing left to drop by then.
+        controlled.DocumentClosing += OnDocumentClosing;
 
         StartModules();
 
@@ -214,6 +220,18 @@ public abstract class RevitAddInApplication : IExternalApplication
         }
     }
 
+    private void OnDocumentClosing(object? sender, Autodesk.Revit.DB.Events.DocumentClosingEventArgs args)
+    {
+        try
+        {
+            _models?.Forget(args.Document);
+        }
+        catch (Exception error)
+        {
+            _log.Warn(error, "could not forget a closing document");
+        }
+    }
+
     private void Stop(UIControlledApplication application)
     {
         // Closed to new work first, and the queue is not drained: Revit is already leaving, and
@@ -223,6 +241,7 @@ public abstract class RevitAddInApplication : IExternalApplication
         try
         {
             application.ControlledApplication.ApplicationInitialized -= OnApplicationInitialized;
+            application.ControlledApplication.DocumentClosing -= OnDocumentClosing;
         }
         catch (Exception error)
         {

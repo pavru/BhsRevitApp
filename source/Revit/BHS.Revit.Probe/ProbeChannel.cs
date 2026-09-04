@@ -19,6 +19,7 @@ internal sealed class ProbeChannel : RevitSideChannel.RevitSideChannelBase
 {
     private readonly ProbeFacts _facts;
     private readonly ProbeSettings _settings;
+    private readonly BHS.Revit.Abstractions.IFeatureServices _services;
     private readonly ExternalEvent _exit;
     private int _publishCount;
 
@@ -29,6 +30,7 @@ internal sealed class ProbeChannel : RevitSideChannel.RevitSideChannelBase
         ExternalEvent exit)
     {
         _settings = new ProbeSettings(layers, services);
+        _services = services;
         _facts = facts;
         _exit = exit;
         Publisher = new ConfigurationPublisher(facts.InstanceId);
@@ -84,6 +86,11 @@ internal sealed class ProbeChannel : RevitSideChannel.RevitSideChannelBase
                 case "ribbon":
                     response.Values.Add("ribbon:availabilityCalls", LocalAvailability.Calls.ToString());
                     response.Values.Add("ribbon:commandRuns", ProbeCommand.Runs.ToString());
+                    break;
+
+                case "model":
+                    foreach (var pair in ModelSettings().GetAwaiter().GetResult())
+                        response.Values.Add(pair.Key, pair.Value);
                     break;
 
                 case "log":
@@ -152,6 +159,71 @@ internal sealed class ProbeChannel : RevitSideChannel.RevitSideChannelBase
             report["log:sink:" + index.ToString("D2")] = sink.GetType().Name + " >= " + sink.Minimum;
             index++;
         }
+
+        return report;
+    }
+
+    /// <summary>
+    /// Writes a project setting into the open model and reads it back.
+    /// </summary>
+    /// <remarks>
+    /// The only shape that compiles, and that is the point of it. A document reaches this code from
+    /// exactly one place - the session handed to work running inside the pump - so "not on the API
+    /// thread" cannot be written here, and "there is no document" has to be named rather than
+    /// forgotten. Both failures used to be caught by checks; now they are unexpressible.
+    /// <para>
+    /// It exercises the whole path at once: the pump there and back, a transaction on the API
+    /// thread, Extensible Storage written and read, and the project chain choosing the model's
+    /// answer over the file's.
+    /// </para>
+    /// </remarks>
+    private async Task<IReadOnlyDictionary<string, string>> ModelSettings()
+    {
+        const string key = "Model:Probe:Marker";
+
+        var report = await _services.Pump.PostAsync("probe: model settings", session =>
+        {
+            var answer = new Dictionary<string, string>(StringComparer.Ordinal);
+            var document = session.Application.ActiveUIDocument?.Document;
+
+            if (document is null)
+            {
+                answer["model:document"] = "(none)";
+                return answer;
+            }
+
+            answer["model:document"] = document.Title;
+            answer["model:before"] = _services.ModelSettings.For(document)[key] ?? "(unset)";
+
+            // Everything the check writes happens inside a group that is rolled back, so the
+            // document ends as clean as it started.
+            //
+            // Not tidiness: a written document is a modified one, and Revit asks whether to save it
+            // on the way out - a modal dialog in a sweep nobody is watching, which is the failure
+            // this whole runner exists to avoid. A group rolls back transactions that have already
+            // committed, so production Write is exercised unchanged rather than replaced by
+            // something the sweep does differently from the product.
+            using var group = new Autodesk.Revit.DB.TransactionGroup(document, "BHS probe: model settings");
+            group.Start();
+
+            _services.ModelSettings.Write(document, new Dictionary<string, string?>
+            {
+                [key] = "written-by-the-probe",
+            });
+
+            var after = _services.ModelSettings.For(document);
+            answer["model:after"] = after[key] ?? "(unset)";
+            answer["model:origin"] = after.Origin.ToString();
+
+            // The other half of the rule: a key without the project prefix must not come from the
+            // model at all, and must still answer from the ordinary chain.
+            answer["model:userScoped"] = after["Probe:Marker"] ?? "(unset)";
+
+            group.RollBack();
+            answer["model:clean"] = document.IsModified ? "False" : "True";
+
+            return answer;
+        }).ConfigureAwait(false);
 
         return report;
     }
