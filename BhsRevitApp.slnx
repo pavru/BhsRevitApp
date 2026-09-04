@@ -66,6 +66,9 @@
          Revit and asks it. The runner is not loaded into Revit and is not on the Revit axis; it
          sits here because the two halves are one instrument. -->
     <Project Path="source/Revit/BHS.Revit.Probe/BHS.Revit.Probe.csproj" Type="C#" />
+    <!-- A stand-in feature: one command, referencing the contracts and never the host. It exists so
+         that "the feature loads only when its button is pressed" is measured rather than assumed. -->
+    <Project Path="source/Revit/BHS.Revit.Probe.Feature/BHS.Revit.Probe.Feature.csproj" Type="C#" />
     <Project Path="source/Revit/BHS.Revit.Probe.Runner/BHS.Revit.Probe.Runner.csproj" Type="C#" />
   </Folder>
 

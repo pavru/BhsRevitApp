@@ -1,4 +1,4 @@
-using Autodesk.Revit.DB.Events;
+﻿using Autodesk.Revit.DB.Events;
 using Autodesk.Revit.UI;
 using BHS.Logging;
 using BHS.Revit.Abstractions;
@@ -45,6 +45,7 @@ public sealed class ProbeApplication : RevitAddInApplication
     private ProbeFacts? _facts;
     private ProbeChannel? _channel;
     private ExternalEvent? _exit;
+    private ExternalEvent? _press;
     private NamedPipeServer? _server;
 
     protected override Guid AddInId => Id;
@@ -75,7 +76,8 @@ public sealed class ProbeApplication : RevitAddInApplication
         // Created here because an external event can only be created from an API context, and
         // OnStarted is still inside the one OnStartup was given.
         _exit = ExternalEvent.Create(new ExitRevitHandler());
-        _channel = new ProbeChannel(facts, Layers, services, _exit);
+        _press = ExternalEvent.Create(new PressButtonHandler());
+        _channel = new ProbeChannel(facts, Layers, services, _exit, _press);
 
         var server = PipeTransport.CreateServer(facts.PipeName);
         server.Error += (_, error) => ProbeLog.Write("server error", error.Error);
@@ -285,6 +287,28 @@ public sealed class ProbeApplication : RevitAddInApplication
             panel.AddItem(button);
             ProbeLog.Write("ribbon: added a button with an availability class in the command's assembly");
 
+            // The one that matters. Named by a plain type name - typeof reaches the entry point,
+            // which is in this assembly, and touching it does not touch the feature behind it.
+            var ping = new PushButtonData(
+                "BHS.Probe.Ping",
+                "Ping",
+                facts.AddInAssembly,
+
+                // Named as a string, and that is not pedantry. Writing typeof here type-loads the
+                // entry point, which resolves its base CommandEntryPoint<PingCommand>, which loads
+                // the feature assembly - while the ribbon is being built, which is the one thing the
+                // whole arrangement exists to avoid. Measured: with typeof, the feature was loaded
+                // before any button had been pressed. A manifest carries strings for this reason,
+                // and the predecessor's ribbon made exactly this mistake.
+                "BHS.Revit.Probe.PingCommandEntryPoint")
+            {
+                AvailabilityClassName = typeof(LocalAvailability).FullName,
+                ToolTip = "Runs a feature command through the host, and loads the feature to do it.",
+            };
+
+            panel.AddItem(ping);
+
+            ProbeLog.Write("ribbon: added the ping button; feature assembly loaded: " + IsFeatureLoaded());
         }
         catch (Exception error)
         {
@@ -334,6 +358,18 @@ public sealed class ProbeApplication : RevitAddInApplication
         {
             ProbeLog.Write("ribbon: could not activate the tab", error);
         }
+    }
+
+    /// <summary>Whether the stand-in feature has been loaded, asked without loading it.</summary>
+    internal static bool IsFeatureLoaded()
+    {
+        foreach (var assembly in AppDomain.CurrentDomain.GetAssemblies())
+        {
+            if (assembly.GetName().Name == "BHS.Revit.Probe.Feature")
+                return true;
+        }
+
+        return false;
     }
 
     private static void LogLoadedAssemblies()

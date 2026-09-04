@@ -49,6 +49,9 @@
         <ProjectReference Include="..\..\Shared\BHS.Settings\BHS.Settings.csproj"/>
         <ProjectReference Include="..\..\Shared\BHS.Logging\BHS.Logging.csproj"/>
         <ProjectReference Include="..\BHS.Revit.Host\BHS.Revit.Host.csproj"/>
+        <!-- The edition names its feature's command in a one-line entry point, so it references
+             the feature at compile time - and still must not load it until the button is pressed. -->
+        <ProjectReference Include="..\BHS.Revit.Probe.Feature\BHS.Revit.Probe.Feature.csproj"/>
         <!-- Through the host, which is the point: the probe is no longer a second host, and
              the sweep that checks it on four live releases now checks the host with it. -->
     </ItemGroup>

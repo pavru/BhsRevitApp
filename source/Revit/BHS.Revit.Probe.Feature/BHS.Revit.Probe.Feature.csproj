@@ -1,0 +1,25 @@
+<Project Sdk="BHS.Revit.Sdk/1.3.7">
+
+    <!--
+      A stand-in for a feature module: a command and nothing else.
+
+      It references only BHS.Revit.Abstractions, never the host - which is the rule the two projects
+      exist to keep. The probe (playing the edition) references this one so that it can name the
+      command in a one-line entry point; what that costs is measured rather than assumed, because on
+      Revit 2024 an assembly that loads holds its simple name in the AppDomain shared with every
+      other vendor for the rest of the session.
+    -->
+
+    <PropertyGroup>
+        <TargetFrameworks>net48-revit2024;net8.0-revit2025;net8.0-revit2026;net10.0-revit2027</TargetFrameworks>
+        <RootNamespace>BHS.Revit.Probe.Feature</RootNamespace>
+        <UseRevitApi>true</UseRevitApi>
+        <UseRevitApiUi>true</UseRevitApiUi>
+        <IsPackable>false</IsPackable>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="..\BHS.Revit.Abstractions\BHS.Revit.Abstractions.csproj"/>
+    </ItemGroup>
+
+</Project>

@@ -40,8 +40,18 @@ public interface IFeatureCommand
 /// this is the same trick applied to commands.
 /// </para>
 /// <code>
+/// [Transaction(TransactionMode.Manual)]
 /// public sealed class FooCommandEntryPoint : CommandEntryPoint&lt;FooCommand&gt; { }
 /// </code>
+/// <para>
+/// <b>The attribute is on the derived class and cannot be moved here.</b> Revit reads
+/// <c>[Transaction]</c> off the type it constructs, and that is the derived one - measured, and the
+/// failure is a modal dialog saying the add-in has no Transaction attribute. Putting it on this base
+/// would look tidy and do nothing; putting it on the feature's own command would do nothing either,
+/// because Revit never sees that type. The mode therefore belongs to each command, travels in the
+/// manifest, and has no default - a command whose mode nobody stated is a button that fails when it
+/// is pressed.
+/// </para>
 /// </remarks>
 public abstract class CommandEntryPoint<TCommand> : IExternalCommand
     where TCommand : IFeatureCommand, new()

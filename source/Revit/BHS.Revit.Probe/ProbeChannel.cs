@@ -21,14 +21,17 @@ internal sealed class ProbeChannel : RevitSideChannel.RevitSideChannelBase
     private readonly ProbeSettings _settings;
     private readonly BHS.Revit.Abstractions.IFeatureServices _services;
     private readonly ExternalEvent _exit;
+    private readonly ExternalEvent _press;
     private int _publishCount;
 
     public ProbeChannel(
         ProbeFacts facts,
         BHS.Settings.LayeredSettings? layers,
         BHS.Revit.Abstractions.IFeatureServices services,
-        ExternalEvent exit)
+        ExternalEvent exit,
+        ExternalEvent press)
     {
+        _press = press;
         _settings = new ProbeSettings(layers, services);
         _services = services;
         _facts = facts;
@@ -86,11 +89,20 @@ internal sealed class ProbeChannel : RevitSideChannel.RevitSideChannelBase
                 case "ribbon":
                     response.Values.Add("ribbon:availabilityCalls", LocalAvailability.Calls.ToString());
                     response.Values.Add("ribbon:commandRuns", ProbeCommand.Runs.ToString());
+                    response.Values.Add("ribbon:featureLoaded", ProbeApplication.IsFeatureLoaded() ? "True" : "False");
+                    response.Values.Add("ribbon:pingRuns",
+                        Environment.GetEnvironmentVariable("BHS_PROBE_PING_RAN") ?? "0");
+                    response.Values.Add("ribbon:pingAddInId",
+                        Environment.GetEnvironmentVariable("BHS_PROBE_PING_SERVICES") ?? "(none)");
                     break;
 
                 case "model":
                     foreach (var pair in ModelSettings().GetAwaiter().GetResult())
                         response.Values.Add(pair.Key, pair.Value);
+                    break;
+
+                case "press":
+                    _press.Raise();
                     break;
 
                 case "log":

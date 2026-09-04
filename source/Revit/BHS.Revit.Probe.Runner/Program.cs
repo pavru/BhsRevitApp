@@ -1,4 +1,4 @@
-using System.Diagnostics;
+﻿using System.Diagnostics;
 using System.Globalization;
 using System.Security.Principal;
 using BHS.Revit.Launch;
@@ -551,11 +551,22 @@ internal static class Program
         var answer = await client.AskAsync(new AskRequest { Question = "ribbon" });
         report.Check("the ribbon panel and button were built", answer.Values.ContainsKey("ribbon:availabilityCalls"));
 
-        // Only with a document: the probe activates its tab on DocumentOpened, and without one
-        // nothing ever shows the tab, so Revit never asks and a count of zero would be silence
-        // rather than an answer.
-        if (!options.WithModel)
+        // Only when the tab has been brought forward on purpose. Revit asks an availability class
+        // while its tab is shown, and showing it turned out to provoke a cancel-the-operation dialog
+        // in the middle of a model load - its own journal names ProgressCancelled - so the sweep no
+        // longer does it, and a count of zero here would be silence rather than an answer.
+        // The half that costs nothing and answers the question that matters most here: a ribbon
+        // built from plain type names must not have loaded the assemblies behind them. On Revit 2024
+        // an assembly that loads holds its name in the AppDomain shared with every vendor for the
+        // rest of the session, including features nobody touched.
+        report.Check("the feature assembly is not loaded while the ribbon stands",
+            answer.Values.GetValueOrDefault("ribbon:featureLoaded") == "False");
+
+        if (!options.WithModel || Environment.GetEnvironmentVariable("BHS_PROBE_SHOW_TAB") != "1")
+        {
+            Report.Note("availability and the press", "not asked - set BHS_PROBE_SHOW_TAB=1 for both");
             return;
+        }
 
         // Waited for, not read once. The probe republishes the document title before it activates
         // the tab, so the moment this check becomes reachable is half a second before the answer
@@ -572,6 +583,53 @@ internal static class Program
         report.Check("Revit asks the availability class once its tab is shown", asked);
         Report.Note("availability calls", calls);
 
+        await CheckFeatureCommandAsync(client, report);
+    }
+
+    /// <summary>
+    /// A command Revit built itself, finding its host and loading its feature to do it.
+    /// </summary>
+    /// <remarks>
+    /// Three answers in one press, and none of them reachable any other way. Whether the registry
+    /// keyed by add-in id is found from inside a command Revit constructed from a string; what
+    /// <c>ActiveAddInId</c> actually returns there, which was documented and never measured; and
+    /// whether the feature assembly stays unloaded until the button is used.
+    /// </remarks>
+    private static async Task CheckFeatureCommandAsync(
+        RevitSideChannel.RevitSideChannelClient client,
+        Report report)
+    {
+        var runs = "0";
+        var addInId = "(none)";
+        var loaded = "False";
+        var attempts = 0;
+
+        // Pressed more than once, for the reason the close needed the same: a posted command is
+        // dropped when Revit is not ready for it, silently and with nothing anywhere to say so. The
+        // first attempt here landed half a second after the ribbon tab was brought forward and went
+        // nowhere.
+        var pressed = await WaitForAsync(() =>
+        {
+            if (attempts == 0 || attempts % 20 == 0)
+                client.Ask(new AskRequest { Question = "press" });
+
+            attempts++;
+
+            var values = client.Ask(new AskRequest { Question = "ribbon" }).Values;
+            runs = values.GetValueOrDefault("ribbon:pingRuns") ?? "0";
+            addInId = values.GetValueOrDefault("ribbon:pingAddInId") ?? "(none)";
+            loaded = values.GetValueOrDefault("ribbon:featureLoaded") ?? "False";
+            return runs != "0";
+        }, 90_000);
+
+        report.Check("a feature command runs through a one-line entry point", pressed);
+
+        report.Check("and it found its own host, keyed by add-in id",
+            string.Equals(addInId, ProbeDeployment.AddInId, StringComparison.OrdinalIgnoreCase));
+
+        report.Check("and the feature assembly loaded only once it was needed", loaded == "True");
+
+        Report.Note("feature command", $"runs {runs}, host {addInId}");
     }
 
     /// <summary>
