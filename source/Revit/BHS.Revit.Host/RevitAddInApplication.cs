@@ -99,9 +99,49 @@ public abstract class RevitAddInApplication : RevitAddInHost, IExternalApplicati
     {
     }
 
-    /// <summary>Sealed: this form answers the base's hook by calling the richer one above.</summary>
-    protected sealed override void OnStarted(IFeatureServices services) =>
+    /// <summary>How many buttons the manifests contributed. Zero is normal for an edition with none.</summary>
+    protected int RibbonButtons { get; private set; }
+
+    /// <summary>Sealed: builds the ribbon, then hands over to the edition.</summary>
+    /// <remarks>
+    /// Before the edition's own hook, so that an edition adding something by hand adds it to a ribbon
+    /// that already exists rather than racing its own manifest.
+    /// </remarks>
+    protected sealed override void OnStarted(IFeatureServices services)
+    {
+        BuildRibbon(services);
         OnStarted((IUiFeatureServices)services, _application!);
+    }
+
+    /// <summary>
+    /// Builds whatever the manifests beside this assembly declare.
+    /// </summary>
+    /// <remarks>
+    /// The directory is this assembly's own, found the only way that works inside Revit: from the
+    /// assembly itself. The obvious alternatives - the entry assembly and
+    /// <c>AppContext.BaseDirectory</c> - both name Revit's installation folder, because the entry
+    /// assembly here is <c>Revit.exe</c>. Measured, for the settings layer, and true again here.
+    /// </remarks>
+    private void BuildRibbon(IFeatureServices services)
+    {
+        try
+        {
+            var directory = Path.GetDirectoryName(GetType().Assembly.Location);
+
+            if (string.IsNullOrEmpty(directory))
+            {
+                services.Log.Warn("no directory for {0}, so no ribbon was built", GetType().Assembly.FullName);
+                return;
+            }
+
+            RibbonButtons = RibbonBuilder.Build(_application!, directory!, services.Log);
+        }
+        catch (Exception error)
+        {
+            // A ribbon that could not be built is a missing button, never a failed start.
+            services.Log.Error(error, "the ribbon could not be built");
+        }
+    }
 
     /// <summary>
     /// Builds the pump, which is the whole of what this form adds to the composition.

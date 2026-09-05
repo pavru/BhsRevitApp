@@ -1,4 +1,4 @@
-﻿<Project Sdk="BHS.Revit.Sdk/1.4.1">
+﻿<Project Sdk="BHS.Revit.Sdk/1.5.1">
 
     <!--
       A minimal add-in whose only job is to be reachable and to report what it sees.
@@ -54,6 +54,34 @@
         <ProjectReference Include="..\BHS.Revit.Probe.Feature\BHS.Revit.Probe.Feature.csproj"/>
         <!-- Through the host, which is the point: the probe is no longer a second host, and
              the sweep that checks it on four live releases now checks the host with it. -->
+    </ItemGroup>
+
+    <!--
+      The ribbon, declared rather than written. The SDK turns these into BHS.Revit.Probe.features.json
+      beside the assembly, the host reads it at startup, and Revit is handed class names as text - so
+      nothing behind a button is loaded until it is pressed. RefCheck verifies each one against the
+      built assembly, which is what makes strings safe to use here.
+    -->
+    <ItemGroup>
+        <RevitRibbonButton Include="BHS.Probe.Command">
+            <Panel>BHS Probe</Panel>
+            <Text>Probe</Text>
+            <ClassName>BHS.Revit.Probe.ProbeCommand</ClassName>
+            <AvailabilityClassName>BHS.Revit.Probe.LocalAvailability</AvailabilityClassName>
+            <ToolTip>Does nothing. Exists so that the ribbon path is exercised.</ToolTip>
+            <Order>1</Order>
+        </RevitRibbonButton>
+
+        <!-- The one that matters: its class derives from a base in another assembly, which must stay
+             unloaded while this button merely exists. -->
+        <RevitRibbonButton Include="BHS.Probe.Ping">
+            <Panel>BHS Probe</Panel>
+            <Text>Ping</Text>
+            <ClassName>BHS.Revit.Probe.PingCommandEntryPoint</ClassName>
+            <AvailabilityClassName>BHS.Revit.Probe.LocalAvailability</AvailabilityClassName>
+            <ToolTip>Runs a feature command through the host, and loads the feature to do it.</ToolTip>
+            <Order>2</Order>
+        </RevitRibbonButton>
     </ItemGroup>
 
     <ItemGroup>

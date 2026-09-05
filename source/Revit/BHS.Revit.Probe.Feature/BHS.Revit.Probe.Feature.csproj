@@ -1,4 +1,4 @@
-﻿<Project Sdk="BHS.Revit.Sdk/1.4.1">
+﻿<Project Sdk="BHS.Revit.Sdk/1.5.1">
 
     <!--
       A stand-in for a feature module: a command and nothing else.

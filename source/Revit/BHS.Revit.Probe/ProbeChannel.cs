@@ -90,6 +90,7 @@ internal sealed class ProbeChannel : RevitSideChannel.RevitSideChannelBase
                     response.Values.Add("ribbon:availabilityCalls", LocalAvailability.Calls.ToString());
                     response.Values.Add("ribbon:commandRuns", ProbeCommand.Runs.ToString());
                     response.Values.Add("ribbon:featureLoaded", ProbeApplication.IsFeatureLoaded() ? "True" : "False");
+                    response.Values.Add("ribbon:fromManifest", ProbeApplication.ButtonsFromManifest.ToString());
                     response.Values.Add("ribbon:pingRuns",
                         Environment.GetEnvironmentVariable("BHS_PROBE_PING_RAN") ?? "0");
                     response.Values.Add("ribbon:pingAddInId",

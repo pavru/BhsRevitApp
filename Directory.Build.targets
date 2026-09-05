@@ -1,0 +1,19 @@
+﻿<Project>
+
+    <!--
+      Runs RefCheck after every Revit-side build.
+
+      It was missing, and the gap is worth recording rather than quietly closing: build/RefCheck
+      carries a complete RefCheck.targets, CLAUDE.md described RVTREF005 as a check that fails the
+      build, and nothing imported the file. So the tool worked, the rule was written down, and it had
+      never once run on its own - every finding this repository has from it came from somebody
+      remembering to type the command.
+
+      A check nobody imports is a check nobody runs. The targets file itself decides what applies to
+      which project: RevitReferenceCheck turns on exactly where $(RevitVersion) is set, which is
+      Revit-side projects and nothing else.
+    -->
+    <Import Project="$(MSBuildThisFileDirectory)build\RefCheck\RefCheck.targets"
+            Condition="'$(RevitVersion)' != '' And Exists('$(MSBuildThisFileDirectory)build\RefCheck\RefCheck.targets')"/>
+
+</Project>

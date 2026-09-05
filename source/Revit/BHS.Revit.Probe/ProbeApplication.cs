@@ -62,6 +62,10 @@ public sealed class ProbeApplication : RevitAddInApplication
     /// </remarks>
     protected override void OnStarted(IUiFeatureServices services, UIControlledApplication application)
     {
+        // Built by the host before this runs, from BHS.Revit.Probe.features.json beside the
+        // assembly. Nothing here names a button; the project file does, and the SDK wrote it down.
+        ButtonsFromManifest = RibbonButtons;
+
         ProbeLog.Write("startup: begin");
 
         var facts = new ProbeFacts(services.Revit.Controlled);
@@ -87,7 +91,6 @@ public sealed class ProbeApplication : RevitAddInApplication
 
         ProbeLog.Write("startup: serving " + facts.PipeName);
 
-        BuildRibbon(application, facts);
 
         services.Revit.Controlled.DocumentOpened += OnDocumentOpened;
 
@@ -258,66 +261,27 @@ public sealed class ProbeApplication : RevitAddInApplication
     }
 
     /// <summary>
-    /// One panel with one button, so that the ribbon path is exercised rather than assumed.
+    /// What the ribbon proved, kept because the answer decided the shape of the whole arrangement.
     /// </summary>
     /// <remarks>
-    /// It also settled a question that decided the shape of the ribbon generator. The API help says
-    /// an <c>IExternalCommandAvailability</c> implementation "should share the same assembly with
-    /// add-in External Command"; a button pointing at a class in <c>BHS.Revit.Common</c> answered it
-    /// - Revit resolves the name inside the command's own assembly and nowhere else, so the type is
-    /// not found and a <c>TypeLoadException</c> reaches the user as a modal dialog. "Should" is
-    /// "must", and the failure is loud rather than a greyed-out button.
+    /// <para>
+    /// The panel and its two buttons are declared in the project file now and built by the host from
+    /// the generated manifest. What used to be written here settled two things worth keeping:
+    /// </para>
+    /// <para>
+    /// An <c>IExternalCommandAvailability</c> implementation must live in the command's own assembly.
+    /// The API help says it "should"; a button naming a class in <c>BHS.Revit.Common</c> answered the
+    /// difference - Revit takes the assembly from the button and resolves the class inside it and
+    /// nowhere else, so the type is not found and a <c>TypeLoadException</c> reaches the user as a
+    /// modal dialog. "Should" is "must", and the failure is loud rather than a greyed-out button.
+    /// It is <c>RVTRIB004</c> now.
+    /// </para>
+    /// <para>
+    /// And naming a class with <c>typeof</c> loads it, which resolves its base, which loads the
+    /// feature assembly - while the ribbon is being built. Measured here, before the manifest existed
+    /// to make it impossible.
+    /// </para>
     /// </remarks>
-    private static void BuildRibbon(UIControlledApplication application, ProbeFacts facts)
-    {
-        try
-        {
-            var panel = application.CreateRibbonPanel("BHS Probe");
-
-            var button = new PushButtonData(
-                "BHS.Probe.Command",
-                "Probe",
-                facts.AddInAssembly,
-                typeof(ProbeCommand).FullName)
-            {
-                AvailabilityClassName = typeof(LocalAvailability).FullName,
-                ToolTip = "Does nothing. Exists so that the ribbon path is exercised.",
-            };
-
-            panel.AddItem(button);
-            ProbeLog.Write("ribbon: added a button with an availability class in the command's assembly");
-
-            // The one that matters. Named by a plain type name - typeof reaches the entry point,
-            // which is in this assembly, and touching it does not touch the feature behind it.
-            var ping = new PushButtonData(
-                "BHS.Probe.Ping",
-                "Ping",
-                facts.AddInAssembly,
-
-                // Named as a string, and that is not pedantry. Writing typeof here type-loads the
-                // entry point, which resolves its base CommandEntryPoint<PingCommand>, which loads
-                // the feature assembly - while the ribbon is being built, which is the one thing the
-                // whole arrangement exists to avoid. Measured: with typeof, the feature was loaded
-                // before any button had been pressed. A manifest carries strings for this reason,
-                // and the predecessor's ribbon made exactly this mistake.
-                "BHS.Revit.Probe.PingCommandEntryPoint")
-            {
-                AvailabilityClassName = typeof(LocalAvailability).FullName,
-                ToolTip = "Runs a feature command through the host, and loads the feature to do it.",
-            };
-
-            panel.AddItem(ping);
-
-            ProbeLog.Write("ribbon: added the ping button; feature assembly loaded: " + IsFeatureLoaded());
-        }
-        catch (Exception error)
-        {
-            // The interesting failure mode, and the one worth catching rather than throwing: Revit
-            // refusing the button outright is itself the answer.
-            ProbeLog.Write("ribbon: could not be built", error);
-        }
-    }
-
     /// <summary>
     /// Brings the tab holding our buttons to the front, so that Revit asks about them.
     /// </summary>
@@ -359,6 +323,9 @@ public sealed class ProbeApplication : RevitAddInApplication
             ProbeLog.Write("ribbon: could not activate the tab", error);
         }
     }
+
+    /// <summary>How many buttons the host built from the manifest. Read by the channel.</summary>
+    internal static int ButtonsFromManifest;
 
     /// <summary>Whether the stand-in feature has been loaded, asked without loading it.</summary>
     internal static bool IsFeatureLoaded()

@@ -202,7 +202,53 @@ To configure the `.addin` file generation, add a `RevitAddIn` item to your `.csp
 </ItemGroup>
 ```
 
-### 8. Publishing and Deployment
+Several add-ins in one project are written into one manifest, which is what Revit's format expects — an edition that offers both an `Application` with a ribbon and a `DBApplication` for the part of itself that needs no window declares two `RevitAddIn` items with the same `Include`:
+
+```xml
+<ItemGroup>
+  <RevitAddIn Include="$(AssemblyName).addin">
+    <AddInType>Application</AddInType>
+    <FullClassName>YourNamespace.YourApplication</FullClassName>
+    <AddInId>ONE-GUID</AddInId>
+  </RevitAddIn>
+  <RevitAddIn Include="$(AssemblyName).addin">
+    <AddInType>DBApplication</AddInType>
+    <FullClassName>YourNamespace.YourDbApplication</FullClassName>
+    <AddInId>A-DIFFERENT-GUID</AddInId>
+  </RevitAddIn>
+</ItemGroup>
+```
+
+Each needs an `AddInId` of its own — Revit files trust and isolation by it — and a duplicate is a build error. `ManifestSettings` (`UnifyInAddInManager`, `UseRevitContext`, `ContextName`) describes the *file* rather than one add-in, so entries sharing a manifest share an isolation context; declaring different ones on entries in the same file is a build error rather than a silent first-wins.
+
+### 8. Ribbon manifest generation
+
+`RevitRibbonButton` items become `$(AssemblyName).features.json` beside the assembly. A host reads it at startup and hands Revit the class name **as text**, so the assembly behind a button is not loaded until the button is pressed.
+
+That is the point of the file rather than a list in code: naming a class with `typeof` loads it, which resolves its base, which loads the feature assembly — while the ribbon is being built. Nothing in the language objects, and it is only visible by measuring.
+
+```xml
+<ItemGroup>
+  <RevitRibbonButton Include="MyVendor.DoTheThing">
+    <Panel>My Panel</Panel>
+    <Text>Do the thing</Text>
+    <ClassName>MyVendor.DoTheThingEntryPoint</ClassName>
+
+    <!-- Optional -->
+    <Tab>My Tab</Tab>                    <!-- empty: Revit's own Add-Ins tab -->
+    <ToolTip>What it does.</ToolTip>
+    <LongDescription>More about it.</LongDescription>
+    <AvailabilityClassName>MyVendor.WhenADocumentIsOpen</AvailabilityClassName>
+    <Order>1</Order>
+  </RevitRibbonButton>
+</ItemGroup>
+```
+
+`Panel`, `Text` and `ClassName` are required (`RVTRIB010`), and two buttons cannot share a name (`RVTRIB011`).
+
+**The class named here must carry `[Transaction]`, and an availability class must live in the same assembly.** Neither can be checked without reading the built assembly as metadata, which this SDK deliberately does not do: on .NET Framework a metadata reader arrives with five polyfills, and putting those inside MSBuild is a collision waiting to happen. Those checks (`RVTRIB001`–`RVTRIB005`) belong to a tool run out of process — in this repository, `build/RefCheck`.
+
+### 9. Publishing and Deployment
 
 The SDK provides built-in targets to package your add-in for distribution (`Publish`) and to install it locally for testing (`Deploy`).
 
@@ -298,7 +344,7 @@ To automatically copy a package, set the `<RevitDeploy>` property. If this prope
 </PropertyGroup>
 ```
 
-### 9. Authenticode signing
+### 10. Authenticode signing
 
 Revit refuses to finish starting until somebody answers a modal dialog about an add-in it has not
 been told to trust. There are three such dialogs and they are answered in different places: an

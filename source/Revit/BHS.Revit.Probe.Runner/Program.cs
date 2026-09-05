@@ -643,6 +643,11 @@ internal static class Program
         var answer = await client.AskAsync(new AskRequest { Question = "ribbon" });
         report.Check("the ribbon panel and button were built", answer.Values.ContainsKey("ribbon:availabilityCalls"));
 
+        // From the file the SDK wrote beside the assembly, not from a list in code. Both buttons, or
+        // the count is wrong and something silently skipped one.
+        report.Check("and they came from the generated manifest, not from code",
+            answer.Values.GetValueOrDefault("ribbon:fromManifest") == "2");
+
         // Only when the tab has been brought forward on purpose. Revit asks an availability class
         // while its tab is shown, and showing it turned out to provoke a cancel-the-operation dialog
         // in the middle of a model load - its own journal names ProgressCancelled - so the sweep no

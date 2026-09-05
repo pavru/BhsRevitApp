@@ -13,8 +13,8 @@
     <PropertyGroup>
         <PackageId>BHS.Revit.Sdk</PackageId>
         <PackageType>MSBuildSdk</PackageType>
-        <Version>1.4.1</Version>
-        <AssemblyVersion>1.4.1</AssemblyVersion>
+        <Version>1.5.1</Version>
+        <AssemblyVersion>1.5.1</AssemblyVersion>
 
         <IsPackable>true</IsPackable>
         <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
