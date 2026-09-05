@@ -32,8 +32,10 @@
           it - deployment here copies and never deletes, which has already left stale assemblies in
           add-in folders. An icon inside the assembly cannot go missing or go stale.
         -->
-        <EmbeddedResource Include="Resources\PlaceholderIcon.16.png"/>
         <EmbeddedResource Include="Resources\PlaceholderIcon.32.png"/>
+        <EmbeddedResource Include="Resources\PlaceholderIcon.64.png"/>
+        <EmbeddedResource Include="Resources\PlaceholderIcon.dark.32.png"/>
+        <EmbeddedResource Include="Resources\PlaceholderIcon.dark.64.png"/>
 
         <!-- The source the two PNGs were rendered from, kept so they can be made again. -->
         <None Include="Resources\PlaceholderIcon.svg"/>

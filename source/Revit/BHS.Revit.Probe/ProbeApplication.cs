@@ -335,6 +335,8 @@ public sealed class ProbeApplication : RevitAddInApplication
                                     && items.TrueForAll(item => item.Image is not null && item.LargeImage is not null);
 
                         ProbeLog.Write($"ribbon: {items.Count} button(s) on '{wanted}', all with icons: {IconsSeen}");
+
+                        MeasureIcons(ribbon, items);
                     }
 
                     ProbeLog.Write($"ribbon: activated tab '{tab.Id}' holding '{wanted}'");
@@ -369,12 +371,162 @@ public sealed class ProbeApplication : RevitAddInApplication
     /// </remarks>
     internal static bool OwnTabSeen;
 
+    /// <summary>What the live ribbon does with an icon, measured on the UI thread.</summary>
+    /// <remarks>
+    /// The question is what to ship for a display at 150% or 200% scaling, and it does not need the
+    /// machine set to those to answer: WPF lays a button image out in logical units and resamples the
+    /// source to whatever device pixels that comes to, so the required source size is the layout box
+    /// times the scale factor. Both halves are readable here, and the arithmetic covers every scale.
+    /// <para>
+    /// What cannot be inferred and has to be tried is whether the ribbon keeps its layout when handed
+    /// a bigger bitmap. <c>ComponentManager.UseOriginalImageSize</c> exists, so the ribbon is capable
+    /// of sizing a button to its image instead - and if Revit has that on, a larger icon changes the
+    /// geometry of the panel rather than sharpening the picture.
+    /// </para>
+    /// </remarks>
+    internal static readonly Dictionary<string, string> IconFacts = new(StringComparer.Ordinal);
+
     /// <summary>Whether every button on our own panel was seen carrying both images.</summary>
     /// <remarks>
     /// Asked of the live ribbon, not of the code that set them: <c>PushButtonData</c> accepting an
     /// <c>ImageSource</c> proves nothing about what Revit did with it.
     /// </remarks>
     internal static bool IconsSeen;
+
+    /// <summary>
+    /// Measures what the ribbon does with the icons it was given. On the UI thread, always.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// The first version of this read the layout before asking for one, so the 32-pixel icon came
+    /// back "not drawn" while the 64-pixel one came back at 64 - which looks like an answer and is
+    /// an artefact. Everything here now measures after an explicit layout pass, and reports every
+    /// image the ribbon is drawing rather than the one it was asked about.
+    /// </para>
+    /// <para>
+    /// Three things decide what to ship. <c>Stretch</c> says whether the source size is the drawn
+    /// size. <c>DpiX</c> on the bitmap says what "natural size" means - WPF takes it as pixels times
+    /// 96/dpi, so a 48-pixel image declared at 144 dpi is 32 units wide and lands exactly on the
+    /// device grid at 150%. And the drawn size against the scale factor gives the pixels a display
+    /// actually asks for.
+    /// </para>
+    /// </remarks>
+    private static void MeasureIcons(
+        Autodesk.Windows.RibbonControl ribbon,
+        IReadOnlyList<Autodesk.Windows.RibbonButton> items)
+    {
+        try
+        {
+            // Before reading anything. A box that has not been measured is zero, and zero read as an
+            // answer is how the first attempt at this reported the opposite of the truth.
+            ribbon.UpdateLayout();
+
+            IconFacts["icon:useOriginalImageSize"] =
+                Autodesk.Windows.ComponentManager.UseOriginalImageSize.ToString();
+
+            var source = System.Windows.PresentationSource.FromVisual(ribbon);
+            var scale = source?.CompositionTarget?.TransformToDevice.M11 ?? 0;
+            IconFacts["icon:dpiScale"] = scale.ToString("F2", System.Globalization.CultureInfo.InvariantCulture);
+
+            var button = items[0];
+            IconFacts["icon:sourcePixels"] = Describe(button.LargeImage);
+            IconFacts["icon:smallSourcePixels"] = Describe(button.Image);
+
+            // The whole finding in two numbers: what we ship and what it comes out as. A 64-pixel
+            // source drawn at 32 units means the button did not change size while the picture gained
+            // pixels; a 64-pixel source drawn at 64 would mean the opposite, and that is what a file
+            // at 96 dpi does - the other entries in the list below are exactly that, as a control.
+            IconFacts["icon:smallDrawn"] = DrawnSize(ribbon, button.Image);
+            IconFacts["icon:largeDrawn"] = DrawnSize(ribbon, button.LargeImage);
+            IconFacts["icon:allDrawn"] = DrawnImages(ribbon);
+
+            // Which of the two variants Revit's current theme asked for. Autodesk's guidelines want
+            // both, and a dark mark on a dark ribbon is not an icon.
+            IconFacts["icon:theme"] = Autodesk.Revit.UI.UIThemeManager.CurrentTheme.ToString();
+            IconFacts["icon:themedIcon"] = BHS.Revit.Host.PlaceholderIcon.Dark ? "dark" : "light";
+
+            foreach (var pair in IconFacts)
+                ProbeLog.Write($"{pair.Key} = {pair.Value}");
+        }
+        catch (Exception error)
+        {
+            ProbeLog.Write("ribbon: could not measure the icons", error);
+        }
+    }
+
+    private static string Describe(System.Windows.Media.ImageSource? image) =>
+        image is System.Windows.Media.Imaging.BitmapSource bitmap
+            ? $"{bitmap.PixelWidth}x{bitmap.PixelHeight}@{bitmap.DpiX:F0}dpi"
+            : "(none)";
+
+    /// <summary>The size the ribbon drew one particular source at, in logical units.</summary>
+    private static string DrawnSize(System.Windows.DependencyObject root, System.Windows.Media.ImageSource? wanted)
+    {
+        if (wanted is not System.Windows.Media.Imaging.BitmapSource source)
+            return "(none)";
+
+        foreach (var element in Descendants(root))
+        {
+            if (element is System.Windows.Controls.Image image
+                && image.Source is System.Windows.Media.Imaging.BitmapSource bitmap
+                && bitmap.PixelWidth == source.PixelWidth
+                && Math.Abs(bitmap.DpiX - source.DpiX) < 0.5
+                && image.ActualWidth > 0)
+            {
+                var culture = System.Globalization.CultureInfo.InvariantCulture;
+                return image.ActualWidth.ToString("F0", culture) + "x" + image.ActualHeight.ToString("F0", culture);
+            }
+        }
+
+        return "(not drawn)";
+    }
+
+    /// <summary>
+    /// Every image the ribbon is drawing from one of ours, with the size it came out at.
+    /// </summary>
+    /// <remarks>
+    /// Matched by pixel size rather than by reference: the ribbon is free to wrap or convert what it
+    /// was handed, and a reference comparison that quietly matches nothing reads as "not drawn".
+    /// </remarks>
+    private static string DrawnImages(System.Windows.DependencyObject root)
+    {
+        var seen = new List<string>();
+
+        foreach (var element in Descendants(root))
+        {
+            if (element is not System.Windows.Controls.Image image)
+                continue;
+
+            if (image.Source is not System.Windows.Media.Imaging.BitmapSource bitmap)
+                continue;
+
+            if (bitmap.PixelWidth is not (16 or 32 or 48 or 64) || bitmap.PixelWidth != bitmap.PixelHeight)
+                continue;
+
+            var culture = System.Globalization.CultureInfo.InvariantCulture;
+
+            seen.Add($"{bitmap.PixelWidth}px@{bitmap.DpiX.ToString("F0", culture)}dpi" +
+                     $"->{image.ActualWidth.ToString("F1", culture)}x{image.ActualHeight.ToString("F1", culture)}" +
+                     $" stretch={image.Stretch}");
+        }
+
+        return seen.Count == 0 ? "(none drawn)" : string.Join(" | ", seen.Distinct());
+    }
+
+    private static IEnumerable<System.Windows.DependencyObject> Descendants(System.Windows.DependencyObject root)
+    {
+        var count = System.Windows.Media.VisualTreeHelper.GetChildrenCount(root);
+
+        for (var index = 0; index < count; index++)
+        {
+            var child = System.Windows.Media.VisualTreeHelper.GetChild(root, index);
+
+            yield return child;
+
+            foreach (var descendant in Descendants(child))
+                yield return descendant;
+        }
+    }
 
     /// <summary>Whether the stand-in feature has been loaded, asked without loading it.</summary>
     internal static bool IsFeatureLoaded()

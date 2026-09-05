@@ -93,6 +93,9 @@ internal sealed class ProbeChannel : RevitSideChannel.RevitSideChannelBase
                     response.Values.Add("ribbon:fromManifest", ProbeApplication.ButtonsFromManifest.ToString());
                     response.Values.Add("ribbon:ownTab", ProbeApplication.OwnTabSeen ? "True" : "False");
                     response.Values.Add("ribbon:icons", ProbeApplication.IconsSeen ? "True" : "False");
+
+                    foreach (var fact in ProbeApplication.IconFacts)
+                        response.Values.Add(fact.Key, fact.Value);
                     response.Values.Add("ribbon:pingRuns",
                         Environment.GetEnvironmentVariable("BHS_PROBE_PING_RAN") ?? "0");
                     response.Values.Add("ribbon:pingAddInId",

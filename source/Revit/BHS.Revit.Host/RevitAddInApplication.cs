@@ -171,6 +171,12 @@ public abstract class RevitAddInApplication : RevitAddInHost, IExternalApplicati
         var session = new UIApplication((Application)sender);
         _pump?.Attach(_pumpEvent!);
 
+        // Only now, because the event lives on UIApplication and this is the first legitimate one a
+        // host is handed. Present on all four releases - checked against the metadata. Autodesk's
+        // icon guidelines ask for a light and a dark variant of every icon, and choosing once at
+        // startup would leave every button wrong for anyone who switches theme by daylight.
+        session.ThemeChanged += (_, _) => RibbonBuilder.FollowTheme(Log.For(Name));
+
         Log.For(Name).Info("session is ready, document {0}",
             session.ActiveUIDocument?.Document?.Title ?? "(none)");
     }

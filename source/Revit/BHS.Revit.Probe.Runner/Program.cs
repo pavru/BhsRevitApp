@@ -686,7 +686,20 @@ internal static class Program
         // goes to Revit's own Add-Ins tab and one to a tab of ours, which is the only way the
         // builder's tab branch runs at all: creating a tab, surviving one that exists already and
         // putting a panel on it were written and never executed until a button asked for them.
-        var ribbon = client.Ask(new AskRequest { Question = "ribbon" }).Values;
+        // Waited for, not read once. The icon measurement happens inside the same pump action that
+        // brings the tab forward, and the flags it sets before measuring are visible first - so a
+        // single read caught Revit 2026 between the two and reported an empty measurement as a
+        // failed one. The rule keeps having to be relearned in new places: a condition that arrives
+        // asynchronously is waited for.
+        var ribbon = new Dictionary<string, string>(StringComparer.Ordinal);
+
+        await WaitForAsync(() =>
+        {
+            ribbon = new Dictionary<string, string>(
+                client.Ask(new AskRequest { Question = "ribbon" }).Values, StringComparer.Ordinal);
+
+            return ribbon.ContainsKey("icon:largeDrawn");
+        }, 30_000);
 
         report.Check("a tab of our own was created and holds its panel",
             ribbon.GetValueOrDefault("ribbon:ownTab") == "True");
@@ -696,6 +709,37 @@ internal static class Program
         // feature draws its own, the framework puts the vendor mark on every button.
         report.Check("and every button on it wears an icon",
             ribbon.GetValueOrDefault("ribbon:icons") == "True");
+
+        // Was a note while nobody knew the answer; an assertion now that the measurement gave one.
+        // Revit's ribbon draws icons with Stretch=None, so the drawn size is the source's natural
+        // size - pixels times 96/dpi - and a plain 64-pixel file makes a 64-unit button rather than
+        // a sharper 32-unit one. Declaring 192 dpi keeps the button at 32 units and doubles the
+        // pixels available to a display that has them, which is the whole answer for 150% and 200%.
+        report.Check("both icons ship twice the pixels at twice the declared dpi",
+            ribbon.GetValueOrDefault("icon:smallSourcePixels") == "32x32@192dpi"
+            && ribbon.GetValueOrDefault("icon:sourcePixels") == "64x64@192dpi");
+
+        // Only the large one is asserted, and the reason is the ribbon's, not ours: a large button
+        // draws LargeImage and nothing else, so the small image is never laid out here and has no
+        // drawn size to check. Asserting one anyway would be asserting the absence of a button.
+        report.Check("and the large one draws at 32 units, so the button did not grow",
+            ribbon.GetValueOrDefault("icon:largeDrawn") == "32x32");
+
+        // The variant follows Revit rather than a guess. Both are shipped, and the live buttons are
+        // repainted when the theme changes - which is why this is a check and not a note.
+        report.Check("the icon variant matches Revit's theme",
+            ribbon.GetValueOrDefault("icon:themedIcon")
+                == (ribbon.GetValueOrDefault("icon:theme") == "Dark" ? "dark" : "light"));
+
+        foreach (var key in new[]
+                 {
+                     "icon:dpiScale", "icon:useOriginalImageSize", "icon:theme", "icon:smallDrawn",
+                     "icon:allDrawn",
+                 })
+        {
+            if (ribbon.TryGetValue(key, out var value))
+                Report.Note(key, value);
+        }
 
         await CheckFeatureCommandAsync(client, report);
     }
