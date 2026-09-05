@@ -80,9 +80,13 @@ internal sealed class TypeFacts : IDisposable
     ///     Whether the attribute is declared on the type itself.
     /// </summary>
     /// <remarks>
-    ///     Directly, and never inherited: Revit reads <c>[Transaction]</c> off the type it constructs,
-    ///     which is the one named on the button. A base class carrying it is not the question being
-    ///     asked here, and answering a different question is how a check stops catching anything.
+    ///     Directly, never up the base chain - and that is a deliberately stricter rule than the CLR's.
+    ///     Measured: <c>TransactionAttribute</c> is <c>[AttributeUsage(AttributeTargets.Class)]</c> with
+    ///     no named arguments on any of the four releases, so <c>Inherited</c> defaults to <c>true</c>
+    ///     and a base could in principle carry it. Whether Revit asks with <c>inherit: true</c> has not
+    ///     been measured. The check does not depend on the answer: the transaction mode is a property
+    ///     of each command, so each command states it, and a mode inherited from somewhere else would
+    ///     be a mode nobody chose.
     /// </remarks>
     public bool HasAttribute(string fullName, string attributeFullName)
     {

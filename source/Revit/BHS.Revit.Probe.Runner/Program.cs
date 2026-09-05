@@ -648,6 +648,7 @@ internal static class Program
         report.Check("and they came from the generated manifest, not from code",
             answer.Values.GetValueOrDefault("ribbon:fromManifest") == "2");
 
+
         // Only when the tab has been brought forward on purpose. Revit asks an availability class
         // while its tab is shown, and showing it turned out to provoke a cancel-the-operation dialog
         // in the middle of a model load - its own journal names ProgressCancelled - so the sweep no
@@ -679,6 +680,22 @@ internal static class Program
 
         report.Check("Revit asks the availability class once its tab is shown", asked);
         Report.Note("availability calls", calls);
+
+        // Here rather than beside the manifest check, because the answer is recorded by the code that
+        // brings the tab forward - the only place in the probe already on the UI thread. One button
+        // goes to Revit's own Add-Ins tab and one to a tab of ours, which is the only way the
+        // builder's tab branch runs at all: creating a tab, surviving one that exists already and
+        // putting a panel on it were written and never executed until a button asked for them.
+        var ribbon = client.Ask(new AskRequest { Question = "ribbon" }).Values;
+
+        report.Check("a tab of our own was created and holds its panel",
+            ribbon.GetValueOrDefault("ribbon:ownTab") == "True");
+
+        // Asked of the live ribbon rather than of the builder. A button with no image gets an empty
+        // frame from Revit, and a panel of those reads as broken rather than unfinished - so until a
+        // feature draws its own, the framework puts the vendor mark on every button.
+        report.Check("and every button on it wears an icon",
+            ribbon.GetValueOrDefault("ribbon:icons") == "True");
 
         await CheckFeatureCommandAsync(client, report);
     }

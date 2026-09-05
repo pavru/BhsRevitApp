@@ -1,4 +1,4 @@
-﻿<Project Sdk="BHS.Revit.Sdk/1.5.1">
+﻿<Project Sdk="BHS.Revit.Sdk/1.5.2">
 
     <!--
       A minimal add-in whose only job is to be reachable and to report what it sees.
@@ -34,6 +34,16 @@
         <!-- For the availability measurement: Revit only asks an availability class while the tab
              holding the button is shown, and nothing shows it in an unattended run. -->
         <UseRevitAdWindows>true</UseRevitAdWindows>
+
+        <!--
+          Not for any window of our own: the host puts an ImageSource on every ribbon button, and
+          UseWPF travels to whoever references it. That is a real consequence of the framework
+          growing icons, and it lands on every Revit-side edition - which was going to be a WPF
+          project anyway, WPF being the decided Revit-side UI. It ships nothing: PresentationCore
+          and its neighbours are in the GAC on net48 and in the shared framework on the .NET axis,
+          and Revit's own interface is already built on them.
+        -->
+        <UseWPF>true</UseWPF>
         <IsPackable>false</IsPackable>
 
         <!--
@@ -73,9 +83,15 @@
         </RevitRibbonButton>
 
         <!-- The one that matters: its class derives from a base in another assembly, which must stay
-             unloaded while this button merely exists. -->
+             unloaded while this button merely exists.
+
+             On a tab of its own, and that is coverage rather than decoration: without one, the whole
+             tab branch of the ribbon builder - creating a tab, surviving one that already exists,
+             putting a panel on it - never ran in any sweep. Two panels also prove they are not
+             confused with each other. -->
         <RevitRibbonButton Include="BHS.Probe.Ping">
-            <Panel>BHS Probe</Panel>
+            <Tab>BHS</Tab>
+            <Panel>Probe feature</Panel>
             <Text>Ping</Text>
             <ClassName>BHS.Revit.Probe.PingCommandEntryPoint</ClassName>
             <AvailabilityClassName>BHS.Revit.Probe.LocalAvailability</AvailabilityClassName>

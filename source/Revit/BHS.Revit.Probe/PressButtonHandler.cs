@@ -1,4 +1,4 @@
-using Autodesk.Revit.UI;
+﻿using Autodesk.Revit.UI;
 using BHS.Logging;
 
 namespace BHS.Revit.Probe;
@@ -22,6 +22,11 @@ internal sealed class PressButtonHandler : IExternalEventHandler
     /// <summary>Command id spellings tried in order. Revit's form for add-in buttons is undocumented.</summary>
     private static readonly string[] Candidates =
     {
+        // The button moved to a tab of its own, so its id did too - the id encodes the tab and the
+        // panel it sits on. Both spellings of both placements are kept: the form Revit uses for
+        // add-in buttons is undocumented, and the old ones cost nothing to try.
+        "CustomCtrl_%CustomCtrl_%BHS%Probe feature%BHS.Probe.Ping",
+        "CustomCtrl_%BHS%Probe feature%BHS.Probe.Ping",
         "CustomCtrl_%CustomCtrl_%Add-Ins%BHS Probe%BHS.Probe.Ping",
         "CustomCtrl_%Add-Ins%BHS Probe%BHS.Probe.Ping",
     };

@@ -1,4 +1,4 @@
-using System.Text.Json;
+﻿using System.Text.Json;
 
 namespace BimHouse.RefCheck;
 
@@ -134,8 +134,8 @@ internal static class RibbonCheck
         {
             findings.Add(new RibbonFinding("RVTRIB003", path,
                 $"'{className}' has no [Transaction]. Revit reads it off the type it constructs - this " +
-                "one, not its base and not the command behind it - and refuses the press with a dialog. " +
-                "The mode belongs to each command and has no default."));
+                "one, not the command behind it - and refuses the press with a dialog. Declare it here: " +
+                "the transaction mode is a property of each command and has no default."));
         }
 
         var availability = Text(button, "availabilityClassName");

@@ -146,7 +146,7 @@ public sealed class ProbeApplication : RevitAddInApplication
             // The question it existed to answer is answered and written down, so the sweep no longer
             // pays for it. BHS_PROBE_SHOW_TAB=1 brings it back for whoever wants to ask again.
             if (Environment.GetEnvironmentVariable("BHS_PROBE_SHOW_TAB") == "1")
-                Services?.Ui().Pump.Post("probe: show the Add-Ins tab", _ => ShowAddInsTab());
+                Services?.Ui().Pump.Post("probe: show our ribbon tab", _ => ShowOurTab());
         }
         catch (Exception error)
         {
@@ -294,7 +294,7 @@ public sealed class ProbeApplication : RevitAddInApplication
     /// rather than run from <c>DocumentOpened</c>, where it once provoked a cancel-the-operation
     /// dialog on a loaded machine.
     /// </remarks>
-    private static void ShowAddInsTab()
+    private static void ShowOurTab()
     {
         try
         {
@@ -306,12 +306,38 @@ public sealed class ProbeApplication : RevitAddInApplication
                 return;
             }
 
-            foreach (var tab in ribbon.Tabs)
+            // The panel holding the ping button, not merely one of ours. Availability is asked while
+            // a tab is shown, and the press is what the button is for - both want this tab, and the
+            // two buttons deliberately sit on different ones now.
+            foreach (var wanted in new[] { OwnPanelTitle, "BHS Probe" })
             {
-                if (tab.Panels.Any(panel => panel.Source?.Title == "BHS Probe"))
+                foreach (var tab in ribbon.Tabs)
                 {
+                    if (!tab.Panels.Any(panel => panel.Source?.Title == wanted))
+                        continue;
+
                     ribbon.ActiveTab = tab;
-                    ProbeLog.Write($"ribbon: activated tab '{tab.Id}' to make Revit ask about availability");
+
+                    // While we are on the thread that may ask: whether the builder's tab branch
+                    // really produced a tab, seen on the live ribbon rather than counted by us -
+                    // and whether the buttons on it came out wearing the placeholder icons.
+                    if (wanted == OwnPanelTitle)
+                    {
+                        OwnTabSeen = true;
+
+                        var items = tab.Panels
+                                       .Where(panel => panel.Source?.Title == wanted)
+                                       .SelectMany(panel => panel.Source!.Items)
+                                       .OfType<Autodesk.Windows.RibbonButton>()
+                                       .ToList();
+
+                        IconsSeen = items.Count > 0
+                                    && items.TrueForAll(item => item.Image is not null && item.LargeImage is not null);
+
+                        ProbeLog.Write($"ribbon: {items.Count} button(s) on '{wanted}', all with icons: {IconsSeen}");
+                    }
+
+                    ProbeLog.Write($"ribbon: activated tab '{tab.Id}' holding '{wanted}'");
                     return;
                 }
             }
@@ -326,6 +352,29 @@ public sealed class ProbeApplication : RevitAddInApplication
 
     /// <summary>How many buttons the host built from the manifest. Read by the channel.</summary>
     internal static int ButtonsFromManifest;
+
+    /// <summary>The panel the ping button sits on, on a tab of ours rather than Revit's Add-Ins.</summary>
+    internal const string OwnPanelTitle = "Probe feature";
+
+    /// <summary>
+    /// Whether the live ribbon was seen holding our own tab, as recorded from the UI thread.
+    /// </summary>
+    /// <remarks>
+    /// <b>Recorded, not asked.</b> The first version of this asked <c>AdWindows</c> directly and was
+    /// called over the channel, which measurement has said from the beginning arrives on a pool
+    /// thread - so every call threw <c>InvalidOperationException</c> from
+    /// <c>RibbonControl.get_Tabs()</c>, WPF refusing a foreign thread, about a hundred and fifty
+    /// times per run. The ribbon was fine; the question was asked from the wrong place, which is the
+    /// single most repeated mistake in this repository.
+    /// </remarks>
+    internal static bool OwnTabSeen;
+
+    /// <summary>Whether every button on our own panel was seen carrying both images.</summary>
+    /// <remarks>
+    /// Asked of the live ribbon, not of the code that set them: <c>PushButtonData</c> accepting an
+    /// <c>ImageSource</c> proves nothing about what Revit did with it.
+    /// </remarks>
+    internal static bool IconsSeen;
 
     /// <summary>Whether the stand-in feature has been loaded, asked without loading it.</summary>
     internal static bool IsFeatureLoaded()

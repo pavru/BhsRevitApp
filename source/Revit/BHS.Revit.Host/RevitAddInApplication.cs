@@ -126,7 +126,7 @@ public abstract class RevitAddInApplication : RevitAddInHost, IExternalApplicati
     {
         try
         {
-            var directory = Path.GetDirectoryName(GetType().Assembly.Location);
+            var directory = System.IO.Path.GetDirectoryName(GetType().Assembly.Location);
 
             if (string.IsNullOrEmpty(directory))
             {

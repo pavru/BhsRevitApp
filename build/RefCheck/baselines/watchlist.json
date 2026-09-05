@@ -16,6 +16,8 @@
     "System.Memory",
     "System.Numerics.Vectors",
     "System.Runtime.CompilerServices.Unsafe",
+    "System.Security.AccessControl",
+    "System.Security.Principal.Windows",
     "System.Text.Json",
     "System.Threading.Tasks.Extensions",
     "Wpf.Ui"

@@ -1,4 +1,4 @@
-﻿<Project Sdk="BHS.Revit.Sdk/1.5.1">
+﻿<Project Sdk="BHS.Revit.Sdk/1.5.2">
 
     <!--
       Contracts the rest of the Revit side is written against. Multi-targets the Revit axis

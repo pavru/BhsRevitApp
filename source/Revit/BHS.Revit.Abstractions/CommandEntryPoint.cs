@@ -50,12 +50,23 @@ public interface IFeatureCommand
 /// public sealed class FooCommandEntryPoint : CommandEntryPoint&lt;FooCommand&gt; { }
 /// </code>
 /// <para>
-/// <b>The attribute is on the derived class and cannot be moved here.</b> Revit reads
-/// <c>[Transaction]</c> off the type it constructs, and that is the derived one - measured, and the
-/// failure is a modal dialog saying the add-in has no Transaction attribute. Putting it on this base
-/// would look tidy and do nothing; putting it on the feature's own command would do nothing either,
-/// because Revit never sees that type. The mode therefore belongs to each command, travels in the
-/// manifest, and has no default - a command whose mode nobody stated is a button that fails when it
+/// <b>The attribute goes on the derived class.</b> Revit reads <c>[Transaction]</c> off the type it
+/// constructs, which is the derived one - measured, and the failure is a modal dialog saying the
+/// add-in has no Transaction attribute. Putting it on the feature's own command would do nothing,
+/// because Revit never sees that type.
+/// <para>
+/// <b>Whether it could be inherited from this base is not known, and the honest answer is worth more
+/// than a tidy one.</b> Checked against the metadata of all four releases:
+/// <c>TransactionAttribute</c> is declared <c>[AttributeUsage(AttributeTargets.Class)]</c> with no
+/// named arguments at all, so <c>Inherited</c> keeps its default of <c>true</c> - the attribute is
+/// inheritable in principle. Whether Revit asks for it with <c>inherit: true</c> has never been
+/// measured; the one measurement here had no attribute anywhere in the chain, which settles nothing
+/// about inheritance.
+/// </para>
+/// <para>
+/// The rule stands anyway, and on its own merit rather than on that question: the transaction mode
+/// is a property of each command, so it is stated where each command is declared. It travels in the
+/// manifest and has no default - a command whose mode nobody stated is a button that fails when it
 /// is pressed.
 /// </para>
 /// </remarks>
