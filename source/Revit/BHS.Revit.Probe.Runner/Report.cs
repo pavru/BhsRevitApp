@@ -42,6 +42,9 @@ internal sealed class Report
         Sweep.Releases.Add(_release);
     }
 
+    /// <summary>Nothing reported after this belongs to a release.</summary>
+    public void EndRelease() => _release = null;
+
     public int Failures => _failed.Count;
 
     /// <summary>How many checks were reported, whatever their outcome.</summary>
@@ -66,15 +69,14 @@ internal sealed class Report
     /// and then 16 s for the same wait - because a single figure read off one run looks like a
     /// measurement. Collected per release and per run, the spread is visible as spread.
     ///
-    /// A repeated key keeps the last value: a note asked twice in one release is a later
-    /// measurement of the same thing, not a second thing.
+    /// Repeated labels are kept, not merged. Several call sites print one line per settings layer
+    /// or per assembly Revit shadowed, all under one label, so keeping the last would throw away
+    /// precisely the detail worth recording.
     /// </remarks>
     public void Note(string what, string value)
     {
         Console.WriteLine($"       {what}: {value}");
-
-        if (_release is not null)
-            _release.Notes[what] = value;
+        _release?.Notes.Add(new NoteRecord(what, value));
     }
 
     public static void Heading(string text)

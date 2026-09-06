@@ -77,6 +77,11 @@ internal static class Program
             server.Kill();
         }
 
+        // The releases are done, so nothing from here belongs to one. Without this the leftovers
+        // below were filed under whichever release happened to run last - Revit 2027, always,
+        // whichever one actually leaked the instance.
+        report.EndRelease();
+
         // Anything still here either was never ours or never left, and the two are worth telling
         // apart: a stranger is somebody's own Revit, a leftover is a registry that missed a death.
         foreach (var left in registry.Instances)
@@ -97,7 +102,13 @@ internal static class Program
             report.Sweep.CommitClean = clean;
             report.Sweep.RecordedUtc = DateTime.UtcNow.ToString("O", CultureInfo.InvariantCulture);
             report.Sweep.WithModel = options.WithModel;
-            report.Sweep.ShowTab = Environment.GetEnvironmentVariable("BHS_PROBE_SHOW_TAB") == "1";
+            // Both conditions, because the ribbon is only exercised when both hold - the check
+            // itself asks for WithModel as well. Recording the environment variable alone would
+            // claim "ribbon exercised" for a run that skipped it, and worse: the verifier compares
+            // check lists only between reports of the same mode, so a false flag would declare two
+            // identical lists incomparable and switch the disappearing-check guard off.
+            report.Sweep.ShowTab =
+                options.WithModel && Environment.GetEnvironmentVariable("BHS_PROBE_SHOW_TAB") == "1";
             report.Sweep.Write(reportPath);
         }
 

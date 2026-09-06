@@ -46,16 +46,62 @@ param(
 Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
 
-$root = Resolve-Path (Join-Path $PSScriptRoot '..' '..')
+$root = Resolve-Path (Join-Path (Join-Path $PSScriptRoot '..') '..')
+# Two-argument Join-Path throughout: the three-argument form arrived in PowerShell 6, and this
+# script is meant to be runnable by hand before pushing - where `powershell` is still 5.1 and fails
+# with "A positional parameter cannot be found", naming nothing about the report. Measured.
 if (-not $Path) { $Path = Join-Path $root 'evidence/sweep-report.json' }
 
 # Everything whose change could alter what a sweep would find. Documentation and CI wiring are not
 # here on purpose: requiring twenty minutes of Revit to fix a typo is how a rule gets switched off.
-$revitSide = @('source/Revit', 'source/Shared', 'build/BHS.Revit.Sdk')
+# source/WinSide is here because BHS.Revit.Launch owns launching Revit, waiting for the
+# registration, asking it to close and killing it - it decides the outcome of checks like "the
+# add-in registers over the well-known pipe" as directly as the add-in does. Left out, an edit to
+# it would leave a stale sweep passing unchallenged.
+$revitSide = @('source/Revit', 'source/Shared', 'source/WinSide', 'build/BHS.Revit.Sdk')
 
-$supported = @(2024, 2025, 2026, 2027)
+# Read from the SDK rather than repeated here. CLAUDE.md promises that adding a Revit release is
+# one line in Revit.Identity.targets; a second list in this file would mean the new release is
+# never required to appear in a sweep - the very "check that stops running" this script exists to
+# catch, committed by the script itself.
+$identity = Join-Path $root 'build/BHS.Revit.Sdk/Sdk/targets/Revit.Identity.targets'
+$supported = @()
+
+if (Test-Path $identity) {
+    $declared = Select-String -Path $identity -Pattern 'RevitSupportedReleases[^>]*>([0-9][^<]*)<' | Select-Object -First 1
+
+    if ($declared) {
+        $supported = @($declared.Matches[0].Groups[1].Value -split ';' |
+            ForEach-Object { ($_ -split '=')[0].Trim() } |
+            Where-Object { $_ -match '^[0-9]{4}$' } |
+            ForEach-Object { [int] $_ })
+    }
+}
 $knownSchema = 1
 $problems = 0
+
+if ($supported.Count -eq 0) {
+    # A completeness check with nothing to be complete against passes on anything. Better to say so
+    # than to go quietly green - this script's whole subject is checks that stop checking.
+    Write-Host "check-sweep-report: could not read the supported releases from $identity." -ForegroundColor Red
+    exit 1
+}
+
+<#
+  Reads a field that may not be there at all.
+
+  StrictMode turns a missing property into a terminating error, so `if (-not $x.Field)` - written to
+  produce a careful sentence when the field is absent - instead kills the script with "the property
+  cannot be found", and the exit code stops being the problem count. Measured on a real report with
+  one field removed. The writer no longer omits nulls, but a record produced by an older build, or
+  by anything else, still can.
+#>
+function Field($object, [string] $name) {
+    if ($null -eq $object) { return $null }
+    $property = $object.PSObject.Properties[$name]
+    if ($null -eq $property) { return $null }
+    return $property.Value
+}
 
 function Summarise {
     $mode = if ($report.WithModel) { 'with a model' } else { 'without a model' }
@@ -63,10 +109,22 @@ function Summarise {
     # Formatted rather than printed as it comes: ConvertFrom-Json turns the ISO string into a
     # DateTime, and Write-Host then renders it in the runner's culture - "09/06/2026", which is
     # either the sixth of September or the ninth of June depending on where the reader is from.
-    $when = ([datetime]$report.RecordedUtc).ToString('yyyy-MM-dd HH:mm:ss') + 'Z'
+    # Parsed as an offset and converted, not cast to [datetime]: Windows PowerShell 5.1 leaves the
+    # ISO string alone where pwsh turns it into a DateTime, and the two then print times ten hours
+    # apart on this machine. A timestamp that means something different depending on who reads it is
+    # worse than none, because it looks like a fact.
+    # Both shapes, because the two shells disagree about what ConvertFrom-Json produces: pwsh hands
+    # back a DateTime already, Windows PowerShell 5.1 leaves the ISO string. Round-tripping the
+    # DateTime through Parse read 06.09 back as the sixth of June; parsing the string with the
+    # current culture would do the same to the other one. So: convert what is there, and parse only
+    # what is still text, invariantly.
+    $raw = Field $report 'RecordedUtc'
+    $utc = if ($raw -is [datetime]) { $raw.ToUniversalTime() }
+           else { [datetimeoffset]::Parse([string] $raw, [cultureinfo]::InvariantCulture).UtcDateTime }
+    $when = $utc.ToString('yyyy-MM-dd HH:mm:ss', [cultureinfo]::InvariantCulture) + 'Z'
 
     Write-Host ("check-sweep-report: {0} checks across {1} release(s), recorded {2} at {3} ({4}). Verified, not reproduced." -f `
-        $report.Performed, $report.Releases.Count, $when, $report.Commit.Substring(0, 8), $mode) -ForegroundColor Green
+        $report.Performed, $report.Releases.Count, $when, $commit.Substring(0, 8), $mode) -ForegroundColor Green
 }
 
 function Fail([string] $message) {
@@ -86,42 +144,46 @@ catch { Fail "the report at $Path is not valid JSON: $($_.Exception.Message)"; e
 
 # ---- 1. schema ---------------------------------------------------------------------------------
 
-if ($report.Schema -ne $knownSchema) {
-    Fail "the report says schema $($report.Schema), and this script understands $knownSchema."
+$schema = Field $report 'Schema'
+
+if ($schema -ne $knownSchema) {
+    Fail "the report says schema $schema, and this script understands $knownSchema."
     exit $problems
 }
 
 # ---- 2. recorded against something that exists -------------------------------------------------
 
-if (-not $report.CommitClean) {
+if (-not (Field $report 'CommitClean')) {
     Fail 'the sweep ran over a dirty working tree, so it tested code that exists on one machine only. Commit first, then sweep, then commit the report.'
 }
 
-if (-not $report.Commit) {
+$commit = Field $report 'Commit'
+
+if (-not $commit) {
     Fail 'the report does not say which commit it ran against, which makes it a record of nothing.'
     exit $problems
 }
 
 # ---- 3. still current --------------------------------------------------------------------------
 
-& git -C $root cat-file -e "$($report.Commit)^{commit}" 2>$null
+& git -C $root cat-file -e "$commit^{commit}" 2>$null
 if ($LASTEXITCODE -ne 0) {
-    Fail "the report names commit $($report.Commit), which is not in this repository."
+    Fail "the report names commit $commit, which is not in this repository."
     exit $problems
 }
 
-& git -C $root merge-base --is-ancestor $report.Commit HEAD
+& git -C $root merge-base --is-ancestor $commit HEAD
 if ($LASTEXITCODE -ne 0) {
-    Fail "the report's commit $($report.Commit) is not an ancestor of HEAD - it describes a different line of work."
+    Fail "the report's commit $commit is not an ancestor of HEAD - it describes a different line of work."
 }
 else {
-    $changed = & git -C $root diff --name-only "$($report.Commit)..HEAD" -- $revitSide
+    $changed = & git -C $root diff --name-only "$commit..HEAD" -- $revitSide
 
     if ($changed) {
         Fail @"
 Revit-side code changed after the sweep was recorded, so the record no longer describes this branch.
 
-Changed since $($report.Commit):
+Changed since ${commit}:
 $($changed | ForEach-Object { "  $_" } | Out-String)
 Sweep again and commit the new report:
   dotnet run --project source/Revit/BHS.Revit.Probe.Runner -- --deploy --report evidence/sweep-report.json
@@ -144,10 +206,10 @@ if ($report.Failed -ne 0) {
 
 foreach ($release in $report.Releases) {
     foreach ($check in $release.Checks) {
-        if (-not $check.Ok) { Fail "Revit $($release.Release): $($check.Name)" }
+        if (-not (Field $check 'Ok')) { Fail "Revit $($release.Release): $($check.Name)" }
     }
 
-    if (-not $release.FileVersion) {
+    if (-not (Field $release 'FileVersion')) {
         Fail "Revit $($release.Release) has no deployed build recorded, so the checks do not say what they checked."
     }
 }

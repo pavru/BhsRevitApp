@@ -1,6 +1,5 @@
 using System.Globalization;
 using System.Text.Json;
-using System.Text.Json.Serialization;
 
 namespace BHS.Revit.Probe.Runner;
 
@@ -21,7 +20,14 @@ internal sealed class ReleaseRecord
     public List<CheckRecord> Checks { get; set; } = new();
 
     /// <summary>The measurements: how long registration took, how many assemblies were loaded.</summary>
-    public Dictionary<string, string> Notes { get; set; } = new();
+    /// <remarks>
+    /// A list, not a dictionary keyed by label, and that is a correction. Three call sites emit the
+    /// same label repeatedly for different facts - one line per settings layer, one per assembly
+    /// Revit shadowed - so a dictionary kept the last and dropped the rest. Measured on the first
+    /// recorded sweep: Revit 2024 recorded one shadowed assembly where the log printed several.
+    /// The record existed to preserve exactly that detail.
+    /// </remarks>
+    public List<NoteRecord> Notes { get; set; } = new();
 }
 
 /// <summary>
@@ -71,10 +77,20 @@ internal sealed class SweepReport
 
     public int Failed { get; set; }
 
+    /// <summary>
+    /// How the record is written. Nulls are written out rather than omitted, deliberately.
+    /// </summary>
+    /// <remarks>
+    /// Omitting them saves a few bytes and costs the reader its diagnostics: a consumer under
+    /// PowerShell's StrictMode meets a property that is not there and dies with "the property
+    /// cannot be found", instead of the sentence somebody wrote for exactly that case. Measured -
+    /// removing FileVersion from a copy of a real report turned a written explanation into an
+    /// opaque failure. A record whose absent fields are invisible is a record that cannot be
+    /// checked for what is missing.
+    /// </remarks>
     private static readonly JsonSerializerOptions Format = new()
     {
         WriteIndented = true,
-        DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull,
     };
 
     public void Write(string path)
@@ -102,7 +118,16 @@ internal sealed class SweepReport
         try
         {
             var commit = Git(repositoryRoot, "rev-parse HEAD")?.Trim();
-            var status = Git(repositoryRoot, "status --porcelain");
+
+            if (commit is null)
+                return (null, false);
+
+            // The report file itself is excluded, and this is not a loophole. Sweeping twice - once
+            // to look at the results, once for the record - would otherwise have the second run see
+            // the first run's uncommitted report and declare the tree dirty, and CI would then
+            // reject a perfectly good record with a sentence that is simply false. Nothing else is
+            // excluded: the question is whether the CODE under test was committed.
+            var status = Git(repositoryRoot, "status --porcelain -- . \":(exclude)evidence/sweep-report.json\"");
             return (commit, string.IsNullOrWhiteSpace(status));
         }
         catch (Exception)
@@ -138,3 +163,6 @@ internal sealed class SweepReport
 
 /// <summary>What is actually installed for one release, as opposed to what was just built.</summary>
 internal sealed record DeployedProbe(string? FileVersion, string? BuiltUtc, bool Signed);
+
+/// <summary>One measurement, kept in the order it was taken.</summary>
+internal sealed record NoteRecord(string Name, string Value);

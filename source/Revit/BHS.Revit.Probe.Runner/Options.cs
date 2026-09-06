@@ -152,6 +152,9 @@ internal sealed class Options
               --allow-untrusted  launch even when an installed add-in is unsigned and untrusted;
                                  you will have to answer Revit's dialogs by hand.
               --timeout <sec>    how long to wait for a registration. Default 240.
+              --report <path>    write the machine-readable record CI verifies, e.g.
+                                 evidence/sweep-report.json. Commit the code first: the record
+                                 refuses to claim a clean tree it did not have.
 
             The exit code is the number of failed checks.
             """);
