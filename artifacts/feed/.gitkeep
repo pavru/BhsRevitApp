@@ -1,0 +1,7 @@
+Kept so that a fresh clone has this directory.
+
+NuGet.config names artifacts/feed as a package source, and NuGet fails a restore outright when a
+local source is missing - NU1301 - so without this file the first command in CLAUDE.md, building
+the SDK, fails before it can create the feed it would have filled.
+
+Nothing else here is committed: the .nupkg files are build output.
