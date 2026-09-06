@@ -1,0 +1,1849 @@
+{
+  "Schema": 1,
+  "Disclaimer": "Recorded on a developer machine. Revit cannot run on hosted CI, so CI verifies this record rather than reproducing it: no automated check here has ever started a Revit.",
+  "Commit": "c2f07c06d529298a679980fe4a5410438704df7d",
+  "CommitClean": true,
+  "RecordedUtc": "2026-09-06T23:06:26.2324694Z",
+  "WithModel": false,
+  "ShowTab": false,
+  "Releases": [
+    {
+      "Release": 2024,
+      "FileVersion": "0.1.0.0",
+      "BuiltUtc": "2026-09-06T23:02:51.6552272Z",
+      "Signed": true,
+      "Checks": [
+        {
+          "Name": "the add-in registers over the well-known pipe",
+          "Ok": true
+        },
+        {
+          "Name": "the registering process is the one that was launched",
+          "Ok": true
+        },
+        {
+          "Name": "the registration names the right release",
+          "Ok": true
+        },
+        {
+          "Name": "the caller is this account",
+          "Ok": true
+        },
+        {
+          "Name": "the registry verified the peer against its pipe",
+          "Ok": true
+        },
+        {
+          "Name": "the registry knows it was started by us",
+          "Ok": true
+        },
+        {
+          "Name": "the registry is watching it for exit",
+          "Ok": true
+        },
+        {
+          "Name": "a pipe server lives inside the Revit process",
+          "Ok": true
+        },
+        {
+          "Name": "its image is the Revit that was started",
+          "Ok": true
+        },
+        {
+          "Name": "a registry that lost everything finds it again by enumeration",
+          "Ok": true
+        },
+        {
+          "Name": "the recovered instance is the same one",
+          "Ok": true
+        },
+        {
+          "Name": "recovery reads the release out of the pipe name",
+          "Ok": true
+        },
+        {
+          "Name": "a recovered instance is never claimed as ours",
+          "Ok": true
+        },
+        {
+          "Name": "GetConfiguration is answered from inside Revit",
+          "Ok": true
+        },
+        {
+          "Name": "the probe saw the correlation token",
+          "Ok": true
+        },
+        {
+          "Name": "the snapshot names the contract it speaks",
+          "Ok": true
+        },
+        {
+          "Name": "what Revit publishes arrives as ordinary configuration",
+          "Ok": true
+        },
+        {
+          "Name": "a change streams out of Revit to the consumer",
+          "Ok": true
+        },
+        {
+          "Name": "the change token fired",
+          "Ok": true
+        },
+        {
+          "Name": "sections bind",
+          "Ok": true
+        },
+        {
+          "Name": "the call arrives off the Revit API thread",
+          "Ok": true
+        },
+        {
+          "Name": "the product layer is the add-in\u0027s own folder, not Revit\u0027s",
+          "Ok": true
+        },
+        {
+          "Name": "a settings file on disk is read inside Revit",
+          "Ok": true
+        },
+        {
+          "Name": "the release-specific layer overrules the common one",
+          "Ok": true
+        },
+        {
+          "Name": "nine files and the environment are looked at, existing or not",
+          "Ok": true
+        },
+        {
+          "Name": "the add-in writes a log file inside Revit",
+          "Ok": true
+        },
+        {
+          "Name": "the file is the one findable by process id",
+          "Ok": true
+        },
+        {
+          "Name": "the journal sink attached, which needs the API thread",
+          "Ok": true
+        },
+        {
+          "Name": "the journal sink attached exactly once, however many hosts",
+          "Ok": true
+        },
+        {
+          "Name": "the journal takes warnings and worse only",
+          "Ok": true
+        },
+        {
+          "Name": "nothing is being dropped",
+          "Ok": true
+        },
+        {
+          "Name": "the log records which assemblies actually loaded",
+          "Ok": true
+        },
+        {
+          "Name": "records are marked with the thread they were written on",
+          "Ok": true
+        },
+        {
+          "Name": "the ribbon panel and button were built",
+          "Ok": true
+        },
+        {
+          "Name": "and they came from the generated manifest, not from code",
+          "Ok": true
+        },
+        {
+          "Name": "the feature assembly is not loaded while the ribbon stands",
+          "Ok": true
+        },
+        {
+          "Name": "a DBApplication add-in starts the same host",
+          "Ok": true
+        },
+        {
+          "Name": "and it is keyed by its own add-in id, beside the interface one",
+          "Ok": true
+        },
+        {
+          "Name": "both add-in ids are found in the registry",
+          "Ok": true
+        },
+        {
+          "Name": "and they are two hosts, not one answering twice",
+          "Ok": true
+        },
+        {
+          "Name": "the interface host offers the API thread and the DB host does not",
+          "Ok": true
+        },
+        {
+          "Name": "both forms were called on the same API thread",
+          "Ok": true
+        },
+        {
+          "Name": "a module starts in the DB host too",
+          "Ok": true
+        },
+        {
+          "Name": "and it is given its own settings section",
+          "Ok": true
+        },
+        {
+          "Name": "startup there is not yet Revit having started, as in the interface form",
+          "Ok": true
+        },
+        {
+          "Name": "settings from disk are read there too",
+          "Ok": true
+        },
+        {
+          "Name": "asking for the API thread there is refused, in a sentence",
+          "Ok": true
+        },
+        {
+          "Name": "and Revit tells it that it has finished starting, session or no session",
+          "Ok": true
+        },
+        {
+          "Name": "every assembly Revit substituted is one RefCheck vets",
+          "Ok": true
+        },
+        {
+          "Name": "Revit closes on an ExitRevit posted from inside",
+          "Ok": true
+        },
+        {
+          "Name": "the registry drops it when the process goes",
+          "Ok": true
+        },
+        {
+          "Name": "the DB host is taken down on the way out, like the interface one",
+          "Ok": true
+        },
+        {
+          "Name": "and its module is stopped with it",
+          "Ok": true
+        }
+      ],
+      "Notes": [
+        {
+          "Name": "launched",
+          "Value": "pid 42844"
+        },
+        {
+          "Name": "registered after",
+          "Value": "18.3s"
+        },
+        {
+          "Name": "recovered by enumeration",
+          "Value": "1 instance(s)"
+        },
+        {
+          "Name": "build",
+          "Value": "24.3.40.26, language Russian"
+        },
+        {
+          "Name": "loaded from",
+          "Value": "C:\\Users\\alex\\AppData\\Roaming\\Autodesk\\Revit\\Addins\\2024\\BimHouseSoftware\\BHS.Revit.Probe\\Lib"
+        },
+        {
+          "Name": "probe log",
+          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2024-42844-20260907-090304.log"
+        },
+        {
+          "Name": "threads",
+          "Value": "api 1, call 18"
+        },
+        {
+          "Name": "appdomain",
+          "Value": "DefaultDomain (#1)"
+        },
+        {
+          "Name": "load context",
+          "Value": "(net48: no load contexts)"
+        },
+        {
+          "Name": "runtime",
+          "Value": ".NET Framework 4.8.9345.0"
+        },
+        {
+          "Name": "settings layer",
+          "Value": "read   C:\\Users\\alex\\AppData\\Roaming\\Autodesk\\Revit\\Addins\\2024\\BimHouseSoftware\\BHS.Revit.Probe\\Lib\\appsettings.json"
+        },
+        {
+          "Name": "settings layer",
+          "Value": "read   C:\\Users\\alex\\AppData\\Roaming\\Autodesk\\Revit\\Addins\\2024\\BimHouseSoftware\\BHS.Revit.Probe\\Lib\\appsettings.revit2024.json"
+        },
+        {
+          "Name": "log",
+          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2024-42844-20260907-090304.log"
+        },
+        {
+          "Name": "sinks",
+          "Value": "FileLogSink \u003E= Trace, TraceLogSink \u003E= None, JournalLogSink \u003E= Warning"
+        },
+        {
+          "Name": "availability and the press",
+          "Value": "not asked - set BHS_PROBE_SHOW_TAB=1 for both"
+        },
+        {
+          "Name": "db host",
+          "Value": "add-in 79613878-acf3-4f56-83fc-11412bb53c24, 2 host(s) registered"
+        },
+        {
+          "Name": "BHS.Grpc.NamedPipes 0.1.0.0",
+          "Value": "ours  C:\\Users\\alex\\AppData\\Roaming\\Autodesk\\Revit\\Addins\\2024\\BimHouseSoftware\\BHS.Revit.Probe\\Lib\\BHS.Grpc.NamedPipes.dll"
+        },
+        {
+          "Name": "BHS.Logging 0.1.0.0",
+          "Value": "ours  C:\\Users\\alex\\AppData\\Roaming\\Autodesk\\Revit\\Addins\\2024\\BimHouseSoftware\\BHS.Revit.Probe\\Lib\\BHS.Logging.dll"
+        },
+        {
+          "Name": "BHS.Revit.Abstractions 0.1.0.0",
+          "Value": "ours  C:\\Users\\alex\\AppData\\Roaming\\Autodesk\\Revit\\Addins\\2024\\BimHouseSoftware\\BHS.Revit.Probe\\Lib\\BHS.Revit.Abstractions.dll"
+        },
+        {
+          "Name": "BHS.Revit.Common 0.1.0.0",
+          "Value": "ours  C:\\Users\\alex\\AppData\\Roaming\\Autodesk\\Revit\\Addins\\2024\\BimHouseSoftware\\BHS.Revit.Probe\\Lib\\BHS.Revit.Common.dll"
+        },
+        {
+          "Name": "BHS.Revit.Host 0.1.0.0",
+          "Value": "ours  C:\\Users\\alex\\AppData\\Roaming\\Autodesk\\Revit\\Addins\\2024\\BimHouseSoftware\\BHS.Revit.Probe\\Lib\\BHS.Revit.Host.dll"
+        },
+        {
+          "Name": "BHS.Revit.Probe 0.1.0.0",
+          "Value": "ours  C:\\Users\\alex\\AppData\\Roaming\\Autodesk\\Revit\\Addins\\2024\\BimHouseSoftware\\BHS.Revit.Probe\\Lib\\BHS.Revit.Probe.dll"
+        },
+        {
+          "Name": "BHS.Settings 0.1.0.0",
+          "Value": "ours  C:\\Users\\alex\\AppData\\Roaming\\Autodesk\\Revit\\Addins\\2024\\BimHouseSoftware\\BHS.Revit.Probe\\Lib\\BHS.Settings.dll"
+        },
+        {
+          "Name": "BHS.Shared 0.1.0.0",
+          "Value": "ours  C:\\Users\\alex\\AppData\\Roaming\\Autodesk\\Revit\\Addins\\2024\\BimHouseSoftware\\BHS.Revit.Probe\\Lib\\BHS.Shared.dll"
+        },
+        {
+          "Name": "BHS.Transport 0.1.0.0",
+          "Value": "ours  C:\\Users\\alex\\AppData\\Roaming\\Autodesk\\Revit\\Addins\\2024\\BimHouseSoftware\\BHS.Revit.Probe\\Lib\\BHS.Transport.dll"
+        },
+        {
+          "Name": "Google.Protobuf 3.29.3.0",
+          "Value": "ours  C:\\Users\\alex\\AppData\\Roaming\\Autodesk\\Revit\\Addins\\2024\\BimHouseSoftware\\BHS.Revit.Probe\\Lib\\Google.Protobuf.dll"
+        },
+        {
+          "Name": "Grpc.Core.Api 2.0.0.0",
+          "Value": "ours  C:\\Users\\alex\\AppData\\Roaming\\Autodesk\\Revit\\Addins\\2024\\BimHouseSoftware\\BHS.Revit.Probe\\Lib\\Grpc.Core.Api.dll"
+        },
+        {
+          "Name": "Microsoft.Extensions.DependencyInjection 6.0.0.0",
+          "Value": "REVIT  C:\\Program Files\\Autodesk\\Revit 2024\\Carbon Insights for Revit 2024\\Microsoft.Extensions.DependencyInjection.dll"
+        },
+        {
+          "Name": "Microsoft.Extensions.DependencyInjection.Abstractions 6.0.0.0",
+          "Value": "REVIT  C:\\Program Files\\Autodesk\\Revit 2024\\Carbon Insights for Revit 2024\\Microsoft.Extensions.DependencyInjection.Abstractions.dll"
+        },
+        {
+          "Name": "Newtonsoft.Json 13.0.0.0",
+          "Value": "REVIT  C:\\Program Files\\Autodesk\\Revit 2024\\Newtonsoft.Json.dll"
+        },
+        {
+          "Name": "System.Memory 4.0.1.1",
+          "Value": "REVIT  C:\\Program Files\\Autodesk\\Revit 2024\\System.Memory.dll"
+        },
+        {
+          "Name": "System.Memory (4.0.1.2) 4.0.1.2",
+          "Value": "elsewhere  C:\\Program Files\\Bim.com Design App\\plugins\\revit\\2024\\System.Memory.dll"
+        },
+        {
+          "Name": "System.Runtime.CompilerServices.Unsafe 4.0.4.1",
+          "Value": "REVIT  C:\\Program Files\\Autodesk\\Revit 2024\\System.Runtime.CompilerServices.Unsafe.dll"
+        },
+        {
+          "Name": "System.Runtime.CompilerServices.Unsafe (6.0.0.0) 6.0.0.0",
+          "Value": "elsewhere  C:\\Program Files (x86)\\archintelligence\\Environment\\\\System.Runtime.CompilerServices.Unsafe.dll"
+        },
+        {
+          "Name": "System.Threading.Tasks.Extensions 4.2.0.1",
+          "Value": "REVIT  C:\\Program Files\\Autodesk\\Revit 2024\\Carbon Insights for Revit 2024\\System.Threading.Tasks.Extensions.dll"
+        },
+        {
+          "Name": "assemblies loaded",
+          "Value": "621"
+        },
+        {
+          "Name": "Revit\u0027s copy won",
+          "Value": "System.Memory"
+        },
+        {
+          "Name": "Revit\u0027s copy won",
+          "Value": "System.Runtime.CompilerServices.Unsafe"
+        },
+        {
+          "Name": "closed after",
+          "Value": "27.2s"
+        }
+      ]
+    },
+    {
+      "Release": 2025,
+      "FileVersion": "0.1.0.0",
+      "BuiltUtc": "2026-09-06T23:02:51.9638609Z",
+      "Signed": true,
+      "Checks": [
+        {
+          "Name": "the add-in registers over the well-known pipe",
+          "Ok": true
+        },
+        {
+          "Name": "the registering process is the one that was launched",
+          "Ok": true
+        },
+        {
+          "Name": "the registration names the right release",
+          "Ok": true
+        },
+        {
+          "Name": "the caller is this account",
+          "Ok": true
+        },
+        {
+          "Name": "the registry verified the peer against its pipe",
+          "Ok": true
+        },
+        {
+          "Name": "the registry knows it was started by us",
+          "Ok": true
+        },
+        {
+          "Name": "the registry is watching it for exit",
+          "Ok": true
+        },
+        {
+          "Name": "a pipe server lives inside the Revit process",
+          "Ok": true
+        },
+        {
+          "Name": "its image is the Revit that was started",
+          "Ok": true
+        },
+        {
+          "Name": "a registry that lost everything finds it again by enumeration",
+          "Ok": true
+        },
+        {
+          "Name": "the recovered instance is the same one",
+          "Ok": true
+        },
+        {
+          "Name": "recovery reads the release out of the pipe name",
+          "Ok": true
+        },
+        {
+          "Name": "a recovered instance is never claimed as ours",
+          "Ok": true
+        },
+        {
+          "Name": "GetConfiguration is answered from inside Revit",
+          "Ok": true
+        },
+        {
+          "Name": "the probe saw the correlation token",
+          "Ok": true
+        },
+        {
+          "Name": "the snapshot names the contract it speaks",
+          "Ok": true
+        },
+        {
+          "Name": "what Revit publishes arrives as ordinary configuration",
+          "Ok": true
+        },
+        {
+          "Name": "a change streams out of Revit to the consumer",
+          "Ok": true
+        },
+        {
+          "Name": "the change token fired",
+          "Ok": true
+        },
+        {
+          "Name": "sections bind",
+          "Ok": true
+        },
+        {
+          "Name": "the call arrives off the Revit API thread",
+          "Ok": true
+        },
+        {
+          "Name": "the product layer is the add-in\u0027s own folder, not Revit\u0027s",
+          "Ok": true
+        },
+        {
+          "Name": "a settings file on disk is read inside Revit",
+          "Ok": true
+        },
+        {
+          "Name": "the release-specific layer overrules the common one",
+          "Ok": true
+        },
+        {
+          "Name": "nine files and the environment are looked at, existing or not",
+          "Ok": true
+        },
+        {
+          "Name": "the add-in writes a log file inside Revit",
+          "Ok": true
+        },
+        {
+          "Name": "the file is the one findable by process id",
+          "Ok": true
+        },
+        {
+          "Name": "the journal sink attached, which needs the API thread",
+          "Ok": true
+        },
+        {
+          "Name": "the journal sink attached exactly once, however many hosts",
+          "Ok": true
+        },
+        {
+          "Name": "the journal takes warnings and worse only",
+          "Ok": true
+        },
+        {
+          "Name": "nothing is being dropped",
+          "Ok": true
+        },
+        {
+          "Name": "the log records which assemblies actually loaded",
+          "Ok": true
+        },
+        {
+          "Name": "records are marked with the thread they were written on",
+          "Ok": true
+        },
+        {
+          "Name": "the ribbon panel and button were built",
+          "Ok": true
+        },
+        {
+          "Name": "and they came from the generated manifest, not from code",
+          "Ok": true
+        },
+        {
+          "Name": "the feature assembly is not loaded while the ribbon stands",
+          "Ok": true
+        },
+        {
+          "Name": "a DBApplication add-in starts the same host",
+          "Ok": true
+        },
+        {
+          "Name": "and it is keyed by its own add-in id, beside the interface one",
+          "Ok": true
+        },
+        {
+          "Name": "both add-in ids are found in the registry",
+          "Ok": true
+        },
+        {
+          "Name": "and they are two hosts, not one answering twice",
+          "Ok": true
+        },
+        {
+          "Name": "the interface host offers the API thread and the DB host does not",
+          "Ok": true
+        },
+        {
+          "Name": "both forms were called on the same API thread",
+          "Ok": true
+        },
+        {
+          "Name": "a module starts in the DB host too",
+          "Ok": true
+        },
+        {
+          "Name": "and it is given its own settings section",
+          "Ok": true
+        },
+        {
+          "Name": "startup there is not yet Revit having started, as in the interface form",
+          "Ok": true
+        },
+        {
+          "Name": "settings from disk are read there too",
+          "Ok": true
+        },
+        {
+          "Name": "asking for the API thread there is refused, in a sentence",
+          "Ok": true
+        },
+        {
+          "Name": "and Revit tells it that it has finished starting, session or no session",
+          "Ok": true
+        },
+        {
+          "Name": "every assembly Revit substituted is one RefCheck vets",
+          "Ok": true
+        },
+        {
+          "Name": "Revit closes on an ExitRevit posted from inside",
+          "Ok": true
+        },
+        {
+          "Name": "the registry drops it when the process goes",
+          "Ok": true
+        },
+        {
+          "Name": "the DB host is taken down on the way out, like the interface one",
+          "Ok": true
+        },
+        {
+          "Name": "and its module is stopped with it",
+          "Ok": true
+        }
+      ],
+      "Notes": [
+        {
+          "Name": "launched",
+          "Value": "pid 55572"
+        },
+        {
+          "Name": "registered after",
+          "Value": "12.8s"
+        },
+        {
+          "Name": "recovered by enumeration",
+          "Value": "1 instance(s)"
+        },
+        {
+          "Name": "build",
+          "Value": "25.4.0.32, language Russian"
+        },
+        {
+          "Name": "loaded from",
+          "Value": "C:\\Users\\alex\\AppData\\Roaming\\Autodesk\\Revit\\Addins\\2025\\BimHouseSoftware\\BHS.Revit.Probe\\Lib"
+        },
+        {
+          "Name": "probe log",
+          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2025-55572-20260907-090358.log"
+        },
+        {
+          "Name": "threads",
+          "Value": "api 1, call 5"
+        },
+        {
+          "Name": "appdomain",
+          "Value": "DefaultDomain (#1)"
+        },
+        {
+          "Name": "load context",
+          "Value": "Default"
+        },
+        {
+          "Name": "runtime",
+          "Value": ".NET 8.0.30"
+        },
+        {
+          "Name": "settings layer",
+          "Value": "read   C:\\Users\\alex\\AppData\\Roaming\\Autodesk\\Revit\\Addins\\2025\\BimHouseSoftware\\BHS.Revit.Probe\\Lib\\appsettings.json"
+        },
+        {
+          "Name": "settings layer",
+          "Value": "read   C:\\Users\\alex\\AppData\\Roaming\\Autodesk\\Revit\\Addins\\2025\\BimHouseSoftware\\BHS.Revit.Probe\\Lib\\appsettings.revit2025.json"
+        },
+        {
+          "Name": "log",
+          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2025-55572-20260907-090358.log"
+        },
+        {
+          "Name": "sinks",
+          "Value": "FileLogSink \u003E= Trace, TraceLogSink \u003E= None, JournalLogSink \u003E= Warning"
+        },
+        {
+          "Name": "availability and the press",
+          "Value": "not asked - set BHS_PROBE_SHOW_TAB=1 for both"
+        },
+        {
+          "Name": "db host",
+          "Value": "add-in 79613878-acf3-4f56-83fc-11412bb53c24, 2 host(s) registered"
+        },
+        {
+          "Name": "BHS.Grpc.NamedPipes 0.1.0.0",
+          "Value": "ours  C:\\Users\\alex\\AppData\\Roaming\\Autodesk\\Revit\\Addins\\2025\\BimHouseSoftware\\BHS.Revit.Probe\\Lib\\BHS.Grpc.NamedPipes.dll"
+        },
+        {
+          "Name": "BHS.Logging 0.1.0.0",
+          "Value": "ours  C:\\Users\\alex\\AppData\\Roaming\\Autodesk\\Revit\\Addins\\2025\\BimHouseSoftware\\BHS.Revit.Probe\\Lib\\BHS.Logging.dll"
+        },
+        {
+          "Name": "BHS.Revit.Abstractions 0.1.0.0",
+          "Value": "ours  C:\\Users\\alex\\AppData\\Roaming\\Autodesk\\Revit\\Addins\\2025\\BimHouseSoftware\\BHS.Revit.Probe\\Lib\\BHS.Revit.Abstractions.dll"
+        },
+        {
+          "Name": "BHS.Revit.Common 0.1.0.0",
+          "Value": "ours  C:\\Users\\alex\\AppData\\Roaming\\Autodesk\\Revit\\Addins\\2025\\BimHouseSoftware\\BHS.Revit.Probe\\Lib\\BHS.Revit.Common.dll"
+        },
+        {
+          "Name": "BHS.Revit.Host 0.1.0.0",
+          "Value": "ours  C:\\Users\\alex\\AppData\\Roaming\\Autodesk\\Revit\\Addins\\2025\\BimHouseSoftware\\BHS.Revit.Probe\\Lib\\BHS.Revit.Host.dll"
+        },
+        {
+          "Name": "BHS.Revit.Probe 0.1.0.0",
+          "Value": "ours  C:\\Users\\alex\\AppData\\Roaming\\Autodesk\\Revit\\Addins\\2025\\BimHouseSoftware\\BHS.Revit.Probe\\Lib\\BHS.Revit.Probe.dll"
+        },
+        {
+          "Name": "BHS.Settings 0.1.0.0",
+          "Value": "ours  C:\\Users\\alex\\AppData\\Roaming\\Autodesk\\Revit\\Addins\\2025\\BimHouseSoftware\\BHS.Revit.Probe\\Lib\\BHS.Settings.dll"
+        },
+        {
+          "Name": "BHS.Shared 0.1.0.0",
+          "Value": "ours  C:\\Users\\alex\\AppData\\Roaming\\Autodesk\\Revit\\Addins\\2025\\BimHouseSoftware\\BHS.Revit.Probe\\Lib\\BHS.Shared.dll"
+        },
+        {
+          "Name": "BHS.Transport 0.1.0.0",
+          "Value": "ours  C:\\Users\\alex\\AppData\\Roaming\\Autodesk\\Revit\\Addins\\2025\\BimHouseSoftware\\BHS.Revit.Probe\\Lib\\BHS.Transport.dll"
+        },
+        {
+          "Name": "Google.Protobuf 3.23.1.0",
+          "Value": "REVIT  C:\\Program Files\\Autodesk\\Revit 2025\\Google.Protobuf.dll"
+        },
+        {
+          "Name": "Grpc.Core.Api 2.0.0.0",
+          "Value": "REVIT  C:\\Program Files\\Autodesk\\Revit 2025\\Grpc.Core.Api.dll"
+        },
+        {
+          "Name": "Microsoft.Extensions.Configuration 8.0.0.0",
+          "Value": "elsewhere  C:\\program files\\dotnet\\shared\\Microsoft.AspNetCore.App\\8.0.30\\Microsoft.Extensions.Configuration.dll"
+        },
+        {
+          "Name": "Microsoft.Extensions.Configuration.Abstractions 8.0.0.0",
+          "Value": "elsewhere  C:\\program files\\dotnet\\shared\\Microsoft.AspNetCore.App\\8.0.30\\Microsoft.Extensions.Configuration.Abstractions.dll"
+        },
+        {
+          "Name": "Microsoft.Extensions.Configuration.FileExtensions 8.0.0.0",
+          "Value": "elsewhere  C:\\program files\\dotnet\\shared\\Microsoft.AspNetCore.App\\8.0.30\\Microsoft.Extensions.Configuration.FileExtensions.dll"
+        },
+        {
+          "Name": "Microsoft.Extensions.DependencyInjection 8.0.0.0",
+          "Value": "elsewhere  C:\\program files\\dotnet\\shared\\Microsoft.AspNetCore.App\\8.0.30\\Microsoft.Extensions.DependencyInjection.dll"
+        },
+        {
+          "Name": "Microsoft.Extensions.DependencyInjection.Abstractions 8.0.0.0",
+          "Value": "elsewhere  C:\\program files\\dotnet\\shared\\Microsoft.AspNetCore.App\\8.0.30\\Microsoft.Extensions.DependencyInjection.Abstractions.dll"
+        },
+        {
+          "Name": "Microsoft.Extensions.Diagnostics 8.0.0.0",
+          "Value": "elsewhere  C:\\program files\\dotnet\\shared\\Microsoft.AspNetCore.App\\8.0.30\\Microsoft.Extensions.Diagnostics.dll"
+        },
+        {
+          "Name": "Microsoft.Extensions.Diagnostics.Abstractions 8.0.0.0",
+          "Value": "elsewhere  C:\\program files\\dotnet\\shared\\Microsoft.AspNetCore.App\\8.0.30\\Microsoft.Extensions.Diagnostics.Abstractions.dll"
+        },
+        {
+          "Name": "Microsoft.Extensions.FileProviders.Abstractions 8.0.0.0",
+          "Value": "elsewhere  C:\\program files\\dotnet\\shared\\Microsoft.AspNetCore.App\\8.0.30\\Microsoft.Extensions.FileProviders.Abstractions.dll"
+        },
+        {
+          "Name": "Microsoft.Extensions.FileProviders.Physical 8.0.0.0",
+          "Value": "elsewhere  C:\\program files\\dotnet\\shared\\Microsoft.AspNetCore.App\\8.0.30\\Microsoft.Extensions.FileProviders.Physical.dll"
+        },
+        {
+          "Name": "Microsoft.Extensions.Hosting 8.0.0.0",
+          "Value": "elsewhere  C:\\program files\\dotnet\\shared\\Microsoft.AspNetCore.App\\8.0.30\\Microsoft.Extensions.Hosting.dll"
+        },
+        {
+          "Name": "Microsoft.Extensions.Hosting.Abstractions 8.0.0.0",
+          "Value": "elsewhere  C:\\program files\\dotnet\\shared\\Microsoft.AspNetCore.App\\8.0.30\\Microsoft.Extensions.Hosting.Abstractions.dll"
+        },
+        {
+          "Name": "Microsoft.Extensions.Logging 8.0.0.0",
+          "Value": "elsewhere  C:\\program files\\dotnet\\shared\\Microsoft.AspNetCore.App\\8.0.30\\Microsoft.Extensions.Logging.dll"
+        },
+        {
+          "Name": "Microsoft.Extensions.Logging.Abstractions 8.0.0.0",
+          "Value": "elsewhere  C:\\program files\\dotnet\\shared\\Microsoft.AspNetCore.App\\8.0.30\\Microsoft.Extensions.Logging.Abstractions.dll"
+        },
+        {
+          "Name": "Microsoft.Extensions.Options 8.0.0.0",
+          "Value": "elsewhere  C:\\program files\\dotnet\\shared\\Microsoft.AspNetCore.App\\8.0.30\\Microsoft.Extensions.Options.dll"
+        },
+        {
+          "Name": "Microsoft.Extensions.Primitives 8.0.0.0",
+          "Value": "elsewhere  C:\\program files\\dotnet\\shared\\Microsoft.AspNetCore.App\\8.0.30\\Microsoft.Extensions.Primitives.dll"
+        },
+        {
+          "Name": "Newtonsoft.Json 13.0.0.0",
+          "Value": "REVIT  C:\\Program Files\\Autodesk\\Revit 2025\\NewtonSoft.Json.dll"
+        },
+        {
+          "Name": "System.Collections.Immutable 8.0.0.0",
+          "Value": "elsewhere  C:\\program files\\dotnet\\shared\\Microsoft.NETCore.App\\8.0.30\\System.Collections.Immutable.dll"
+        },
+        {
+          "Name": "System.Memory 8.0.0.0",
+          "Value": "elsewhere  C:\\program files\\dotnet\\shared\\Microsoft.NETCore.App\\8.0.30\\System.Memory.dll"
+        },
+        {
+          "Name": "System.Numerics.Vectors 8.0.0.0",
+          "Value": "elsewhere  C:\\program files\\dotnet\\shared\\Microsoft.NETCore.App\\8.0.30\\System.Numerics.Vectors.dll"
+        },
+        {
+          "Name": "System.Runtime.CompilerServices.Unsafe 8.0.0.0",
+          "Value": "elsewhere  C:\\program files\\dotnet\\shared\\Microsoft.NETCore.App\\8.0.30\\System.Runtime.CompilerServices.Unsafe.dll"
+        },
+        {
+          "Name": "assemblies loaded",
+          "Value": "407"
+        },
+        {
+          "Name": "Revit\u0027s copy won",
+          "Value": "Google.Protobuf"
+        },
+        {
+          "Name": "Revit\u0027s copy won",
+          "Value": "Grpc.Core.Api"
+        },
+        {
+          "Name": "closed after",
+          "Value": "3.8s"
+        }
+      ]
+    },
+    {
+      "Release": 2026,
+      "FileVersion": "0.1.0.0",
+      "BuiltUtc": "2026-09-06T23:02:52.3512329Z",
+      "Signed": true,
+      "Checks": [
+        {
+          "Name": "the add-in registers over the well-known pipe",
+          "Ok": true
+        },
+        {
+          "Name": "the registering process is the one that was launched",
+          "Ok": true
+        },
+        {
+          "Name": "the registration names the right release",
+          "Ok": true
+        },
+        {
+          "Name": "the caller is this account",
+          "Ok": true
+        },
+        {
+          "Name": "the registry verified the peer against its pipe",
+          "Ok": true
+        },
+        {
+          "Name": "the registry knows it was started by us",
+          "Ok": true
+        },
+        {
+          "Name": "the registry is watching it for exit",
+          "Ok": true
+        },
+        {
+          "Name": "a pipe server lives inside the Revit process",
+          "Ok": true
+        },
+        {
+          "Name": "its image is the Revit that was started",
+          "Ok": true
+        },
+        {
+          "Name": "a registry that lost everything finds it again by enumeration",
+          "Ok": true
+        },
+        {
+          "Name": "the recovered instance is the same one",
+          "Ok": true
+        },
+        {
+          "Name": "recovery reads the release out of the pipe name",
+          "Ok": true
+        },
+        {
+          "Name": "a recovered instance is never claimed as ours",
+          "Ok": true
+        },
+        {
+          "Name": "GetConfiguration is answered from inside Revit",
+          "Ok": true
+        },
+        {
+          "Name": "the probe saw the correlation token",
+          "Ok": true
+        },
+        {
+          "Name": "the snapshot names the contract it speaks",
+          "Ok": true
+        },
+        {
+          "Name": "what Revit publishes arrives as ordinary configuration",
+          "Ok": true
+        },
+        {
+          "Name": "a change streams out of Revit to the consumer",
+          "Ok": true
+        },
+        {
+          "Name": "the change token fired",
+          "Ok": true
+        },
+        {
+          "Name": "sections bind",
+          "Ok": true
+        },
+        {
+          "Name": "the call arrives off the Revit API thread",
+          "Ok": true
+        },
+        {
+          "Name": "the product layer is the add-in\u0027s own folder, not Revit\u0027s",
+          "Ok": true
+        },
+        {
+          "Name": "a settings file on disk is read inside Revit",
+          "Ok": true
+        },
+        {
+          "Name": "the release-specific layer overrules the common one",
+          "Ok": true
+        },
+        {
+          "Name": "nine files and the environment are looked at, existing or not",
+          "Ok": true
+        },
+        {
+          "Name": "the add-in writes a log file inside Revit",
+          "Ok": true
+        },
+        {
+          "Name": "the file is the one findable by process id",
+          "Ok": true
+        },
+        {
+          "Name": "the journal sink attached, which needs the API thread",
+          "Ok": true
+        },
+        {
+          "Name": "the journal sink attached exactly once, however many hosts",
+          "Ok": true
+        },
+        {
+          "Name": "the journal takes warnings and worse only",
+          "Ok": true
+        },
+        {
+          "Name": "nothing is being dropped",
+          "Ok": true
+        },
+        {
+          "Name": "the log records which assemblies actually loaded",
+          "Ok": true
+        },
+        {
+          "Name": "records are marked with the thread they were written on",
+          "Ok": true
+        },
+        {
+          "Name": "the ribbon panel and button were built",
+          "Ok": true
+        },
+        {
+          "Name": "and they came from the generated manifest, not from code",
+          "Ok": true
+        },
+        {
+          "Name": "the feature assembly is not loaded while the ribbon stands",
+          "Ok": true
+        },
+        {
+          "Name": "a DBApplication add-in starts the same host",
+          "Ok": true
+        },
+        {
+          "Name": "and it is keyed by its own add-in id, beside the interface one",
+          "Ok": true
+        },
+        {
+          "Name": "both add-in ids are found in the registry",
+          "Ok": true
+        },
+        {
+          "Name": "and they are two hosts, not one answering twice",
+          "Ok": true
+        },
+        {
+          "Name": "the interface host offers the API thread and the DB host does not",
+          "Ok": true
+        },
+        {
+          "Name": "both forms were called on the same API thread",
+          "Ok": true
+        },
+        {
+          "Name": "a module starts in the DB host too",
+          "Ok": true
+        },
+        {
+          "Name": "and it is given its own settings section",
+          "Ok": true
+        },
+        {
+          "Name": "startup there is not yet Revit having started, as in the interface form",
+          "Ok": true
+        },
+        {
+          "Name": "settings from disk are read there too",
+          "Ok": true
+        },
+        {
+          "Name": "asking for the API thread there is refused, in a sentence",
+          "Ok": true
+        },
+        {
+          "Name": "and Revit tells it that it has finished starting, session or no session",
+          "Ok": true
+        },
+        {
+          "Name": "every assembly Revit substituted is one RefCheck vets",
+          "Ok": true
+        },
+        {
+          "Name": "Revit closes on an ExitRevit posted from inside",
+          "Ok": true
+        },
+        {
+          "Name": "the registry drops it when the process goes",
+          "Ok": true
+        },
+        {
+          "Name": "the DB host is taken down on the way out, like the interface one",
+          "Ok": true
+        },
+        {
+          "Name": "and its module is stopped with it",
+          "Ok": true
+        }
+      ],
+      "Notes": [
+        {
+          "Name": "launched",
+          "Value": "pid 49768"
+        },
+        {
+          "Name": "registered after",
+          "Value": "33.0s"
+        },
+        {
+          "Name": "recovered by enumeration",
+          "Value": "1 instance(s)"
+        },
+        {
+          "Name": "build",
+          "Value": "26.4.10.51, language Russian"
+        },
+        {
+          "Name": "loaded from",
+          "Value": "C:\\Users\\alex\\AppData\\Roaming\\Autodesk\\Revit\\Addins\\2026\\BimHouseSoftware\\BHS.Revit.Probe\\Lib"
+        },
+        {
+          "Name": "probe log",
+          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2026-49768-20260907-090420.log"
+        },
+        {
+          "Name": "threads",
+          "Value": "api 1, call 17"
+        },
+        {
+          "Name": "appdomain",
+          "Value": "DefaultDomain (#1)"
+        },
+        {
+          "Name": "load context",
+          "Value": "Default"
+        },
+        {
+          "Name": "runtime",
+          "Value": ".NET 8.0.30"
+        },
+        {
+          "Name": "settings layer",
+          "Value": "read   C:\\Users\\alex\\AppData\\Roaming\\Autodesk\\Revit\\Addins\\2026\\BimHouseSoftware\\BHS.Revit.Probe\\Lib\\appsettings.json"
+        },
+        {
+          "Name": "settings layer",
+          "Value": "read   C:\\Users\\alex\\AppData\\Roaming\\Autodesk\\Revit\\Addins\\2026\\BimHouseSoftware\\BHS.Revit.Probe\\Lib\\appsettings.revit2026.json"
+        },
+        {
+          "Name": "log",
+          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2026-49768-20260907-090420.log"
+        },
+        {
+          "Name": "sinks",
+          "Value": "FileLogSink \u003E= Trace, TraceLogSink \u003E= None, JournalLogSink \u003E= Warning"
+        },
+        {
+          "Name": "availability and the press",
+          "Value": "not asked - set BHS_PROBE_SHOW_TAB=1 for both"
+        },
+        {
+          "Name": "db host",
+          "Value": "add-in 79613878-acf3-4f56-83fc-11412bb53c24, 2 host(s) registered"
+        },
+        {
+          "Name": "BHS.Grpc.NamedPipes 0.1.0.0",
+          "Value": "ours  C:\\Users\\alex\\AppData\\Roaming\\Autodesk\\Revit\\Addins\\2026\\BimHouseSoftware\\BHS.Revit.Probe\\Lib\\BHS.Grpc.NamedPipes.dll"
+        },
+        {
+          "Name": "BHS.Logging 0.1.0.0",
+          "Value": "ours  C:\\Users\\alex\\AppData\\Roaming\\Autodesk\\Revit\\Addins\\2026\\BimHouseSoftware\\BHS.Revit.Probe\\Lib\\BHS.Logging.dll"
+        },
+        {
+          "Name": "BHS.Revit.Abstractions 0.1.0.0",
+          "Value": "ours  C:\\Users\\alex\\AppData\\Roaming\\Autodesk\\Revit\\Addins\\2026\\BimHouseSoftware\\BHS.Revit.Probe\\Lib\\BHS.Revit.Abstractions.dll"
+        },
+        {
+          "Name": "BHS.Revit.Common 0.1.0.0",
+          "Value": "ours  C:\\Users\\alex\\AppData\\Roaming\\Autodesk\\Revit\\Addins\\2026\\BimHouseSoftware\\BHS.Revit.Probe\\Lib\\BHS.Revit.Common.dll"
+        },
+        {
+          "Name": "BHS.Revit.Host 0.1.0.0",
+          "Value": "ours  C:\\Users\\alex\\AppData\\Roaming\\Autodesk\\Revit\\Addins\\2026\\BimHouseSoftware\\BHS.Revit.Probe\\Lib\\BHS.Revit.Host.dll"
+        },
+        {
+          "Name": "BHS.Revit.Probe 0.1.0.0",
+          "Value": "ours  C:\\Users\\alex\\AppData\\Roaming\\Autodesk\\Revit\\Addins\\2026\\BimHouseSoftware\\BHS.Revit.Probe\\Lib\\BHS.Revit.Probe.dll"
+        },
+        {
+          "Name": "BHS.Settings 0.1.0.0",
+          "Value": "ours  C:\\Users\\alex\\AppData\\Roaming\\Autodesk\\Revit\\Addins\\2026\\BimHouseSoftware\\BHS.Revit.Probe\\Lib\\BHS.Settings.dll"
+        },
+        {
+          "Name": "BHS.Shared 0.1.0.0",
+          "Value": "ours  C:\\Users\\alex\\AppData\\Roaming\\Autodesk\\Revit\\Addins\\2026\\BimHouseSoftware\\BHS.Revit.Probe\\Lib\\BHS.Shared.dll"
+        },
+        {
+          "Name": "BHS.Transport 0.1.0.0",
+          "Value": "ours  C:\\Users\\alex\\AppData\\Roaming\\Autodesk\\Revit\\Addins\\2026\\BimHouseSoftware\\BHS.Revit.Probe\\Lib\\BHS.Transport.dll"
+        },
+        {
+          "Name": "Google.Protobuf 3.23.1.0",
+          "Value": "REVIT  C:\\Program Files\\Autodesk\\Revit 2026\\Google.Protobuf.dll"
+        },
+        {
+          "Name": "Grpc.Core.Api 2.0.0.0",
+          "Value": "REVIT  C:\\Program Files\\Autodesk\\Revit 2026\\Grpc.Core.Api.dll"
+        },
+        {
+          "Name": "Microsoft.Extensions.DependencyInjection 8.0.0.0",
+          "Value": "elsewhere  C:\\program files\\dotnet\\shared\\Microsoft.AspNetCore.App\\8.0.30\\Microsoft.Extensions.DependencyInjection.dll"
+        },
+        {
+          "Name": "Microsoft.Extensions.DependencyInjection.Abstractions 8.0.0.0",
+          "Value": "elsewhere  C:\\program files\\dotnet\\shared\\Microsoft.AspNetCore.App\\8.0.30\\Microsoft.Extensions.DependencyInjection.Abstractions.dll"
+        },
+        {
+          "Name": "Microsoft.Extensions.Logging.Abstractions 8.0.0.0",
+          "Value": "elsewhere  C:\\program files\\dotnet\\shared\\Microsoft.AspNetCore.App\\8.0.30\\Microsoft.Extensions.Logging.Abstractions.dll"
+        },
+        {
+          "Name": "Microsoft.Extensions.ObjectPool 8.0.0.0",
+          "Value": "elsewhere  C:\\program files\\dotnet\\shared\\Microsoft.AspNetCore.App\\8.0.30\\Microsoft.Extensions.ObjectPool.dll"
+        },
+        {
+          "Name": "Newtonsoft.Json 13.0.0.0",
+          "Value": "REVIT  C:\\Program Files\\Autodesk\\Revit 2026\\NewtonSoft.Json.dll"
+        },
+        {
+          "Name": "Newtonsoft.Json (11.0.0.0) 11.0.0.0",
+          "Value": "elsewhere  C:\\Program Files (x86)\\archintelligence\\Environment\\Net\\Newtonsoft.Json.dll"
+        },
+        {
+          "Name": "System.Collections.Immutable 8.0.0.0",
+          "Value": "elsewhere  C:\\program files\\dotnet\\shared\\Microsoft.NETCore.App\\8.0.30\\System.Collections.Immutable.dll"
+        },
+        {
+          "Name": "System.Memory 8.0.0.0",
+          "Value": "elsewhere  C:\\program files\\dotnet\\shared\\Microsoft.NETCore.App\\8.0.30\\System.Memory.dll"
+        },
+        {
+          "Name": "System.Numerics.Vectors 8.0.0.0",
+          "Value": "elsewhere  C:\\program files\\dotnet\\shared\\Microsoft.NETCore.App\\8.0.30\\System.Numerics.Vectors.dll"
+        },
+        {
+          "Name": "System.Runtime.CompilerServices.Unsafe 8.0.0.0",
+          "Value": "elsewhere  C:\\program files\\dotnet\\shared\\Microsoft.NETCore.App\\8.0.30\\System.Runtime.CompilerServices.Unsafe.dll"
+        },
+        {
+          "Name": "System.Runtime.CompilerServices.Unsafe (6.0.0.0) 6.0.0.0",
+          "Value": "elsewhere  C:\\Program Files (x86)\\archintelligence\\Environment\\Net\\System.Runtime.CompilerServices.Unsafe.dll"
+        },
+        {
+          "Name": "assemblies loaded",
+          "Value": "794"
+        },
+        {
+          "Name": "Revit\u0027s copy won",
+          "Value": "Google.Protobuf"
+        },
+        {
+          "Name": "Revit\u0027s copy won",
+          "Value": "Grpc.Core.Api"
+        },
+        {
+          "Name": "closed after",
+          "Value": "32.9s"
+        }
+      ]
+    },
+    {
+      "Release": 2027,
+      "FileVersion": "0.1.0.0",
+      "BuiltUtc": "2026-09-06T23:02:51.3323063Z",
+      "Signed": true,
+      "Checks": [
+        {
+          "Name": "the add-in registers over the well-known pipe",
+          "Ok": true
+        },
+        {
+          "Name": "the registering process is the one that was launched",
+          "Ok": true
+        },
+        {
+          "Name": "the registration names the right release",
+          "Ok": true
+        },
+        {
+          "Name": "the caller is this account",
+          "Ok": true
+        },
+        {
+          "Name": "the registry verified the peer against its pipe",
+          "Ok": true
+        },
+        {
+          "Name": "the registry knows it was started by us",
+          "Ok": true
+        },
+        {
+          "Name": "the registry is watching it for exit",
+          "Ok": true
+        },
+        {
+          "Name": "a pipe server lives inside the Revit process",
+          "Ok": true
+        },
+        {
+          "Name": "its image is the Revit that was started",
+          "Ok": true
+        },
+        {
+          "Name": "a registry that lost everything finds it again by enumeration",
+          "Ok": true
+        },
+        {
+          "Name": "the recovered instance is the same one",
+          "Ok": true
+        },
+        {
+          "Name": "recovery reads the release out of the pipe name",
+          "Ok": true
+        },
+        {
+          "Name": "a recovered instance is never claimed as ours",
+          "Ok": true
+        },
+        {
+          "Name": "GetConfiguration is answered from inside Revit",
+          "Ok": true
+        },
+        {
+          "Name": "the probe saw the correlation token",
+          "Ok": true
+        },
+        {
+          "Name": "the snapshot names the contract it speaks",
+          "Ok": true
+        },
+        {
+          "Name": "what Revit publishes arrives as ordinary configuration",
+          "Ok": true
+        },
+        {
+          "Name": "a change streams out of Revit to the consumer",
+          "Ok": true
+        },
+        {
+          "Name": "the change token fired",
+          "Ok": true
+        },
+        {
+          "Name": "sections bind",
+          "Ok": true
+        },
+        {
+          "Name": "the call arrives off the Revit API thread",
+          "Ok": true
+        },
+        {
+          "Name": "the product layer is the add-in\u0027s own folder, not Revit\u0027s",
+          "Ok": true
+        },
+        {
+          "Name": "a settings file on disk is read inside Revit",
+          "Ok": true
+        },
+        {
+          "Name": "the release-specific layer overrules the common one",
+          "Ok": true
+        },
+        {
+          "Name": "nine files and the environment are looked at, existing or not",
+          "Ok": true
+        },
+        {
+          "Name": "the add-in writes a log file inside Revit",
+          "Ok": true
+        },
+        {
+          "Name": "the file is the one findable by process id",
+          "Ok": true
+        },
+        {
+          "Name": "the journal sink attached, which needs the API thread",
+          "Ok": true
+        },
+        {
+          "Name": "the journal sink attached exactly once, however many hosts",
+          "Ok": true
+        },
+        {
+          "Name": "the journal takes warnings and worse only",
+          "Ok": true
+        },
+        {
+          "Name": "nothing is being dropped",
+          "Ok": true
+        },
+        {
+          "Name": "the log records which assemblies actually loaded",
+          "Ok": true
+        },
+        {
+          "Name": "records are marked with the thread they were written on",
+          "Ok": true
+        },
+        {
+          "Name": "the ribbon panel and button were built",
+          "Ok": true
+        },
+        {
+          "Name": "and they came from the generated manifest, not from code",
+          "Ok": true
+        },
+        {
+          "Name": "the feature assembly is not loaded while the ribbon stands",
+          "Ok": true
+        },
+        {
+          "Name": "a DBApplication add-in starts the same host",
+          "Ok": true
+        },
+        {
+          "Name": "and it is keyed by its own add-in id, beside the interface one",
+          "Ok": true
+        },
+        {
+          "Name": "both add-in ids are found in the registry",
+          "Ok": true
+        },
+        {
+          "Name": "and they are two hosts, not one answering twice",
+          "Ok": true
+        },
+        {
+          "Name": "the interface host offers the API thread and the DB host does not",
+          "Ok": true
+        },
+        {
+          "Name": "both forms were called on the same API thread",
+          "Ok": true
+        },
+        {
+          "Name": "a module starts in the DB host too",
+          "Ok": true
+        },
+        {
+          "Name": "and it is given its own settings section",
+          "Ok": true
+        },
+        {
+          "Name": "startup there is not yet Revit having started, as in the interface form",
+          "Ok": true
+        },
+        {
+          "Name": "settings from disk are read there too",
+          "Ok": true
+        },
+        {
+          "Name": "asking for the API thread there is refused, in a sentence",
+          "Ok": true
+        },
+        {
+          "Name": "and Revit tells it that it has finished starting, session or no session",
+          "Ok": true
+        },
+        {
+          "Name": "every assembly Revit substituted is one RefCheck vets",
+          "Ok": true
+        },
+        {
+          "Name": "Revit closes on an ExitRevit posted from inside",
+          "Ok": true
+        },
+        {
+          "Name": "the registry drops it when the process goes",
+          "Ok": true
+        },
+        {
+          "Name": "the DB host is taken down on the way out, like the interface one",
+          "Ok": true
+        },
+        {
+          "Name": "and its module is stopped with it",
+          "Ok": true
+        }
+      ],
+      "Notes": [
+        {
+          "Name": "launched",
+          "Value": "pid 12212"
+        },
+        {
+          "Name": "registered after",
+          "Value": "17.0s"
+        },
+        {
+          "Name": "recovered by enumeration",
+          "Value": "1 instance(s)"
+        },
+        {
+          "Name": "build",
+          "Value": "27.0.20.10, language Russian"
+        },
+        {
+          "Name": "loaded from",
+          "Value": "C:\\Users\\alex\\AppData\\Roaming\\Autodesk\\Revit\\Addins\\2027\\BimHouseSoftware\\BHS.Revit.Probe\\Lib"
+        },
+        {
+          "Name": "probe log",
+          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2027-12212-20260907-090534.log"
+        },
+        {
+          "Name": "threads",
+          "Value": "api 2, call 18"
+        },
+        {
+          "Name": "appdomain",
+          "Value": "DefaultDomain (#1)"
+        },
+        {
+          "Name": "load context",
+          "Value": "Default"
+        },
+        {
+          "Name": "runtime",
+          "Value": ".NET 10.0.11"
+        },
+        {
+          "Name": "settings layer",
+          "Value": "read   C:\\Users\\alex\\AppData\\Roaming\\Autodesk\\Revit\\Addins\\2027\\BimHouseSoftware\\BHS.Revit.Probe\\Lib\\appsettings.json"
+        },
+        {
+          "Name": "settings layer",
+          "Value": "read   C:\\Users\\alex\\AppData\\Roaming\\Autodesk\\Revit\\Addins\\2027\\BimHouseSoftware\\BHS.Revit.Probe\\Lib\\appsettings.revit2027.json"
+        },
+        {
+          "Name": "log",
+          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2027-12212-20260907-090534.log"
+        },
+        {
+          "Name": "sinks",
+          "Value": "FileLogSink \u003E= Trace, TraceLogSink \u003E= None, JournalLogSink \u003E= Warning"
+        },
+        {
+          "Name": "availability and the press",
+          "Value": "not asked - set BHS_PROBE_SHOW_TAB=1 for both"
+        },
+        {
+          "Name": "db host",
+          "Value": "add-in 79613878-acf3-4f56-83fc-11412bb53c24, 2 host(s) registered"
+        },
+        {
+          "Name": "BHS.Grpc.NamedPipes 0.1.0.0",
+          "Value": "ours  C:\\Users\\alex\\AppData\\Roaming\\Autodesk\\Revit\\Addins\\2027\\BimHouseSoftware\\BHS.Revit.Probe\\Lib\\BHS.Grpc.NamedPipes.dll"
+        },
+        {
+          "Name": "BHS.Logging 0.1.0.0",
+          "Value": "ours  C:\\Users\\alex\\AppData\\Roaming\\Autodesk\\Revit\\Addins\\2027\\BimHouseSoftware\\BHS.Revit.Probe\\Lib\\BHS.Logging.dll"
+        },
+        {
+          "Name": "BHS.Revit.Abstractions 0.1.0.0",
+          "Value": "ours  C:\\Users\\alex\\AppData\\Roaming\\Autodesk\\Revit\\Addins\\2027\\BimHouseSoftware\\BHS.Revit.Probe\\Lib\\BHS.Revit.Abstractions.dll"
+        },
+        {
+          "Name": "BHS.Revit.Common 0.1.0.0",
+          "Value": "ours  C:\\Users\\alex\\AppData\\Roaming\\Autodesk\\Revit\\Addins\\2027\\BimHouseSoftware\\BHS.Revit.Probe\\Lib\\BHS.Revit.Common.dll"
+        },
+        {
+          "Name": "BHS.Revit.Host 0.1.0.0",
+          "Value": "ours  C:\\Users\\alex\\AppData\\Roaming\\Autodesk\\Revit\\Addins\\2027\\BimHouseSoftware\\BHS.Revit.Probe\\Lib\\BHS.Revit.Host.dll"
+        },
+        {
+          "Name": "BHS.Revit.Probe 0.1.0.0",
+          "Value": "ours  C:\\Users\\alex\\AppData\\Roaming\\Autodesk\\Revit\\Addins\\2027\\BimHouseSoftware\\BHS.Revit.Probe\\Lib\\BHS.Revit.Probe.dll"
+        },
+        {
+          "Name": "BHS.Settings 0.1.0.0",
+          "Value": "ours  C:\\Users\\alex\\AppData\\Roaming\\Autodesk\\Revit\\Addins\\2027\\BimHouseSoftware\\BHS.Revit.Probe\\Lib\\BHS.Settings.dll"
+        },
+        {
+          "Name": "BHS.Shared 0.1.0.0",
+          "Value": "ours  C:\\Users\\alex\\AppData\\Roaming\\Autodesk\\Revit\\Addins\\2027\\BimHouseSoftware\\BHS.Revit.Probe\\Lib\\BHS.Shared.dll"
+        },
+        {
+          "Name": "BHS.Transport 0.1.0.0",
+          "Value": "ours  C:\\Users\\alex\\AppData\\Roaming\\Autodesk\\Revit\\Addins\\2027\\BimHouseSoftware\\BHS.Revit.Probe\\Lib\\BHS.Transport.dll"
+        },
+        {
+          "Name": "Google.Protobuf 3.23.1.0",
+          "Value": "REVIT  C:\\Program Files\\Autodesk\\Revit 2027\\Google.Protobuf.dll"
+        },
+        {
+          "Name": "Grpc.Core.Api 2.0.0.0",
+          "Value": "REVIT  C:\\Program Files\\Autodesk\\Revit 2027\\Grpc.Core.Api.dll"
+        },
+        {
+          "Name": "Microsoft.Extensions.AI.Abstractions 10.0.0.0",
+          "Value": "REVIT  C:\\Program Files\\Autodesk\\Revit 2027\\AddIns\\Assistant\\Microsoft.Extensions.AI.Abstractions.dll"
+        },
+        {
+          "Name": "Microsoft.Extensions.AI.Abstractions (10.3.0.0) 10.3.0.0",
+          "Value": "REVIT  C:\\Program Files\\Autodesk\\Revit 2027 MCP Server Read-Tools Technical Preview\\Microsoft.Extensions.AI.Abstractions.dll"
+        },
+        {
+          "Name": "Microsoft.Extensions.Configuration 10.0.0.0",
+          "Value": "elsewhere  C:\\program files\\dotnet\\shared\\Microsoft.AspNetCore.App\\10.0.11\\Microsoft.Extensions.Configuration.dll"
+        },
+        {
+          "Name": "Microsoft.Extensions.Configuration (10.0.0.0) 10.0.0.0",
+          "Value": "REVIT  C:\\Program Files\\Autodesk\\Revit 2027 MCP Server Read-Tools Technical Preview\\Microsoft.Extensions.Configuration.dll"
+        },
+        {
+          "Name": "Microsoft.Extensions.Configuration (8.0.0.0) 8.0.0.0",
+          "Value": "REVIT  C:\\Program Files\\Autodesk\\Revit 2027\\AddIns\\IssuesManagement\\Microsoft.Extensions.Configuration.dll"
+        },
+        {
+          "Name": "Microsoft.Extensions.Configuration.Abstractions 10.0.0.0",
+          "Value": "elsewhere  C:\\program files\\dotnet\\shared\\Microsoft.AspNetCore.App\\10.0.11\\Microsoft.Extensions.Configuration.Abstractions.dll"
+        },
+        {
+          "Name": "Microsoft.Extensions.Configuration.Abstractions (10.0.0.0) 10.0.0.0",
+          "Value": "REVIT  C:\\Program Files\\Autodesk\\Revit 2027 MCP Server Read-Tools Technical Preview\\Microsoft.Extensions.Configuration.Abstractions.dll"
+        },
+        {
+          "Name": "Microsoft.Extensions.Configuration.Abstractions (8.0.0.0) 8.0.0.0",
+          "Value": "REVIT  C:\\Program Files\\Autodesk\\Revit 2027\\AddIns\\IssuesManagement\\Microsoft.Extensions.Configuration.Abstractions.dll"
+        },
+        {
+          "Name": "Microsoft.Extensions.Configuration.Binder 10.0.0.0",
+          "Value": "elsewhere  C:\\program files\\dotnet\\shared\\Microsoft.AspNetCore.App\\10.0.11\\Microsoft.Extensions.Configuration.Binder.dll"
+        },
+        {
+          "Name": "Microsoft.Extensions.Configuration.Binder (10.0.0.0) 10.0.0.0",
+          "Value": "REVIT  C:\\Program Files\\Autodesk\\Revit 2027 MCP Server Read-Tools Technical Preview\\Microsoft.Extensions.Configuration.Binder.dll"
+        },
+        {
+          "Name": "Microsoft.Extensions.Configuration.Binder (8.0.0.0) 8.0.0.0",
+          "Value": "REVIT  C:\\Program Files\\Autodesk\\Revit 2027\\AddIns\\IssuesManagement\\Microsoft.Extensions.Configuration.Binder.dll"
+        },
+        {
+          "Name": "Microsoft.Extensions.Configuration.CommandLine 10.0.0.0",
+          "Value": "REVIT  C:\\Program Files\\Autodesk\\Revit 2027 MCP Server Read-Tools Technical Preview\\Microsoft.Extensions.Configuration.CommandLine.dll"
+        },
+        {
+          "Name": "Microsoft.Extensions.Configuration.EnvironmentVariables 10.0.0.0",
+          "Value": "elsewhere  C:\\program files\\dotnet\\shared\\Microsoft.AspNetCore.App\\10.0.11\\Microsoft.Extensions.Configuration.EnvironmentVariables.dll"
+        },
+        {
+          "Name": "Microsoft.Extensions.Configuration.EnvironmentVariables (10.0.0.0) 10.0.0.0",
+          "Value": "REVIT  C:\\Program Files\\Autodesk\\Revit 2027 MCP Server Read-Tools Technical Preview\\Microsoft.Extensions.Configuration.EnvironmentVariables.dll"
+        },
+        {
+          "Name": "Microsoft.Extensions.Configuration.FileExtensions 10.0.0.0",
+          "Value": "elsewhere  C:\\program files\\dotnet\\shared\\Microsoft.AspNetCore.App\\10.0.11\\Microsoft.Extensions.Configuration.FileExtensions.dll"
+        },
+        {
+          "Name": "Microsoft.Extensions.Configuration.FileExtensions (10.0.0.0) 10.0.0.0",
+          "Value": "REVIT  C:\\Program Files\\Autodesk\\Revit 2027 MCP Server Read-Tools Technical Preview\\Microsoft.Extensions.Configuration.FileExtensions.dll"
+        },
+        {
+          "Name": "Microsoft.Extensions.Configuration.Json 10.0.0.0",
+          "Value": "elsewhere  C:\\program files\\dotnet\\shared\\Microsoft.AspNetCore.App\\10.0.11\\Microsoft.Extensions.Configuration.Json.dll"
+        },
+        {
+          "Name": "Microsoft.Extensions.Configuration.Json (10.0.0.0) 10.0.0.0",
+          "Value": "REVIT  C:\\Program Files\\Autodesk\\Revit 2027 MCP Server Read-Tools Technical Preview\\Microsoft.Extensions.Configuration.Json.dll"
+        },
+        {
+          "Name": "Microsoft.Extensions.Configuration.UserSecrets 10.0.0.0",
+          "Value": "REVIT  C:\\Program Files\\Autodesk\\Revit 2027 MCP Server Read-Tools Technical Preview\\Microsoft.Extensions.Configuration.UserSecrets.dll"
+        },
+        {
+          "Name": "Microsoft.Extensions.DependencyInjection 10.0.0.0",
+          "Value": "elsewhere  C:\\program files\\dotnet\\shared\\Microsoft.AspNetCore.App\\10.0.11\\Microsoft.Extensions.DependencyInjection.dll"
+        },
+        {
+          "Name": "Microsoft.Extensions.DependencyInjection (10.0.0.0) 10.0.0.0",
+          "Value": "REVIT  C:\\Program Files\\Autodesk\\Revit 2027 MCP Server Read-Tools Technical Preview\\Microsoft.Extensions.DependencyInjection.dll"
+        },
+        {
+          "Name": "Microsoft.Extensions.DependencyInjection (8.0.0.0) 8.0.0.0",
+          "Value": "REVIT  C:\\Program Files\\Autodesk\\Revit 2027\\AddIns\\IssuesManagement\\Microsoft.Extensions.DependencyInjection.dll"
+        },
+        {
+          "Name": "Microsoft.Extensions.DependencyInjection.Abstractions 10.0.0.0",
+          "Value": "elsewhere  C:\\program files\\dotnet\\shared\\Microsoft.AspNetCore.App\\10.0.11\\Microsoft.Extensions.DependencyInjection.Abstractions.dll"
+        },
+        {
+          "Name": "Microsoft.Extensions.DependencyInjection.Abstractions (10.0.0.0) 10.0.0.0",
+          "Value": "REVIT  C:\\Program Files\\Autodesk\\Revit 2027 MCP Server Read-Tools Technical Preview\\Microsoft.Extensions.DependencyInjection.Abstractions.dll"
+        },
+        {
+          "Name": "Microsoft.Extensions.DependencyInjection.Abstractions (8.0.0.0) 8.0.0.0",
+          "Value": "REVIT  C:\\Program Files\\Autodesk\\Revit 2027\\AddIns\\IssuesManagement\\Microsoft.Extensions.DependencyInjection.Abstractions.dll"
+        },
+        {
+          "Name": "Microsoft.Extensions.Diagnostics 10.0.0.0",
+          "Value": "elsewhere  C:\\program files\\dotnet\\shared\\Microsoft.AspNetCore.App\\10.0.11\\Microsoft.Extensions.Diagnostics.dll"
+        },
+        {
+          "Name": "Microsoft.Extensions.Diagnostics (10.0.0.0) 10.0.0.0",
+          "Value": "REVIT  C:\\Program Files\\Autodesk\\Revit 2027 MCP Server Read-Tools Technical Preview\\Microsoft.Extensions.Diagnostics.dll"
+        },
+        {
+          "Name": "Microsoft.Extensions.Diagnostics (8.0.0.0) 8.0.0.0",
+          "Value": "REVIT  C:\\Program Files\\Autodesk\\Revit 2027\\AddIns\\IssuesManagement\\Microsoft.Extensions.Diagnostics.dll"
+        },
+        {
+          "Name": "Microsoft.Extensions.Diagnostics.Abstractions 10.0.0.0",
+          "Value": "elsewhere  C:\\program files\\dotnet\\shared\\Microsoft.AspNetCore.App\\10.0.11\\Microsoft.Extensions.Diagnostics.Abstractions.dll"
+        },
+        {
+          "Name": "Microsoft.Extensions.Diagnostics.Abstractions (10.0.0.0) 10.0.0.0",
+          "Value": "REVIT  C:\\Program Files\\Autodesk\\Revit 2027 MCP Server Read-Tools Technical Preview\\Microsoft.Extensions.Diagnostics.Abstractions.dll"
+        },
+        {
+          "Name": "Microsoft.Extensions.FileProviders.Abstractions 10.0.0.0",
+          "Value": "elsewhere  C:\\program files\\dotnet\\shared\\Microsoft.AspNetCore.App\\10.0.11\\Microsoft.Extensions.FileProviders.Abstractions.dll"
+        },
+        {
+          "Name": "Microsoft.Extensions.FileProviders.Abstractions (10.0.0.0) 10.0.0.0",
+          "Value": "REVIT  C:\\Program Files\\Autodesk\\Revit 2027 MCP Server Read-Tools Technical Preview\\Microsoft.Extensions.FileProviders.Abstractions.dll"
+        },
+        {
+          "Name": "Microsoft.Extensions.FileProviders.Physical 10.0.0.0",
+          "Value": "elsewhere  C:\\program files\\dotnet\\shared\\Microsoft.AspNetCore.App\\10.0.11\\Microsoft.Extensions.FileProviders.Physical.dll"
+        },
+        {
+          "Name": "Microsoft.Extensions.FileProviders.Physical (10.0.0.0) 10.0.0.0",
+          "Value": "REVIT  C:\\Program Files\\Autodesk\\Revit 2027 MCP Server Read-Tools Technical Preview\\Microsoft.Extensions.FileProviders.Physical.dll"
+        },
+        {
+          "Name": "Microsoft.Extensions.FileSystemGlobbing 10.0.0.0",
+          "Value": "REVIT  C:\\Program Files\\Autodesk\\Revit 2027 MCP Server Read-Tools Technical Preview\\Microsoft.Extensions.FileSystemGlobbing.dll"
+        },
+        {
+          "Name": "Microsoft.Extensions.Hosting 10.0.0.0",
+          "Value": "elsewhere  C:\\program files\\dotnet\\shared\\Microsoft.AspNetCore.App\\10.0.11\\Microsoft.Extensions.Hosting.dll"
+        },
+        {
+          "Name": "Microsoft.Extensions.Hosting (10.0.0.0) 10.0.0.0",
+          "Value": "REVIT  C:\\Program Files\\Autodesk\\Revit 2027 MCP Server Read-Tools Technical Preview\\Microsoft.Extensions.Hosting.dll"
+        },
+        {
+          "Name": "Microsoft.Extensions.Hosting.Abstractions 10.0.0.0",
+          "Value": "elsewhere  C:\\program files\\dotnet\\shared\\Microsoft.AspNetCore.App\\10.0.11\\Microsoft.Extensions.Hosting.Abstractions.dll"
+        },
+        {
+          "Name": "Microsoft.Extensions.Hosting.Abstractions (10.0.0.0) 10.0.0.0",
+          "Value": "REVIT  C:\\Program Files\\Autodesk\\Revit 2027 MCP Server Read-Tools Technical Preview\\Microsoft.Extensions.Hosting.Abstractions.dll"
+        },
+        {
+          "Name": "Microsoft.Extensions.Http 10.0.0.0",
+          "Value": "elsewhere  C:\\program files\\dotnet\\shared\\Microsoft.AspNetCore.App\\10.0.11\\Microsoft.Extensions.Http.dll"
+        },
+        {
+          "Name": "Microsoft.Extensions.Http (8.0.0.0) 8.0.0.0",
+          "Value": "REVIT  C:\\Program Files\\Autodesk\\Revit 2027\\AddIns\\IssuesManagement\\Microsoft.Extensions.Http.dll"
+        },
+        {
+          "Name": "Microsoft.Extensions.Http.Polly 8.0.0.0",
+          "Value": "REVIT  C:\\Program Files\\Autodesk\\Revit 2027\\AddIns\\ExtendedAPIs\\Microsoft.Extensions.Http.Polly.dll"
+        },
+        {
+          "Name": "Microsoft.Extensions.Logging 10.0.0.0",
+          "Value": "elsewhere  C:\\program files\\dotnet\\shared\\Microsoft.AspNetCore.App\\10.0.11\\Microsoft.Extensions.Logging.dll"
+        },
+        {
+          "Name": "Microsoft.Extensions.Logging (10.0.0.0) 10.0.0.0",
+          "Value": "REVIT  C:\\Program Files\\Autodesk\\Revit 2027 MCP Server Read-Tools Technical Preview\\Microsoft.Extensions.Logging.dll"
+        },
+        {
+          "Name": "Microsoft.Extensions.Logging (8.0.0.0) 8.0.0.0",
+          "Value": "REVIT  C:\\Program Files\\Autodesk\\Revit 2027\\AddIns\\IssuesManagement\\Microsoft.Extensions.Logging.dll"
+        },
+        {
+          "Name": "Microsoft.Extensions.Logging.Abstractions 10.0.0.0",
+          "Value": "elsewhere  C:\\program files\\dotnet\\shared\\Microsoft.AspNetCore.App\\10.0.11\\Microsoft.Extensions.Logging.Abstractions.dll"
+        },
+        {
+          "Name": "Microsoft.Extensions.Logging.Abstractions (10.0.0.0) 10.0.0.0",
+          "Value": "REVIT  C:\\Program Files\\Autodesk\\Revit 2027 MCP Server Read-Tools Technical Preview\\Microsoft.Extensions.Logging.Abstractions.dll"
+        },
+        {
+          "Name": "Microsoft.Extensions.Logging.Abstractions (8.0.0.0) 8.0.0.0",
+          "Value": "REVIT  C:\\Program Files\\Autodesk\\Revit 2027\\AddIns\\IssuesManagement\\Microsoft.Extensions.Logging.Abstractions.dll"
+        },
+        {
+          "Name": "Microsoft.Extensions.Logging.Configuration 10.0.0.0",
+          "Value": "elsewhere  C:\\program files\\dotnet\\shared\\Microsoft.AspNetCore.App\\10.0.11\\Microsoft.Extensions.Logging.Configuration.dll"
+        },
+        {
+          "Name": "Microsoft.Extensions.Logging.Configuration (10.0.0.0) 10.0.0.0",
+          "Value": "REVIT  C:\\Program Files\\Autodesk\\Revit 2027 MCP Server Read-Tools Technical Preview\\Microsoft.Extensions.Logging.Configuration.dll"
+        },
+        {
+          "Name": "Microsoft.Extensions.Logging.Console 10.0.0.0",
+          "Value": "elsewhere  C:\\program files\\dotnet\\shared\\Microsoft.AspNetCore.App\\10.0.11\\Microsoft.Extensions.Logging.Console.dll"
+        },
+        {
+          "Name": "Microsoft.Extensions.Logging.Console (10.0.0.0) 10.0.0.0",
+          "Value": "REVIT  C:\\Program Files\\Autodesk\\Revit 2027 MCP Server Read-Tools Technical Preview\\Microsoft.Extensions.Logging.Console.dll"
+        },
+        {
+          "Name": "Microsoft.Extensions.Logging.Debug 10.0.0.0",
+          "Value": "elsewhere  C:\\program files\\dotnet\\shared\\Microsoft.AspNetCore.App\\10.0.11\\Microsoft.Extensions.Logging.Debug.dll"
+        },
+        {
+          "Name": "Microsoft.Extensions.Logging.Debug (10.0.0.0) 10.0.0.0",
+          "Value": "REVIT  C:\\Program Files\\Autodesk\\Revit 2027 MCP Server Read-Tools Technical Preview\\Microsoft.Extensions.Logging.Debug.dll"
+        },
+        {
+          "Name": "Microsoft.Extensions.Logging.EventLog 10.0.0.0",
+          "Value": "elsewhere  C:\\program files\\dotnet\\shared\\Microsoft.AspNetCore.App\\10.0.11\\Microsoft.Extensions.Logging.EventLog.dll"
+        },
+        {
+          "Name": "Microsoft.Extensions.Logging.EventLog (10.0.0.0) 10.0.0.0",
+          "Value": "REVIT  C:\\Program Files\\Autodesk\\Revit 2027 MCP Server Read-Tools Technical Preview\\Microsoft.Extensions.Logging.EventLog.dll"
+        },
+        {
+          "Name": "Microsoft.Extensions.Logging.EventSource 10.0.0.0",
+          "Value": "elsewhere  C:\\program files\\dotnet\\shared\\Microsoft.AspNetCore.App\\10.0.11\\Microsoft.Extensions.Logging.EventSource.dll"
+        },
+        {
+          "Name": "Microsoft.Extensions.Logging.EventSource (10.0.0.0) 10.0.0.0",
+          "Value": "REVIT  C:\\Program Files\\Autodesk\\Revit 2027 MCP Server Read-Tools Technical Preview\\Microsoft.Extensions.Logging.EventSource.dll"
+        },
+        {
+          "Name": "Microsoft.Extensions.Options 10.0.0.0",
+          "Value": "elsewhere  C:\\program files\\dotnet\\shared\\Microsoft.AspNetCore.App\\10.0.11\\Microsoft.Extensions.Options.dll"
+        },
+        {
+          "Name": "Microsoft.Extensions.Options (10.0.0.0) 10.0.0.0",
+          "Value": "REVIT  C:\\Program Files\\Autodesk\\Revit 2027 MCP Server Read-Tools Technical Preview\\Microsoft.Extensions.Options.dll"
+        },
+        {
+          "Name": "Microsoft.Extensions.Options (8.0.0.0) 8.0.0.0",
+          "Value": "REVIT  C:\\Program Files\\Autodesk\\Revit 2027\\AddIns\\IssuesManagement\\Microsoft.Extensions.Options.dll"
+        },
+        {
+          "Name": "Microsoft.Extensions.Options.ConfigurationExtensions 10.0.0.0",
+          "Value": "elsewhere  C:\\program files\\dotnet\\shared\\Microsoft.AspNetCore.App\\10.0.11\\Microsoft.Extensions.Options.ConfigurationExtensions.dll"
+        },
+        {
+          "Name": "Microsoft.Extensions.Options.ConfigurationExtensions (10.0.0.0) 10.0.0.0",
+          "Value": "REVIT  C:\\Program Files\\Autodesk\\Revit 2027 MCP Server Read-Tools Technical Preview\\Microsoft.Extensions.Options.ConfigurationExtensions.dll"
+        },
+        {
+          "Name": "Microsoft.Extensions.Primitives 10.0.0.0",
+          "Value": "elsewhere  C:\\program files\\dotnet\\shared\\Microsoft.AspNetCore.App\\10.0.11\\Microsoft.Extensions.Primitives.dll"
+        },
+        {
+          "Name": "Microsoft.Extensions.Primitives (10.0.0.0) 10.0.0.0",
+          "Value": "REVIT  C:\\Program Files\\Autodesk\\Revit 2027 MCP Server Read-Tools Technical Preview\\Microsoft.Extensions.Primitives.dll"
+        },
+        {
+          "Name": "Microsoft.Extensions.Primitives (8.0.0.0) 8.0.0.0",
+          "Value": "REVIT  C:\\Program Files\\Autodesk\\Revit 2027\\AddIns\\IssuesManagement\\Microsoft.Extensions.Primitives.dll"
+        },
+        {
+          "Name": "Newtonsoft.Json 13.0.0.0",
+          "Value": "REVIT  C:\\Program Files\\Autodesk\\Revit 2027\\NewtonSoft.Json.dll"
+        },
+        {
+          "Name": "Newtonsoft.Json (11.0.0.0) 11.0.0.0",
+          "Value": "elsewhere  C:\\Program Files (x86)\\archintelligence\\Environment\\Net\\Newtonsoft.Json.dll"
+        },
+        {
+          "Name": "Newtonsoft.Json (13.0.0.0) 13.0.0.0",
+          "Value": "REVIT  C:\\Program Files\\Autodesk\\Revit 2027\\AddIns\\IssuesManagement\\Newtonsoft.Json.dll"
+        },
+        {
+          "Name": "System.Collections.Immutable 10.0.0.0",
+          "Value": "elsewhere  C:\\program files\\dotnet\\shared\\Microsoft.NETCore.App\\10.0.11\\System.Collections.Immutable.dll"
+        },
+        {
+          "Name": "System.Memory 10.0.0.0",
+          "Value": "elsewhere  C:\\program files\\dotnet\\shared\\Microsoft.NETCore.App\\10.0.11\\System.Memory.dll"
+        },
+        {
+          "Name": "System.Numerics.Vectors 10.0.0.0",
+          "Value": "elsewhere  C:\\program files\\dotnet\\shared\\Microsoft.NETCore.App\\10.0.11\\System.Numerics.Vectors.dll"
+        },
+        {
+          "Name": "System.Runtime.CompilerServices.Unsafe 10.0.0.0",
+          "Value": "elsewhere  C:\\program files\\dotnet\\shared\\Microsoft.NETCore.App\\10.0.11\\System.Runtime.CompilerServices.Unsafe.dll"
+        },
+        {
+          "Name": "System.Runtime.CompilerServices.Unsafe (6.0.0.0) 6.0.0.0",
+          "Value": "elsewhere  C:\\Program Files (x86)\\archintelligence\\Environment\\Net\\System.Runtime.CompilerServices.Unsafe.dll"
+        },
+        {
+          "Name": "assemblies loaded",
+          "Value": "712"
+        },
+        {
+          "Name": "Revit\u0027s copy won",
+          "Value": "Google.Protobuf"
+        },
+        {
+          "Name": "Revit\u0027s copy won",
+          "Value": "Grpc.Core.Api"
+        },
+        {
+          "Name": "closed after",
+          "Value": "38.8s"
+        }
+      ]
+    }
+  ],
+  "Performed": 212,
+  "Failed": 0
+}
