@@ -51,10 +51,17 @@
     <!--
       IgnoreExitCode keeps MSB3073 out of the log: the tool already emits one canonical
       error per finding, and the summary below says what to do about them.
+
+      StandardOutputImportance is high, and that is deliberate rather than loud. The tool prints
+      one line per project - "N assemblies checked against Revit YYYY, no conflicts" - and at
+      normal importance CI never showed it, because a hosted build logs at minimal. A passing
+      check that leaves no trace is indistinguishable from one that stopped running, and this
+      exact check spent months not running at all while CLAUDE.md described it as a build failure.
+      One line per project is what it costs to see that it happened.
     -->
     <Exec Condition="Exists('$(_RefCheckBaseline)')"
           Command="dotnet &quot;$(RefCheckToolAssembly)&quot; check --baseline &quot;$(_RefCheckBaseline)&quot; --watchlist &quot;$(RefCheckBaselineDirectory)watchlist.json&quot; --input &quot;$(TargetDir.TrimEnd('\'))&quot;"
-          StandardOutputImportance="normal"
+          StandardOutputImportance="high"
           IgnoreExitCode="true">
       <Output TaskParameter="ExitCode" PropertyName="_RefCheckExitCode" />
     </Exec>
