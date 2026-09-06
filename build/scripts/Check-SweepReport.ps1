@@ -21,8 +21,10 @@
       1. it exists, parses, and its schema is one this script understands;
       2. it was recorded on a clean tree - a sweep over uncommitted edits tested something that
          exists on one machine and nowhere else;
-      3. its commit is an ancestor of HEAD, and nothing Revit-side changed after it. This is the one
-         that matters: without it, last week's report passes forever;
+      3. the Revit-side directories still hash to what they hashed when it was taken. This is the
+         one that matters - without it, last week's report passes forever - and it compares CONTENT
+         rather than ancestry, because squashing a pull request writes a new commit and the first
+         merged record failed on that within the hour;
       4. every supported release is present, and nothing failed;
       5. no check present in the base report has disappeared. A check that stops running prints
          nothing and fails nothing - which is how RefCheck went months unimported here.
@@ -77,7 +79,7 @@ if (Test-Path $identity) {
             ForEach-Object { [int] $_ })
     }
 }
-$knownSchema = 1
+$knownSchema = 2
 $problems = 0
 
 if ($supported.Count -eq 0) {
@@ -166,28 +168,49 @@ if (-not $commit) {
 
 # ---- 3. still current --------------------------------------------------------------------------
 
-& git -C $root cat-file -e "$commit^{commit}" 2>$null
-if ($LASTEXITCODE -ne 0) {
-    Fail "the report names commit $commit, which is not in this repository."
-    exit $problems
-}
+# Content, not ancestry, and this is a correction the first merge forced.
+#
+# The check used to ask whether the report's commit was an ancestor of HEAD. This repository merges
+# by squashing, and a squash writes a NEW commit - so the moment the first record reached master,
+# the commit it named was no longer in the history and a perfectly current record failed. Rebasing
+# and cherry-picking would have done the same.
+#
+# Comparing tree hashes asks what was actually meant all along: not "was this the commit" but "is
+# this the same content". None of those operations change what the files say, so none of them
+# disturb this.
 
-& git -C $root merge-base --is-ancestor $commit HEAD
-if ($LASTEXITCODE -ne 0) {
-    Fail "the report's commit $commit is not an ancestor of HEAD - it describes a different line of work."
+$recorded = Field $report 'Content'
+
+if ($null -eq $recorded) {
+    Fail 'the report records no content hashes, so there is no way to tell whether it is current.'
 }
 else {
-    $changed = & git -C $root diff --name-only "$commit..HEAD" -- $revitSide
+    foreach ($path in $revitSide) {
+        $was = Field $recorded $path
 
-    if ($changed) {
-        Fail @"
-Revit-side code changed after the sweep was recorded, so the record no longer describes this branch.
+        if (-not $was) {
+            Fail "the report says nothing about $path, so a change there would go unnoticed."
+            continue
+        }
 
-Changed since ${commit}:
-$($changed | ForEach-Object { "  $_" } | Out-String)
+        $now = (& git -C $root rev-parse "HEAD:$path" 2>$null)
+
+        if ($LASTEXITCODE -ne 0 -or -not $now) {
+            Fail "$path is not in this commit, though the report recorded it."
+            continue
+        }
+
+        if ($now.Trim() -ne $was) {
+            $changed = & git -C $root diff --name-only "$was" "$($now.Trim())" 2>$null
+
+            Fail @"
+$path changed since the sweep was recorded, so the record no longer describes this branch.
+
+$(if ($changed) { ($changed | ForEach-Object { "  $path/$_" } | Out-String) })
 Sweep again and commit the new report:
   dotnet run --project source/Revit/BHS.Revit.Probe.Runner -- --deploy --report evidence/sweep-report.json
 "@
+        }
     }
 }
 
