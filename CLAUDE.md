@@ -1885,8 +1885,14 @@ dotnet build <проект> -c Release -f net8.0-revit2026 -p:RevitSignWith=<о�
 > **Задавайте её постоянно, а не на сессию.** Первый раз переменную поставили через `$env:` — то
 > есть на одно окно, — и через день сборка молча вышла неподписанной, а Revit снова начал
 > спрашивать. Ошибки при этом нет никакой: пустая `RevitSignWith` означает «продакшн», и задача
-> подписи просто не выполняется. Отпечаток на этой машине —
-> `B054B597ABD9968FB7DE1E777C54BDA872E4495C`; проверить, что доехало, можно так:
+> подписи просто не выполняется. Отпечаток здесь не приводится — этот же раздел двумя абзацами
+> выше запрещает класть его в git, и запрет держался ровно до того абзаца. Спросить его у машины:
+>
+> ```powershell
+> Get-ChildItem Cert:\CurrentUser\My -CodeSigningCert | Format-List Subject, Thumbprint
+> ```
+>
+> Проверить, что подпись доехала до развёрнутого add-in:
 >
 > ```powershell
 > Get-AuthenticodeSignature "$env:APPDATA\Autodesk\Revit\Addins\2026\BimHouseSoftware\BHS.Revit.Probe\Lib\BHS.Revit.Probe.dll"
