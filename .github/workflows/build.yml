@@ -23,9 +23,17 @@ on:
   pull_request:
     branches: [master]
 
+# Neither job writes anything back. Left unset, the token carries whatever the repository default
+# happens to be, which on an older repository is write access to every scope.
+permissions:
+  contents: read
+
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
+  # Superseding a pull request run is free - only the last one matters. Superseding a push to
+  # master is not: two merges landing close together would cancel the first, and with both checks
+  # required that leaves a master commit permanently without a green build.
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
   sdk-version:

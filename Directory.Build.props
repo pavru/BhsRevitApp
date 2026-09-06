@@ -27,31 +27,13 @@
       Tooling under build/ is not covered - BHS.Revit.Sdk carries its own version, because that
       one is a compatibility contract with the projects naming it in their header.
 
-      AssemblyVersion is deliberately frozen at the major and does NOT follow VersionPrefix.
-      The reason is Revit 2024, where every add-in shares one AppDomain: two of our editions
-      installed side by side have to resolve to ONE BHS.Logging.dll and ONE BHS.Revit.Host.dll,
-      because LogRouter.Default and HostRegistry are built to be additive across editions - which
-      is the whole point of making them idempotent rather than assuming "I am alone here".
-      Distinct assembly versions would load both copies, each edition would get its own Default,
-      and the additivity would quietly mean nothing.
-
-      This is the same freeze CLAUDE.md flags as a hazard on Wpf.Ui, and the hazard is real: any
-      build sharing the major claims the same identity. It is safe here only because our simple
-      names carry the BHS. prefix, so no other vendor can land on them - the prefix earning its
-      keep a second time.
+      Only the source of truth lives here. AssemblyVersion and FileVersion are derived in
+      Directory.Build.targets, where $(Version) already exists: deriving them here would read
+      VersionPrefix directly and quietly ignore a `-p:Version=` on the command line, so a release
+      build would ship a package saying 1.2.3 and assemblies still saying 0.1.0.
     -->
     <PropertyGroup>
         <VersionPrefix>0.1.0</VersionPrefix>
-        <AssemblyVersion>$([System.Version]::Parse('$(VersionPrefix)').Major).0.0.0</AssemblyVersion>
-
-        <!--
-          Stated, because the base SDK derives FileVersion from AssemblyVersion rather than from
-          VersionPrefix - so freezing one silently freezes the other, and every build would look
-          identical on disk. Measured: without this line the assemblies came out 0.0.0.0 in both.
-          The file version is what a person reads off a deployed file to answer "is this the build
-          I am debugging", and that question is the whole of rule 2.4.
-        -->
-        <FileVersion>$(VersionPrefix).0</FileVersion>
     </PropertyGroup>
 
     <PropertyGroup>

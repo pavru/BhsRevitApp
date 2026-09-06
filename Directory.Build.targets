@@ -16,4 +16,48 @@
     <Import Project="$(MSBuildThisFileDirectory)build\RefCheck\RefCheck.targets"
             Condition="'$(RevitVersion)' != '' And Exists('$(MSBuildThisFileDirectory)build\RefCheck\RefCheck.targets')"/>
 
+    <!--
+      Assembly versions, derived here rather than in Directory.Build.props because $(Version) does
+      not exist yet at that point - the SDK computes it from VersionPrefix later. Reading
+      VersionPrefix directly would make `-p:Version=1.2.3` produce a package that says 1.2.3 and
+      assemblies that still say 0.1.0.
+
+      The two halves point in opposite directions on purpose.
+
+      FileVersion moves with every version, because it is what a person reads off a deployed file
+      to answer "is this the build I am debugging" - a question this repository has got wrong twice,
+      once through a stale unpacked SDK and once through an assembly that went out unsigned in
+      silence. The suffix is dropped: a file version is four numbers and takes no prerelease tag.
+
+      AssemblyVersion is frozen at major.minor, and this is identity rather than bookkeeping. On
+      Revit 2024 every add-in shares one AppDomain, so two of our editions installed side by side
+      have to resolve to ONE BHS.Logging.dll and ONE BHS.Revit.Host.dll: LogRouter.Default and
+      HostRegistry are built to be additive across editions, which means nothing at all if each
+      edition loads its own copy. Frozen at major.minor rather than major alone because the major
+      is still 0, where minor is what carries a breaking change - and because 0.0.0.0 is the value
+      an assembly with no version set reports, which would make every Revit diagnostic naming one
+      of ours say nothing.
+
+      This is the same freeze CLAUDE.md flags as a hazard on Wpf.Ui, and the hazard is real: any
+      build sharing major.minor claims the same identity. It is safe here only because our simple
+      names carry the BHS. prefix, so no other vendor can land on them.
+    -->
+    <PropertyGroup Condition="'$(Version)' != ''">
+        <_BhsNumericVersion>$(Version.Split('-')[0])</_BhsNumericVersion>
+        <FileVersion Condition="'$(FileVersion)' == ''">$(_BhsNumericVersion).0</FileVersion>
+        <AssemblyVersion Condition="'$(AssemblyVersion)' == ''">$([System.Version]::Parse('$(_BhsNumericVersion)').Major).$([System.Version]::Parse('$(_BhsNumericVersion)').Minor).0.0</AssemblyVersion>
+    </PropertyGroup>
+
+    <!--
+      The PropertyGroup above is conditional, and a condition that silently does not fire is the
+      shape of failure this repository keeps paying for: the derivation would simply not happen,
+      the SDK defaults would take over, and the assemblies would carry an identity nobody chose.
+      So say so out loud instead.
+    -->
+    <Target Name="BhsEnsureVersionDerived" BeforeTargets="GetAssemblyVersion"
+            Condition="'$(_BhsNumericVersion)' == ''">
+        <Error Code="BHSVER001"
+               Text="Version was empty when Directory.Build.targets ran, so AssemblyVersion and FileVersion were never derived and the assembly would carry whatever the SDK defaulted to. See the comment above this target." />
+    </Target>
+
 </Project>

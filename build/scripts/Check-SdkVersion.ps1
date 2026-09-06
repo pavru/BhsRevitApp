@@ -33,8 +33,8 @@ param(
 Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
 
-$root = Resolve-Path (Join-Path $PSScriptRoot '..\..')
-$sdkProject = Join-Path $root 'build\BHS.Revit.Sdk\BHS.Revit.Sdk.csproj'
+$root = Resolve-Path (Join-Path $PSScriptRoot '..' '..')
+$sdkProject = Join-Path $root 'build/BHS.Revit.Sdk/BHS.Revit.Sdk.csproj'
 
 # Paths whose content ends up deciding how a Revit project builds. readme.md and images/ ride
 # along in the package but change nothing, and a version bump costs an edit in five project
