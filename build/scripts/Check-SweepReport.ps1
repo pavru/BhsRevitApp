@@ -60,8 +60,13 @@ $problems = 0
 function Summarise {
     $mode = if ($report.WithModel) { 'with a model' } else { 'without a model' }
     $mode += if ($report.ShowTab) { ', ribbon exercised' } else { ', ribbon not exercised' }
+    # Formatted rather than printed as it comes: ConvertFrom-Json turns the ISO string into a
+    # DateTime, and Write-Host then renders it in the runner's culture - "09/06/2026", which is
+    # either the sixth of September or the ninth of June depending on where the reader is from.
+    $when = ([datetime]$report.RecordedUtc).ToString('yyyy-MM-dd HH:mm:ss') + 'Z'
+
     Write-Host ("check-sweep-report: {0} checks across {1} release(s), recorded {2} at {3} ({4}). Verified, not reproduced." -f `
-        $report.Performed, $report.Releases.Count, $report.RecordedUtc, $report.Commit.Substring(0, 8), $mode) -ForegroundColor Green
+        $report.Performed, $report.Releases.Count, $when, $report.Commit.Substring(0, 8), $mode) -ForegroundColor Green
 }
 
 function Fail([string] $message) {
