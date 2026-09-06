@@ -1,4 +1,4 @@
-<Project Sdk="BHS.Revit.Sdk/1.3.7">
+﻿<Project Sdk="BHS.Revit.Sdk/1.5.2">
 
     <!--
       A minimal add-in whose only job is to be reachable and to report what it sees.
@@ -34,6 +34,16 @@
         <!-- For the availability measurement: Revit only asks an availability class while the tab
              holding the button is shown, and nothing shows it in an unattended run. -->
         <UseRevitAdWindows>true</UseRevitAdWindows>
+
+        <!--
+          Not for any window of our own: the host puts an ImageSource on every ribbon button, and
+          UseWPF travels to whoever references it. That is a real consequence of the framework
+          growing icons, and it lands on every Revit-side edition - which was going to be a WPF
+          project anyway, WPF being the decided Revit-side UI. It ships nothing: PresentationCore
+          and its neighbours are in the GAC on net48 and in the shared framework on the .NET axis,
+          and Revit's own interface is already built on them.
+        -->
+        <UseWPF>true</UseWPF>
         <IsPackable>false</IsPackable>
 
         <!--
@@ -49,8 +59,45 @@
         <ProjectReference Include="..\..\Shared\BHS.Settings\BHS.Settings.csproj"/>
         <ProjectReference Include="..\..\Shared\BHS.Logging\BHS.Logging.csproj"/>
         <ProjectReference Include="..\BHS.Revit.Host\BHS.Revit.Host.csproj"/>
+        <!-- The edition names its feature's command in a one-line entry point, so it references
+             the feature at compile time - and still must not load it until the button is pressed. -->
+        <ProjectReference Include="..\BHS.Revit.Probe.Feature\BHS.Revit.Probe.Feature.csproj"/>
         <!-- Through the host, which is the point: the probe is no longer a second host, and
              the sweep that checks it on four live releases now checks the host with it. -->
+    </ItemGroup>
+
+    <!--
+      The ribbon, declared rather than written. The SDK turns these into BHS.Revit.Probe.features.json
+      beside the assembly, the host reads it at startup, and Revit is handed class names as text - so
+      nothing behind a button is loaded until it is pressed. RefCheck verifies each one against the
+      built assembly, which is what makes strings safe to use here.
+    -->
+    <ItemGroup>
+        <RevitRibbonButton Include="BHS.Probe.Command">
+            <Panel>BHS Probe</Panel>
+            <Text>Probe</Text>
+            <ClassName>BHS.Revit.Probe.ProbeCommand</ClassName>
+            <AvailabilityClassName>BHS.Revit.Probe.LocalAvailability</AvailabilityClassName>
+            <ToolTip>Does nothing. Exists so that the ribbon path is exercised.</ToolTip>
+            <Order>1</Order>
+        </RevitRibbonButton>
+
+        <!-- The one that matters: its class derives from a base in another assembly, which must stay
+             unloaded while this button merely exists.
+
+             On a tab of its own, and that is coverage rather than decoration: without one, the whole
+             tab branch of the ribbon builder - creating a tab, surviving one that already exists,
+             putting a panel on it - never ran in any sweep. Two panels also prove they are not
+             confused with each other. -->
+        <RevitRibbonButton Include="BHS.Probe.Ping">
+            <Tab>BHS</Tab>
+            <Panel>Probe feature</Panel>
+            <Text>Ping</Text>
+            <ClassName>BHS.Revit.Probe.PingCommandEntryPoint</ClassName>
+            <AvailabilityClassName>BHS.Revit.Probe.LocalAvailability</AvailabilityClassName>
+            <ToolTip>Runs a feature command through the host, and loads the feature to do it.</ToolTip>
+            <Order>2</Order>
+        </RevitRibbonButton>
     </ItemGroup>
 
     <ItemGroup>
@@ -67,6 +114,26 @@
             <VendorId>$(RevitVendorId)</VendorId>
             <VendorDescription>$(RevitVendorDescription)</VendorDescription>
             <Description>Verification probe: reports what a Revit-side assembly actually sees.</Description>
+        </RevitAddIn>
+
+        <!--
+          The same file, a second entry: the DB form of the host, measured rather than declared.
+          Revit's manifest format takes a list, and ordinary interactive Revit loads a DBApplication
+          entry as readily as an Application one - so the sweep that checks the interface form checks
+          this one in the same run, with no headless engine involved.
+
+          Its own AddInId, because that is what Revit files trust and isolation by and what the host
+          registry is keyed on; sharing one would make a host unreachable in a way that looks like it
+          never started. The SDK now refuses a duplicate outright.
+        -->
+        <RevitAddIn Include="BHS.Revit.Probe.addin">
+            <AddInType>DBApplication</AddInType>
+            <AddInName>BHS.Revit.Probe.Db</AddInName>
+            <FullClassName>BHS.Revit.Probe.ProbeDbApplication</FullClassName>
+            <AddInId>79613878-acf3-4f56-83fc-11412bb53c24</AddInId>
+            <VendorId>$(RevitVendorId)</VendorId>
+            <VendorDescription>$(RevitVendorDescription)</VendorDescription>
+            <Description>The same framework in an add-in that has no user interface.</Description>
         </RevitAddIn>
     </ItemGroup>
 

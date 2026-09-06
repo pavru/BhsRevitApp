@@ -27,10 +27,17 @@ public sealed class RevitLaunchOptions
     /// Generous because two waits are stacked inside it. Registration arrives long before Revit is
     /// idle - 18s against about 72s to a usable window on 2024 - so the external event carrying the
     /// exit command sits in the queue until startup finishes; measured at 25 seconds on 2024. Only
-    /// then does teardown begin, and that alone ranged from 6s to 70s across the releases. A
-    /// tighter budget does not fail the close, it kills Revit in the middle of one.
+    /// then does teardown begin, and that alone ranged from 3s to over 240s across the releases.
+    /// <para>
+    /// Raised from 240 to 360 on the second reading that reached the old ceiling: 208s on Revit 2024
+    /// once, and then a 2026 that had just spent 105 seconds opening a model and did not finish
+    /// leaving inside four minutes. Both were machines running their fifth Revit of the hour, which
+    /// is exactly the condition an unattended sweep creates for itself. A tighter budget does not
+    /// fail the close, it kills Revit in the middle of one - and that has already looked like a
+    /// defect once when it was not.
+    /// </para>
     /// </remarks>
-    public TimeSpan ShutdownTimeout { get; set; } = TimeSpan.FromSeconds(240);
+    public TimeSpan ShutdownTimeout { get; set; } = TimeSpan.FromSeconds(360);
 
     /// <summary>
     /// Pass <c>/nosplash</c>.

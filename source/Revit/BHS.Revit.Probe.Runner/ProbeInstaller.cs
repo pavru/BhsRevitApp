@@ -1,4 +1,4 @@
-using System.Diagnostics;
+﻿using System.Diagnostics;
 using System.Globalization;
 using BHS.Revit.Launch;
 using Microsoft.Win32;
@@ -121,7 +121,13 @@ internal static class ProbeInstaller
         File.WriteAllText(Path.Combine(directory, "appsettings.json"), """
             {
               // written by the probe runner; removed with --undeploy
-              "Probe": { "Marker": "product", "Layer": "common" }
+              "Probe": { "Marker": "product", "Layer": "common" },
+              // The DB half's module reads this one, which proves the host narrowed the settings to
+              // the module rather than handing it the whole store.
+              "ProbeDbModule": { "Marker": "product" },
+              // A project-scoped key set by the vendor, so that the sweep can prove a project
+              // removes it rather than merely overriding it.
+              "Model": { "Probe": { "Cleared": "set-by-the-product-layer" } }
             }
             """);
 
@@ -150,24 +156,40 @@ internal static class ProbeInstaller
     public static void Trust(RevitInstallation installation)
     {
         using var key = Registry.CurrentUser.CreateSubKey(installation.TrustKeyPath, writable: true);
-        key?.SetValue(ProbeDeployment.AddInId, 1, RegistryValueKind.DWord);
+
+        // Every id in the manifest, not just the first. The value is keyed by add-in, so one entry
+        // would leave the other half asking - and a dialog nobody sees is what stops a sweep dead.
+        foreach (var id in ProbeDeployment.AddInIds)
+            key?.SetValue(id, 1, RegistryValueKind.DWord);
     }
 
     public static bool Untrust(RevitInstallation installation)
     {
         using var key = Registry.CurrentUser.OpenSubKey(installation.TrustKeyPath, writable: true);
 
-        if (key?.GetValue(ProbeDeployment.AddInId) is null)
+        if (key is null)
             return false;
 
-        key.DeleteValue(ProbeDeployment.AddInId, throwOnMissingValue: false);
-        return true;
+        var removed = false;
+
+        foreach (var id in ProbeDeployment.AddInIds)
+        {
+            if (key.GetValue(id) is null)
+                continue;
+
+            key.DeleteValue(id, throwOnMissingValue: false);
+            removed = true;
+        }
+
+        return removed;
     }
 
     public static bool IsTrusted(RevitInstallation installation)
     {
         using var key = Registry.CurrentUser.OpenSubKey(installation.TrustKeyPath);
-        return key?.GetValue(ProbeDeployment.AddInId) is int allowed && allowed == 1;
+
+        return key is not null
+               && ProbeDeployment.AddInIds.All(id => key.GetValue(id) is int allowed && allowed == 1);
     }
 
     /// <summary>Where the SDK puts the probe manifest for one release.</summary>

@@ -1,4 +1,4 @@
-using BimHouse.RefCheck;
+﻿using BimHouse.RefCheck;
 
 return Cli.Run(args);
 
@@ -184,8 +184,17 @@ internal static class Cli
             }
         }
 
-        Report(baseline, findings, unwatched, denied, twoCopies, checkedFiles);
-        return findings.Count == 0 && denied.Count == 0 ? 0 : 1;
+        // The ribbon manifests sitting in the same folder. A different question from the rest of this
+        // tool - it is about our own types rather than about Revit's copies of somebody's assembly -
+        // but the same folder, the same pass and the same metadata reader, and the alternative was
+        // putting a metadata reader inside MSBuild.
+        var ribbon = new List<RibbonFinding>();
+
+        foreach (var directory in inputs.Where(Directory.Exists))
+            ribbon.AddRange(RibbonCheck.Check(directory));
+
+        Report(baseline, findings, unwatched, denied, twoCopies, ribbon, checkedFiles);
+        return findings.Count == 0 && denied.Count == 0 && ribbon.Count == 0 ? 0 : 1;
     }
 
     private static void Report(
@@ -194,8 +203,14 @@ internal static class Cli
         SortedSet<string> unwatched,
         List<string> denied,
         SortedSet<(string Name, string Ours, string Revits)> twoCopies,
+        List<RibbonFinding> ribbon,
         int checkedFiles)
     {
+        // First, because a ribbon that cannot work is a dialog in front of a person, and because
+        // each of these is a specific dialog this project hit before it was a build error.
+        foreach (var finding in ribbon)
+            Console.Error.WriteLine($"{finding.Manifest} : error {finding.Code}: {finding.Message}");
+
         // Stated, not warned about.
         //
         // Every one of these is true and none of them is actionable on its own: System.Numerics.Vectors
@@ -239,7 +254,7 @@ internal static class Cli
                 "and re-collect the baselines.");
         }
 
-        if (findings.Count == 0 && denied.Count == 0)
+        if (findings.Count == 0 && denied.Count == 0 && ribbon.Count == 0)
         {
             Console.WriteLine(
                 $"RefCheck: {checkedFiles} assemblies checked against Revit {baseline.RevitVersion}, no conflicts.");

@@ -1,7 +1,7 @@
 {
   "revitVersion": "2024",
   "sourcePath": "C:/Program Files/Autodesk/Revit 2024",
-  "collectedUtc": "2026-09-03T21:38:33.8938348Z",
+  "collectedUtc": "2026-09-05T20:34:00.2155282Z",
   "hostVendorMarker": "Autodesk",
   "assemblies": [
     {
@@ -5694,7 +5694,33 @@
       "assemblyVersion": "6.0.0.0",
       "fileVersion": "6.0.21.52210",
       "vendor": "Microsoft Corporation",
-      "members": []
+      "surfaceIndexed": true,
+      "members": [
+        "System.Diagnostics.CodeAnalysis.AllowNullAttribute::.ctor/0",
+        "System.Diagnostics.CodeAnalysis.DisallowNullAttribute::.ctor/0",
+        "System.Diagnostics.CodeAnalysis.DoesNotReturnAttribute::.ctor/0",
+        "System.Diagnostics.CodeAnalysis.DoesNotReturnIfAttribute::.ctor/1",
+        "System.Diagnostics.CodeAnalysis.DoesNotReturnIfAttribute::get_ParameterValue/0",
+        "System.Diagnostics.CodeAnalysis.MaybeNullAttribute::.ctor/0",
+        "System.Diagnostics.CodeAnalysis.MaybeNullWhenAttribute::.ctor/1",
+        "System.Diagnostics.CodeAnalysis.MaybeNullWhenAttribute::get_ReturnValue/0",
+        "System.Diagnostics.CodeAnalysis.MemberNotNullAttribute::.ctor/1",
+        "System.Diagnostics.CodeAnalysis.MemberNotNullAttribute::get_Members/0",
+        "System.Diagnostics.CodeAnalysis.MemberNotNullWhenAttribute::.ctor/2",
+        "System.Diagnostics.CodeAnalysis.MemberNotNullWhenAttribute::get_Members/0",
+        "System.Diagnostics.CodeAnalysis.MemberNotNullWhenAttribute::get_ReturnValue/0",
+        "System.Diagnostics.CodeAnalysis.NotNullAttribute::.ctor/0",
+        "System.Diagnostics.CodeAnalysis.NotNullIfNotNullAttribute::.ctor/1",
+        "System.Diagnostics.CodeAnalysis.NotNullIfNotNullAttribute::get_ParameterName/0",
+        "System.Diagnostics.CodeAnalysis.NotNullWhenAttribute::.ctor/1",
+        "System.Diagnostics.CodeAnalysis.NotNullWhenAttribute::get_ReturnValue/0",
+        "System.Runtime.Versioning.OSPlatformAttribute::get_PlatformName/0",
+        "System.Runtime.Versioning.SupportedOSPlatformAttribute::.ctor/1",
+        "System.Runtime.Versioning.SupportedOSPlatformGuardAttribute::.ctor/1",
+        "System.Runtime.Versioning.TargetPlatformAttribute::.ctor/1",
+        "System.Runtime.Versioning.UnsupportedOSPlatformAttribute::.ctor/1",
+        "System.Runtime.Versioning.UnsupportedOSPlatformGuardAttribute::.ctor/1"
+      ]
     },
     {
       "name": "System.Security.Cryptography.Algorithms",
@@ -5747,7 +5773,31 @@
       "assemblyVersion": "5.0.0.0",
       "fileVersion": "5.0.20.51904",
       "vendor": "Microsoft Corporation",
-      "members": []
+      "surfaceIndexed": true,
+      "members": [
+        "System.Diagnostics.CodeAnalysis.AllowNullAttribute::.ctor/0",
+        "System.Diagnostics.CodeAnalysis.DisallowNullAttribute::.ctor/0",
+        "System.Diagnostics.CodeAnalysis.DoesNotReturnAttribute::.ctor/0",
+        "System.Diagnostics.CodeAnalysis.DoesNotReturnIfAttribute::.ctor/1",
+        "System.Diagnostics.CodeAnalysis.DoesNotReturnIfAttribute::get_ParameterValue/0",
+        "System.Diagnostics.CodeAnalysis.MaybeNullAttribute::.ctor/0",
+        "System.Diagnostics.CodeAnalysis.MaybeNullWhenAttribute::.ctor/1",
+        "System.Diagnostics.CodeAnalysis.MaybeNullWhenAttribute::get_ReturnValue/0",
+        "System.Diagnostics.CodeAnalysis.MemberNotNullAttribute::.ctor/1",
+        "System.Diagnostics.CodeAnalysis.MemberNotNullAttribute::get_Members/0",
+        "System.Diagnostics.CodeAnalysis.MemberNotNullWhenAttribute::.ctor/2",
+        "System.Diagnostics.CodeAnalysis.MemberNotNullWhenAttribute::get_Members/0",
+        "System.Diagnostics.CodeAnalysis.MemberNotNullWhenAttribute::get_ReturnValue/0",
+        "System.Diagnostics.CodeAnalysis.NotNullAttribute::.ctor/0",
+        "System.Diagnostics.CodeAnalysis.NotNullIfNotNullAttribute::.ctor/1",
+        "System.Diagnostics.CodeAnalysis.NotNullIfNotNullAttribute::get_ParameterName/0",
+        "System.Diagnostics.CodeAnalysis.NotNullWhenAttribute::.ctor/1",
+        "System.Diagnostics.CodeAnalysis.NotNullWhenAttribute::get_ReturnValue/0",
+        "System.Runtime.Versioning.OSPlatformAttribute::get_PlatformName/0",
+        "System.Runtime.Versioning.SupportedOSPlatformAttribute::.ctor/1",
+        "System.Runtime.Versioning.TargetPlatformAttribute::.ctor/1",
+        "System.Runtime.Versioning.UnsupportedOSPlatformAttribute::.ctor/1"
+      ]
     },
     {
       "name": "System.ServiceModel.Http",

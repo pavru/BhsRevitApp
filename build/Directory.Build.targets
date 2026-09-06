@@ -1,0 +1,15 @@
+﻿<Project>
+
+    <!--
+      Intentionally empty, and the twin of Directory.Build.props beside it.
+
+      MSBuild stops walking up at the first Directory.Build.targets, so this shields the tooling under
+      build/ from the repository root file - which imports RefCheck into every Revit-side project.
+      Without this, RefCheck's own project would import the targets that build RefCheck.
+
+      The import at the root is already conditional on $(RevitVersion), so nothing here is load
+      bearing today. It exists so that the shield is a pair rather than a habit somebody has to
+      remember, which is how the props file came to be there in the first place.
+    -->
+
+</Project>

@@ -1,4 +1,4 @@
-using System.Diagnostics;
+﻿using System.Diagnostics;
 using System.Globalization;
 using System.Security.Principal;
 using BHS.Revit.Launch;
@@ -237,6 +237,11 @@ internal static class Program
         if (options.WithModel)
             await CheckModelSettingsAsync(client, report);
 
+        // After the ribbon and the model, because one of its questions is about an event that only
+        // arrives once Revit has finished starting - and asking a thing that has not happened yet
+        // measures the clock, not the thing.
+        await CheckDbHostAsync(client, report);
+
         await CheckAssembliesAsync(client, installation, addInDirectory, report);
 
         if (options.KeepOpen)
@@ -390,8 +395,14 @@ internal static class Program
         report.Check("the file is the one findable by process id",
             string.Equals(path, ProbeLogPath(processId), StringComparison.OrdinalIgnoreCase));
 
+        // One, not one per host. The probe now runs two hosts in one process and the first run with
+        // both doubled every journal warning - the router is additive on purpose, so a sink it
+        // cannot deduplicate has to be guarded by whoever adds it.
         report.Check("the journal sink attached, which needs the API thread",
             sinks.Any(sink => sink.StartsWith("JournalLogSink", StringComparison.Ordinal)));
+
+        report.Check("the journal sink attached exactly once, however many hosts",
+            sinks.Count(sink => sink.StartsWith("JournalLogSink", StringComparison.Ordinal)) == 1);
 
         report.Check("the journal takes warnings and worse only",
             sinks.Any(sink => sink.StartsWith("JournalLogSink >= Warning", StringComparison.Ordinal)));
@@ -499,15 +510,21 @@ internal static class Program
         var title = string.Empty;
         var started = DateTime.UtcNow;
 
-        // Five minutes, and measured rather than guessed. On Revit 2026 an empty model given on the
-        // command line finished opening 3 minutes 51 seconds after the add-in registered - the
-        // add-in is up early in startup, the document is opened at the end of it. A two-minute
-        // budget failed this check while the model was opening perfectly well.
+        // Fifteen minutes, and every raise of this number has been paid for by a failure that was
+        // not one. Two minutes failed while Revit 2026 was opening the model perfectly well - it
+        // finished at 3 minutes 51 seconds. Five minutes then failed on Revit 2024 on a machine that
+        // had already started Revit four times that hour: the add-in log timestamps the document at
+        // 11 minutes 36 seconds after registration, so the work had started, was running, and
+        // finished - the budget was simply shorter than the machine.
+        //
+        // The rule this keeps costing to relearn: before raising a timeout, ask whether the work
+        // being waited for ever began. The answer is in the add-in's log and in Revit's journal, not
+        // in the stopwatch. It began every time.
         var arrived = await WaitForAsync(() =>
         {
             title = Value(client.GetConfiguration(new ConfigurationRequest()), "Document:Title");
             return !string.IsNullOrEmpty(title);
-        }, 300_000);
+        }, 900_000);
 
         report.Check("the model given on the command line is opened and reported", arrived);
 
@@ -543,6 +560,81 @@ internal static class Program
     /// not legitimate is deciding it by reading the sentence twice.
     /// </para>
     /// </remarks>
+    /// <summary>
+    /// The other shape of add-in: an application with no user interface.
+    /// </summary>
+    /// <remarks>
+    /// Everything said about this form until now came from metadata. Ordinary interactive Revit
+    /// loads a <c>DBApplication</c> manifest as readily as an <c>Application</c> one, so this costs
+    /// the sweep nothing and no headless engine is involved - and it puts both forms in one process
+    /// at once, which is the case the host registry actually has to survive.
+    /// </remarks>
+    private static async Task CheckDbHostAsync(RevitSideChannel.RevitSideChannelClient client, Report report)
+    {
+        var answer = await client.AskAsync(new AskRequest { Question = "dbhost" });
+        var values = answer.Values;
+
+        report.Check("a DBApplication add-in starts the same host",
+            values.GetValueOrDefault("db:started") == "True");
+
+        report.Check("and it is keyed by its own add-in id, beside the interface one",
+            string.Equals(values.GetValueOrDefault("db:addInId"), ProbeDeployment.DbAddInId,
+                StringComparison.OrdinalIgnoreCase));
+
+        // Looked up by id and compared, not counted. A count of two would also be satisfied by one
+        // host that registered twice, which is the failure this is here to catch.
+        _ = int.TryParse(values.GetValueOrDefault("db:hostsRegistered"), out var hosts);
+
+        report.Check("both add-in ids are found in the registry",
+            values.GetValueOrDefault("db:foundBoth") == "True");
+
+        report.Check("and they are two hosts, not one answering twice",
+            values.GetValueOrDefault("db:distinct") == "True");
+
+        // The narrowing is a fact about the host, not a convention: the same registry hands out one
+        // with a way onto the API thread and one without, and each is what its form can offer.
+        report.Check("the interface host offers the API thread and the DB host does not",
+            values.GetValueOrDefault("db:uiHasPump") == "True"
+            && values.GetValueOrDefault("db:dbHasPump") == "False");
+
+        report.Check("both forms were called on the same API thread",
+            values.GetValueOrDefault("db:apiThread") == values.GetValueOrDefault("db:uiApiThread"));
+
+        report.Check("a module starts in the DB host too",
+            values.GetValueOrDefault("db:moduleStarted") == "True");
+
+        report.Check("and it is given its own settings section",
+            values.GetValueOrDefault("db:moduleSection") == "product");
+
+        report.Check("startup there is not yet Revit having started, as in the interface form",
+            values.GetValueOrDefault("db:initializedAtStart") == "False");
+
+        report.Check("settings from disk are read there too",
+            values.GetValueOrDefault("db:settings") == "product");
+
+        // The whole argument for a separate interface over a nullable member: the mismatch has to
+        // say what is wrong where it happens, not throw a NullReferenceException somewhere later.
+        var refusal = values.GetValueOrDefault("db:uiRefusal") ?? string.Empty;
+
+        report.Check("asking for the API thread there is refused, in a sentence",
+            refusal.Contains("no user interface", StringComparison.OrdinalIgnoreCase)
+            && refusal.Contains("DBApplication", StringComparison.Ordinal));
+
+        // Waited for rather than read once - the rule this repository bought with three wrong
+        // measurements of the availability class. It was a note until it was measured; the answer
+        // was yes, and it cost the context a member name: what fires here has nothing to do with a
+        // session, so the framework calls it "initialized" and raises it for both forms.
+        var initialized = await WaitForAsync(
+            () => client.Ask(new AskRequest { Question = "dbhost" })
+                        .Values.GetValueOrDefault("db:initialized") == "True",
+            30_000);
+
+        report.Check("and Revit tells it that it has finished starting, session or no session",
+            initialized);
+
+        Report.Note("db host", $"add-in {values.GetValueOrDefault("db:addInId")}, {hosts} host(s) registered");
+    }
+
     private static async Task CheckRibbonAsync(
         RevitSideChannel.RevitSideChannelClient client,
         Options options,
@@ -551,11 +643,28 @@ internal static class Program
         var answer = await client.AskAsync(new AskRequest { Question = "ribbon" });
         report.Check("the ribbon panel and button were built", answer.Values.ContainsKey("ribbon:availabilityCalls"));
 
-        // Only with a document: the probe activates its tab on DocumentOpened, and without one
-        // nothing ever shows the tab, so Revit never asks and a count of zero would be silence
-        // rather than an answer.
-        if (!options.WithModel)
+        // From the file the SDK wrote beside the assembly, not from a list in code. Both buttons, or
+        // the count is wrong and something silently skipped one.
+        report.Check("and they came from the generated manifest, not from code",
+            answer.Values.GetValueOrDefault("ribbon:fromManifest") == "2");
+
+
+        // Only when the tab has been brought forward on purpose. Revit asks an availability class
+        // while its tab is shown, and showing it turned out to provoke a cancel-the-operation dialog
+        // in the middle of a model load - its own journal names ProgressCancelled - so the sweep no
+        // longer does it, and a count of zero here would be silence rather than an answer.
+        // The half that costs nothing and answers the question that matters most here: a ribbon
+        // built from plain type names must not have loaded the assemblies behind them. On Revit 2024
+        // an assembly that loads holds its name in the AppDomain shared with every vendor for the
+        // rest of the session, including features nobody touched.
+        report.Check("the feature assembly is not loaded while the ribbon stands",
+            answer.Values.GetValueOrDefault("ribbon:featureLoaded") == "False");
+
+        if (!options.WithModel || Environment.GetEnvironmentVariable("BHS_PROBE_SHOW_TAB") != "1")
+        {
+            Report.Note("availability and the press", "not asked - set BHS_PROBE_SHOW_TAB=1 for both");
             return;
+        }
 
         // Waited for, not read once. The probe republishes the document title before it activates
         // the tab, so the moment this check becomes reachable is half a second before the answer
@@ -572,6 +681,113 @@ internal static class Program
         report.Check("Revit asks the availability class once its tab is shown", asked);
         Report.Note("availability calls", calls);
 
+        // Here rather than beside the manifest check, because the answer is recorded by the code that
+        // brings the tab forward - the only place in the probe already on the UI thread. One button
+        // goes to Revit's own Add-Ins tab and one to a tab of ours, which is the only way the
+        // builder's tab branch runs at all: creating a tab, surviving one that exists already and
+        // putting a panel on it were written and never executed until a button asked for them.
+        // Waited for, not read once. The icon measurement happens inside the same pump action that
+        // brings the tab forward, and the flags it sets before measuring are visible first - so a
+        // single read caught Revit 2026 between the two and reported an empty measurement as a
+        // failed one. The rule keeps having to be relearned in new places: a condition that arrives
+        // asynchronously is waited for.
+        var ribbon = new Dictionary<string, string>(StringComparer.Ordinal);
+
+        await WaitForAsync(() =>
+        {
+            ribbon = new Dictionary<string, string>(
+                client.Ask(new AskRequest { Question = "ribbon" }).Values, StringComparer.Ordinal);
+
+            return ribbon.ContainsKey("icon:largeDrawn");
+        }, 30_000);
+
+        report.Check("a tab of our own was created and holds its panel",
+            ribbon.GetValueOrDefault("ribbon:ownTab") == "True");
+
+        // Asked of the live ribbon rather than of the builder. A button with no image gets an empty
+        // frame from Revit, and a panel of those reads as broken rather than unfinished - so until a
+        // feature draws its own, the framework puts the vendor mark on every button.
+        report.Check("and every button on it wears an icon",
+            ribbon.GetValueOrDefault("ribbon:icons") == "True");
+
+        // Was a note while nobody knew the answer; an assertion now that the measurement gave one.
+        // Revit's ribbon draws icons with Stretch=None, so the drawn size is the source's natural
+        // size - pixels times 96/dpi - and a plain 64-pixel file makes a 64-unit button rather than
+        // a sharper 32-unit one. Declaring 192 dpi keeps the button at 32 units and doubles the
+        // pixels available to a display that has them, which is the whole answer for 150% and 200%.
+        report.Check("both icons ship twice the pixels at twice the declared dpi",
+            ribbon.GetValueOrDefault("icon:smallSourcePixels") == "32x32@192dpi"
+            && ribbon.GetValueOrDefault("icon:sourcePixels") == "64x64@192dpi");
+
+        // Only the large one is asserted, and the reason is the ribbon's, not ours: a large button
+        // draws LargeImage and nothing else, so the small image is never laid out here and has no
+        // drawn size to check. Asserting one anyway would be asserting the absence of a button.
+        report.Check("and the large one draws at 32 units, so the button did not grow",
+            ribbon.GetValueOrDefault("icon:largeDrawn") == "32x32");
+
+        // The variant follows Revit rather than a guess. Both are shipped, and the live buttons are
+        // repainted when the theme changes - which is why this is a check and not a note.
+        report.Check("the icon variant matches Revit's theme",
+            ribbon.GetValueOrDefault("icon:themedIcon")
+                == (ribbon.GetValueOrDefault("icon:theme") == "Dark" ? "dark" : "light"));
+
+        foreach (var key in new[]
+                 {
+                     "icon:dpiScale", "icon:useOriginalImageSize", "icon:theme", "icon:smallDrawn",
+                     "icon:allDrawn",
+                 })
+        {
+            if (ribbon.TryGetValue(key, out var value))
+                Report.Note(key, value);
+        }
+
+        await CheckFeatureCommandAsync(client, report);
+    }
+
+    /// <summary>
+    /// A command Revit built itself, finding its host and loading its feature to do it.
+    /// </summary>
+    /// <remarks>
+    /// Three answers in one press, and none of them reachable any other way. Whether the registry
+    /// keyed by add-in id is found from inside a command Revit constructed from a string; what
+    /// <c>ActiveAddInId</c> actually returns there, which was documented and never measured; and
+    /// whether the feature assembly stays unloaded until the button is used.
+    /// </remarks>
+    private static async Task CheckFeatureCommandAsync(
+        RevitSideChannel.RevitSideChannelClient client,
+        Report report)
+    {
+        var runs = "0";
+        var addInId = "(none)";
+        var loaded = "False";
+        var attempts = 0;
+
+        // Pressed more than once, for the reason the close needed the same: a posted command is
+        // dropped when Revit is not ready for it, silently and with nothing anywhere to say so. The
+        // first attempt here landed half a second after the ribbon tab was brought forward and went
+        // nowhere.
+        var pressed = await WaitForAsync(() =>
+        {
+            if (attempts == 0 || attempts % 20 == 0)
+                client.Ask(new AskRequest { Question = "press" });
+
+            attempts++;
+
+            var values = client.Ask(new AskRequest { Question = "ribbon" }).Values;
+            runs = values.GetValueOrDefault("ribbon:pingRuns") ?? "0";
+            addInId = values.GetValueOrDefault("ribbon:pingAddInId") ?? "(none)";
+            loaded = values.GetValueOrDefault("ribbon:featureLoaded") ?? "False";
+            return runs != "0";
+        }, 90_000);
+
+        report.Check("a feature command runs through a one-line entry point", pressed);
+
+        report.Check("and it found its own host, keyed by add-in id",
+            string.Equals(addInId, ProbeDeployment.AddInId, StringComparison.OrdinalIgnoreCase));
+
+        report.Check("and the feature assembly loaded only once it was needed", loaded == "True");
+
+        Report.Note("feature command", $"runs {runs}, host {addInId}");
     }
 
     /// <summary>
@@ -604,6 +820,16 @@ internal static class Program
 
         report.Check("a key without the project prefix is not taken from the model",
             answer.Values.GetValueOrDefault("model:userScoped") != "written-by-the-probe");
+
+        // The subtle half, and the reason the schema has a third field: Extensible Storage refuses
+        // a null, so a removed key travels as a name in a list and is unfolded back into key -> null
+        // on reading. Without this the overlay would let a cleared value fall through to the layer
+        // below and the mechanism would look like it worked.
+        report.Check("the product layer really did set the key that is about to be cleared",
+            answer.Values.GetValueOrDefault("model:clearedBefore") == "set-by-the-product-layer");
+
+        report.Check("and a project can clear what the vendor's own file set",
+            answer.Values.GetValueOrDefault("model:clearedAfter") == "(unset)");
 
         // The sweep must leave nothing behind to be asked about. A written document is a modified
         // one, and Revit asks whether to save it on the way out - which nothing outside the process
@@ -753,6 +979,17 @@ internal static class Program
         // for is a departure nobody hears about until somebody asks.
         var dropped = await WaitForAsync(() => !registry.TryGet(instance.InstanceId, out _), 10000);
         report.Check("the registry drops it when the process goes", dropped);
+
+        // Only readable now, and only from the file: OnShutdown runs while Revit is leaving, so
+        // there is no channel left to ask over. The DB form's way down is the half of its life that
+        // nothing else in this sweep touches.
+        var log = ReadLog(ProbeLogPath(instance.ProcessId));
+
+        report.Check("the DB host is taken down on the way out, like the interface one",
+            log.Contains("BHS.Revit.Probe.Db stopped", StringComparison.Ordinal));
+
+        report.Check("and its module is stopped with it",
+            log.Contains("the DB half's module stopped", StringComparison.Ordinal));
     }
 
     private static HashSet<string> ShippedAssemblies(RevitInstallation installation)
@@ -858,7 +1095,7 @@ internal static class Program
 
             foreach (var addIn in untrusted)
             {
-                var ours = string.Equals(addIn.AddInId, ProbeDeployment.AddInId, StringComparison.OrdinalIgnoreCase);
+                var ours = ProbeDeployment.AddInIds.Contains(addIn.AddInId, StringComparer.OrdinalIgnoreCase);
                 Console.WriteLine($"  {addIn}{(ours ? "  <- ours, run --deploy" : string.Empty)}");
             }
         }

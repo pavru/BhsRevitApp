@@ -1,4 +1,4 @@
-using Autodesk.Revit.DB;
+﻿using Autodesk.Revit.DB;
 using Autodesk.Revit.UI;
 using BHS.Logging;
 
@@ -9,10 +9,16 @@ namespace BHS.Revit.Abstractions;
 /// The difference is that this one can be given things. Revit constructs an
 /// <c>IExternalCommand</c> from a class name and cannot pass it anything; this is constructed by
 /// the entry point, which has the host.
+/// <para>
+/// It is handed <see cref="IUiFeatureServices"/> rather than the narrower surface, and that is
+/// exact rather than generous: a command is reached by pressing something, so the host that owns it
+/// has a user interface by definition. Anything reachable from a <c>DBApplication</c> add-in is a
+/// module, not a command.
+/// </para>
 /// </remarks>
 public interface IFeatureCommand
 {
-    Result Execute(IFeatureServices services, ExternalCommandData data, ElementSet elements, ref string message);
+    Result Execute(IUiFeatureServices services, ExternalCommandData data, ElementSet elements, ref string message);
 }
 
 /// <summary>
@@ -40,8 +46,29 @@ public interface IFeatureCommand
 /// this is the same trick applied to commands.
 /// </para>
 /// <code>
+/// [Transaction(TransactionMode.Manual)]
 /// public sealed class FooCommandEntryPoint : CommandEntryPoint&lt;FooCommand&gt; { }
 /// </code>
+/// <para>
+/// <b>The attribute goes on the derived class.</b> Revit reads <c>[Transaction]</c> off the type it
+/// constructs, which is the derived one - measured, and the failure is a modal dialog saying the
+/// add-in has no Transaction attribute. Putting it on the feature's own command would do nothing,
+/// because Revit never sees that type.
+/// <para>
+/// <b>Whether it could be inherited from this base is not known, and the honest answer is worth more
+/// than a tidy one.</b> Checked against the metadata of all four releases:
+/// <c>TransactionAttribute</c> is declared <c>[AttributeUsage(AttributeTargets.Class)]</c> with no
+/// named arguments at all, so <c>Inherited</c> keeps its default of <c>true</c> - the attribute is
+/// inheritable in principle. Whether Revit asks for it with <c>inherit: true</c> has never been
+/// measured; the one measurement here had no attribute anywhere in the chain, which settles nothing
+/// about inheritance.
+/// </para>
+/// <para>
+/// The rule stands anyway, and on its own merit rather than on that question: the transaction mode
+/// is a property of each command, so it is stated where each command is declared. It travels in the
+/// manifest and has no default - a command whose mode nobody stated is a button that fails when it
+/// is pressed.
+/// </para>
 /// </remarks>
 public abstract class CommandEntryPoint<TCommand> : IExternalCommand
     where TCommand : IFeatureCommand, new()
@@ -88,13 +115,13 @@ public abstract class CommandEntryPoint<TCommand> : IExternalCommand
     /// measured from inside a command, and this repository has learned what documented-but-unmeasured
     /// is worth.
     /// </remarks>
-    private IFeatureServices? Locate(ExternalCommandData commandData)
+    private IUiFeatureServices? Locate(ExternalCommandData commandData)
     {
         try
         {
             var addInId = commandData?.Application?.ActiveAddInId?.GetGUID();
 
-            if (addInId is { } id && HostRegistry.Find(id) is { } found)
+            if (addInId is { } id && HostRegistry.Find(id) is IUiFeatureServices found)
                 return found;
         }
         catch (Exception)
@@ -102,7 +129,10 @@ public abstract class CommandEntryPoint<TCommand> : IExternalCommand
             // Asking must never be worse than not knowing.
         }
 
-        return HostRegistry.FindByAssembly(typeof(TCommand).Assembly)
-               ?? HostRegistry.FindByAssembly(GetType().Assembly);
+        // Narrowed rather than cast: a host found here that has no user interface is a
+        // DBApplication add-in whose assembly also carries a command, which is a deployment
+        // mistake. It reads as "no host" and gets the message below, which says what to do.
+        return HostRegistry.FindByAssembly(typeof(TCommand).Assembly) as IUiFeatureServices
+               ?? HostRegistry.FindByAssembly(GetType().Assembly) as IUiFeatureServices;
     }
 }

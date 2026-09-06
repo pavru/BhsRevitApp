@@ -1,4 +1,4 @@
-<Project Sdk="BHS.Revit.Sdk/1.3.7">
+﻿<Project Sdk="BHS.Revit.Sdk/1.5.2">
 
     <!--
       The Revit-side host: the entry point an edition derives from, and everything that has to
@@ -15,7 +15,31 @@
         <RootNamespace>BHS.Revit.Host</RootNamespace>
         <UseRevitApi>true</UseRevitApi>
         <UseRevitApiUi>true</UseRevitApiUi>
+
+        <!--
+          For ImageSource on a ribbon button, and nothing else - no XAML here. It costs nothing in
+          the AppDomain: PresentationCore and its neighbours are in the GAC on net48 and in the
+          Windows Desktop shared framework on the .NET axis, and Revit's own interface is WPF, so
+          they are loaded long before we ask. RefCheck confirms the output is unchanged.
+        -->
+        <UseWPF>true</UseWPF>
     </PropertyGroup>
+
+    <ItemGroup>
+        <!--
+          Embedded rather than deployed. A file beside the assembly would need a path resolved at run
+          time, would have to survive publishing and deployment, and would outlive whatever produced
+          it - deployment here copies and never deletes, which has already left stale assemblies in
+          add-in folders. An icon inside the assembly cannot go missing or go stale.
+        -->
+        <EmbeddedResource Include="Resources\PlaceholderIcon.32.png"/>
+        <EmbeddedResource Include="Resources\PlaceholderIcon.64.png"/>
+        <EmbeddedResource Include="Resources\PlaceholderIcon.dark.32.png"/>
+        <EmbeddedResource Include="Resources\PlaceholderIcon.dark.64.png"/>
+
+        <!-- The source the two PNGs were rendered from, kept so they can be made again. -->
+        <None Include="Resources\PlaceholderIcon.svg"/>
+    </ItemGroup>
 
     <ItemGroup>
         <ProjectReference Include="..\BHS.Revit.Abstractions\BHS.Revit.Abstractions.csproj"/>

@@ -1,4 +1,4 @@
-<Project>
+﻿<Project>
 
     <!-- ======================================================================================= -->
     <!-- Base-SDK behaviour that does not apply once `revit` is the target platform.             -->
@@ -16,6 +16,21 @@
       brings in the WPF targets and the Microsoft.WindowsDesktop.App reference.
     -->
     <Target Name="_CheckForInvalidWindowsDesktopTargetingConfiguration"/>
+
+    <!--
+      And the same refusal a second time, from the other end.
+
+      The check above stops a project that asks for WPF itself; this one stops a project that merely
+      references one that did, by looking for Microsoft.WindowsDesktop.App among the transitive
+      framework references. Two checks, one reason, and only the first was stubbed - which stayed
+      invisible until the framework put an ImageSource on a ribbon button and every edition
+      referencing it stopped building on the .NET axis with NETSDK1136.
+
+      Worth stating plainly, because it is the ordinary case rather than an exception: a Revit-side
+      edition is Windows desktop by definition, and it inherits WPF from the framework whether or not
+      it draws anything of its own.
+    -->
+    <Target Name="_CheckForTransitiveWindowsDesktopDependencies"/>
 
     <!--
       A target platform earns automatic preprocessor constants: REVIT, REVIT2026_0, and a

@@ -1,4 +1,4 @@
-using Autodesk.Revit.UI;
+﻿using Autodesk.Revit.UI;
 using BHS.Logging;
 using BHS.Transport;
 using BHS.Transport.Protocol;
@@ -19,16 +19,19 @@ internal sealed class ProbeChannel : RevitSideChannel.RevitSideChannelBase
 {
     private readonly ProbeFacts _facts;
     private readonly ProbeSettings _settings;
-    private readonly BHS.Revit.Abstractions.IFeatureServices _services;
+    private readonly BHS.Revit.Abstractions.IUiFeatureServices _services;
     private readonly ExternalEvent _exit;
+    private readonly ExternalEvent _press;
     private int _publishCount;
 
     public ProbeChannel(
         ProbeFacts facts,
         BHS.Settings.LayeredSettings? layers,
-        BHS.Revit.Abstractions.IFeatureServices services,
-        ExternalEvent exit)
+        BHS.Revit.Abstractions.IUiFeatureServices services,
+        ExternalEvent exit,
+        ExternalEvent press)
     {
+        _press = press;
         _settings = new ProbeSettings(layers, services);
         _services = services;
         _facts = facts;
@@ -86,11 +89,53 @@ internal sealed class ProbeChannel : RevitSideChannel.RevitSideChannelBase
                 case "ribbon":
                     response.Values.Add("ribbon:availabilityCalls", LocalAvailability.Calls.ToString());
                     response.Values.Add("ribbon:commandRuns", ProbeCommand.Runs.ToString());
+                    response.Values.Add("ribbon:featureLoaded", ProbeApplication.IsFeatureLoaded() ? "True" : "False");
+                    response.Values.Add("ribbon:fromManifest", ProbeApplication.ButtonsFromManifest.ToString());
+                    response.Values.Add("ribbon:ownTab", ProbeApplication.OwnTabSeen ? "True" : "False");
+                    response.Values.Add("ribbon:icons", ProbeApplication.IconsSeen ? "True" : "False");
+
+                    foreach (var fact in ProbeApplication.IconFacts)
+                        response.Values.Add(fact.Key, fact.Value);
+                    response.Values.Add("ribbon:pingRuns",
+                        Environment.GetEnvironmentVariable("BHS_PROBE_PING_RAN") ?? "0");
+                    response.Values.Add("ribbon:pingAddInId",
+                        Environment.GetEnvironmentVariable("BHS_PROBE_PING_SERVICES") ?? "(none)");
                     break;
 
                 case "model":
                     foreach (var pair in ModelSettings().GetAwaiter().GetResult())
                         response.Values.Add(pair.Key, pair.Value);
+                    break;
+
+                case "press":
+                    _press.Raise();
+                    break;
+
+                // The other half of the add-in, which has no channel of its own on purpose: two
+                // servers in one process would race for one pipe name, and the question here is
+                // about the host, not the transport.
+                case "dbhost":
+                    response.Values.Add("db:started", ProbeDbApplication.Started ? "True" : "False");
+                    response.Values.Add("db:addInId", ProbeDbApplication.AddInIdSeen);
+                    response.Values.Add("db:initializedAtStart", ProbeDbApplication.InitializedAtStart ? "True" : "False");
+                    response.Values.Add("db:settings", ProbeDbApplication.SettingsSeen);
+                    response.Values.Add("db:uiRefusal", ProbeDbApplication.UiRefusal);
+                    response.Values.Add("db:hostsRegistered", BHS.Revit.Abstractions.HostRegistry.Count.ToString());
+                    response.Values.Add("db:apiThread", ProbeDbApplication.ApiThreadId.ToString());
+                    response.Values.Add("db:uiApiThread", _services.Revit.ApiThreadId.ToString());
+                    response.Values.Add("db:moduleStarted", ProbeDbModule.Started ? "True" : "False");
+                    response.Values.Add("db:moduleSection", ProbeDbModule.SectionSeen);
+
+                    // Both looked up by id, and asked whether they are the same object. "At least
+                    // two are registered" would also pass if one host had registered twice.
+                    var ui = BHS.Revit.Abstractions.HostRegistry.Find(ProbeApplication.Id);
+                    var db = BHS.Revit.Abstractions.HostRegistry.Find(ProbeDbApplication.Id);
+
+                    response.Values.Add("db:foundBoth", ui is not null && db is not null ? "True" : "False");
+                    response.Values.Add("db:distinct", ui is not null && db is not null && !ReferenceEquals(ui, db) ? "True" : "False");
+                    response.Values.Add("db:uiHasPump", ui is BHS.Revit.Abstractions.IUiFeatureServices ? "True" : "False");
+                    response.Values.Add("db:dbHasPump", db is BHS.Revit.Abstractions.IUiFeatureServices ? "True" : "False");
+                    response.Values.Add("db:initialized", ProbeDbApplication.Initialized ? "True" : "False");
                     break;
 
                 case "log":
@@ -206,9 +251,19 @@ internal sealed class ProbeChannel : RevitSideChannel.RevitSideChannelBase
             using var group = new Autodesk.Revit.DB.TransactionGroup(document, "BHS probe: model settings");
             group.Start();
 
+            const string cleared = "Model:Probe:Cleared";
+
+            // What the product layer put there, before the model has said anything.
+            answer["model:clearedBefore"] = _services.ModelSettings.For(document)[cleared] ?? "(unset)";
+
             _services.ModelSettings.Write(document, new Dictionary<string, string?>
             {
                 [key] = "written-by-the-probe",
+
+                // Null means remove, not "set to empty". The subtle half of the mechanism: a project
+                // takes away what the vendor's own file set, and the consumer falls back to its own
+                // default rather than ours.
+                [cleared] = null,
             });
 
             var after = _services.ModelSettings.For(document);
@@ -218,6 +273,7 @@ internal sealed class ProbeChannel : RevitSideChannel.RevitSideChannelBase
             // The other half of the rule: a key without the project prefix must not come from the
             // model at all, and must still answer from the ordinary chain.
             answer["model:userScoped"] = after["Probe:Marker"] ?? "(unset)";
+            answer["model:clearedAfter"] = after[cleared] ?? "(unset)";
 
             group.RollBack();
             answer["model:clean"] = document.IsModified ? "False" : "True";

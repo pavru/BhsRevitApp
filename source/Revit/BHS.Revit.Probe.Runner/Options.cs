@@ -48,8 +48,14 @@ internal sealed class Options
     /// the exit command sits in the queue until startup finishes; measured at 25 seconds on 2024.
     /// Only then does the teardown itself begin, and that alone was 9s on 2025 and 70s on 2027.
     /// A tighter budget does not fail the close, it just kills Revit in the middle of one.
+    /// <para>
+    /// Raised to 360 on the second reading that reached the old ceiling - 208s on 2024, then a 2026
+    /// that had just spent 105 seconds opening a model and did not finish leaving inside four
+    /// minutes. Both machines were on their fifth Revit of the hour, which is the condition a sweep
+    /// creates for itself.
+    /// </para>
     /// </remarks>
-    public TimeSpan ShutdownTimeout { get; set; } = TimeSpan.FromSeconds(240);
+    public TimeSpan ShutdownTimeout { get; set; } = TimeSpan.FromSeconds(360);
 
     /// <summary>
     /// Open a model on start, and check that the probe sees it.

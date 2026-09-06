@@ -1,0 +1,91 @@
+# The delivery path, built before the first feature rather than after it.
+#
+# It exists because this repository ran 51 commits and every measurement in CLAUDE.md on one
+# machine, by hand, because somebody remembered to type the command. That works until the day it
+# does not, and the day it stops is not announced.
+#
+# Two stages, and the split is forced by the subject: the half that needs a live Revit cannot run
+# on a hosted runner, because Revit is not there and cannot be installed. So this file carries
+# everything that is true without Revit - the build on all four Revit target frameworks, RefCheck
+# against the assemblies Revit ships, and the transport probe on all three runtimes - and the
+# in-Revit sweep (BHS.Revit.Probe.Runner, 288 checks) stays a local ritual until a self-hosted
+# runner on the development machine takes it.
+#
+# THE JOB NAMES BELOW ARE A CONTRACT. Branch protection lists required checks by name, and a
+# renamed job means the required check never arrives and the merge is blocked forever by a message
+# that names nothing. Rename here only together with the branch rule, and the rule first.
+
+name: build
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+    branches: [master]
+
+# Neither job writes anything back. Left unset, the token carries whatever the repository default
+# happens to be, which on an older repository is write access to every scope.
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  # Superseding a pull request run is free - only the last one matters. Superseding a push to
+  # master is not: two merges landing close together would cancel the first, and with both checks
+  # required that leaves a master commit permanently without a green build.
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+jobs:
+  sdk-version:
+    name: sdk-version
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          # The bump half compares against the base of the pull request, so the base has to be
+          # in the clone. A shallow one would make the check pass by being unable to look.
+          fetch-depth: 0
+
+      - name: SDK version is consistent, and moved if the SDK did
+        shell: pwsh
+        run: |
+          $since = if ('${{ github.event_name }}' -eq 'pull_request') { 'origin/${{ github.base_ref }}' } else { '' }
+          if ($since) {
+            ./build/scripts/Check-SdkVersion.ps1 -Since $since
+          } else {
+            ./build/scripts/Check-SdkVersion.ps1
+          }
+
+  build:
+    name: build
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          # net10.0 is Revit 2027 and the Win-side axis; net8.0 is 2025 and 2026. net48 needs no
+          # runtime here - it is the machine's own - but it does need the targeting pack, which
+          # windows-latest carries with Visual Studio.
+          dotnet-version: |
+            8.0.x
+            10.0.x
+
+      - name: Pack the SDK into the repository feed
+        # MSBuild resolves an SDK package before any project restores, so this cannot be folded
+        # into the solution build. It is the bootstrap step from the SDK readme.
+        run: dotnet build build/BHS.Revit.Sdk/BHS.Revit.Sdk.csproj -c Release
+
+      - name: Build the solution
+        # RefCheck runs inside this: Directory.Build.targets imports it wherever RevitVersion is
+        # set, so a Revit-side assembly clashing with a copy Revit ships fails the build here.
+        run: dotnet build BhsRevitApp.slnx -c Release
+
+      - name: Transport probe, net48
+        run: dotnet run --project source/Shared/BHS.Transport.Probe -c Release -f net48 --no-build
+
+      - name: Transport probe, net8.0
+        run: dotnet run --project source/Shared/BHS.Transport.Probe -c Release -f net8.0-windows --no-build
+
+      - name: Transport probe, net10.0
+        run: dotnet run --project source/Shared/BHS.Transport.Probe -c Release -f net10.0-windows --no-build

@@ -22,6 +22,20 @@
         <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
     </PropertyGroup>
 
+    <!--
+      One version for everything under source/, and it moves with the change that earns it.
+      Tooling under build/ is not covered - BHS.Revit.Sdk carries its own version, because that
+      one is a compatibility contract with the projects naming it in their header.
+
+      Only the source of truth lives here. AssemblyVersion and FileVersion are derived in
+      Directory.Build.targets, where $(Version) already exists: deriving them here would read
+      VersionPrefix directly and quietly ignore a `-p:Version=` on the command line, so a release
+      build would ship a package saying 1.2.3 and assemblies still saying 0.1.0.
+    -->
+    <PropertyGroup>
+        <VersionPrefix>0.1.0</VersionPrefix>
+    </PropertyGroup>
+
     <PropertyGroup>
         <NeutralLanguage>en</NeutralLanguage>
         <SatelliteResourceLanguages>en-US;en-GB;ru-RU</SatelliteResourceLanguages>
@@ -41,9 +55,21 @@
     </PropertyGroup>
 
     <!--
-      Output paths are left alone. Every Revit target framework has its own moniker, so the
-      ordinary bin\<Configuration>\<tfm>\ layout already keeps the versions apart and there is
-      nothing to redirect.
+      The platform is kept OUT of the output path, and this is a correction rather than a
+      preference.
+
+      Left alone, the same project lands in two different places depending on how it is built:
+      building the solution produces bin\Release\<tfm>\, while `dotnet run` on the project
+      looks in bind\Release\<tfm>\. Both existed here, months apart in content, and every
+      local probe run was executing whichever one happened to be newer - which is to say, not
+      necessarily the one just built. CI found it the first time the second directory was absent,
+      and the failure was a missing file rather than a stale result, which is the lucky version.
+
+      Nothing is lost by dropping it: x64 is the only platform Revit has ever had, so the segment
+      distinguished nothing and only made two spellings of one path.
     -->
+    <PropertyGroup>
+        <AppendPlatformToOutputPath>false</AppendPlatformToOutputPath>
+    </PropertyGroup>
 
 </Project>

@@ -1,7 +1,8 @@
-<Project>
+﻿<Project>
 
     <UsingTask TaskName="BHS.Revit.Sdk.GenerateRevitDefineConstants" AssemblyFile="$(BuildTasksAssembly)"/>
     <UsingTask TaskName="BHS.Revit.Sdk.GenerateRevitAddIn" AssemblyFile="$(BuildTasksAssembly)"/>
+    <UsingTask TaskName="BHS.Revit.Sdk.GenerateFeatureManifest" AssemblyFile="$(BuildTasksAssembly)"/>
 
     <ItemDefinitionGroup>
         <RevitAddIn>
@@ -11,6 +12,7 @@
 
     <PropertyGroup>
         <PublishRevitAddIn Condition="'$(PublishRevitAddIn)' == ''">false</PublishRevitAddIn>
+        <RevitFeatureManifestExtension Condition="'$(RevitFeatureManifestExtension)' == ''">.features.json</RevitFeatureManifestExtension>
         <DeployRevitAddIn Condition="'$(DeployRevitAddIn)' == ''">false</DeployRevitAddIn>
 
         <RevitVendorId Condition="'$(RevitVendorId)' == ''">UnknownVendor</RevitVendorId>
@@ -52,7 +54,9 @@
         <ItemGroup>
             <RevitAddIn>
                 <_AssemblyPathForManifest Condition="'$(PublishRevitAddIn)' != 'true'">%(RevitAddIn.Assembly)</_AssemblyPathForManifest>
-                <_AssemblyPathForManifest Condition="'$(PublishRevitAddIn)' == 'true'">%(RevitAddIn.VendorId)\%(RevitAddIn.AddInName)\Lib\%(RevitAddIn.Assembly)</_AssemblyPathForManifest>
+                <!-- Where the publish target actually puts the files, named the same way it names
+                     them: by package, not by add-in. Several add-ins in one project share one Lib. -->
+                <_AssemblyPathForManifest Condition="'$(PublishRevitAddIn)' == 'true'">$(RevitVendorId)\$(RevitPackageName)\Lib\%(RevitAddIn.Assembly)</_AssemblyPathForManifest>
             </RevitAddIn>
         </ItemGroup>
 
@@ -83,6 +87,37 @@
         <GenerateRevitAddIn
             AddInDefinition="@(_RevitAddInTaskItem)"
             RevitVersion="$(RevitVersion)"/>
+    </Target>
+
+    <!--
+      The ribbon manifest: what the host reads to build buttons without loading the assemblies
+      behind them. It goes next to the assembly, which for a published add-in means Lib - the same
+      place the settings files land, and for the same reason: what belongs beside the assembly is
+      found relative to the assembly, and everything a level up exists without being read.
+    -->
+    <!--
+      Written straight into the output directory, and without Inputs/Outputs.
+
+      Both decisions were bought by one silent failure. The first version wrote to obj and added a
+      None item with CopyToOutputDirectory, which does nothing: the copy list is computed in
+      AssignTargetPaths, long before a target that runs beside CopyFilesToOutputDirectory. And it was
+      guarded by Inputs="$(MSBuildAllProjects)", a property modern SDKs leave empty - so the target
+      was considered up to date and skipped, with no output and no message. Writing the file is a few
+      hundred bytes of string building; it does not need protecting from itself.
+    -->
+    <Target Name="_GenerateFeatureManifest"
+            AfterTargets="CopyFilesToOutputDirectory"
+            Condition="'$(RevitVersion)' != '' And '@(RevitRibbonButton)' != ''">
+
+        <GenerateFeatureManifest
+            Buttons="@(RevitRibbonButton)"
+            OutputPath="$(TargetDir)$(AssemblyName)$(RevitFeatureManifestExtension)"
+            AssemblyFileName="$(TargetFileName)"/>
+
+        <ItemGroup>
+            <!-- So that a clean removes it, like anything else the build produced. -->
+            <FileWrites Include="$(TargetDir)$(AssemblyName)$(RevitFeatureManifestExtension)"/>
+        </ItemGroup>
     </Target>
 
 </Project>

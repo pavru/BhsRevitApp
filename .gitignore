@@ -1,12 +1,26 @@
 ## Build output
 [Bb]in/
 [Oo]bj/
-artifacts/
 publish/
 *.binlog
 
-## Repo-local NuGet feed (produced by building build/BHS.Revit.Sdk)
-artifacts/feed/
+## Repo-local NuGet feed: its CONTENT is produced by building build/BHS.Revit.Sdk and never
+## committed, but the directory itself is. NuGet.config names it as a package source, and NuGet
+## refuses a source that does not exist - NU1301, on the very first restore, before anything can
+## create it. So a fresh clone did not build at all, including the bootstrap step CLAUDE.md tells
+## you to run first. Found by CI on its first run, which is exactly what CI is for: the directory
+## had existed on this machine for months.
+## A nested artifacts/ anywhere is build output, ignored as it always was. Spelled out because
+## the root exception below is anchored: writing `artifacts/*` alone quietly stopped ignoring
+## every other artifacts directory in the tree, which the old unanchored `artifacts/` had covered.
+**/artifacts/
+!/artifacts/
+
+## The root feed: the directory is tracked, its content never.
+/artifacts/*
+!/artifacts/feed/
+/artifacts/feed/*
+!/artifacts/feed/.gitkeep
 
 ## Rider / JetBrains
 .idea/
