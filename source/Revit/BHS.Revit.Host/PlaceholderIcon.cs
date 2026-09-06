@@ -1,4 +1,4 @@
-using Autodesk.Revit.UI;
+﻿using Autodesk.Revit.UI;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
 
@@ -37,6 +37,18 @@ public static class PlaceholderIcon
 {
     private static readonly Dictionary<string, ImageSource?> Cache = new(StringComparer.Ordinal);
 
+    /// <summary>
+    /// Why the last icon or theme lookup did not work, or <see langword="null"/> when both did.
+    /// </summary>
+    /// <remarks>
+    /// Both failures below are answered by carrying on - a missing icon is a plain button, and an
+    /// unknown theme is the light one - and that is right, because neither is worth a failed
+    /// startup inside Revit. What is not right is doing it in silence: a button that came out plain
+    /// looks exactly like a button nobody has drawn yet, which is the state this whole class exists
+    /// to make visible. So the reason is kept, and whoever asked for the icon says it once.
+    /// </remarks>
+    public static string? LastFailure { get; private set; }
+
     /// <summary>The small slot: 32 pixels at 192 dpi, which is 16 units wide.</summary>
     public static ImageSource? Small => Load(32, Dark);
 
@@ -60,11 +72,12 @@ public static class PlaceholderIcon
             {
                 return UIThemeManager.CurrentTheme == UITheme.Dark;
             }
-            catch (Exception)
+            catch (Exception error)
             {
                 // Asked too early, or asked of a Revit that has no opinion. Light is the older
                 // default and the safer guess: a dark mark on a light ribbon is legible, and the
                 // reverse is not.
+                LastFailure = $"the theme could not be read ({error.GetType().Name}: {error.Message}); assuming light";
                 return false;
             }
         }
@@ -92,7 +105,10 @@ public static class PlaceholderIcon
             using var stream = typeof(PlaceholderIcon).Assembly.GetManifestResourceStream(name);
 
             if (stream is null)
+            {
+                LastFailure = $"the embedded resource {name} is not in this assembly";
                 return null;
+            }
 
             var image = new BitmapImage();
 
@@ -111,9 +127,11 @@ public static class PlaceholderIcon
 
             return image;
         }
-        catch (Exception)
+        catch (Exception error)
         {
-            // A missing icon is a plain button. It is never worth a failed startup.
+            // A missing icon is a plain button. It is never worth a failed startup - but it is
+            // worth one line, which whoever asked writes.
+            LastFailure = $"{name} could not be decoded ({error.GetType().Name}: {error.Message})";
             return null;
         }
     }

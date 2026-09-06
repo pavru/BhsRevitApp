@@ -12,4 +12,13 @@
       If something here ever needs a shared setting, add it to this file rather than removing it.
     -->
 
+    <!--
+      The one setting the tooling does share with source/, and it is deliberate rather than an
+      exception to the shield: RefCheck and the SDK are our code too, and a warning nobody has to
+      answer for is a warning nobody reads. Zero on both sides today.
+    -->
+    <PropertyGroup>
+        <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+    </PropertyGroup>
+
 </Project>

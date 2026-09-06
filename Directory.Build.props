@@ -15,11 +15,23 @@
         <PlatformTarget>x64</PlatformTarget>
     </PropertyGroup>
 
+    <!--
+      Warnings are errors, and the baseline is zero because it already was.
+
+      The rules document offers a ratchet for this - freeze the current count, fail only when it
+      grows - and a ratchet is the right answer when there is a backlog to pay off. There is none:
+      the whole solution builds with 0 warnings across all four Revit target frameworks. A bar set
+      at zero today costs nothing and needs no machinery; set it in a year and it needs both.
+
+      NoWarn stays the escape hatch, per project and per code, where a warning has been read and
+      judged wrong. That is a decision with a name on it, which is the opposite of a global
+      allowance nobody revisits.
+    -->
     <PropertyGroup>
         <LangVersion>latest</LangVersion>
         <Nullable>enable</Nullable>
         <ImplicitUsings>enable</ImplicitUsings>
-        <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
+        <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
     </PropertyGroup>
 
     <!--

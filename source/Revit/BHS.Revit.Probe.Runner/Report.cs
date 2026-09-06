@@ -1,4 +1,4 @@
-namespace BHS.Revit.Probe.Runner;
+﻿namespace BHS.Revit.Probe.Runner;
 
 /// <summary>
 /// The running tally, printed as it goes.
@@ -13,8 +13,12 @@ internal sealed class Report
 
     public int Failures => _failed.Count;
 
+    /// <summary>How many checks were reported, whatever their outcome.</summary>
+    public int Performed { get; private set; }
+
     public bool Check(string what, bool ok)
     {
+        Performed++;
         Console.WriteLine($"  [{(ok ? "ok" : "FAIL")}] {what}");
 
         if (!ok)
@@ -32,17 +36,43 @@ internal sealed class Report
         Console.WriteLine("== " + text);
     }
 
-    public void Summarise()
+    /// <summary>
+    /// The fewest checks a single release is expected to contribute.
+    /// </summary>
+    /// <remarks>
+    /// A floor, not a figure: adding checks is the normal direction and must not require an edit
+    /// here. It exists for the one failure a sweep cannot otherwise see - a check that stopped
+    /// running. A condition that is never evaluated prints nothing, fails nothing, and is
+    /// indistinguishable from one that passed; that is how RefCheck went months unimported while
+    /// the documentation called it a build failure, and how the placeholder icons passed every
+    /// assertion while holding a quarter of the logo.
+    ///
+    /// Measured at 53 for a plain single-release sweep, so 45 leaves room for a mode that asks
+    /// fewer questions without leaving room for a whole area to disappear.
+    /// </remarks>
+    public const int MinimumPerRelease = 45;
+
+    public void Summarise(int releases)
     {
         Console.WriteLine();
 
+        var floor = MinimumPerRelease * Math.Max(releases, 1);
+
+        if (Performed < floor)
+        {
+            Console.WriteLine(
+                $"  [FAIL] only {Performed} checks ran across {releases} release(s), fewer than the " +
+                $"{floor} expected. Some check stopped running rather than started failing.");
+            _failed.Add($"the sweep ran {Performed} checks, fewer than the {floor} expected");
+        }
+
         if (_failed.Count == 0)
         {
-            Console.WriteLine("== all checks passed");
+            Console.WriteLine($"== all checks passed ({Performed})");
             return;
         }
 
-        Console.WriteLine($"== {_failed.Count} check(s) FAILED");
+        Console.WriteLine($"== {_failed.Count} check(s) FAILED, out of {Performed}");
         foreach (var failure in _failed)
             Console.WriteLine("   - " + failure);
     }

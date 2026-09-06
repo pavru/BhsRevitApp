@@ -132,6 +132,27 @@
             <_DeployDestinationRoot Condition="'$(RevitDeploy)' == 'Local'">$(AppData)\Autodesk\Revit\Addins\$(RevitVersion)\</_DeployDestinationRoot>
         </PropertyGroup>
 
+        <PropertyGroup>
+            <_DeployAddInFolder>$([System.IO.Path]::Combine('$(_DeployDestinationRoot)', '$(RevitVendorId)', '$(RevitPackageName)'))</_DeployAddInFolder>
+        </PropertyGroup>
+
+        <!--
+          Our own folder is emptied before the copy, and only ours: the Addins directory belongs to
+          every vendor on the machine, while VendorId/PackageName under it is this package and
+          nothing else.
+
+          Deploy used to copy and never delete, so the folder accumulated whatever any past build
+          had put there. Measured: add-in folders still held BHS.Configuration.dll and
+          GrpcDotNetNamedPipes.dll from renames, and Microsoft.Extensions.* from the day that
+          reference was removed - Revit was loading a directory no build had produced in weeks.
+          Worse, RVTREF005 reads the build output rather than the deployed folder, so a forbidden
+          assembly could outlive the rule that banned it.
+
+          The probe runner already cleared the folder itself, which is the tell: it needed doing,
+          and only the caller that had been bitten did it.
+        -->
+        <RemoveDir Directories="$(_DeployAddInFolder)" Condition="Exists('$(_DeployAddInFolder)')" />
+
         <ItemGroup>
             <_DeployFiles Include="$(_PublishRoot)\**\*.*" />
         </ItemGroup>
@@ -142,7 +163,21 @@
               DestinationFiles="@(_DeployFiles->'$(_DeployDestinationRoot)%(RecursiveDir)%(Filename)%(Extension)')" 
               SkipUnchangedFiles="true" />
               
-        <Message Importance="High" Text="Deploy complete: $(_DeployDestinationRoot)" />
+        <!--
+          Said out loud, because the alternative is silence in the one place where it costs a
+          person time. An empty RevitSignWith means "production", so the signing target simply does
+          not run - no error, no warning. That is correct for a release and wrong for a deploy: an
+          unsigned add-in makes Revit raise a modal dialog before any add-in reaches OnStartup, and
+          from outside the process that is indistinguishable from a Revit that is merely slow.
+          Measured once already, when the thumbprint had been set for one terminal session only and
+          builds quietly went out unsigned for a day.
+        -->
+        <Message Importance="High" Condition="'$(RevitSignWith)' == ''"
+                 Text="Deploy complete: $(_DeployDestinationRoot) - UNSIGNED. Revit will ask about this add-in unless it is already trusted by AddInId. Set BHS_REVIT_SIGN_WITH to sign." />
+        <!-- The last four characters, not the thumbprint: enough to tell one development certificate
+             from another, and the repository is public, so build logs are too. -->
+        <Message Importance="High" Condition="'$(RevitSignWith)' != ''"
+                 Text="Deploy complete: $(_DeployDestinationRoot) - signed with certificate ...$(RevitSignWith.Substring($([MSBuild]::Subtract($(RevitSignWith.Length), 4))))." />
     </Target>
 
     <!--
@@ -164,6 +199,13 @@
             <_DeployDestinationRoot Condition="'$(RevitDeploy)' == 'System'">$(ProgramFiles)</_DeployDestinationRoot>
             <_DeployDestinationRoot Condition="'$(RevitDeploy)' == 'Local'">$(LocalAppData)</_DeployDestinationRoot>
         </PropertyGroup>
+
+        <PropertyGroup>
+            <_DeployAddInFolder>$([System.IO.Path]::Combine('$(_DeployDestinationRoot)', '$(RevitVendorId)', '$(RevitPackageName)'))</_DeployAddInFolder>
+        </PropertyGroup>
+
+        <!-- Same reason as the version-specific deploy above: ours only, emptied before the copy. -->
+        <RemoveDir Directories="$(_DeployAddInFolder)" Condition="Exists('$(_DeployAddInFolder)')" />
 
         <ItemGroup>
             <_DeployFiles Include="$(_SourcePath)\**\*.*" />
