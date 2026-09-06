@@ -150,8 +150,21 @@
 
           The probe runner already cleared the folder itself, which is the tell: it needed doing,
           and only the caller that had been bitten did it.
+
+          ContinueOnError is not laziness here, it is the difference between a stale folder and a
+          broken one. Rebuild with RevitDeploy=Local while Revit is open and the loaded assembly is
+          mapped: Directory.Delete removes what it can and then throws, so without this the target
+          fails AFTER emptying Lib and BEFORE the copy, and the next Revit start finds a half-erased
+          add-in. With it, the copy still runs and restores everything it owns; the locked file
+          keeps its old content, which is exactly what it kept before this clean existed.
+
+          It also does not touch the manifests at the Addins root, and cannot: that directory holds
+          every vendor's .addin, and a manifest we published under a name we no longer use is
+          indistinguishable from somebody else's. Renaming an add-in still leaves its old manifest
+          behind - known, and narrower than what it replaced.
         -->
-        <RemoveDir Directories="$(_DeployAddInFolder)" Condition="Exists('$(_DeployAddInFolder)')" />
+        <RemoveDir Directories="$(_DeployAddInFolder)" Condition="Exists('$(_DeployAddInFolder)')"
+                   ContinueOnError="WarnAndContinue" />
 
         <ItemGroup>
             <_DeployFiles Include="$(_PublishRoot)\**\*.*" />
@@ -172,12 +185,47 @@
           Measured once already, when the thumbprint had been set for one terminal session only and
           builds quietly went out unsigned for a day.
         -->
-        <Message Importance="High" Condition="'$(RevitSignWith)' == ''"
+        <Message Importance="High" Condition="'$(RevitSignWith)' == '' AND '@(RevitAddIn)' != ''"
                  Text="Deploy complete: $(_DeployDestinationRoot) - UNSIGNED. Revit will ask about this add-in unless it is already trusted by AddInId. Set BHS_REVIT_SIGN_WITH to sign." />
+        <Message Importance="High" Condition="'$(RevitSignWith)' == '' AND '@(RevitAddIn)' == ''"
+                 Text="Deploy complete: $(_DeployDestinationRoot)" />
         <!-- The last four characters, not the thumbprint: enough to tell one development certificate
-             from another, and the repository is public, so build logs are too. -->
-        <Message Importance="High" Condition="'$(RevitSignWith)' != ''"
+             from another, and the repository is public, so build logs are too.
+
+             Length-guarded, because Substring throws on a negative start and a thumbprint short
+             enough to cause that is a mistyped environment variable - which would then fail the
+             build from inside the SUCCESS message, naming Substring and not the variable. -->
+        <PropertyGroup>
+            <!--
+              The stamp the signing target touches, which is the only evidence here that this build
+              actually signed anything. Asking RevitSignWith alone says what was CONFIGURED, and the
+              two come apart on an ordinary incremental build: signing hangs off CoreCompile, so
+              with the sources unchanged it does not run, while the deploy does. The message would
+              then report "signed" on a file this build never touched - a claim dressed as a
+              measurement, which is the failure this whole change set is about.
+              Absolute, and that is load bearing: Exists() resolves a relative path against the
+              working directory of the build, not against the project, so the relative form was
+              false whenever the build was started from anywhere but the project folder - which is
+              always, since the solution lives one level up. Measured: the stamp was on disk and the
+              message still said the build had not signed.
+            -->
+            <_RevitSignStamp>$(MSBuildProjectDirectory)\$(IntermediateOutputPath)$(TargetFileName).$(RevitSignWith).signed</_RevitSignStamp>
+        </PropertyGroup>
+
+        <Message Importance="High" Condition="'$(RevitSignWith)' != '' AND '@(RevitAddIn)' != '' AND Exists('$(_RevitSignStamp)') AND $(RevitSignWith.Length) &gt; 4"
                  Text="Deploy complete: $(_DeployDestinationRoot) - signed with certificate ...$(RevitSignWith.Substring($([MSBuild]::Subtract($(RevitSignWith.Length), 4))))." />
+        <Message Importance="High" Condition="'$(RevitSignWith)' != '' AND '@(RevitAddIn)' != '' AND Exists('$(_RevitSignStamp)') AND $(RevitSignWith.Length) &lt;= 4"
+                 Text="Deploy complete: $(_DeployDestinationRoot) - signed, though RevitSignWith is only $(RevitSignWith.Length) characters and no thumbprint is that short." />
+        <!--
+          Only a project that declares an add-in is ever signed - Revit asks about the assembly its
+          manifest names and about nothing else - so the ones that declare none say nothing about
+          signatures. Without this they all reported "did not sign", which is true and useless, and
+          drowns the one line that matters in four that never could have said anything else.
+        -->
+        <Message Importance="High" Condition="'$(RevitSignWith)' != '' AND '@(RevitAddIn)' != '' AND !Exists('$(_RevitSignStamp)')"
+                 Text="Deploy complete: $(_DeployDestinationRoot) - signing is configured, but this build did not sign: the deployed file carries whatever signature it already had, or none." />
+        <Message Importance="High" Condition="'$(RevitSignWith)' != '' AND '@(RevitAddIn)' == ''"
+                 Text="Deploy complete: $(_DeployDestinationRoot)" />
     </Target>
 
     <!--
@@ -204,8 +252,10 @@
             <_DeployAddInFolder>$([System.IO.Path]::Combine('$(_DeployDestinationRoot)', '$(RevitVendorId)', '$(RevitPackageName)'))</_DeployAddInFolder>
         </PropertyGroup>
 
-        <!-- Same reason as the version-specific deploy above: ours only, emptied before the copy. -->
-        <RemoveDir Directories="$(_DeployAddInFolder)" Condition="Exists('$(_DeployAddInFolder)')" />
+        <!-- Same reason as the version-specific deploy above: ours only, emptied before the copy,
+             and never failing the build over a file Revit happens to have mapped. -->
+        <RemoveDir Directories="$(_DeployAddInFolder)" Condition="Exists('$(_DeployAddInFolder)')"
+                   ContinueOnError="WarnAndContinue" />
 
         <ItemGroup>
             <_DeployFiles Include="$(_SourcePath)\**\*.*" />

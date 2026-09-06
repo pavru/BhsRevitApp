@@ -47,6 +47,10 @@ internal static class Program
         if (!GuardMachineIsFree(selected))
             return 1;
 
+        // What is actually installed for each release about to be swept - not what was just built.
+        foreach (var installation in selected)
+            ProbeInstaller.Describe(installation);
+
         var report = new Report();
 
         using var registry = new RevitInstanceRegistry();
