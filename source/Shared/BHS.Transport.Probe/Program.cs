@@ -1,4 +1,4 @@
-using System.Diagnostics;
+﻿using System.Diagnostics;
 using System.Security.Principal;
 using BHS.Transport;
 using BHS.Transport.Configuration;
@@ -146,7 +146,23 @@ internal static class Program
         failures += await RegistryAsync(suffix);
         failures += await CrossProcessAsync(suffix);
 
-        Console.WriteLine(failures == 0 ? "== all checks passed" : $"== {failures} check(s) FAILED");
+        // A floor rather than an exact figure: adding checks is the normal direction and must not
+        // need an edit here, while losing them silently is the thing being guarded against. Raise
+        // it when the count has grown and settled - a floor left far below the real number stops
+        // being a floor.
+        const int expected = 60;
+
+        if (Performed < expected)
+        {
+            Console.WriteLine(
+                $"  [FAIL] only {Performed} checks ran, fewer than the {expected} this probe " +
+                "is known to have. Some check stopped running rather than started failing.");
+            failures++;
+        }
+
+        Console.WriteLine(failures == 0
+            ? $"== all checks passed ({Performed})"
+            : $"== {failures} check(s) FAILED, out of {Performed}");
         return failures;
     }
 
@@ -581,8 +597,19 @@ internal static class Program
         return condition();
     }
 
+    /// <summary>How many checks have been reported, whatever their outcome.</summary>
+    /// <remarks>
+    /// Counted because the failure this probe cannot otherwise see is a check that stopped running.
+    /// A condition that is never evaluated reports nothing, costs nothing and looks exactly like a
+    /// passing one - which is how RefCheck went months without being imported while the
+    /// documentation described it as failing the build. The count is the one number that moves when
+    /// that happens.
+    /// </remarks>
+    internal static int Performed { get; private set; }
+
     internal static void Check(ref int failures, string what, bool ok)
     {
+        Performed++;
         Console.WriteLine($"  [{(ok ? "ok" : "FAIL")}] {what}");
         if (!ok) failures++;
     }

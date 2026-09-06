@@ -80,7 +80,7 @@ internal static class Program
                 $"release {left.Release}, pid {left.ProcessId} - left alone");
         }
 
-        report.Summarise();
+        report.Summarise(selected.Count);
         return report.Failures;
     }
 
