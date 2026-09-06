@@ -52,7 +52,7 @@ internal sealed class ReleaseRecord
 /// </remarks>
 internal sealed class SweepReport
 {
-    public const int CurrentSchema = 1;
+    public const int CurrentSchema = 2;
 
     public int Schema { get; set; } = CurrentSchema;
 
@@ -64,6 +64,24 @@ internal sealed class SweepReport
     public string? Commit { get; set; }
 
     public bool CommitClean { get; set; }
+
+    /// <summary>
+    /// The git tree hash of every directory whose content decides what a sweep would find.
+    /// </summary>
+    /// <remarks>
+    /// This, and not the commit, is what makes a record checkable, and the difference was found the
+    /// hard way: the first pull request carrying a record was squashed, which is how this repository
+    /// merges - and a squash writes a NEW commit, so the one the record named was no longer in the
+    /// history at all. The staleness check then failed on a record that was perfectly current.
+    ///
+    /// A tree hash asks the right question. Not "was this the commit" - the commit is an accident
+    /// of how the work was folded together - but "is this the same content". It survives squashing,
+    /// rebasing and cherry-picking, because none of them change what the files say.
+    ///
+    /// The commit is still recorded, for a reader who wants to go and look. It is no longer what
+    /// the check depends on.
+    /// </remarks>
+    public Dictionary<string, string> Content { get; set; } = new();
 
     public string? RecordedUtc { get; set; }
 
@@ -113,14 +131,16 @@ internal sealed class SweepReport
     /// clean flag is what stops it from claiming more than it knows: a sweep run over a dirty tree
     /// tested something that exists on one machine and nowhere else.
     /// </remarks>
-    public static (string? Commit, bool Clean) DescribeWorkingTree(string repositoryRoot)
+    public static (string? Commit, bool Clean, Dictionary<string, string> Content) DescribeWorkingTree(
+        string repositoryRoot,
+        IEnumerable<string> paths)
     {
         try
         {
             var commit = Git(repositoryRoot, "rev-parse HEAD")?.Trim();
 
             if (commit is null)
-                return (null, false);
+                return (null, false, new Dictionary<string, string>());
 
             // The report file itself is excluded, and this is not a loophole. Sweeping twice - once
             // to look at the results, once for the record - would otherwise have the second run see
@@ -128,13 +148,41 @@ internal sealed class SweepReport
             // reject a perfectly good record with a sentence that is simply false. Nothing else is
             // excluded: the question is whether the CODE under test was committed.
             var status = Git(repositoryRoot, "status --porcelain -- . \":(exclude)evidence/sweep-report.json\"");
-            return (commit, string.IsNullOrWhiteSpace(status));
+
+            var content = new Dictionary<string, string>(StringComparer.Ordinal);
+
+            foreach (var path in paths)
+            {
+                // The tree object for that directory as HEAD has it. Absent for a path that does
+                // not exist, which is itself worth recording rather than silently skipping.
+                var tree = Git(repositoryRoot, $"rev-parse HEAD:{path}")?.Trim();
+                content[path] = string.IsNullOrEmpty(tree) ? "absent" : tree;
+            }
+
+            return (commit, string.IsNullOrWhiteSpace(status), content);
         }
         catch (Exception)
         {
-            return (null, false);
+            return (null, false, new Dictionary<string, string>());
         }
     }
+
+    /// <summary>
+    /// The directories whose content decides what a sweep would find.
+    /// </summary>
+    /// <remarks>
+    /// Deliberately not everything: documentation and CI wiring change nothing about how the add-in
+    /// behaves inside Revit, and a rule that made fixing a typo cost twenty minutes of Revit is a
+    /// rule somebody switches off within the week. Kept in step with the same list in
+    /// build/scripts/Check-SweepReport.ps1, which is the reader of what this writes.
+    /// </remarks>
+    public static readonly string[] RevitSidePaths =
+    {
+        "source/Revit",
+        "source/Shared",
+        "source/WinSide",
+        "build/BHS.Revit.Sdk",
+    };
 
     private static string? Git(string workingDirectory, string arguments)
     {

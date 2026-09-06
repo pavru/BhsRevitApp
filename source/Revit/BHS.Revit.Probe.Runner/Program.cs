@@ -96,10 +96,11 @@ internal static class Program
         if (options.ReportPath is { Length: > 0 } reportPath)
         {
             var root = ProbeInstaller.FindRepositoryRoot() ?? Environment.CurrentDirectory;
-            var (commit, clean) = SweepReport.DescribeWorkingTree(root);
+            var (commit, clean, content) = SweepReport.DescribeWorkingTree(root, SweepReport.RevitSidePaths);
 
             report.Sweep.Commit = commit;
             report.Sweep.CommitClean = clean;
+            report.Sweep.Content = content;
             report.Sweep.RecordedUtc = DateTime.UtcNow.ToString("O", CultureInfo.InvariantCulture);
             report.Sweep.WithModel = options.WithModel;
             // Both conditions, because the ribbon is only exercised when both hold - the check
