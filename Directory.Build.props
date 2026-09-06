@@ -73,9 +73,21 @@
     </PropertyGroup>
 
     <!--
-      Output paths are left alone. Every Revit target framework has its own moniker, so the
-      ordinary bin\<Configuration>\<tfm>\ layout already keeps the versions apart and there is
-      nothing to redirect.
+      The platform is kept OUT of the output path, and this is a correction rather than a
+      preference.
+
+      Left alone, the same project lands in two different places depending on how it is built:
+      building the solution produces bin\Release\<tfm>\, while `dotnet run` on the project
+      looks in bind\Release\<tfm>\. Both existed here, months apart in content, and every
+      local probe run was executing whichever one happened to be newer - which is to say, not
+      necessarily the one just built. CI found it the first time the second directory was absent,
+      and the failure was a missing file rather than a stale result, which is the lucky version.
+
+      Nothing is lost by dropping it: x64 is the only platform Revit has ever had, so the segment
+      distinguished nothing and only made two spellings of one path.
     -->
+    <PropertyGroup>
+        <AppendPlatformToOutputPath>false</AppendPlatformToOutputPath>
+    </PropertyGroup>
 
 </Project>
