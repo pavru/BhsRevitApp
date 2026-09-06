@@ -38,16 +38,30 @@ public static class PlaceholderIcon
     private static readonly Dictionary<string, ImageSource?> Cache = new(StringComparer.Ordinal);
 
     /// <summary>
-    /// Why the last icon or theme lookup did not work, or <see langword="null"/> when both did.
+    /// Why the icons are not what they should be, or <see langword="null"/> when they are.
     /// </summary>
     /// <remarks>
-    /// Both failures below are answered by carrying on - a missing icon is a plain button, and an
+    /// Both failures below are answered by carrying on - a missing icon is a plain button, an
     /// unknown theme is the light one - and that is right, because neither is worth a failed
     /// startup inside Revit. What is not right is doing it in silence: a button that came out plain
-    /// looks exactly like a button nobody has drawn yet, which is the state this whole class exists
-    /// to make visible. So the reason is kept, and whoever asked for the icon says it once.
+    /// looks exactly like a button nobody has drawn yet, which is the state this class exists to
+    /// make visible. So the reason is kept, and whoever asked says it once.
+    ///
+    /// The two are held apart because they expire differently, and a warning that outlives its
+    /// cause is the warning nobody reads. A theme that could not be read is a fact about a moment -
+    /// asked before Revit was ready - so it clears the next time the answer comes; on Revit 2024
+    /// this class is process-wide across editions sharing one BHS.Revit.Host.dll, where a sticky
+    /// one would have a second edition reporting the first one's stale complaint as its own. A
+    /// resource that would not decode is a fact about the file, which no later success changes.
     /// </remarks>
-    public static string? LastFailure { get; private set; }
+    public static string? LastFailure =>
+        string.Join("; ", new[] { ThemeFailure, IconFailure }.Where(one => !string.IsNullOrEmpty(one)));
+
+    /// <summary>Why the theme could not be read, cleared as soon as it can be.</summary>
+    public static string? ThemeFailure { get; private set; }
+
+    /// <summary>Why an icon would not load. Never cleared: the file does not repair itself.</summary>
+    public static string? IconFailure { get; private set; }
 
     /// <summary>The small slot: 32 pixels at 192 dpi, which is 16 units wide.</summary>
     public static ImageSource? Small => Load(32, Dark);
@@ -70,14 +84,16 @@ public static class PlaceholderIcon
         {
             try
             {
-                return UIThemeManager.CurrentTheme == UITheme.Dark;
+                var dark = UIThemeManager.CurrentTheme == UITheme.Dark;
+                ThemeFailure = null;
+                return dark;
             }
             catch (Exception error)
             {
                 // Asked too early, or asked of a Revit that has no opinion. Light is the older
                 // default and the safer guess: a dark mark on a light ribbon is legible, and the
                 // reverse is not.
-                LastFailure = $"the theme could not be read ({error.GetType().Name}: {error.Message}); assuming light";
+                ThemeFailure = $"the theme could not be read ({error.GetType().Name}: {error.Message}); assuming light";
                 return false;
             }
         }
@@ -106,7 +122,7 @@ public static class PlaceholderIcon
 
             if (stream is null)
             {
-                LastFailure = $"the embedded resource {name} is not in this assembly";
+                IconFailure = $"the embedded resource {name} is not in this assembly";
                 return null;
             }
 
@@ -131,7 +147,7 @@ public static class PlaceholderIcon
         {
             // A missing icon is a plain button. It is never worth a failed startup - but it is
             // worth one line, which whoever asked writes.
-            LastFailure = $"{name} could not be decoded ({error.GetType().Name}: {error.Message})";
+            IconFailure = $"{name} could not be decoded ({error.GetType().Name}: {error.Message})";
             return null;
         }
     }

@@ -60,9 +60,14 @@ internal sealed class Report
 
         if (Performed < floor)
         {
+            // A symptom, not a diagnosis. The count also drops when a release aborts early - Revit
+            // failing to register, say - and this repository has a documented history of chasing
+            // wrong diagnoses printed by its own sweep. Naming both causes costs one line and stops
+            // the next person from looking for a deleted check that was never deleted.
             Console.WriteLine(
                 $"  [FAIL] only {Performed} checks ran across {releases} release(s), fewer than the " +
-                $"{floor} expected. Some check stopped running rather than started failing.");
+                $"{floor} expected. Either a check stopped running, or a release did not get far " +
+                "enough to ask its questions - the failures above say which.");
             _failed.Add($"the sweep ran {Performed} checks, fewer than the {floor} expected");
         }
 
