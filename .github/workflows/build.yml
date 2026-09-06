@@ -89,3 +89,29 @@ jobs:
 
       - name: Transport probe, net10.0
         run: dotnet run --project source/Shared/BHS.Transport.Probe -c Release -f net10.0-windows --no-build
+
+  # NOT a Revit run. Read this before believing the badge.
+  #
+  # Revit needs an interactive session, a licence and a gigabyte of Autodesk on disk, so no hosted
+  # runner will ever start one - and none of the 288 checks that prove the add-in actually works
+  # execute here. Those run on a developer machine, by hand, through BHS.Revit.Probe.Runner.
+  #
+  # This job checks the RECORD that run leaves behind: that it exists, was taken on a clean tree,
+  # belongs to a commit no Revit-side change has landed on top of, covers every supported release,
+  # contains no failure, and has not quietly lost a check since the base. That is a real check with
+  # real teeth - a stale or missing record fails the build - and it is still not evidence that Revit
+  # works. It is evidence that somebody's evidence is current.
+  sweep-evidence:
+    name: sweep-evidence
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          # The staleness check diffs against the commit the sweep names, which may be well behind.
+          fetch-depth: 0
+
+      - name: The recorded sweep is current, complete and green
+        shell: pwsh
+        run: |
+          $base = if ('${{ github.event_name }}' -eq 'pull_request') { 'origin/${{ github.base_ref }}' } else { 'HEAD~1' }
+          ./build/scripts/Check-SweepReport.ps1 -Base $base

@@ -48,8 +48,9 @@ internal static class Program
             return 1;
 
         // What is actually installed for each release about to be swept - not what was just built.
+        var deployed = new Dictionary<int, DeployedProbe>();
         foreach (var installation in selected)
-            ProbeInstaller.Describe(installation);
+            deployed[installation.Release.Year] = ProbeInstaller.Describe(installation);
 
         var report = new Report();
 
@@ -68,7 +69,8 @@ internal static class Program
         try
         {
             foreach (var installation in selected)
-                await RunAsync(installation, launcher, registry, options, report);
+                await RunAsync(installation, launcher, registry, options, report,
+                    deployed.TryGetValue(installation.Release.Year, out var probe) ? probe : null);
         }
         finally
         {
@@ -79,12 +81,26 @@ internal static class Program
         // apart: a stranger is somebody's own Revit, a leftover is a registry that missed a death.
         foreach (var left in registry.Instances)
         {
-            Report.Note(
+            report.Note(
                 left.StartedByUs ? "still registered after the sweep" : "another Revit registered without a token of ours",
                 $"release {left.Release}, pid {left.ProcessId} - left alone");
         }
 
         report.Summarise(selected.Count);
+
+        if (options.ReportPath is { Length: > 0 } reportPath)
+        {
+            var root = ProbeInstaller.FindRepositoryRoot() ?? Environment.CurrentDirectory;
+            var (commit, clean) = SweepReport.DescribeWorkingTree(root);
+
+            report.Sweep.Commit = commit;
+            report.Sweep.CommitClean = clean;
+            report.Sweep.RecordedUtc = DateTime.UtcNow.ToString("O", CultureInfo.InvariantCulture);
+            report.Sweep.WithModel = options.WithModel;
+            report.Sweep.ShowTab = Environment.GetEnvironmentVariable("BHS_PROBE_SHOW_TAB") == "1";
+            report.Sweep.Write(reportPath);
+        }
+
         return report.Failures;
     }
 
@@ -100,8 +116,10 @@ internal static class Program
         RevitLauncher launcher,
         RevitInstanceRegistry registry,
         Options options,
-        Report report)
+        Report report,
+        DeployedProbe? deployed)
     {
+        report.BeginRelease(installation.Release.Year, deployed);
         Report.Heading($"Revit {installation.Release} - {installation.ExecutablePath}");
 
         var model = options.WithModel ? TakeModelCopy(installation, report) : null;
@@ -116,17 +134,17 @@ internal static class Program
             });
 
         if (session.Process is not null)
-            Report.Note("launched", "pid " + session.Process.Id.ToString(CultureInfo.InvariantCulture));
+            report.Note("launched", "pid " + session.Process.Id.ToString(CultureInfo.InvariantCulture));
 
         try
         {
             if (!report.Check("the add-in registers over the well-known pipe", session.Registered))
             {
-                ExplainFailedLaunch(session);
+                ExplainFailedLaunch(session, report);
                 return;
             }
 
-            Report.Note("registered after", session.Elapsed.TotalSeconds.ToString("F1", CultureInfo.InvariantCulture) + "s");
+            report.Note("registered after", session.Elapsed.TotalSeconds.ToString("F1", CultureInfo.InvariantCulture) + "s");
 
             await InspectAsync(installation, registry, session, options, model, report);
         }
@@ -141,21 +159,21 @@ internal static class Program
     /// The one path the runner has to explain without being told anything, because a probe that
     /// never registered never got to tell it anything.
     /// </remarks>
-    private static void ExplainFailedLaunch(RevitSession session)
+    private static void ExplainFailedLaunch(RevitSession session, Report report)
     {
         switch (session.Outcome)
         {
             case RevitLaunchOutcome.NotStarted:
-                Report.Note("Revit would not start at all", session.Installation.ExecutablePath);
+                report.Note("Revit would not start at all", session.Installation.ExecutablePath);
                 break;
 
             case RevitLaunchOutcome.ExitedBeforeRegistering:
-                Report.Note("Revit exited before registering", "exit code " + ExitCode(session));
+                report.Note("Revit exited before registering", "exit code " + ExitCode(session));
                 break;
 
             default:
-                Report.Note("probe log", ProbeLogPath(session.Process?.Id ?? 0));
-                Report.Note("no log there means", "the add-in was never loaded - check the Revit journal");
+                report.Note("probe log", ProbeLogPath(session.Process?.Id ?? 0));
+                report.Note("no log there means", "the add-in was never loaded - check the Revit journal");
                 break;
         }
     }
@@ -219,9 +237,9 @@ internal static class Program
         report.Check("the probe saw the correlation token", Value(snapshot, "Instance:StartedByRunner") == "True");
 
         var addInDirectory = Value(snapshot, "AddIn:Directory");
-        Report.Note("build", Value(snapshot, "Revit:VersionBuild") + ", language " + Value(snapshot, "Revit:Language"));
-        Report.Note("loaded from", addInDirectory);
-        Report.Note("probe log", Value(snapshot, "AddIn:Log"));
+        report.Note("build", Value(snapshot, "Revit:VersionBuild") + ", language " + Value(snapshot, "Revit:Language"));
+        report.Note("loaded from", addInDirectory);
+        report.Note("probe log", Value(snapshot, "AddIn:Log"));
 
         report.Check("the snapshot names the contract it speaks", snapshot.ContractVersion == Handshake.ContractVersion);
 
@@ -250,7 +268,7 @@ internal static class Program
 
         if (options.KeepOpen)
         {
-            Report.Note("left running", "pid " + revit.Id.ToString(CultureInfo.InvariantCulture));
+            report.Note("left running", "pid " + revit.Id.ToString(CultureInfo.InvariantCulture));
             return;
         }
 
@@ -263,7 +281,7 @@ internal static class Program
         // failure as the unsigned add-in dialog, arrived at from the other side.
         if (!documentArrived)
         {
-            Report.Note("not asking it to close", "the document never arrived, and a request now would land mid-operation");
+            report.Note("not asking it to close", "the document never arrived, and a request now would land mid-operation");
             session.Kill();
             report.Check("the Revit that would not open its model could be killed", !session.IsRunning);
             return;
@@ -336,7 +354,7 @@ internal static class Program
         if (settings.Values.TryGetValue("settings:error", out var failure))
         {
             report.Check("settings are read from disk inside Revit", false);
-            Report.Note("settings failed", failure);
+            report.Note("settings failed", failure);
             return;
         }
 
@@ -363,7 +381,7 @@ internal static class Program
                                              .OrderBy(pair => pair.Key, StringComparer.Ordinal)
                                              .Where(pair => pair.Value.StartsWith("read", StringComparison.Ordinal)))
         {
-            Report.Note("settings layer", layer.Value);
+            report.Note("settings layer", layer.Value);
         }
     }
 
@@ -426,8 +444,8 @@ internal static class Program
         report.Check("records are marked with the thread they were written on",
             text.Contains("*]", StringComparison.Ordinal));
 
-        Report.Note("log", path);
-        Report.Note("sinks", string.Join(", ", sinks));
+        report.Note("log", path);
+        report.Note("sinks", string.Join(", ", sinks));
     }
 
     /// <summary>Reads a log a live Revit still holds open.</summary>
@@ -474,8 +492,8 @@ internal static class Program
         if (!File.Exists(source))
         {
             report.Check($"a test model for Revit {year} is available", false);
-            Report.Note("expected at", source);
-            Report.Note("how to make one", "see testdata/readme.md - they are deliberately not in git");
+            report.Note("expected at", source);
+            report.Note("how to make one", "see testdata/readme.md - they are deliberately not in git");
             return null;
         }
 
@@ -488,7 +506,7 @@ internal static class Program
         catch (Exception error) when (error is IOException or UnauthorizedAccessException)
         {
             report.Check($"a test model for Revit {year} could be copied", false);
-            Report.Note("why", error.Message);
+            report.Note("why", error.Message);
             return null;
         }
     }
@@ -535,8 +553,8 @@ internal static class Program
         report.Check("and it is the one that was asked for",
             string.Equals(title, expected, StringComparison.OrdinalIgnoreCase));
 
-        Report.Note("document", string.IsNullOrEmpty(title) ? "(none)" : title);
-        Report.Note("opened after registration",
+        report.Note("document", string.IsNullOrEmpty(title) ? "(none)" : title);
+        report.Note("opened after registration",
             (DateTime.UtcNow - started).TotalSeconds.ToString("F1", CultureInfo.InvariantCulture) + "s");
 
         try
@@ -636,7 +654,7 @@ internal static class Program
         report.Check("and Revit tells it that it has finished starting, session or no session",
             initialized);
 
-        Report.Note("db host", $"add-in {values.GetValueOrDefault("db:addInId")}, {hosts} host(s) registered");
+        report.Note("db host", $"add-in {values.GetValueOrDefault("db:addInId")}, {hosts} host(s) registered");
     }
 
     private static async Task CheckRibbonAsync(
@@ -666,7 +684,7 @@ internal static class Program
 
         if (!options.WithModel || Environment.GetEnvironmentVariable("BHS_PROBE_SHOW_TAB") != "1")
         {
-            Report.Note("availability and the press", "not asked - set BHS_PROBE_SHOW_TAB=1 for both");
+            report.Note("availability and the press", "not asked - set BHS_PROBE_SHOW_TAB=1 for both");
             return;
         }
 
@@ -683,7 +701,7 @@ internal static class Program
         }, 60_000);
 
         report.Check("Revit asks the availability class once its tab is shown", asked);
-        Report.Note("availability calls", calls);
+        report.Note("availability calls", calls);
 
         // Here rather than beside the manifest check, because the answer is recorded by the code that
         // brings the tab forward - the only place in the probe already on the UI thread. One button
@@ -742,7 +760,7 @@ internal static class Program
                  })
         {
             if (ribbon.TryGetValue(key, out var value))
-                Report.Note(key, value);
+                report.Note(key, value);
         }
 
         await CheckFeatureCommandAsync(client, report);
@@ -791,7 +809,7 @@ internal static class Program
 
         report.Check("and the feature assembly loaded only once it was needed", loaded == "True");
 
-        Report.Note("feature command", $"runs {runs}, host {addInId}");
+        report.Note("feature command", $"runs {runs}, host {addInId}");
     }
 
     /// <summary>
@@ -841,7 +859,7 @@ internal static class Program
         report.Check("and the document is left unmodified, so nothing is asked on the way out",
             answer.Values.GetValueOrDefault("model:clean") == "True");
 
-        Report.Note("model settings", $"document {document}, origin {answer.Values.GetValueOrDefault("model:origin")}");
+        report.Note("model settings", $"document {document}, origin {answer.Values.GetValueOrDefault("model:origin")}");
     }
 
     /// <summary>Where the call lands, and in which AppDomain the add-in is living.</summary>
@@ -856,10 +874,10 @@ internal static class Program
         // the reason closing Revit goes through an external event rather than a direct call.
         report.Check("the call arrives off the Revit API thread", api != calling);
 
-        Report.Note("threads", $"api {api}, call {calling}");
-        Report.Note("appdomain", $"{context.Values["appdomain:name"]} (#{context.Values["appdomain:id"]})");
-        Report.Note("load context", context.Values.GetValueOrDefault("loadcontext") ?? "(not reported)");
-        Report.Note("runtime", context.Values["runtime"]);
+        report.Note("threads", $"api {api}, call {calling}");
+        report.Note("appdomain", $"{context.Values["appdomain:name"]} (#{context.Values["appdomain:id"]})");
+        report.Note("load context", context.Values.GetValueOrDefault("loadcontext") ?? "(not reported)");
+        report.Note("runtime", context.Values["runtime"]);
     }
 
     /// <summary>
@@ -900,16 +918,16 @@ internal static class Program
             var revits = IsUnder(location, installation.InstallDirectory);
             var origin = ours ? "ours" : revits ? "REVIT" : "elsewhere";
 
-            Report.Note($"{name} {version}", $"{origin}  {location}");
+            report.Note($"{name} {version}", $"{origin}  {location}");
 
             if (shipped.Contains(name) && !ours)
                 shadowed.Add(name);
         }
 
-        Report.Note("assemblies loaded", answer.Values["assembly:count"]);
+        report.Note("assemblies loaded", answer.Values["assembly:count"]);
 
         foreach (var name in shadowed)
-            Report.Note("Revit's copy won", name);
+            report.Note("Revit's copy won", name);
 
         // Substitution itself is not the question - Revit loads first and always wins. The question
         // is whether the copy that won has been checked, and RefCheck's watchlist is the record of
@@ -918,7 +936,7 @@ internal static class Program
 
         if (vetted is null)
         {
-            Report.Note("RefCheck watchlist", "not readable from here, so substitutions are unjudged");
+            report.Note("RefCheck watchlist", "not readable from here, so substitutions are unjudged");
             return;
         }
 
@@ -926,7 +944,7 @@ internal static class Program
         report.Check("every assembly Revit substituted is one RefCheck vets", unverified.Count == 0);
 
         foreach (var name in unverified)
-            Report.Note("substituted but not on the watchlist", name);
+            report.Note("substituted but not on the watchlist", name);
     }
 
     /// <summary>
@@ -958,7 +976,7 @@ internal static class Program
         // claim that we started it - which is the point of checking rather than assuming.
         report.Check("a recovered instance is never claimed as ours", !recovered.StartedByUs);
 
-        Report.Note("recovered by enumeration", found.ToString(CultureInfo.InvariantCulture) + " instance(s)");
+        report.Note("recovered by enumeration", found.ToString(CultureInfo.InvariantCulture) + " instance(s)");
     }
 
     /// <summary>Close it the way it is meant to be closed, and measure how long that takes.</summary>
@@ -977,7 +995,7 @@ internal static class Program
         if (!exited)
             return;
 
-        Report.Note("closed after", closing.Elapsed.TotalSeconds.ToString("F1", CultureInfo.InvariantCulture) + "s");
+        report.Note("closed after", closing.Elapsed.TotalSeconds.ToString("F1", CultureInfo.InvariantCulture) + "s");
 
         // Nothing told the registry; it was watching the process. A departure that has to be swept
         // for is a departure nobody hears about until somebody asks.
@@ -1037,7 +1055,7 @@ internal static class Program
         if (options.KeepOpen || !session.IsRunning)
             return;
 
-        Report.Note("killing", "pid " + (session.Process?.Id.ToString(CultureInfo.InvariantCulture) ?? "?")
+        report.Note("killing", "pid " + (session.Process?.Id.ToString(CultureInfo.InvariantCulture) ?? "?")
                                + " - it did not close on its own");
 
         report.Check("the leftover Revit could be killed", session.Kill());

@@ -1,4 +1,4 @@
-using BHS.Shared;
+﻿using BHS.Shared;
 
 namespace BHS.Revit.Probe.Runner;
 
@@ -16,6 +16,18 @@ internal sealed class Options
 
     /// <summary>Leave Revit running after the checks, for a look by hand.</summary>
     public bool KeepOpen { get; set; }
+
+    /// <summary>
+    /// Where to write the machine-readable record of this sweep, if anywhere.
+    /// </summary>
+    /// <remarks>
+    /// The point of the file is that CI can check a sweep it cannot run: Revit needs an interactive
+    /// session and a licence, so no hosted runner will ever start one. What CI verifies is the
+    /// record - that it belongs to this commit, covers every release, contains no failure, and has
+    /// not quietly lost a check since the last one. The file says so itself, in a field, because a
+    /// disclaimer nobody reads is a disclaimer that eventually gets forgotten.
+    /// </remarks>
+    public string? ReportPath { get; set; }
 
     /// <summary>
     /// Launch even when the probe is not recorded as trusted for a release.
@@ -97,6 +109,11 @@ internal sealed class Options
 
                 case "--with-model":
                     options.WithModel = true;
+                    break;
+
+                case "--report" when index + 1 < args.Length:
+                    options.ReportPath = args[index + 1];
+                    index++;
                     break;
 
                 case "--keep-open":

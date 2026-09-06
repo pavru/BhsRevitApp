@@ -89,7 +89,7 @@ internal static class ProbeInstaller
     /// run where this can be wrong is the ordinary one - deploy once, sweep repeatedly - and that
     /// is the run where saying nothing would leave the original problem exactly where it was.
     /// </remarks>
-    public static void Describe(RevitInstallation installation)
+    public static DeployedProbe Describe(RevitInstallation installation)
     {
         try
         {
@@ -98,7 +98,7 @@ internal static class ProbeInstaller
             if (!File.Exists(assembly))
             {
                 Console.WriteLine($"  Revit {installation.Release}: nothing at {assembly}");
-                return;
+                return new DeployedProbe(null, null, false);
             }
 
             var info = FileVersionInfo.GetVersionInfo(assembly);
@@ -108,10 +108,16 @@ internal static class ProbeInstaller
             Console.WriteLine(
                 $"  Revit {installation.Release}: {ProbeDeployment.AddInName}.dll " +
                 $"{info.FileVersion} built {written:yyyy-MM-dd HH:mm:ss}, {(signed ? "signed" : "UNSIGNED")}");
+
+            return new DeployedProbe(
+                info.FileVersion,
+                written.ToUniversalTime().ToString("O", CultureInfo.InvariantCulture),
+                signed);
         }
         catch (Exception error)
         {
             Console.WriteLine($"  Revit {installation.Release}: could not be described ({error.GetType().Name})");
+            return new DeployedProbe(null, null, false);
         }
     }
 
