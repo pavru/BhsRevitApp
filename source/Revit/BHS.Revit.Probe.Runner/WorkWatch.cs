@@ -94,6 +94,7 @@ internal static class WorkWatch
         var started = DateTime.UtcNow;
         var deadline = started + ceiling;
         var unanswered = 0;
+        var announced = false;
 
         while (DateTime.UtcNow < deadline)
         {
@@ -144,14 +145,35 @@ internal static class WorkWatch
             var watching = DateTime.UtcNow - started;
             var quietFor = watcher.SinceLastHeard < watching ? watcher.SinceLastHeard : watching;
 
-            if (listening && quietFor > quiet)
+            // The phase says blocked even when the dialog would not name itself: Revit hands
+            // DialogBoxShowing an id that can be absent, and reading the id alone downgraded
+            // exactly those dialogs to "went quiet" - the answer being a person either way.
+            var blocked = watcher.CurrentPhase == RevitPhase.Blocked || watcher.BlockedBy.Length > 0;
+
+            // While Revit is holding a dialog the quiet clock does not run, and this is a
+            // correction rather than a tolerance. Blocked was already told apart from silence and
+            // then treated exactly like it: the wait announced "Revit is waiting for somebody to
+            // answer" and gave up sixty seconds later - while somebody was answering. Measured on
+            // Revit 2024, where the dialog was answered and the process had already been killed.
+            //
+            // Silence during Blocked is not evidence of anything: Revit is not working, it is
+            // asking, and the answer is a person rather than a longer budget. So the wait keeps its
+            // ceiling, which still ends an unattended run, and stops pretending the clock means
+            // something in this phase. An unattended run reaches the same failure, later and
+            // correctly named; an attended one now finishes.
+            if (blocked)
             {
-                // The phase says blocked even when the dialog would not name itself: Revit hands
-                // DialogBoxShowing an id that can be absent, and reading the id alone downgraded
-                // exactly those dialogs to "went quiet" - the answer being a person either way.
-                return watcher.CurrentPhase == RevitPhase.Blocked || watcher.BlockedBy.Length > 0
-                    ? WaitOutcome.Blocked
-                    : WaitOutcome.WentQuiet;
+                if (!announced)
+                {
+                    announced = true;
+                    Console.WriteLine("       waiting: Revit is asking "
+                                      + (watcher.BlockedBy.Length > 0 ? watcher.BlockedBy : "something")
+                                      + " - answer it, or this ends at the ceiling");
+                }
+            }
+            else if (listening && quietFor > quiet)
+            {
+                return WaitOutcome.WentQuiet;
             }
 
             await Task.Delay(250);
@@ -159,12 +181,20 @@ internal static class WorkWatch
 
         try
         {
-            return done() ? WaitOutcome.Arrived : WaitOutcome.Ceiling;
+            if (done())
+                return WaitOutcome.Arrived;
         }
         catch (Exception)
         {
             return WaitOutcome.Unreachable;
         }
+
+        // Named for what it was doing when the time ran out. A run that spent its ceiling holding a
+        // dialog nobody answered failed for that reason, and "fifteen minutes passed" would send
+        // the reader looking for a hang that never happened.
+        return watcher.CurrentPhase == RevitPhase.Blocked || watcher.BlockedBy.Length > 0
+            ? WaitOutcome.Blocked
+            : WaitOutcome.Ceiling;
     }
 
     /// <summary>Polls until a condition holds, or until the time runs out.</summary>
