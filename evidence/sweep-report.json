@@ -1,22 +1,22 @@
 {
   "Schema": 2,
   "Disclaimer": "Recorded on a developer machine. Revit cannot run on hosted CI, so CI verifies this record rather than reproducing it: no automated check here has ever started a Revit.",
-  "Commit": "9f6fdb0d8fb2007fc3f9a1772e4153782e8a3e5e",
+  "Commit": "b08e8c4d417b2046b0474bb3ae7ae382a5fb5227",
   "CommitClean": true,
   "Content": {
-    "source/Revit": "304f1b8248e1c7ebee527e9390ca5da3a0f11434",
+    "source/Revit": "4a1e4e41a17d33719f3853e939750f4abce303a6",
     "source/Shared": "613cf6a30882b4be74e38ff08c0a18e216eaaa36",
     "source/WinSide": "5b71abdce4cd8186abf36416137a3dfa7f437a28",
     "build/BHS.Revit.Sdk": "eb401a3b673fabf6b4ba9ee1286cf8a450e3ed1c"
   },
-  "RecordedUtc": "2026-09-07T04:08:36.7847069Z",
+  "RecordedUtc": "2026-09-07T05:18:26.5479007Z",
   "WithModel": true,
   "ShowTab": false,
   "Releases": [
     {
       "Release": 2024,
       "FileVersion": "0.1.0.0",
-      "BuiltUtc": "2026-09-07T04:05:08.2127300Z",
+      "BuiltUtc": "2026-09-07T04:52:59.0965457Z",
       "Signed": true,
       "Checks": [
         {
@@ -296,11 +296,11 @@
       "Notes": [
         {
           "Name": "launched",
-          "Value": "pid 61816"
+          "Value": "pid 54812"
         },
         {
           "Name": "registered after",
-          "Value": "17.1s"
+          "Value": "15.6s"
         },
         {
           "Name": "recovered by enumeration",
@@ -316,11 +316,11 @@
         },
         {
           "Name": "probe log",
-          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2024-61816-20260907-140522.log"
+          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2024-54812-20260907-151430.log"
         },
         {
           "Name": "threads",
-          "Value": "api 1, call 12"
+          "Value": "api 1, call 18"
         },
         {
           "Name": "appdomain",
@@ -344,7 +344,7 @@
         },
         {
           "Name": "log",
-          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2024-61816-20260907-140522.log"
+          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2024-54812-20260907-151430.log"
         },
         {
           "Name": "sinks",
@@ -352,11 +352,11 @@
         },
         {
           "Name": "document",
-          "Value": "bhs-sweep-2024-be9af41be17a436894cb5b35b36a6190"
+          "Value": "bhs-sweep-2024-5fa4f782686d4f7ea441fc42e4eaaa7f"
         },
         {
           "Name": "opened after registration",
-          "Value": "17.6s"
+          "Value": "16.2s"
         },
         {
           "Name": "availability and the press",
@@ -364,7 +364,7 @@
         },
         {
           "Name": "model settings",
-          "Value": "document bhs-sweep-2024-be9af41be17a436894cb5b35b36a6190, origin Model"
+          "Value": "document bhs-sweep-2024-5fa4f782686d4f7ea441fc42e4eaaa7f, origin Model"
         },
         {
           "Name": "db host",
@@ -476,7 +476,7 @@
         },
         {
           "Name": "diagnostic events",
-          "Value": "96 received, 0 dropped by the publisher, longest quiet spell 11.5s during Starting"
+          "Value": "99 received, 0 dropped by the publisher, longest quiet spell 10.5s during Starting"
         },
         {
           "Name": "phases seen",
@@ -496,7 +496,7 @@
         },
         {
           "Name": "progress caption",
-          "Value": "\u0417\u0430\u0433\u0440\u0443\u0437\u043A\u0430 bhs-sweep-2024-be9af41be17a436894cb5b35b36a6190.rvt"
+          "Value": "\u0417\u0430\u0433\u0440\u0443\u0437\u043A\u0430 bhs-sweep-2024-5fa4f782686d4f7ea441fc42e4eaaa7f.rvt"
         },
         {
           "Name": "progress caption",
@@ -532,18 +532,18 @@
         },
         {
           "Name": "progress caption",
-          "Value": "\u0427\u0435\u0440\u0442\u0435\u0436: bhs-sweep-2024-be9af41be17a436894cb5b35b36a6190.rvt - \u041F\u043B\u0430\u043D \u044D\u0442\u0430\u0436\u0430: \u0423\u0440\u043E\u0432\u0435\u043D\u044C 1"
+          "Value": "\u0427\u0435\u0440\u0442\u0435\u0436: bhs-sweep-2024-5fa4f782686d4f7ea441fc42e4eaaa7f.rvt - \u041F\u043B\u0430\u043D \u044D\u0442\u0430\u0436\u0430: \u0423\u0440\u043E\u0432\u0435\u043D\u044C 1"
         },
         {
           "Name": "closed after",
-          "Value": "22.0s"
+          "Value": "21.2s"
         }
       ]
     },
     {
       "Release": 2025,
       "FileVersion": "0.1.0.0",
-      "BuiltUtc": "2026-09-07T04:05:09.5480055Z",
+      "BuiltUtc": "2026-09-07T04:53:00.0856861Z",
       "Signed": true,
       "Checks": [
         {
@@ -823,11 +823,11 @@
       "Notes": [
         {
           "Name": "launched",
-          "Value": "pid 55564"
+          "Value": "pid 49696"
         },
         {
           "Name": "registered after",
-          "Value": "12.7s"
+          "Value": "13.1s"
         },
         {
           "Name": "recovered by enumeration",
@@ -843,11 +843,11 @@
         },
         {
           "Name": "probe log",
-          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2025-55564-20260907-140626.log"
+          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2025-49696-20260907-151532.log"
         },
         {
           "Name": "threads",
-          "Value": "api 1, call 24"
+          "Value": "api 1, call 5"
         },
         {
           "Name": "appdomain",
@@ -871,7 +871,7 @@
         },
         {
           "Name": "log",
-          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2025-55564-20260907-140626.log"
+          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2025-49696-20260907-151532.log"
         },
         {
           "Name": "sinks",
@@ -879,7 +879,7 @@
         },
         {
           "Name": "document",
-          "Value": "bhs-sweep-2025-0571d1447c4945b69c06a27270e7d29d"
+          "Value": "bhs-sweep-2025-da167256ef8f480ea6a7a3be5e687f91"
         },
         {
           "Name": "opened after registration",
@@ -891,7 +891,7 @@
         },
         {
           "Name": "model settings",
-          "Value": "document bhs-sweep-2025-0571d1447c4945b69c06a27270e7d29d, origin Model"
+          "Value": "document bhs-sweep-2025-da167256ef8f480ea6a7a3be5e687f91, origin Model"
         },
         {
           "Name": "db host",
@@ -1035,7 +1035,7 @@
         },
         {
           "Name": "diagnostic events",
-          "Value": "66 received, 0 dropped by the publisher, longest quiet spell 3.9s during Working"
+          "Value": "65 received, 0 dropped by the publisher, longest quiet spell 4.1s during Working"
         },
         {
           "Name": "phases seen",
@@ -1063,7 +1063,7 @@
         },
         {
           "Name": "progress caption",
-          "Value": "\u0417\u0430\u0433\u0440\u0443\u0437\u043A\u0430 bhs-sweep-2025-0571d1447c4945b69c06a27270e7d29d.rvt"
+          "Value": "\u0417\u0430\u0433\u0440\u0443\u0437\u043A\u0430 bhs-sweep-2025-da167256ef8f480ea6a7a3be5e687f91.rvt"
         },
         {
           "Name": "progress caption",
@@ -1091,18 +1091,18 @@
         },
         {
           "Name": "progress caption",
-          "Value": "\u0427\u0435\u0440\u0442\u0435\u0436: bhs-sweep-2025-0571d1447c4945b69c06a27270e7d29d.rvt - \u041F\u043B\u0430\u043D \u044D\u0442\u0430\u0436\u0430: \u0423\u0440\u043E\u0432\u0435\u043D\u044C 1"
+          "Value": "\u0427\u0435\u0440\u0442\u0435\u0436: bhs-sweep-2025-da167256ef8f480ea6a7a3be5e687f91.rvt - \u041F\u043B\u0430\u043D \u044D\u0442\u0430\u0436\u0430: \u0423\u0440\u043E\u0432\u0435\u043D\u044C 1"
         },
         {
           "Name": "closed after",
-          "Value": "3.6s"
+          "Value": "3.4s"
         }
       ]
     },
     {
       "Release": 2026,
       "FileVersion": "0.1.0.0",
-      "BuiltUtc": "2026-09-07T04:05:10.2020501Z",
+      "BuiltUtc": "2026-09-07T04:52:59.8897821Z",
       "Signed": true,
       "Checks": [
         {
@@ -1382,11 +1382,11 @@
       "Notes": [
         {
           "Name": "launched",
-          "Value": "pid 33048"
+          "Value": "pid 56144"
         },
         {
           "Name": "registered after",
-          "Value": "25.8s"
+          "Value": "27.4s"
         },
         {
           "Name": "recovered by enumeration",
@@ -1402,11 +1402,11 @@
         },
         {
           "Name": "probe log",
-          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2026-33048-20260907-140654.log"
+          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2026-56144-20260907-151600.log"
         },
         {
           "Name": "threads",
-          "Value": "api 1, call 16"
+          "Value": "api 1, call 7"
         },
         {
           "Name": "appdomain",
@@ -1430,7 +1430,7 @@
         },
         {
           "Name": "log",
-          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2026-33048-20260907-140654.log"
+          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2026-56144-20260907-151600.log"
         },
         {
           "Name": "sinks",
@@ -1438,11 +1438,11 @@
         },
         {
           "Name": "document",
-          "Value": "bhs-sweep-2026-0afab49d216d4a76b53ff7d747a1d204"
+          "Value": "bhs-sweep-2026-2e21ca8a639641bdb81c23c48c2ec705"
         },
         {
           "Name": "opened after registration",
-          "Value": "20.1s"
+          "Value": "59.7s"
         },
         {
           "Name": "availability and the press",
@@ -1450,7 +1450,7 @@
         },
         {
           "Name": "model settings",
-          "Value": "document bhs-sweep-2026-0afab49d216d4a76b53ff7d747a1d204, origin Model"
+          "Value": "document bhs-sweep-2026-2e21ca8a639641bdb81c23c48c2ec705, origin Model"
         },
         {
           "Name": "db host",
@@ -1558,7 +1558,7 @@
         },
         {
           "Name": "diagnostic events",
-          "Value": "147 received, 0 dropped by the publisher, longest quiet spell 8.3s during Starting"
+          "Value": "146 received, 0 dropped by the publisher, longest quiet spell 45.2s during Starting"
         },
         {
           "Name": "phases seen",
@@ -1582,7 +1582,7 @@
         },
         {
           "Name": "progress caption",
-          "Value": "\u0417\u0430\u0433\u0440\u0443\u0437\u043A\u0430 bhs-sweep-2026-0afab49d216d4a76b53ff7d747a1d204.rvt"
+          "Value": "\u0417\u0430\u0433\u0440\u0443\u0437\u043A\u0430 bhs-sweep-2026-2e21ca8a639641bdb81c23c48c2ec705.rvt"
         },
         {
           "Name": "progress caption",
@@ -1610,7 +1610,7 @@
         },
         {
           "Name": "progress caption",
-          "Value": "\u0427\u0435\u0440\u0442\u0435\u0436: bhs-sweep-2026-0afab49d216d4a76b53ff7d747a1d204.rvt - \u041F\u043B\u0430\u043D \u044D\u0442\u0430\u0436\u0430: \u0423\u0440\u043E\u0432\u0435\u043D\u044C 1"
+          "Value": "\u0427\u0435\u0440\u0442\u0435\u0436: bhs-sweep-2026-2e21ca8a639641bdb81c23c48c2ec705.rvt - \u041F\u043B\u0430\u043D \u044D\u0442\u0430\u0436\u0430: \u0423\u0440\u043E\u0432\u0435\u043D\u044C 1"
         },
         {
           "Name": "progress caption",
@@ -1626,14 +1626,14 @@
         },
         {
           "Name": "closed after",
-          "Value": "15.6s"
+          "Value": "16.3s"
         }
       ]
     },
     {
       "Release": 2027,
       "FileVersion": "0.1.0.0",
-      "BuiltUtc": "2026-09-07T04:05:09.1634459Z",
+      "BuiltUtc": "2026-09-07T04:52:59.4333382Z",
       "Signed": true,
       "Checks": [
         {
@@ -1913,11 +1913,11 @@
       "Notes": [
         {
           "Name": "launched",
-          "Value": "pid 48704"
+          "Value": "pid 51052"
         },
         {
           "Name": "registered after",
-          "Value": "16.9s"
+          "Value": "16.7s"
         },
         {
           "Name": "recovered by enumeration",
@@ -1933,11 +1933,11 @@
         },
         {
           "Name": "probe log",
-          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2027-48704-20260907-140758.log"
+          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2027-51052-20260907-151746.log"
         },
         {
           "Name": "threads",
-          "Value": "api 2, call 20"
+          "Value": "api 2, call 22"
         },
         {
           "Name": "appdomain",
@@ -1961,7 +1961,7 @@
         },
         {
           "Name": "log",
-          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2027-48704-20260907-140758.log"
+          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2027-51052-20260907-151746.log"
         },
         {
           "Name": "sinks",
@@ -1969,11 +1969,11 @@
         },
         {
           "Name": "document",
-          "Value": "bhs-sweep-2027-b30dc421ba02442291616c72fb9b9f07"
+          "Value": "bhs-sweep-2027-b370bad3dd64411da5d84bbbb7c388f3"
         },
         {
           "Name": "opened after registration",
-          "Value": "20.3s"
+          "Value": "22.2s"
         },
         {
           "Name": "availability and the press",
@@ -1981,7 +1981,7 @@
         },
         {
           "Name": "model settings",
-          "Value": "document bhs-sweep-2027-b30dc421ba02442291616c72fb9b9f07, origin Model"
+          "Value": "document bhs-sweep-2027-b370bad3dd64411da5d84bbbb7c388f3, origin Model"
         },
         {
           "Name": "db host",
@@ -2341,7 +2341,7 @@
         },
         {
           "Name": "diagnostic events",
-          "Value": "147 received, 0 dropped by the publisher, longest quiet spell 8.2s during Idle"
+          "Value": "148 received, 0 dropped by the publisher, longest quiet spell 9.9s during Idle"
         },
         {
           "Name": "phases seen",
@@ -2365,7 +2365,7 @@
         },
         {
           "Name": "progress caption",
-          "Value": "\u0417\u0430\u0433\u0440\u0443\u0437\u043A\u0430 bhs-sweep-2027-b30dc421ba02442291616c72fb9b9f07.rvt"
+          "Value": "\u0417\u0430\u0433\u0440\u0443\u0437\u043A\u0430 bhs-sweep-2027-b370bad3dd64411da5d84bbbb7c388f3.rvt"
         },
         {
           "Name": "progress caption",
@@ -2393,7 +2393,7 @@
         },
         {
           "Name": "progress caption",
-          "Value": "\u0427\u0435\u0440\u0442\u0435\u0436: bhs-sweep-2027-b30dc421ba02442291616c72fb9b9f07.rvt - \u041F\u043B\u0430\u043D \u044D\u0442\u0430\u0436\u0430: \u0423\u0440\u043E\u0432\u0435\u043D\u044C 1"
+          "Value": "\u0427\u0435\u0440\u0442\u0435\u0436: bhs-sweep-2027-b370bad3dd64411da5d84bbbb7c388f3.rvt - \u041F\u043B\u0430\u043D \u044D\u0442\u0430\u0436\u0430: \u0423\u0440\u043E\u0432\u0435\u043D\u044C 1"
         },
         {
           "Name": "progress caption",
