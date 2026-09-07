@@ -1,301 +1,22 @@
 {
   "Schema": 2,
   "Disclaimer": "Recorded on a developer machine. Revit cannot run on hosted CI, so CI verifies this record rather than reproducing it: no automated check here has ever started a Revit.",
-  "Commit": "bd967327fda7117b192287b1152fbbb26ca11ab3",
+  "Commit": "67d405ba791c87bcb24898e809d94af1acc63fc2",
   "CommitClean": true,
   "Content": {
-    "source/Revit": "a5018b734ee25ec8e7f96de5f0e1ddec81346d8f",
+    "source/Revit": "69553678b05182c981bf726a70ae160c1e4e2b38",
     "source/Shared": "eee7d0ad7ce690ad605b52c1772dded4a3f97cbd",
     "source/WinSide": "5b71abdce4cd8186abf36416137a3dfa7f437a28",
     "build/BHS.Revit.Sdk": "eb401a3b673fabf6b4ba9ee1286cf8a450e3ed1c"
   },
-  "RecordedUtc": "2026-09-07T21:24:24.5379637Z",
+  "RecordedUtc": "2026-09-07T21:34:32.1795587Z",
   "WithModel": true,
   "ShowTab": false,
   "Releases": [
     {
       "Release": 2024,
       "FileVersion": "0.1.0.0",
-      "BuiltUtc": "2026-09-07T21:19:03.1459945Z",
-      "Signed": true,
-      "Checks": [
-        {
-          "Name": "the add-in registers over the well-known pipe",
-          "Ok": true
-        },
-        {
-          "Name": "the registering process is the one that was launched",
-          "Ok": true
-        },
-        {
-          "Name": "the registration names the right release",
-          "Ok": true
-        },
-        {
-          "Name": "the caller is this account",
-          "Ok": true
-        },
-        {
-          "Name": "the registry verified the peer against its pipe",
-          "Ok": true
-        },
-        {
-          "Name": "the registry knows it was started by us",
-          "Ok": true
-        },
-        {
-          "Name": "the registry is watching it for exit",
-          "Ok": true
-        },
-        {
-          "Name": "a pipe server lives inside the Revit process",
-          "Ok": true
-        },
-        {
-          "Name": "its image is the Revit that was started",
-          "Ok": true
-        },
-        {
-          "Name": "a registry that lost everything finds it again by enumeration",
-          "Ok": true
-        },
-        {
-          "Name": "the recovered instance is the same one",
-          "Ok": true
-        },
-        {
-          "Name": "recovery reads the release out of the pipe name",
-          "Ok": true
-        },
-        {
-          "Name": "a recovered instance is never claimed as ours",
-          "Ok": true
-        },
-        {
-          "Name": "GetConfiguration is answered from inside Revit",
-          "Ok": true
-        },
-        {
-          "Name": "the probe saw the correlation token",
-          "Ok": true
-        },
-        {
-          "Name": "the snapshot names the contract it speaks",
-          "Ok": true
-        },
-        {
-          "Name": "what Revit publishes arrives as ordinary configuration",
-          "Ok": true
-        },
-        {
-          "Name": "a change streams out of Revit to the consumer",
-          "Ok": true
-        },
-        {
-          "Name": "the change token fired",
-          "Ok": true
-        },
-        {
-          "Name": "sections bind",
-          "Ok": true
-        },
-        {
-          "Name": "the call arrives off the Revit API thread",
-          "Ok": true
-        },
-        {
-          "Name": "the product layer is the add-in\u0027s own folder, not Revit\u0027s",
-          "Ok": true
-        },
-        {
-          "Name": "a settings file on disk is read inside Revit",
-          "Ok": true
-        },
-        {
-          "Name": "the release-specific layer overrules the common one",
-          "Ok": true
-        },
-        {
-          "Name": "nine files and the environment are looked at, existing or not",
-          "Ok": true
-        },
-        {
-          "Name": "the add-in writes a log file inside Revit",
-          "Ok": true
-        },
-        {
-          "Name": "the file is the one findable by process id",
-          "Ok": true
-        },
-        {
-          "Name": "the journal sink attached, which needs the API thread",
-          "Ok": true
-        },
-        {
-          "Name": "the journal sink attached exactly once, however many hosts",
-          "Ok": true
-        },
-        {
-          "Name": "the journal takes warnings and worse only",
-          "Ok": true
-        },
-        {
-          "Name": "nothing is being dropped",
-          "Ok": true
-        },
-        {
-          "Name": "the log records which assemblies actually loaded",
-          "Ok": true
-        },
-        {
-          "Name": "records are marked with the thread they were written on",
-          "Ok": true
-        },
-        {
-          "Name": "the model given on the command line is opened and reported",
-          "Ok": false
-        },
-        {
-          "Name": "and it is the one that was asked for",
-          "Ok": false
-        },
-        {
-          "Name": "the diagnostic stream carries what Revit is doing",
-          "Ok": true
-        },
-        {
-          "Name": "every phase arrived on Revit\u0027s API thread",
-          "Ok": true
-        },
-        {
-          "Name": "the publisher accounted for everything it dropped",
-          "Ok": true
-        },
-        {
-          "Name": "opening a model is visible as it happens",
-          "Ok": true
-        },
-        {
-          "Name": "and so is the document becoming usable",
-          "Ok": false
-        },
-        {
-          "Name": "the Revit that would not open its model could be killed",
-          "Ok": true
-        }
-      ],
-      "Abandoned": true,
-      "Notes": [
-        {
-          "Name": "launched",
-          "Value": "pid 56300"
-        },
-        {
-          "Name": "registered after",
-          "Value": "16.4s"
-        },
-        {
-          "Name": "recovered by enumeration",
-          "Value": "1 instance(s)"
-        },
-        {
-          "Name": "build",
-          "Value": "24.3.40.26, language Russian"
-        },
-        {
-          "Name": "loaded from",
-          "Value": "C:\\Users\\alex\\AppData\\Roaming\\Autodesk\\Revit\\Addins\\2024\\BimHouseSoftware\\BHS.Revit.Probe\\Lib"
-        },
-        {
-          "Name": "probe log",
-          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2024-56300-20260908-071917.log"
-        },
-        {
-          "Name": "threads",
-          "Value": "api 1, call 29"
-        },
-        {
-          "Name": "appdomain",
-          "Value": "DefaultDomain (#1)"
-        },
-        {
-          "Name": "load context",
-          "Value": "(net48: no load contexts)"
-        },
-        {
-          "Name": "runtime",
-          "Value": ".NET Framework 4.8.9345.0"
-        },
-        {
-          "Name": "settings layer",
-          "Value": "read   C:\\Users\\alex\\AppData\\Roaming\\Autodesk\\Revit\\Addins\\2024\\BimHouseSoftware\\BHS.Revit.Probe\\Lib\\appsettings.json"
-        },
-        {
-          "Name": "settings layer",
-          "Value": "read   C:\\Users\\alex\\AppData\\Roaming\\Autodesk\\Revit\\Addins\\2024\\BimHouseSoftware\\BHS.Revit.Probe\\Lib\\appsettings.revit2024.json"
-        },
-        {
-          "Name": "log",
-          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2024-56300-20260908-071917.log"
-        },
-        {
-          "Name": "sinks",
-          "Value": "FileLogSink \u003E= Trace, TraceLogSink \u003E= None, JournalLogSink \u003E= Warning"
-        },
-        {
-          "Name": "the wait ended because",
-          "Value": "Revit is waiting for somebody to answer TaskDialog_Stop_Operation"
-        },
-        {
-          "Name": "document",
-          "Value": "(none)"
-        },
-        {
-          "Name": "opened after registration",
-          "Value": "71.3s"
-        },
-        {
-          "Name": "diagnostic events",
-          "Value": "7 received, 0 dropped by the publisher, longest quiet spell 11.2s during Starting"
-        },
-        {
-          "Name": "phases seen",
-          "Value": "Starting, OpeningDocument, Working, Blocked"
-        },
-        {
-          "Name": "progress caption",
-          "Value": "OnStartup"
-        },
-        {
-          "Name": "progress caption",
-          "Value": "opening"
-        },
-        {
-          "Name": "progress caption",
-          "Value": "\u041E\u0442\u043A\u0440\u044B\u0442\u0438\u0435 \u0441\u0443\u0449\u0435\u0441\u0442\u0432\u0443\u044E\u0449\u0435\u0433\u043E \u043F\u0440\u043E\u0435\u043A\u0442\u0430"
-        },
-        {
-          "Name": "progress caption",
-          "Value": "\u0417\u0430\u0433\u0440\u0443\u0437\u043A\u0430 bhs-sweep-2024-59eb6be643a642a9ac8a6aa62a85e86f.rvt"
-        },
-        {
-          "Name": "progress caption",
-          "Value": "dialog"
-        },
-        {
-          "Name": "modal dialog",
-          "Value": "TaskDialog_Stop_Operation"
-        },
-        {
-          "Name": "not asking it to close",
-          "Value": "the document never arrived, and a request now would land mid-operation"
-        }
-      ]
-    },
-    {
-      "Release": 2025,
-      "FileVersion": "0.1.0.0",
-      "BuiltUtc": "2026-09-07T21:19:03.9244983Z",
+      "BuiltUtc": "2026-09-07T21:26:12.7337110Z",
       "Signed": true,
       "Checks": [
         {
@@ -603,11 +324,590 @@
       "Notes": [
         {
           "Name": "launched",
-          "Value": "pid 64404"
+          "Value": "pid 64288"
         },
         {
           "Name": "registered after",
-          "Value": "14.4s"
+          "Value": "14.6s"
+        },
+        {
+          "Name": "recovered by enumeration",
+          "Value": "1 instance(s)"
+        },
+        {
+          "Name": "build",
+          "Value": "24.3.40.26, language Russian"
+        },
+        {
+          "Name": "loaded from",
+          "Value": "C:\\Users\\alex\\AppData\\Roaming\\Autodesk\\Revit\\Addins\\2024\\BimHouseSoftware\\BHS.Revit.Probe\\Lib"
+        },
+        {
+          "Name": "probe log",
+          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2024-64288-20260908-072624.log"
+        },
+        {
+          "Name": "threads",
+          "Value": "api 1, call 17"
+        },
+        {
+          "Name": "appdomain",
+          "Value": "DefaultDomain (#1)"
+        },
+        {
+          "Name": "load context",
+          "Value": "(net48: no load contexts)"
+        },
+        {
+          "Name": "runtime",
+          "Value": ".NET Framework 4.8.9345.0"
+        },
+        {
+          "Name": "settings layer",
+          "Value": "read   C:\\Users\\alex\\AppData\\Roaming\\Autodesk\\Revit\\Addins\\2024\\BimHouseSoftware\\BHS.Revit.Probe\\Lib\\appsettings.json"
+        },
+        {
+          "Name": "settings layer",
+          "Value": "read   C:\\Users\\alex\\AppData\\Roaming\\Autodesk\\Revit\\Addins\\2024\\BimHouseSoftware\\BHS.Revit.Probe\\Lib\\appsettings.revit2024.json"
+        },
+        {
+          "Name": "log",
+          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2024-64288-20260908-072624.log"
+        },
+        {
+          "Name": "sinks",
+          "Value": "FileLogSink \u003E= Trace, TraceLogSink \u003E= None, JournalLogSink \u003E= Warning"
+        },
+        {
+          "Name": "document",
+          "Value": "bhs-sweep-2024-1071aa6bc11242b4bc6baead4ae69e56"
+        },
+        {
+          "Name": "opened after registration",
+          "Value": "184.7s"
+        },
+        {
+          "Name": "availability and the press",
+          "Value": "not asked - set BHS_PROBE_SHOW_TAB=1 for both"
+        },
+        {
+          "Name": "model settings",
+          "Value": "document bhs-sweep-2024-1071aa6bc11242b4bc6baead4ae69e56, origin Model"
+        },
+        {
+          "Name": "fields as built",
+          "Value": "Cleared,Values,Version"
+        },
+        {
+          "Name": "a fourth field under the same GUID",
+          "Value": "InvalidOperationException: A different Schema with the same identity already exists."
+        },
+        {
+          "Name": "db host",
+          "Value": "add-in 79613878-acf3-4f56-83fc-11412bb53c24, 2 host(s) registered"
+        },
+        {
+          "Name": "BHS.Grpc.NamedPipes 0.1.0.0",
+          "Value": "ours  C:\\Users\\alex\\AppData\\Roaming\\Autodesk\\Revit\\Addins\\2024\\BimHouseSoftware\\BHS.Revit.Probe\\Lib\\BHS.Grpc.NamedPipes.dll"
+        },
+        {
+          "Name": "BHS.Logging 0.1.0.0",
+          "Value": "ours  C:\\Users\\alex\\AppData\\Roaming\\Autodesk\\Revit\\Addins\\2024\\BimHouseSoftware\\BHS.Revit.Probe\\Lib\\BHS.Logging.dll"
+        },
+        {
+          "Name": "BHS.Revit.Abstractions 0.1.0.0",
+          "Value": "ours  C:\\Users\\alex\\AppData\\Roaming\\Autodesk\\Revit\\Addins\\2024\\BimHouseSoftware\\BHS.Revit.Probe\\Lib\\BHS.Revit.Abstractions.dll"
+        },
+        {
+          "Name": "BHS.Revit.Common 0.1.0.0",
+          "Value": "ours  C:\\Users\\alex\\AppData\\Roaming\\Autodesk\\Revit\\Addins\\2024\\BimHouseSoftware\\BHS.Revit.Probe\\Lib\\BHS.Revit.Common.dll"
+        },
+        {
+          "Name": "BHS.Revit.Host 0.1.0.0",
+          "Value": "ours  C:\\Users\\alex\\AppData\\Roaming\\Autodesk\\Revit\\Addins\\2024\\BimHouseSoftware\\BHS.Revit.Probe\\Lib\\BHS.Revit.Host.dll"
+        },
+        {
+          "Name": "BHS.Revit.Probe 0.1.0.0",
+          "Value": "ours  C:\\Users\\alex\\AppData\\Roaming\\Autodesk\\Revit\\Addins\\2024\\BimHouseSoftware\\BHS.Revit.Probe\\Lib\\BHS.Revit.Probe.dll"
+        },
+        {
+          "Name": "BHS.Settings 0.1.0.0",
+          "Value": "ours  C:\\Users\\alex\\AppData\\Roaming\\Autodesk\\Revit\\Addins\\2024\\BimHouseSoftware\\BHS.Revit.Probe\\Lib\\BHS.Settings.dll"
+        },
+        {
+          "Name": "BHS.Shared 0.1.0.0",
+          "Value": "ours  C:\\Users\\alex\\AppData\\Roaming\\Autodesk\\Revit\\Addins\\2024\\BimHouseSoftware\\BHS.Revit.Probe\\Lib\\BHS.Shared.dll"
+        },
+        {
+          "Name": "BHS.Transport 0.1.0.0",
+          "Value": "ours  C:\\Users\\alex\\AppData\\Roaming\\Autodesk\\Revit\\Addins\\2024\\BimHouseSoftware\\BHS.Revit.Probe\\Lib\\BHS.Transport.dll"
+        },
+        {
+          "Name": "Google.Protobuf 3.29.3.0",
+          "Value": "ours  C:\\Users\\alex\\AppData\\Roaming\\Autodesk\\Revit\\Addins\\2024\\BimHouseSoftware\\BHS.Revit.Probe\\Lib\\Google.Protobuf.dll"
+        },
+        {
+          "Name": "Grpc.Core.Api 2.0.0.0",
+          "Value": "ours  C:\\Users\\alex\\AppData\\Roaming\\Autodesk\\Revit\\Addins\\2024\\BimHouseSoftware\\BHS.Revit.Probe\\Lib\\Grpc.Core.Api.dll"
+        },
+        {
+          "Name": "Microsoft.Extensions.DependencyInjection 6.0.0.0",
+          "Value": "REVIT  C:\\Program Files\\Autodesk\\Revit 2024\\Carbon Insights for Revit 2024\\Microsoft.Extensions.DependencyInjection.dll"
+        },
+        {
+          "Name": "Microsoft.Extensions.DependencyInjection.Abstractions 6.0.0.0",
+          "Value": "REVIT  C:\\Program Files\\Autodesk\\Revit 2024\\Carbon Insights for Revit 2024\\Microsoft.Extensions.DependencyInjection.Abstractions.dll"
+        },
+        {
+          "Name": "Newtonsoft.Json 13.0.0.0",
+          "Value": "REVIT  C:\\Program Files\\Autodesk\\Revit 2024\\Newtonsoft.Json.dll"
+        },
+        {
+          "Name": "System.Buffers 4.0.3.0",
+          "Value": "REVIT  C:\\Program Files\\Autodesk\\Revit 2024\\System.Buffers.dll"
+        },
+        {
+          "Name": "System.Memory 4.0.1.1",
+          "Value": "REVIT  C:\\Program Files\\Autodesk\\Revit 2024\\System.Memory.dll"
+        },
+        {
+          "Name": "System.Memory (4.0.1.2) 4.0.1.2",
+          "Value": "elsewhere  C:\\Program Files\\Bim.com Design App\\plugins\\revit\\2024\\System.Memory.dll"
+        },
+        {
+          "Name": "System.Numerics.Vectors 4.1.4.0",
+          "Value": "REVIT  C:\\Program Files\\Autodesk\\Revit 2024\\System.Numerics.Vectors.dll"
+        },
+        {
+          "Name": "System.Runtime.CompilerServices.Unsafe 4.0.4.1",
+          "Value": "REVIT  C:\\Program Files\\Autodesk\\Revit 2024\\System.Runtime.CompilerServices.Unsafe.dll"
+        },
+        {
+          "Name": "System.Runtime.CompilerServices.Unsafe (6.0.0.0) 6.0.0.0",
+          "Value": "elsewhere  C:\\Program Files (x86)\\archintelligence\\Environment\\\\System.Runtime.CompilerServices.Unsafe.dll"
+        },
+        {
+          "Name": "System.Threading.Tasks.Extensions 4.2.0.1",
+          "Value": "REVIT  C:\\Program Files\\Autodesk\\Revit 2024\\Carbon Insights for Revit 2024\\System.Threading.Tasks.Extensions.dll"
+        },
+        {
+          "Name": "assemblies loaded",
+          "Value": "676"
+        },
+        {
+          "Name": "Revit\u0027s copy won",
+          "Value": "System.Buffers"
+        },
+        {
+          "Name": "Revit\u0027s copy won",
+          "Value": "System.Memory"
+        },
+        {
+          "Name": "Revit\u0027s copy won",
+          "Value": "System.Numerics.Vectors"
+        },
+        {
+          "Name": "Revit\u0027s copy won",
+          "Value": "System.Runtime.CompilerServices.Unsafe"
+        },
+        {
+          "Name": "diagnostic events",
+          "Value": "157 received, 0 dropped by the publisher, longest quiet spell 169.0s during Blocked"
+        },
+        {
+          "Name": "phases seen",
+          "Value": "Starting, Idle, OpeningDocument, Working, DocumentReady, Blocked"
+        },
+        {
+          "Name": "progress caption",
+          "Value": "OnStartup"
+        },
+        {
+          "Name": "progress caption",
+          "Value": "opening"
+        },
+        {
+          "Name": "progress caption",
+          "Value": "\u041E\u0442\u043A\u0440\u044B\u0442\u0438\u0435 \u0441\u0443\u0449\u0435\u0441\u0442\u0432\u0443\u044E\u0449\u0435\u0433\u043E \u043F\u0440\u043E\u0435\u043A\u0442\u0430"
+        },
+        {
+          "Name": "progress caption",
+          "Value": "\u0417\u0430\u0433\u0440\u0443\u0437\u043A\u0430 bhs-sweep-2024-1071aa6bc11242b4bc6baead4ae69e56.rvt"
+        },
+        {
+          "Name": "progress caption",
+          "Value": "\u041E\u0431\u043D\u043E\u0432\u043B\u0435\u043D\u0438\u0435 \u0441\u0432\u044F\u0437\u0435\u0439"
+        },
+        {
+          "Name": "progress caption",
+          "Value": "dialog"
+        },
+        {
+          "Name": "progress caption",
+          "Value": "\u041E\u0431\u043D\u043E\u0432\u043B\u0435\u043D\u0438\u0435"
+        },
+        {
+          "Name": "progress caption",
+          "Value": "\u0424\u0438\u043A\u0441\u0430\u0446\u0438\u044F \u0442\u0440\u0430\u043D\u0437\u0430\u043A\u0446\u0438\u0439"
+        },
+        {
+          "Name": "progress caption",
+          "Value": "\u0424\u043E\u0440\u043C\u0438\u0440\u043E\u0432\u0430\u043D\u0438\u0435 \u0433\u0440\u0430\u0444\u0438\u043A\u0438 \u0434\u043B\u044F \u0414\u0438\u0441\u043F\u0435\u0442\u0447\u0435\u0440 \u043F\u0440\u043E\u0435\u043A\u0442\u0430"
+        },
+        {
+          "Name": "progress caption",
+          "Value": "\u0424\u043E\u0440\u043C\u0438\u0440\u043E\u0432\u0430\u043D\u0438\u0435 \u0433\u0440\u0430\u0444\u0438\u043A\u0438 \u0434\u043B\u044F \u041F\u043B\u0430\u043D \u044D\u0442\u0430\u0436\u0430: \u0423\u0440\u043E\u0432\u0435\u043D\u044C 1"
+        },
+        {
+          "Name": "progress caption",
+          "Value": "opened"
+        },
+        {
+          "Name": "progress caption",
+          "Value": "\u041E\u0431\u0440\u0430\u0431\u043E\u0442\u043A\u0430"
+        },
+        {
+          "Name": "progress caption",
+          "Value": "application initialized"
+        },
+        {
+          "Name": "progress caption",
+          "Value": "\u0427\u0435\u0440\u0442\u0435\u0436: bhs-sweep-2024-1071aa6bc11242b4bc6baead4ae69e56.rvt - \u041F\u043B\u0430\u043D \u044D\u0442\u0430\u0436\u0430: \u0423\u0440\u043E\u0432\u0435\u043D\u044C 1"
+        },
+        {
+          "Name": "progress caption",
+          "Value": "\u0420\u0435\u0433\u0435\u043D\u0435\u0440\u0430\u0446\u0438\u044F"
+        },
+        {
+          "Name": "progress caption",
+          "Value": "\u0410\u0432\u0442\u043E\u043C\u0430\u0442\u0438\u0447\u0435\u0441\u043A\u043E\u0435 \u0441\u043E\u0435\u0434\u0438\u043D\u0435\u043D\u0438\u0435 \u0438\u0437\u043C\u0435\u043D\u0435\u043D\u043D\u044B\u0445 \u044D\u043B\u0435\u043C\u0435\u043D\u0442\u043E\u0432"
+        },
+        {
+          "Name": "modal dialog",
+          "Value": "TaskDialog_Stop_Operation"
+        },
+        {
+          "Name": "closed after",
+          "Value": "21.9s"
+        }
+      ]
+    },
+    {
+      "Release": 2025,
+      "FileVersion": "0.1.0.0",
+      "BuiltUtc": "2026-09-07T21:26:12.9911602Z",
+      "Signed": true,
+      "Checks": [
+        {
+          "Name": "the add-in registers over the well-known pipe",
+          "Ok": true
+        },
+        {
+          "Name": "the registering process is the one that was launched",
+          "Ok": true
+        },
+        {
+          "Name": "the registration names the right release",
+          "Ok": true
+        },
+        {
+          "Name": "the caller is this account",
+          "Ok": true
+        },
+        {
+          "Name": "the registry verified the peer against its pipe",
+          "Ok": true
+        },
+        {
+          "Name": "the registry knows it was started by us",
+          "Ok": true
+        },
+        {
+          "Name": "the registry is watching it for exit",
+          "Ok": true
+        },
+        {
+          "Name": "a pipe server lives inside the Revit process",
+          "Ok": true
+        },
+        {
+          "Name": "its image is the Revit that was started",
+          "Ok": true
+        },
+        {
+          "Name": "a registry that lost everything finds it again by enumeration",
+          "Ok": true
+        },
+        {
+          "Name": "the recovered instance is the same one",
+          "Ok": true
+        },
+        {
+          "Name": "recovery reads the release out of the pipe name",
+          "Ok": true
+        },
+        {
+          "Name": "a recovered instance is never claimed as ours",
+          "Ok": true
+        },
+        {
+          "Name": "GetConfiguration is answered from inside Revit",
+          "Ok": true
+        },
+        {
+          "Name": "the probe saw the correlation token",
+          "Ok": true
+        },
+        {
+          "Name": "the snapshot names the contract it speaks",
+          "Ok": true
+        },
+        {
+          "Name": "what Revit publishes arrives as ordinary configuration",
+          "Ok": true
+        },
+        {
+          "Name": "a change streams out of Revit to the consumer",
+          "Ok": true
+        },
+        {
+          "Name": "the change token fired",
+          "Ok": true
+        },
+        {
+          "Name": "sections bind",
+          "Ok": true
+        },
+        {
+          "Name": "the call arrives off the Revit API thread",
+          "Ok": true
+        },
+        {
+          "Name": "the product layer is the add-in\u0027s own folder, not Revit\u0027s",
+          "Ok": true
+        },
+        {
+          "Name": "a settings file on disk is read inside Revit",
+          "Ok": true
+        },
+        {
+          "Name": "the release-specific layer overrules the common one",
+          "Ok": true
+        },
+        {
+          "Name": "nine files and the environment are looked at, existing or not",
+          "Ok": true
+        },
+        {
+          "Name": "the add-in writes a log file inside Revit",
+          "Ok": true
+        },
+        {
+          "Name": "the file is the one findable by process id",
+          "Ok": true
+        },
+        {
+          "Name": "the journal sink attached, which needs the API thread",
+          "Ok": true
+        },
+        {
+          "Name": "the journal sink attached exactly once, however many hosts",
+          "Ok": true
+        },
+        {
+          "Name": "the journal takes warnings and worse only",
+          "Ok": true
+        },
+        {
+          "Name": "nothing is being dropped",
+          "Ok": true
+        },
+        {
+          "Name": "the log records which assemblies actually loaded",
+          "Ok": true
+        },
+        {
+          "Name": "records are marked with the thread they were written on",
+          "Ok": true
+        },
+        {
+          "Name": "the model given on the command line is opened and reported",
+          "Ok": true
+        },
+        {
+          "Name": "and it is the one that was asked for",
+          "Ok": true
+        },
+        {
+          "Name": "the ribbon panel and button were built",
+          "Ok": true
+        },
+        {
+          "Name": "and they came from the generated manifest, not from code",
+          "Ok": true
+        },
+        {
+          "Name": "the feature assembly is not loaded while the ribbon stands",
+          "Ok": true
+        },
+        {
+          "Name": "the pump reaches the API thread and finds the open document",
+          "Ok": true
+        },
+        {
+          "Name": "a project setting starts unset in a fresh model",
+          "Ok": true
+        },
+        {
+          "Name": "it is written into the model and read back",
+          "Ok": true
+        },
+        {
+          "Name": "and the model is then named as where it came from",
+          "Ok": true
+        },
+        {
+          "Name": "a key without the project prefix is not taken from the model",
+          "Ok": true
+        },
+        {
+          "Name": "the product layer really did set the key that is about to be cleared",
+          "Ok": true
+        },
+        {
+          "Name": "and a project can clear what the vendor\u0027s own file set",
+          "Ok": true
+        },
+        {
+          "Name": "and the document is left unmodified, so nothing is asked on the way out",
+          "Ok": true
+        },
+        {
+          "Name": "a throwaway schema registers inside Revit",
+          "Ok": true
+        },
+        {
+          "Name": "the same schema definition may be built again",
+          "Ok": true
+        },
+        {
+          "Name": "but a field may never be added to it",
+          "Ok": true
+        },
+        {
+          "Name": "and the refusal leaves the registered definition untouched",
+          "Ok": true
+        },
+        {
+          "Name": "an entity round-trips through the document",
+          "Ok": true
+        },
+        {
+          "Name": "RecognizedField answers for every field of the entity\u0027s own schema",
+          "Ok": true
+        },
+        {
+          "Name": "and the measurement left the document unmodified",
+          "Ok": true
+        },
+        {
+          "Name": "a DBApplication add-in starts the same host",
+          "Ok": true
+        },
+        {
+          "Name": "and it is keyed by its own add-in id, beside the interface one",
+          "Ok": true
+        },
+        {
+          "Name": "both add-in ids are found in the registry",
+          "Ok": true
+        },
+        {
+          "Name": "and they are two hosts, not one answering twice",
+          "Ok": true
+        },
+        {
+          "Name": "the interface host offers the API thread and the DB host does not",
+          "Ok": true
+        },
+        {
+          "Name": "both forms were called on the same API thread",
+          "Ok": true
+        },
+        {
+          "Name": "a module starts in the DB host too",
+          "Ok": true
+        },
+        {
+          "Name": "and it is given its own settings section",
+          "Ok": true
+        },
+        {
+          "Name": "startup there is not yet Revit having started, as in the interface form",
+          "Ok": true
+        },
+        {
+          "Name": "settings from disk are read there too",
+          "Ok": true
+        },
+        {
+          "Name": "asking for the API thread there is refused, in a sentence",
+          "Ok": true
+        },
+        {
+          "Name": "and Revit tells it that it has finished starting, session or no session",
+          "Ok": true
+        },
+        {
+          "Name": "every assembly Revit substituted is one RefCheck vets",
+          "Ok": true
+        },
+        {
+          "Name": "the diagnostic stream carries what Revit is doing",
+          "Ok": true
+        },
+        {
+          "Name": "every phase arrived on Revit\u0027s API thread",
+          "Ok": true
+        },
+        {
+          "Name": "the publisher accounted for everything it dropped",
+          "Ok": true
+        },
+        {
+          "Name": "opening a model is visible as it happens",
+          "Ok": true
+        },
+        {
+          "Name": "and so is the document becoming usable",
+          "Ok": true
+        },
+        {
+          "Name": "Revit closes on an ExitRevit posted from inside",
+          "Ok": true
+        },
+        {
+          "Name": "the registry drops it when the process goes",
+          "Ok": true
+        },
+        {
+          "Name": "the DB host is taken down on the way out, like the interface one",
+          "Ok": true
+        },
+        {
+          "Name": "and its module is stopped with it",
+          "Ok": true
+        }
+      ],
+      "Abandoned": false,
+      "Notes": [
+        {
+          "Name": "launched",
+          "Value": "pid 64884"
+        },
+        {
+          "Name": "registered after",
+          "Value": "14.2s"
         },
         {
           "Name": "recovered by enumeration",
@@ -623,11 +923,11 @@
         },
         {
           "Name": "probe log",
-          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2025-64404-20260908-072045.log"
+          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2025-64884-20260908-073016.log"
         },
         {
           "Name": "threads",
-          "Value": "api 1, call 24"
+          "Value": "api 1, call 25"
         },
         {
           "Name": "appdomain",
@@ -651,7 +951,7 @@
         },
         {
           "Name": "log",
-          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2025-64404-20260908-072045.log"
+          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2025-64884-20260908-073016.log"
         },
         {
           "Name": "sinks",
@@ -659,11 +959,11 @@
         },
         {
           "Name": "document",
-          "Value": "bhs-sweep-2025-de2f4a880076436e844cc4c2f74f829d"
+          "Value": "bhs-sweep-2025-670e6e53772e4b0c83ca0c4eadd0a9d2"
         },
         {
           "Name": "opened after registration",
-          "Value": "9.4s"
+          "Value": "9.3s"
         },
         {
           "Name": "availability and the press",
@@ -671,7 +971,7 @@
         },
         {
           "Name": "model settings",
-          "Value": "document bhs-sweep-2025-de2f4a880076436e844cc4c2f74f829d, origin Model"
+          "Value": "document bhs-sweep-2025-670e6e53772e4b0c83ca0c4eadd0a9d2, origin Model"
         },
         {
           "Name": "fields as built",
@@ -823,7 +1123,7 @@
         },
         {
           "Name": "diagnostic events",
-          "Value": "81 received, 0 dropped by the publisher, longest quiet spell 4.2s during Working"
+          "Value": "79 received, 0 dropped by the publisher, longest quiet spell 3.9s during Working"
         },
         {
           "Name": "phases seen",
@@ -851,7 +1151,7 @@
         },
         {
           "Name": "progress caption",
-          "Value": "\u0417\u0430\u0433\u0440\u0443\u0437\u043A\u0430 bhs-sweep-2025-de2f4a880076436e844cc4c2f74f829d.rvt"
+          "Value": "\u0417\u0430\u0433\u0440\u0443\u0437\u043A\u0430 bhs-sweep-2025-670e6e53772e4b0c83ca0c4eadd0a9d2.rvt"
         },
         {
           "Name": "progress caption",
@@ -879,18 +1179,18 @@
         },
         {
           "Name": "progress caption",
-          "Value": "\u0427\u0435\u0440\u0442\u0435\u0436: bhs-sweep-2025-de2f4a880076436e844cc4c2f74f829d.rvt - \u041F\u043B\u0430\u043D \u044D\u0442\u0430\u0436\u0430: \u0423\u0440\u043E\u0432\u0435\u043D\u044C 1"
+          "Value": "\u0427\u0435\u0440\u0442\u0435\u0436: bhs-sweep-2025-670e6e53772e4b0c83ca0c4eadd0a9d2.rvt - \u041F\u043B\u0430\u043D \u044D\u0442\u0430\u0436\u0430: \u0423\u0440\u043E\u0432\u0435\u043D\u044C 1"
         },
         {
           "Name": "closed after",
-          "Value": "3.9s"
+          "Value": "3.4s"
         }
       ]
     },
     {
       "Release": 2026,
       "FileVersion": "0.1.0.0",
-      "BuiltUtc": "2026-09-07T21:19:05.1826907Z",
+      "BuiltUtc": "2026-09-07T21:26:14.0344238Z",
       "Signed": true,
       "Checks": [
         {
@@ -1198,11 +1498,11 @@
       "Notes": [
         {
           "Name": "launched",
-          "Value": "pid 67168"
+          "Value": "pid 65472"
         },
         {
           "Name": "registered after",
-          "Value": "25.7s"
+          "Value": "28.5s"
         },
         {
           "Name": "recovered by enumeration",
@@ -1218,11 +1518,11 @@
         },
         {
           "Name": "probe log",
-          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2026-67168-20260908-072115.log"
+          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2026-65472-20260908-073046.log"
         },
         {
           "Name": "threads",
-          "Value": "api 1, call 7"
+          "Value": "api 1, call 16"
         },
         {
           "Name": "appdomain",
@@ -1246,7 +1546,7 @@
         },
         {
           "Name": "log",
-          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2026-67168-20260908-072115.log"
+          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2026-65472-20260908-073046.log"
         },
         {
           "Name": "sinks",
@@ -1254,11 +1554,11 @@
         },
         {
           "Name": "document",
-          "Value": "bhs-sweep-2026-bd47e4c384644cfe869d3cfeb2a4db12"
+          "Value": "bhs-sweep-2026-75f076e561254c49a7499034701f1d4d"
         },
         {
           "Name": "opened after registration",
-          "Value": "60.6s"
+          "Value": "63.2s"
         },
         {
           "Name": "availability and the press",
@@ -1266,7 +1566,7 @@
         },
         {
           "Name": "model settings",
-          "Value": "document bhs-sweep-2026-bd47e4c384644cfe869d3cfeb2a4db12, origin Model"
+          "Value": "document bhs-sweep-2026-75f076e561254c49a7499034701f1d4d, origin Model"
         },
         {
           "Name": "fields as built",
@@ -1382,7 +1682,7 @@
         },
         {
           "Name": "diagnostic events",
-          "Value": "159 received, 0 dropped by the publisher, longest quiet spell 45.0s during Starting"
+          "Value": "158 received, 0 dropped by the publisher, longest quiet spell 47.7s during Starting"
         },
         {
           "Name": "phases seen",
@@ -1406,7 +1706,7 @@
         },
         {
           "Name": "progress caption",
-          "Value": "\u0417\u0430\u0433\u0440\u0443\u0437\u043A\u0430 bhs-sweep-2026-bd47e4c384644cfe869d3cfeb2a4db12.rvt"
+          "Value": "\u0417\u0430\u0433\u0440\u0443\u0437\u043A\u0430 bhs-sweep-2026-75f076e561254c49a7499034701f1d4d.rvt"
         },
         {
           "Name": "progress caption",
@@ -1434,7 +1734,7 @@
         },
         {
           "Name": "progress caption",
-          "Value": "\u0427\u0435\u0440\u0442\u0435\u0436: bhs-sweep-2026-bd47e4c384644cfe869d3cfeb2a4db12.rvt - \u041F\u043B\u0430\u043D \u044D\u0442\u0430\u0436\u0430: \u0423\u0440\u043E\u0432\u0435\u043D\u044C 1"
+          "Value": "\u0427\u0435\u0440\u0442\u0435\u0436: bhs-sweep-2026-75f076e561254c49a7499034701f1d4d.rvt - \u041F\u043B\u0430\u043D \u044D\u0442\u0430\u0436\u0430: \u0423\u0440\u043E\u0432\u0435\u043D\u044C 1"
         },
         {
           "Name": "progress caption",
@@ -1450,14 +1750,14 @@
         },
         {
           "Name": "closed after",
-          "Value": "16.2s"
+          "Value": "15.8s"
         }
       ]
     },
     {
       "Release": 2027,
       "FileVersion": "0.1.0.0",
-      "BuiltUtc": "2026-09-07T21:19:05.0132934Z",
+      "BuiltUtc": "2026-09-07T21:26:14.1722591Z",
       "Signed": true,
       "Checks": [
         {
@@ -1765,11 +2065,11 @@
       "Notes": [
         {
           "Name": "launched",
-          "Value": "pid 69104"
+          "Value": "pid 27660"
         },
         {
           "Name": "registered after",
-          "Value": "21.0s"
+          "Value": "17.4s"
         },
         {
           "Name": "recovered by enumeration",
@@ -1785,11 +2085,11 @@
         },
         {
           "Name": "probe log",
-          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2027-69104-20260908-072304.log"
+          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2027-27660-20260908-073236.log"
         },
         {
           "Name": "threads",
-          "Value": "api 2, call 21"
+          "Value": "api 2, call 15"
         },
         {
           "Name": "appdomain",
@@ -1813,7 +2113,7 @@
         },
         {
           "Name": "log",
-          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2027-69104-20260908-072304.log"
+          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2027-27660-20260908-073236.log"
         },
         {
           "Name": "sinks",
@@ -1821,11 +2121,11 @@
         },
         {
           "Name": "document",
-          "Value": "bhs-sweep-2027-561d2f685583401a820c70a446d89c61"
+          "Value": "bhs-sweep-2027-dacb575f85d04661823c9a02b767624b"
         },
         {
           "Name": "opened after registration",
-          "Value": "60.3s"
+          "Value": "37.1s"
         },
         {
           "Name": "availability and the press",
@@ -1833,7 +2133,7 @@
         },
         {
           "Name": "model settings",
-          "Value": "document bhs-sweep-2027-561d2f685583401a820c70a446d89c61, origin Model"
+          "Value": "document bhs-sweep-2027-dacb575f85d04661823c9a02b767624b, origin Model"
         },
         {
           "Name": "fields as built",
@@ -2201,11 +2501,11 @@
         },
         {
           "Name": "diagnostic events",
-          "Value": "160 received, 0 dropped by the publisher, longest quiet spell 36.7s during Starting"
+          "Value": "159 received, 0 dropped by the publisher, longest quiet spell 20.3s during Starting"
         },
         {
           "Name": "phases seen",
-          "Value": "Starting, Idle, OpeningDocument, Working, DocumentReady, Blocked"
+          "Value": "Starting, Idle, OpeningDocument, Working, DocumentReady"
         },
         {
           "Name": "progress caption",
@@ -2225,11 +2525,7 @@
         },
         {
           "Name": "progress caption",
-          "Value": "\u0417\u0430\u0433\u0440\u0443\u0437\u043A\u0430 bhs-sweep-2027-561d2f685583401a820c70a446d89c61.rvt"
-        },
-        {
-          "Name": "progress caption",
-          "Value": "dialog"
+          "Value": "\u0417\u0430\u0433\u0440\u0443\u0437\u043A\u0430 bhs-sweep-2027-dacb575f85d04661823c9a02b767624b.rvt"
         },
         {
           "Name": "progress caption",
@@ -2257,7 +2553,7 @@
         },
         {
           "Name": "progress caption",
-          "Value": "\u0427\u0435\u0440\u0442\u0435\u0436: bhs-sweep-2027-561d2f685583401a820c70a446d89c61.rvt - \u041F\u043B\u0430\u043D \u044D\u0442\u0430\u0436\u0430: \u0423\u0440\u043E\u0432\u0435\u043D\u044C 1"
+          "Value": "\u0427\u0435\u0440\u0442\u0435\u0436: bhs-sweep-2027-dacb575f85d04661823c9a02b767624b.rvt - \u041F\u043B\u0430\u043D \u044D\u0442\u0430\u0436\u0430: \u0423\u0440\u043E\u0432\u0435\u043D\u044C 1"
         },
         {
           "Name": "progress caption",
@@ -2272,16 +2568,12 @@
           "Value": "\u0410\u0432\u0442\u043E\u043C\u0430\u0442\u0438\u0447\u0435\u0441\u043A\u043E\u0435 \u0441\u043E\u0435\u0434\u0438\u043D\u0435\u043D\u0438\u0435 \u0438\u0437\u043C\u0435\u043D\u0435\u043D\u043D\u044B\u0445 \u044D\u043B\u0435\u043C\u0435\u043D\u0442\u043E\u0432"
         },
         {
-          "Name": "modal dialog",
-          "Value": "TaskDialog_Stop_Operation"
-        },
-        {
           "Name": "closed after",
-          "Value": "12.5s"
+          "Value": "71.8s"
         }
       ]
     }
   ],
-  "Performed": 266,
-  "Failed": 3
+  "Performed": 300,
+  "Failed": 0
 }
