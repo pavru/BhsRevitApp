@@ -707,15 +707,6 @@ internal static class SweepChecks
     }
 
     /// <summary>
-    /// Settings that belong to the document, written into it and read back.
-    /// </summary>
-    /// <remarks>
-    /// The whole path in one check: a channel call reaching the API thread through the pump, a
-    /// transaction, Extensible Storage written and read, and the project chain preferring what the
-    /// model says. None of it can be measured from outside Revit, and the storage half cannot be
-    /// measured without a document, which is why this runs only with one open.
-    /// </remarks>
-    /// <summary>
     /// How permanent an Extensible Storage schema really is.
     /// </summary>
     /// <remarks>
@@ -751,7 +742,7 @@ internal static class SweepChecks
         }
 
         report.Check("a throwaway schema registers inside Revit",
-            values.GetValueOrDefault("schema:registered") == "True");
+            values.GetValueOrDefault("schema:registered") == "ok");
 
         // Rebuilding the identical definition succeeds, and that is what lets two editions sharing
         // one BHS.Revit.Host.dll in Revit 2024's AppDomain each call Build and meet on one schema.
@@ -763,8 +754,13 @@ internal static class SweepChecks
         report.Check("but a field may never be added to it",
             values.GetValueOrDefault("schema:extraField")?.StartsWith("InvalidOperationException", StringComparison.Ordinal) == true);
 
+        // Both sides read from the same answer, so they must be compared against something as well
+        // as against each other: two absent keys are equal, and the check would pass by saying
+        // nothing. Every sibling here compares to a known value; this one had to be told to.
+        var built = values.GetValueOrDefault("schema:fields");
+
         report.Check("and the refusal leaves the registered definition untouched",
-            values.GetValueOrDefault("schema:fieldsAfter") == values.GetValueOrDefault("schema:fields"));
+            !string.IsNullOrEmpty(built) && values.GetValueOrDefault("schema:fieldsAfter") == built);
 
         report.Check("an entity round-trips through the document",
             values.GetValueOrDefault("schema:roundTrip") == "ok"
@@ -787,6 +783,14 @@ internal static class SweepChecks
             values.GetValueOrDefault("schema:clean") == "True");
     }
 
+    /// Settings that belong to the document, written into it and read back.
+    /// </summary>
+    /// <remarks>
+    /// The whole path in one check: a channel call reaching the API thread through the pump, a
+    /// transaction, Extensible Storage written and read, and the project chain preferring what the
+    /// model says. None of it can be measured from outside Revit, and the storage half cannot be
+    /// measured without a document, which is why this runs only with one open.
+    /// </remarks>
     private static async Task CheckModelSettingsAsync(
         RevitSideChannel.RevitSideChannelClient client,
         Report report)

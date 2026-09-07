@@ -145,10 +145,16 @@ internal static class WorkWatch
             var watching = DateTime.UtcNow - started;
             var quietFor = watcher.SinceLastHeard < watching ? watcher.SinceLastHeard : watching;
 
-            // The phase says blocked even when the dialog would not name itself: Revit hands
-            // DialogBoxShowing an id that can be absent, and reading the id alone downgraded
-            // exactly those dialogs to "went quiet" - the answer being a person either way.
-            var blocked = watcher.CurrentPhase == RevitPhase.Blocked || watcher.BlockedBy.Length > 0;
+            // The phase alone, and the remembered dialog id deliberately left out of it. The id is
+            // sticky by design - it survives until Revit visibly moves on, so that a dialog still on
+            // screen is not forgotten the instant anything else happens. When it only worded a
+            // sentence that bias was free. Stopping the clock on it is not: a dialog raised during
+            // Starting and answered leaves the id set, Revit emits nothing but Starting, and a
+            // genuine hang would then hold the wait for the whole ceiling - the watchdog decaying
+            // back into the fixed budget it was written to replace.
+            //
+            // So the phase decides the behaviour and the id only decides the wording.
+            var blocked = watcher.CurrentPhase == RevitPhase.Blocked;
 
             // While Revit is holding a dialog the quiet clock does not run, and this is a
             // correction rather than a tolerance. Blocked was already told apart from silence and
@@ -171,9 +177,15 @@ internal static class WorkWatch
                                       + " - answer it, or this ends at the ceiling");
                 }
             }
-            else if (listening && quietFor > quiet)
+            else
             {
-                return WaitOutcome.WentQuiet;
+                // Asked again the next time it blocks: a second dialog is a second moment when the
+                // person at the screen is the thing being waited on, and the first announcement has
+                // long scrolled away.
+                announced = false;
+
+                if (listening && quietFor > quiet)
+                    return WaitOutcome.WentQuiet;
             }
 
             await Task.Delay(250);

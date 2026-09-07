@@ -234,20 +234,6 @@ internal sealed class ProbeChannel : RevitSideChannel.RevitSideChannelBase
     }
 
     /// <summary>
-    /// Writes a project setting into the open model and reads it back.
-    /// </summary>
-    /// <remarks>
-    /// The only shape that compiles, and that is the point of it. A document reaches this code from
-    /// exactly one place - the session handed to work running inside the pump - so "not on the API
-    /// thread" cannot be written here, and "there is no document" has to be named rather than
-    /// forgotten. Both failures used to be caught by checks; now they are unexpressible.
-    /// <para>
-    /// It exercises the whole path at once: the pump there and back, a transaction on the API
-    /// thread, Extensible Storage written and read, and the project chain choosing the model's
-    /// answer over the file's.
-    /// </para>
-    /// </remarks>
-    /// <summary>
     /// How permanent a schema really is, once a model carries it.
     /// </summary>
     /// <remarks>
@@ -320,9 +306,17 @@ internal sealed class ProbeChannel : RevitSideChannel.RevitSideChannelBase
             }
 
             // 1. The shape the product uses today, under a name only this measurement knows.
-            var first = Build(probeSchemaId, extraField: false);
-            answer["schema:registered"] = first is not null ? "True" : "False";
-            answer["schema:fields"] = string.Join(",", first!.ListFields().Select(f => f.FieldName));
+            //
+            // Guarded like every other step, and the reason is written down elsewhere in this
+            // repository at the price of a whole release: an exception escaping here leaves Ask to
+            // rethrow it, and the runner has no try around its checks - so the rest of the release
+            // is lost and Revit is never asked to close. The measurement reports its own failure
+            // as a value; it does not take the sweep with it.
+            answer["schema:registered"] = Attempt(() =>
+            {
+                var first = Build(probeSchemaId, extraField: false);
+                answer["schema:fields"] = string.Join(",", first.ListFields().Select(f => f.FieldName));
+            });
 
             // 2. The same definition again. If this alone throws, every later question is moot:
             //    the answer would be that a definition may be built exactly once per process.
@@ -338,8 +332,11 @@ internal sealed class ProbeChannel : RevitSideChannel.RevitSideChannelBase
                 ? "(gone)"
                 : string.Join(",", current.ListFields().Select(f => f.FieldName));
 
+            if (answer["schema:registered"] != "ok")
+                return answer;
+
             using var group = new Autodesk.Revit.DB.TransactionGroup(document, "BHS probe: schema");
-            group.Start();
+            answer["schema:group"] = Attempt(() => group.Start());
 
             // 5. An entity written under the definition as it stands, read back, and asked about a
             //    field it may or may not know. RecognizedField reads like the tolerance mechanism;
@@ -368,7 +365,7 @@ internal sealed class ProbeChannel : RevitSideChannel.RevitSideChannelBase
                         read.RecognizedField(field) ? "True" : "False";
             });
 
-            group.RollBack();
+            answer["schema:rolledBack"] = Attempt(() => group.RollBack());
             answer["schema:clean"] = document.IsModified ? "False" : "True";
 
             return answer;
@@ -377,6 +374,19 @@ internal sealed class ProbeChannel : RevitSideChannel.RevitSideChannelBase
         return report;
     }
 
+    /// Writes a project setting into the open model and reads it back.
+    /// </summary>
+    /// <remarks>
+    /// The only shape that compiles, and that is the point of it. A document reaches this code from
+    /// exactly one place - the session handed to work running inside the pump - so "not on the API
+    /// thread" cannot be written here, and "there is no document" has to be named rather than
+    /// forgotten. Both failures used to be caught by checks; now they are unexpressible.
+    /// <para>
+    /// It exercises the whole path at once: the pump there and back, a transaction on the API
+    /// thread, Extensible Storage written and read, and the project chain choosing the model's
+    /// answer over the file's.
+    /// </para>
+    /// </remarks>
     private async Task<IReadOnlyDictionary<string, string>> ModelSettings()
     {
         const string key = "Model:Probe:Marker";

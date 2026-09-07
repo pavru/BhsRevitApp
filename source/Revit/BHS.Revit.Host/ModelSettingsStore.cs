@@ -79,6 +79,21 @@ internal sealed class ModelSettingsStore
     /// key that already means something cannot be taken away from it. Nothing uses it yet; that is
     /// the right moment to claim it. Settings keys are identifiers joined by colons, so a leading
     /// dollar cannot collide with one by accident.
+    ///
+    /// <b>Reserved and, for now, unusable even by us - said plainly rather than left to be
+    /// discovered.</b> <see cref="Write"/> is the only way in and refuses the prefix from everyone,
+    /// so the framework cannot yet write the keys it has claimed. That is deliberate: a bypass with
+    /// no caller would be a mechanism with nothing to mechanise, which this repository has decided
+    /// against elsewhere. Two things have to be settled together with the first reserved key, and
+    /// neither is settled now:
+    /// <list type="bullet">
+    /// <item>a path that may write it - an internal overload, not a flag on the public one;</item>
+    /// <item>what happens to it on an ordinary feature write. <see cref="Write"/> builds a fresh
+    /// entity and replaces the whole map, so a reserved key would be erased by the next write that
+    /// did not mention it. Framework keys therefore need merging, which is a different contract
+    /// from the replace-everything one features have - and choosing it before there is a key to
+    /// choose it for would be guessing.</item>
+    /// </list>
     /// </remarks>
     public const string ReservedPrefix = "$";
 
