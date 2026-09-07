@@ -1,22 +1,22 @@
 {
   "Schema": 2,
   "Disclaimer": "Recorded on a developer machine. Revit cannot run on hosted CI, so CI verifies this record rather than reproducing it: no automated check here has ever started a Revit.",
-  "Commit": "4f6f190f63e49e115775161ae8b5826afa976b2c",
+  "Commit": "d07d02f6e2a38ff1b0894a4ea92f9088bdab7f23",
   "CommitClean": true,
   "Content": {
-    "source/Revit": "273e692816908ef880316c73c122c65dc5627061",
-    "source/Shared": "311c245f12433dbb9b492fda427a8d5e9eee6185",
+    "source/Revit": "488d46110a69b1335cbaad0be51283d2f75d5825",
+    "source/Shared": "07a859a4a1125400534d76c0af771f6473666183",
     "source/WinSide": "5b71abdce4cd8186abf36416137a3dfa7f437a28",
     "build/BHS.Revit.Sdk": "eb401a3b673fabf6b4ba9ee1286cf8a450e3ed1c"
   },
-  "RecordedUtc": "2026-09-06T23:28:31.0511005Z",
+  "RecordedUtc": "2026-09-07T01:23:27.7103474Z",
   "WithModel": false,
   "ShowTab": false,
   "Releases": [
     {
       "Release": 2024,
       "FileVersion": "0.1.0.0",
-      "BuiltUtc": "2026-09-06T23:25:05.6963841Z",
+      "BuiltUtc": "2026-09-07T01:19:45.5484120Z",
       "Signed": true,
       "Checks": [
         {
@@ -216,6 +216,18 @@
           "Ok": true
         },
         {
+          "Name": "the diagnostic stream carries what Revit is doing",
+          "Ok": true
+        },
+        {
+          "Name": "every phase arrived on Revit\u0027s API thread",
+          "Ok": true
+        },
+        {
+          "Name": "the publisher accounted for everything it dropped",
+          "Ok": true
+        },
+        {
           "Name": "Revit closes on an ExitRevit posted from inside",
           "Ok": true
         },
@@ -235,11 +247,11 @@
       "Notes": [
         {
           "Name": "launched",
-          "Value": "pid 54988"
+          "Value": "pid 52032"
         },
         {
           "Name": "registered after",
-          "Value": "16.3s"
+          "Value": "18.8s"
         },
         {
           "Name": "recovered by enumeration",
@@ -255,11 +267,11 @@
         },
         {
           "Name": "probe log",
-          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2024-54988-20260907-092516.log"
+          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2024-52032-20260907-112000.log"
         },
         {
           "Name": "threads",
-          "Value": "api 1, call 18"
+          "Value": "api 1, call 20"
         },
         {
           "Name": "appdomain",
@@ -283,7 +295,7 @@
         },
         {
           "Name": "log",
-          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2024-54988-20260907-092516.log"
+          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2024-52032-20260907-112000.log"
         },
         {
           "Name": "sinks",
@@ -386,15 +398,27 @@
           "Value": "System.Runtime.CompilerServices.Unsafe"
         },
         {
+          "Name": "diagnostic events",
+          "Value": "4 received, 0 dropped by the publisher, longest quiet spell 0.0s during Working"
+        },
+        {
+          "Name": "phases seen",
+          "Value": "Idle, Working"
+        },
+        {
+          "Name": "progress caption",
+          "Value": "\u041E\u0431\u0440\u0430\u0431\u043E\u0442\u043A\u0430"
+        },
+        {
           "Name": "closed after",
-          "Value": "28.5s"
+          "Value": "28.3s"
         }
       ]
     },
     {
       "Release": 2025,
       "FileVersion": "0.1.0.0",
-      "BuiltUtc": "2026-09-06T23:18:35.4511063Z",
+      "BuiltUtc": "2026-09-07T01:19:46.0960786Z",
       "Signed": true,
       "Checks": [
         {
@@ -594,6 +618,18 @@
           "Ok": true
         },
         {
+          "Name": "the diagnostic stream carries what Revit is doing",
+          "Ok": true
+        },
+        {
+          "Name": "every phase arrived on Revit\u0027s API thread",
+          "Ok": true
+        },
+        {
+          "Name": "the publisher accounted for everything it dropped",
+          "Ok": true
+        },
+        {
           "Name": "Revit closes on an ExitRevit posted from inside",
           "Ok": true
         },
@@ -613,11 +649,11 @@
       "Notes": [
         {
           "Name": "launched",
-          "Value": "pid 22692"
+          "Value": "pid 37640"
         },
         {
           "Name": "registered after",
-          "Value": "13.4s"
+          "Value": "15.1s"
         },
         {
           "Name": "recovered by enumeration",
@@ -633,11 +669,11 @@
         },
         {
           "Name": "probe log",
-          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2025-22692-20260907-092612.log"
+          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2025-37640-20260907-112059.log"
         },
         {
           "Name": "threads",
-          "Value": "api 1, call 7"
+          "Value": "api 1, call 23"
         },
         {
           "Name": "appdomain",
@@ -661,7 +697,7 @@
         },
         {
           "Name": "log",
-          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2025-22692-20260907-092612.log"
+          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2025-37640-20260907-112059.log"
         },
         {
           "Name": "sinks",
@@ -801,7 +837,7 @@
         },
         {
           "Name": "assemblies loaded",
-          "Value": "407"
+          "Value": "406"
         },
         {
           "Name": "Revit\u0027s copy won",
@@ -812,15 +848,27 @@
           "Value": "Grpc.Core.Api"
         },
         {
+          "Name": "diagnostic events",
+          "Value": "4 received, 0 dropped by the publisher, longest quiet spell 0.0s during Working"
+        },
+        {
+          "Name": "phases seen",
+          "Value": "Idle, Working"
+        },
+        {
+          "Name": "progress caption",
+          "Value": "\u041E\u0431\u0440\u0430\u0431\u043E\u0442\u043A\u0430"
+        },
+        {
           "Name": "closed after",
-          "Value": "3.7s"
+          "Value": "3.5s"
         }
       ]
     },
     {
       "Release": 2026,
       "FileVersion": "0.1.0.0",
-      "BuiltUtc": "2026-09-06T23:18:36.1641614Z",
+      "BuiltUtc": "2026-09-07T01:19:46.3935677Z",
       "Signed": true,
       "Checks": [
         {
@@ -1020,6 +1068,18 @@
           "Ok": true
         },
         {
+          "Name": "the diagnostic stream carries what Revit is doing",
+          "Ok": true
+        },
+        {
+          "Name": "every phase arrived on Revit\u0027s API thread",
+          "Ok": true
+        },
+        {
+          "Name": "the publisher accounted for everything it dropped",
+          "Ok": true
+        },
+        {
           "Name": "Revit closes on an ExitRevit posted from inside",
           "Ok": true
         },
@@ -1039,11 +1099,11 @@
       "Notes": [
         {
           "Name": "launched",
-          "Value": "pid 53284"
+          "Value": "pid 56408"
         },
         {
           "Name": "registered after",
-          "Value": "25.3s"
+          "Value": "28.5s"
         },
         {
           "Name": "recovered by enumeration",
@@ -1059,11 +1119,11 @@
         },
         {
           "Name": "probe log",
-          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2026-53284-20260907-092634.log"
+          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2026-56408-20260907-112123.log"
         },
         {
           "Name": "threads",
-          "Value": "api 1, call 19"
+          "Value": "api 1, call 17"
         },
         {
           "Name": "appdomain",
@@ -1087,7 +1147,7 @@
         },
         {
           "Name": "log",
-          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2026-53284-20260907-092634.log"
+          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2026-56408-20260907-112123.log"
         },
         {
           "Name": "sinks",
@@ -1191,7 +1251,7 @@
         },
         {
           "Name": "assemblies loaded",
-          "Value": "794"
+          "Value": "793"
         },
         {
           "Name": "Revit\u0027s copy won",
@@ -1202,15 +1262,27 @@
           "Value": "Grpc.Core.Api"
         },
         {
+          "Name": "diagnostic events",
+          "Value": "2 received, 0 dropped by the publisher, longest quiet spell 0.0s during Working"
+        },
+        {
+          "Name": "phases seen",
+          "Value": "Idle, Working"
+        },
+        {
+          "Name": "progress caption",
+          "Value": "\u041E\u0431\u0440\u0430\u0431\u043E\u0442\u043A\u0430"
+        },
+        {
           "Name": "closed after",
-          "Value": "50.0s"
+          "Value": "54.0s"
         }
       ]
     },
     {
       "Release": 2027,
       "FileVersion": "0.1.0.0",
-      "BuiltUtc": "2026-09-06T23:18:35.6875312Z",
+      "BuiltUtc": "2026-09-07T01:19:45.9079676Z",
       "Signed": true,
       "Checks": [
         {
@@ -1410,6 +1482,18 @@
           "Ok": true
         },
         {
+          "Name": "the diagnostic stream carries what Revit is doing",
+          "Ok": true
+        },
+        {
+          "Name": "every phase arrived on Revit\u0027s API thread",
+          "Ok": true
+        },
+        {
+          "Name": "the publisher accounted for everything it dropped",
+          "Ok": true
+        },
+        {
           "Name": "Revit closes on an ExitRevit posted from inside",
           "Ok": true
         },
@@ -1429,11 +1513,11 @@
       "Notes": [
         {
           "Name": "launched",
-          "Value": "pid 27596"
+          "Value": "pid 61832"
         },
         {
           "Name": "registered after",
-          "Value": "17.7s"
+          "Value": "17.4s"
         },
         {
           "Name": "recovered by enumeration",
@@ -1449,11 +1533,11 @@
         },
         {
           "Name": "probe log",
-          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2027-27596-20260907-092758.log"
+          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2027-61832-20260907-112251.log"
         },
         {
           "Name": "threads",
-          "Value": "api 2, call 21"
+          "Value": "api 2, call 10"
         },
         {
           "Name": "appdomain",
@@ -1477,7 +1561,7 @@
         },
         {
           "Name": "log",
-          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2027-27596-20260907-092758.log"
+          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2027-61832-20260907-112251.log"
         },
         {
           "Name": "sinks",
@@ -1844,12 +1928,24 @@
           "Value": "Grpc.Core.Api"
         },
         {
+          "Name": "diagnostic events",
+          "Value": "2 received, 0 dropped by the publisher, longest quiet spell 0.0s during Working"
+        },
+        {
+          "Name": "phases seen",
+          "Value": "Idle, Working"
+        },
+        {
+          "Name": "progress caption",
+          "Value": "\u041E\u0431\u0440\u0430\u0431\u043E\u0442\u043A\u0430"
+        },
+        {
           "Name": "closed after",
-          "Value": "21.7s"
+          "Value": "24.8s"
         }
       ]
     }
   ],
-  "Performed": 212,
+  "Performed": 224,
   "Failed": 0
 }
