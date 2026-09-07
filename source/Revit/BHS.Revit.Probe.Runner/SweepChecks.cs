@@ -728,12 +728,13 @@ internal static class SweepChecks
     /// the identity leaves this machine.
     /// </para>
     /// <para>
-    /// <b>Almost everything here is a note rather than a check, and that is the point.</b> Nobody
-    /// knows these answers yet, and a check written before its answer agrees with whoever wrote it -
-    /// this repository has the scar: <c>IsSessionReady</c> was named for a belief and measured into
-    /// <c>IsInitialized</c> only because the question was left open. Two things are asserted,
-    /// because they must hold whatever the answers turn out to be: the throwaway schema registers
-    /// at all, and the document is left unmodified.
+    /// <b>Notes first, assertions second, and the order was the point.</b> When this was written
+    /// nobody knew the answers, so it reported and asserted almost nothing - a check written before
+    /// its answer agrees with whoever wrote it, which is how <c>IsSessionReady</c> got its name and
+    /// kept it until somebody measured. Revit 2024, 2025 and 2027 then answered identically, so the
+    /// notes have become assertions. They now guard the decision rather than inform it: the day
+    /// Autodesk lets a schema grow a field, this goes red, and that is precisely the news worth
+    /// hearing the same day rather than a year later.
     /// </para>
     /// </remarks>
     private static async Task CheckSchemaEvolutionAsync(
@@ -752,15 +753,33 @@ internal static class SweepChecks
         report.Check("a throwaway schema registers inside Revit",
             values.GetValueOrDefault("schema:registered") == "True");
 
-        report.Note("fields as built", values.GetValueOrDefault("schema:fields") ?? "(missing)");
-        report.Note("the same definition, a second time", values.GetValueOrDefault("schema:sameAgain") ?? "(missing)");
-        report.Note("a fourth field under the same GUID", values.GetValueOrDefault("schema:extraField") ?? "(missing)");
-        report.Note("what the registry holds afterwards", values.GetValueOrDefault("schema:fieldsAfter") ?? "(missing)");
-        report.Note("an entity round-trip", values.GetValueOrDefault("schema:roundTrip") ?? "(missing)");
-        report.Note("value read back", values.GetValueOrDefault("schema:readBack") ?? "(missing)");
+        // Rebuilding the identical definition succeeds, and that is what lets two editions sharing
+        // one BHS.Revit.Host.dll in Revit 2024's AppDomain each call Build and meet on one schema.
+        report.Check("the same schema definition may be built again",
+            values.GetValueOrDefault("schema:sameAgain") == "ok");
 
-        foreach (var pair in values.Where(one => one.Key.StartsWith("schema:recognized:", StringComparison.Ordinal)))
-            report.Note("RecognizedField " + pair.Key["schema:recognized:".Length..], pair.Value);
+        // The one the whole shape rests on. Asserted on the exception type rather than its text:
+        // the message is Revit's, and Revit speaks the language it was installed in.
+        report.Check("but a field may never be added to it",
+            values.GetValueOrDefault("schema:extraField")?.StartsWith("InvalidOperationException", StringComparison.Ordinal) == true);
+
+        report.Check("and the refusal leaves the registered definition untouched",
+            values.GetValueOrDefault("schema:fieldsAfter") == values.GetValueOrDefault("schema:fields"));
+
+        report.Check("an entity round-trips through the document",
+            values.GetValueOrDefault("schema:roundTrip") == "ok"
+            && values.GetValueOrDefault("schema:readBack") == "v");
+
+        // Not the tolerance mechanism its name suggests: it answers for the entity's own schema,
+        // which is why it cannot help a definition change. Asserted so that a future release
+        // quietly changing the answer is noticed.
+        var recognized = values.Where(one => one.Key.StartsWith("schema:recognized:", StringComparison.Ordinal)).ToList();
+
+        report.Check("RecognizedField answers for every field of the entity's own schema",
+            recognized.Count == 3 && recognized.All(one => one.Value == "True"));
+
+        report.Note("fields as built", values.GetValueOrDefault("schema:fields") ?? "(missing)");
+        report.Note("a fourth field under the same GUID", values.GetValueOrDefault("schema:extraField") ?? "(missing)");
 
         // This one is an assertion whatever the rest says: the measurement must not leave the
         // model dirty, or the sweep meets the save dialog it exists to avoid.
