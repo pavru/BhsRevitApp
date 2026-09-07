@@ -1,22 +1,22 @@
 {
   "Schema": 2,
   "Disclaimer": "Recorded on a developer machine. Revit cannot run on hosted CI, so CI verifies this record rather than reproducing it: no automated check here has ever started a Revit.",
-  "Commit": "2eaa705fbef809dcba29a6c383a1481e9f7df662",
+  "Commit": "f6cd88dfcbb29f8ef565fb772aab1771cc57789b",
   "CommitClean": true,
   "Content": {
-    "source/Revit": "92976f88deedebf8255eb3754c0a5fec0ec44ef8",
-    "source/Shared": "613cf6a30882b4be74e38ff08c0a18e216eaaa36",
+    "source/Revit": "5d65eccfc45f48166028358f0e29bf4909ecf081",
+    "source/Shared": "eee7d0ad7ce690ad605b52c1772dded4a3f97cbd",
     "source/WinSide": "5b71abdce4cd8186abf36416137a3dfa7f437a28",
     "build/BHS.Revit.Sdk": "eb401a3b673fabf6b4ba9ee1286cf8a450e3ed1c"
   },
-  "RecordedUtc": "2026-09-07T07:58:07.7615404Z",
+  "RecordedUtc": "2026-09-07T22:33:28.6982243Z",
   "WithModel": true,
   "ShowTab": false,
   "Releases": [
     {
       "Release": 2024,
       "FileVersion": "0.1.0.0",
-      "BuiltUtc": "2026-09-07T07:12:40.4219803Z",
+      "BuiltUtc": "2026-09-07T22:27:30.1045058Z",
       "Signed": true,
       "Checks": [
         {
@@ -204,6 +204,34 @@
           "Ok": true
         },
         {
+          "Name": "a throwaway schema registers inside Revit",
+          "Ok": true
+        },
+        {
+          "Name": "the same schema definition may be built again",
+          "Ok": true
+        },
+        {
+          "Name": "but a field may never be added to it",
+          "Ok": true
+        },
+        {
+          "Name": "and the refusal leaves the registered definition untouched",
+          "Ok": true
+        },
+        {
+          "Name": "an entity round-trips through the document",
+          "Ok": true
+        },
+        {
+          "Name": "RecognizedField answers for every field of the entity\u0027s own schema",
+          "Ok": true
+        },
+        {
+          "Name": "and the measurement left the document unmodified",
+          "Ok": true
+        },
+        {
           "Name": "a DBApplication add-in starts the same host",
           "Ok": true
         },
@@ -296,11 +324,11 @@
       "Notes": [
         {
           "Name": "launched",
-          "Value": "pid 8712"
+          "Value": "pid 36664"
         },
         {
           "Name": "registered after",
-          "Value": "17.0s"
+          "Value": "32.4s"
         },
         {
           "Name": "recovered by enumeration",
@@ -316,11 +344,11 @@
         },
         {
           "Name": "probe log",
-          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2024-8712-20260907-175328.log"
+          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2024-36664-20260908-082802.log"
         },
         {
           "Name": "threads",
-          "Value": "api 1, call 20"
+          "Value": "api 1, call 18"
         },
         {
           "Name": "appdomain",
@@ -344,7 +372,7 @@
         },
         {
           "Name": "log",
-          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2024-8712-20260907-175328.log"
+          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2024-36664-20260908-082802.log"
         },
         {
           "Name": "sinks",
@@ -352,11 +380,11 @@
         },
         {
           "Name": "document",
-          "Value": "bhs-sweep-2024-425ad6f2e77a46fa861f4cbe948937d8"
+          "Value": "bhs-sweep-2024-ac0c7523bfe241b1bc1fa56ba79deb49"
         },
         {
           "Name": "opened after registration",
-          "Value": "19.4s"
+          "Value": "35.3s"
         },
         {
           "Name": "availability and the press",
@@ -364,7 +392,15 @@
         },
         {
           "Name": "model settings",
-          "Value": "document bhs-sweep-2024-425ad6f2e77a46fa861f4cbe948937d8, origin Model"
+          "Value": "document bhs-sweep-2024-ac0c7523bfe241b1bc1fa56ba79deb49, origin Model"
+        },
+        {
+          "Name": "fields as built",
+          "Value": "Cleared,Values,Version"
+        },
+        {
+          "Name": "a fourth field under the same GUID",
+          "Value": "InvalidOperationException: A different Schema with the same identity already exists."
         },
         {
           "Name": "db host",
@@ -456,7 +492,7 @@
         },
         {
           "Name": "assemblies loaded",
-          "Value": "673"
+          "Value": "676"
         },
         {
           "Name": "Revit\u0027s copy won",
@@ -476,7 +512,7 @@
         },
         {
           "Name": "diagnostic events",
-          "Value": "147 received, 0 dropped by the publisher, longest quiet spell 12.8s during Starting"
+          "Value": "165 received, 0 dropped by the publisher, longest quiet spell 28.2s during Starting"
         },
         {
           "Name": "phases seen",
@@ -496,7 +532,7 @@
         },
         {
           "Name": "progress caption",
-          "Value": "\u0417\u0430\u0433\u0440\u0443\u0437\u043A\u0430 bhs-sweep-2024-425ad6f2e77a46fa861f4cbe948937d8.rvt"
+          "Value": "\u0417\u0430\u0433\u0440\u0443\u0437\u043A\u0430 bhs-sweep-2024-ac0c7523bfe241b1bc1fa56ba79deb49.rvt"
         },
         {
           "Name": "progress caption",
@@ -532,7 +568,7 @@
         },
         {
           "Name": "progress caption",
-          "Value": "\u0427\u0435\u0440\u0442\u0435\u0436: bhs-sweep-2024-425ad6f2e77a46fa861f4cbe948937d8.rvt - \u041F\u043B\u0430\u043D \u044D\u0442\u0430\u0436\u0430: \u0423\u0440\u043E\u0432\u0435\u043D\u044C 1"
+          "Value": "\u0427\u0435\u0440\u0442\u0435\u0436: bhs-sweep-2024-ac0c7523bfe241b1bc1fa56ba79deb49.rvt - \u041F\u043B\u0430\u043D \u044D\u0442\u0430\u0436\u0430: \u0423\u0440\u043E\u0432\u0435\u043D\u044C 1"
         },
         {
           "Name": "progress caption",
@@ -544,14 +580,14 @@
         },
         {
           "Name": "closed after",
-          "Value": "20.9s"
+          "Value": "21.3s"
         }
       ]
     },
     {
       "Release": 2025,
       "FileVersion": "0.1.0.0",
-      "BuiltUtc": "2026-09-07T07:12:40.4964640Z",
+      "BuiltUtc": "2026-09-07T22:27:32.4209155Z",
       "Signed": true,
       "Checks": [
         {
@@ -739,6 +775,34 @@
           "Ok": true
         },
         {
+          "Name": "a throwaway schema registers inside Revit",
+          "Ok": true
+        },
+        {
+          "Name": "the same schema definition may be built again",
+          "Ok": true
+        },
+        {
+          "Name": "but a field may never be added to it",
+          "Ok": true
+        },
+        {
+          "Name": "and the refusal leaves the registered definition untouched",
+          "Ok": true
+        },
+        {
+          "Name": "an entity round-trips through the document",
+          "Ok": true
+        },
+        {
+          "Name": "RecognizedField answers for every field of the entity\u0027s own schema",
+          "Ok": true
+        },
+        {
+          "Name": "and the measurement left the document unmodified",
+          "Ok": true
+        },
+        {
           "Name": "a DBApplication add-in starts the same host",
           "Ok": true
         },
@@ -831,11 +895,11 @@
       "Notes": [
         {
           "Name": "launched",
-          "Value": "pid 25344"
+          "Value": "pid 61124"
         },
         {
           "Name": "registered after",
-          "Value": "12.6s"
+          "Value": "20.4s"
         },
         {
           "Name": "recovered by enumeration",
@@ -851,11 +915,11 @@
         },
         {
           "Name": "probe log",
-          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2025-25344-20260907-175432.log"
+          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2025-61124-20260908-082931.log"
         },
         {
           "Name": "threads",
-          "Value": "api 1, call 7"
+          "Value": "api 1, call 23"
         },
         {
           "Name": "appdomain",
@@ -879,7 +943,7 @@
         },
         {
           "Name": "log",
-          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2025-25344-20260907-175432.log"
+          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2025-61124-20260908-082931.log"
         },
         {
           "Name": "sinks",
@@ -887,11 +951,11 @@
         },
         {
           "Name": "document",
-          "Value": "bhs-sweep-2025-bbf2565a157745b1808443108c5be152"
+          "Value": "bhs-sweep-2025-61176759e4e546259522523455e4677b"
         },
         {
           "Name": "opened after registration",
-          "Value": "9.3s"
+          "Value": "9.4s"
         },
         {
           "Name": "availability and the press",
@@ -899,7 +963,15 @@
         },
         {
           "Name": "model settings",
-          "Value": "document bhs-sweep-2025-bbf2565a157745b1808443108c5be152, origin Model"
+          "Value": "document bhs-sweep-2025-61176759e4e546259522523455e4677b, origin Model"
+        },
+        {
+          "Name": "fields as built",
+          "Value": "Cleared,Values,Version"
+        },
+        {
+          "Name": "a fourth field under the same GUID",
+          "Value": "InvalidOperationException: A different Schema with the same identity already exists."
         },
         {
           "Name": "db host",
@@ -1031,7 +1103,7 @@
         },
         {
           "Name": "assemblies loaded",
-          "Value": "442"
+          "Value": "443"
         },
         {
           "Name": "Revit\u0027s copy won",
@@ -1043,7 +1115,7 @@
         },
         {
           "Name": "diagnostic events",
-          "Value": "70 received, 0 dropped by the publisher, longest quiet spell 4.0s during Working"
+          "Value": "90 received, 0 dropped by the publisher, longest quiet spell 3.8s during Working"
         },
         {
           "Name": "phases seen",
@@ -1071,7 +1143,7 @@
         },
         {
           "Name": "progress caption",
-          "Value": "\u0417\u0430\u0433\u0440\u0443\u0437\u043A\u0430 bhs-sweep-2025-bbf2565a157745b1808443108c5be152.rvt"
+          "Value": "\u0417\u0430\u0433\u0440\u0443\u0437\u043A\u0430 bhs-sweep-2025-61176759e4e546259522523455e4677b.rvt"
         },
         {
           "Name": "progress caption",
@@ -1099,18 +1171,18 @@
         },
         {
           "Name": "progress caption",
-          "Value": "\u0427\u0435\u0440\u0442\u0435\u0436: bhs-sweep-2025-bbf2565a157745b1808443108c5be152.rvt - \u041F\u043B\u0430\u043D \u044D\u0442\u0430\u0436\u0430: \u0423\u0440\u043E\u0432\u0435\u043D\u044C 1"
+          "Value": "\u0427\u0435\u0440\u0442\u0435\u0436: bhs-sweep-2025-61176759e4e546259522523455e4677b.rvt - \u041F\u043B\u0430\u043D \u044D\u0442\u0430\u0436\u0430: \u0423\u0440\u043E\u0432\u0435\u043D\u044C 1"
         },
         {
           "Name": "closed after",
-          "Value": "4.0s"
+          "Value": "3.8s"
         }
       ]
     },
     {
       "Release": 2026,
       "FileVersion": "0.1.0.0",
-      "BuiltUtc": "2026-09-07T07:12:41.2405902Z",
+      "BuiltUtc": "2026-09-07T22:27:33.3827790Z",
       "Signed": true,
       "Checks": [
         {
@@ -1298,6 +1370,34 @@
           "Ok": true
         },
         {
+          "Name": "a throwaway schema registers inside Revit",
+          "Ok": true
+        },
+        {
+          "Name": "the same schema definition may be built again",
+          "Ok": true
+        },
+        {
+          "Name": "but a field may never be added to it",
+          "Ok": true
+        },
+        {
+          "Name": "and the refusal leaves the registered definition untouched",
+          "Ok": true
+        },
+        {
+          "Name": "an entity round-trips through the document",
+          "Ok": true
+        },
+        {
+          "Name": "RecognizedField answers for every field of the entity\u0027s own schema",
+          "Ok": true
+        },
+        {
+          "Name": "and the measurement left the document unmodified",
+          "Ok": true
+        },
+        {
           "Name": "a DBApplication add-in starts the same host",
           "Ok": true
         },
@@ -1390,11 +1490,11 @@
       "Notes": [
         {
           "Name": "launched",
-          "Value": "pid 47368"
+          "Value": "pid 58332"
         },
         {
           "Name": "registered after",
-          "Value": "26.2s"
+          "Value": "34.3s"
         },
         {
           "Name": "recovered by enumeration",
@@ -1410,11 +1510,11 @@
         },
         {
           "Name": "probe log",
-          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2026-47368-20260907-175501.log"
+          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2026-58332-20260908-083010.log"
         },
         {
           "Name": "threads",
-          "Value": "api 1, call 20"
+          "Value": "api 1, call 16"
         },
         {
           "Name": "appdomain",
@@ -1438,7 +1538,7 @@
         },
         {
           "Name": "log",
-          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2026-47368-20260907-175501.log"
+          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2026-58332-20260908-083010.log"
         },
         {
           "Name": "sinks",
@@ -1446,11 +1546,11 @@
         },
         {
           "Name": "document",
-          "Value": "bhs-sweep-2026-7e7f62aef6104361a77f47f6cd147ead"
+          "Value": "bhs-sweep-2026-10132bf3720a4e1d9b9396ed6f996b1f"
         },
         {
           "Name": "opened after registration",
-          "Value": "64.7s"
+          "Value": "68.9s"
         },
         {
           "Name": "availability and the press",
@@ -1458,7 +1558,15 @@
         },
         {
           "Name": "model settings",
-          "Value": "document bhs-sweep-2026-7e7f62aef6104361a77f47f6cd147ead, origin Model"
+          "Value": "document bhs-sweep-2026-10132bf3720a4e1d9b9396ed6f996b1f, origin Model"
+        },
+        {
+          "Name": "fields as built",
+          "Value": "Cleared,Values,Version"
+        },
+        {
+          "Name": "a fourth field under the same GUID",
+          "Value": "InvalidOperationException: A different Schema with the same identity already exists."
         },
         {
           "Name": "db host",
@@ -1554,7 +1662,7 @@
         },
         {
           "Name": "assemblies loaded",
-          "Value": "853"
+          "Value": "856"
         },
         {
           "Name": "Revit\u0027s copy won",
@@ -1566,7 +1674,7 @@
         },
         {
           "Name": "diagnostic events",
-          "Value": "148 received, 0 dropped by the publisher, longest quiet spell 51.0s during Starting"
+          "Value": "168 received, 0 dropped by the publisher, longest quiet spell 56.9s during Starting"
         },
         {
           "Name": "phases seen",
@@ -1590,7 +1698,7 @@
         },
         {
           "Name": "progress caption",
-          "Value": "\u0417\u0430\u0433\u0440\u0443\u0437\u043A\u0430 bhs-sweep-2026-7e7f62aef6104361a77f47f6cd147ead.rvt"
+          "Value": "\u0417\u0430\u0433\u0440\u0443\u0437\u043A\u0430 bhs-sweep-2026-10132bf3720a4e1d9b9396ed6f996b1f.rvt"
         },
         {
           "Name": "progress caption",
@@ -1618,7 +1726,7 @@
         },
         {
           "Name": "progress caption",
-          "Value": "\u0427\u0435\u0440\u0442\u0435\u0436: bhs-sweep-2026-7e7f62aef6104361a77f47f6cd147ead.rvt - \u041F\u043B\u0430\u043D \u044D\u0442\u0430\u0436\u0430: \u0423\u0440\u043E\u0432\u0435\u043D\u044C 1"
+          "Value": "\u0427\u0435\u0440\u0442\u0435\u0436: bhs-sweep-2026-10132bf3720a4e1d9b9396ed6f996b1f.rvt - \u041F\u043B\u0430\u043D \u044D\u0442\u0430\u0436\u0430: \u0423\u0440\u043E\u0432\u0435\u043D\u044C 1"
         },
         {
           "Name": "progress caption",
@@ -1634,14 +1742,14 @@
         },
         {
           "Name": "closed after",
-          "Value": "15.2s"
+          "Value": "15.5s"
         }
       ]
     },
     {
       "Release": 2027,
       "FileVersion": "0.1.0.0",
-      "BuiltUtc": "2026-09-07T07:12:40.2600593Z",
+      "BuiltUtc": "2026-09-07T22:27:31.7245657Z",
       "Signed": true,
       "Checks": [
         {
@@ -1829,6 +1937,34 @@
           "Ok": true
         },
         {
+          "Name": "a throwaway schema registers inside Revit",
+          "Ok": true
+        },
+        {
+          "Name": "the same schema definition may be built again",
+          "Ok": true
+        },
+        {
+          "Name": "but a field may never be added to it",
+          "Ok": true
+        },
+        {
+          "Name": "and the refusal leaves the registered definition untouched",
+          "Ok": true
+        },
+        {
+          "Name": "an entity round-trips through the document",
+          "Ok": true
+        },
+        {
+          "Name": "RecognizedField answers for every field of the entity\u0027s own schema",
+          "Ok": true
+        },
+        {
+          "Name": "and the measurement left the document unmodified",
+          "Ok": true
+        },
+        {
           "Name": "a DBApplication add-in starts the same host",
           "Ok": true
         },
@@ -1921,11 +2057,11 @@
       "Notes": [
         {
           "Name": "launched",
-          "Value": "pid 49452"
+          "Value": "pid 71232"
         },
         {
           "Name": "registered after",
-          "Value": "18.8s"
+          "Value": "25.0s"
         },
         {
           "Name": "recovered by enumeration",
@@ -1941,11 +2077,11 @@
         },
         {
           "Name": "probe log",
-          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2027-49452-20260907-175652.log"
+          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2027-71232-20260908-083210.log"
         },
         {
           "Name": "threads",
-          "Value": "api 2, call 19"
+          "Value": "api 2, call 20"
         },
         {
           "Name": "appdomain",
@@ -1969,7 +2105,7 @@
         },
         {
           "Name": "log",
-          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2027-49452-20260907-175652.log"
+          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2027-71232-20260908-083210.log"
         },
         {
           "Name": "sinks",
@@ -1977,11 +2113,11 @@
         },
         {
           "Name": "document",
-          "Value": "bhs-sweep-2027-7362767a13af4579b90eecff69b8da0c"
+          "Value": "bhs-sweep-2027-949f5eb2cb4d41a8939c9ce0e123bcdc"
         },
         {
           "Name": "opened after registration",
-          "Value": "56.9s"
+          "Value": "59.0s"
         },
         {
           "Name": "availability and the press",
@@ -1989,7 +2125,15 @@
         },
         {
           "Name": "model settings",
-          "Value": "document bhs-sweep-2027-7362767a13af4579b90eecff69b8da0c, origin Model"
+          "Value": "document bhs-sweep-2027-949f5eb2cb4d41a8939c9ce0e123bcdc, origin Model"
+        },
+        {
+          "Name": "fields as built",
+          "Value": "Cleared,Values,Version"
+        },
+        {
+          "Name": "a fourth field under the same GUID",
+          "Value": "InvalidOperationException: A different Schema with the same identity already exists."
         },
         {
           "Name": "db host",
@@ -2349,7 +2493,7 @@
         },
         {
           "Name": "diagnostic events",
-          "Value": "146 received, 0 dropped by the publisher, longest quiet spell 40.3s during Starting"
+          "Value": "159 received, 0 dropped by the publisher, longest quiet spell 43.3s during Starting"
         },
         {
           "Name": "phases seen",
@@ -2373,7 +2517,7 @@
         },
         {
           "Name": "progress caption",
-          "Value": "\u0417\u0430\u0433\u0440\u0443\u0437\u043A\u0430 bhs-sweep-2027-7362767a13af4579b90eecff69b8da0c.rvt"
+          "Value": "\u0417\u0430\u0433\u0440\u0443\u0437\u043A\u0430 bhs-sweep-2027-949f5eb2cb4d41a8939c9ce0e123bcdc.rvt"
         },
         {
           "Name": "progress caption",
@@ -2401,7 +2545,7 @@
         },
         {
           "Name": "progress caption",
-          "Value": "\u0427\u0435\u0440\u0442\u0435\u0436: bhs-sweep-2027-7362767a13af4579b90eecff69b8da0c.rvt - \u041F\u043B\u0430\u043D \u044D\u0442\u0430\u0436\u0430: \u0423\u0440\u043E\u0432\u0435\u043D\u044C 1"
+          "Value": "\u0427\u0435\u0440\u0442\u0435\u0436: bhs-sweep-2027-949f5eb2cb4d41a8939c9ce0e123bcdc.rvt - \u041F\u043B\u0430\u043D \u044D\u0442\u0430\u0436\u0430: \u0423\u0440\u043E\u0432\u0435\u043D\u044C 1"
         },
         {
           "Name": "progress caption",
@@ -2417,11 +2561,11 @@
         },
         {
           "Name": "closed after",
-          "Value": "11.8s"
+          "Value": "12.3s"
         }
       ]
     }
   ],
-  "Performed": 272,
+  "Performed": 300,
   "Failed": 0
 }

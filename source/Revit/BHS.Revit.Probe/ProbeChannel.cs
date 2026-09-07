@@ -127,6 +127,11 @@ internal sealed class ProbeChannel : RevitSideChannel.RevitSideChannelBase
                         response.Values.Add(pair.Key, pair.Value);
                     break;
 
+                case "schema":
+                    foreach (var pair in SchemaEvolution().GetAwaiter().GetResult())
+                        response.Values.Add(pair.Key, pair.Value);
+                    break;
+
                 case "press":
                     _press.Raise();
                     break;
@@ -229,6 +234,146 @@ internal sealed class ProbeChannel : RevitSideChannel.RevitSideChannelBase
     }
 
     /// <summary>
+    /// How permanent a schema really is, once a model carries it.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <c>CLAUDE.md</c> says a schema that has reached somebody else's model can never be changed,
+    /// and the whole three-field shape of <c>BHS.ModelSettings</c> rests on that sentence. It is
+    /// true of one GUID and says nothing about the price: a schema under a new GUID is a different
+    /// schema, and a reader that tries the new one and falls back to the old migrates on the next
+    /// write. So the question is not whether the window closes but what it costs to reopen it - and
+    /// that is measurable rather than arguable.
+    /// </para>
+    /// <para>
+    /// <b>Reported as measurements, not as checks, and deliberately.</b> Nobody here knows the
+    /// answers yet, and a check written before its answer is a check that agrees with whoever wrote
+    /// it. They become assertions in the commit that reads them - the same order that turned
+    /// <c>IsSessionReady</c> into <c>IsInitialized</c>.
+    /// </para>
+    /// <para>
+    /// <b>A throwaway GUID throughout.</b> Registration is process-wide and lasts the session, so
+    /// this must never touch the identity the product writes; and the entity goes into the document
+    /// inside a group that is rolled back, for the same reason the settings check does it - a
+    /// modified document asks to be saved, and a sweep has nobody to answer.
+    /// </para>
+    /// </remarks>
+    private async Task<IReadOnlyDictionary<string, string>> SchemaEvolution()
+    {
+        // Fixed rather than random, so two sessions are comparable; and nothing but this
+        // measurement ever names it.
+        var probeSchemaId = new Guid("3f4c8e21-7b9a-4d16-8c05-2a6e91d4b7f3");
+
+        var report = await _services.Pump.PostAsync("probe: schema evolution", session =>
+        {
+            var answer = new Dictionary<string, string>(StringComparer.Ordinal);
+            var document = session.Application.ActiveUIDocument?.Document;
+
+            if (document is null)
+            {
+                answer["schema:document"] = "(none)";
+                return answer;
+            }
+
+            Autodesk.Revit.DB.ExtensibleStorage.Schema Build(Guid id, bool extraField)
+            {
+                using var builder = new Autodesk.Revit.DB.ExtensibleStorage.SchemaBuilder(id);
+                builder.SetSchemaName("BHSProbeSchema");
+                builder.SetVendorId("BimHouseSoftware");
+                builder.SetReadAccessLevel(Autodesk.Revit.DB.ExtensibleStorage.AccessLevel.Public);
+                builder.SetWriteAccessLevel(Autodesk.Revit.DB.ExtensibleStorage.AccessLevel.Vendor);
+                builder.AddSimpleField("Version", typeof(string));
+                builder.AddMapField("Values", typeof(string), typeof(string));
+                builder.AddArrayField("Cleared", typeof(string));
+
+                if (extraField)
+                    builder.AddSimpleField("Extra", typeof(string));
+
+                return builder.Finish();
+            }
+
+            string Attempt(Action work)
+            {
+                try
+                {
+                    work();
+                    return "ok";
+                }
+                catch (Exception error)
+                {
+                    return error.GetType().Name + ": " + error.Message.Split('\n')[0];
+                }
+            }
+
+            // 1. The shape the product uses today, under a name only this measurement knows.
+            //
+            // Guarded like every other step, and the reason is written down elsewhere in this
+            // repository at the price of a whole release: an exception escaping here leaves Ask to
+            // rethrow it, and the runner has no try around its checks - so the rest of the release
+            // is lost and Revit is never asked to close. The measurement reports its own failure
+            // as a value; it does not take the sweep with it.
+            answer["schema:registered"] = Attempt(() =>
+            {
+                var first = Build(probeSchemaId, extraField: false);
+                answer["schema:fields"] = string.Join(",", first.ListFields().Select(f => f.FieldName));
+            });
+
+            // 2. The same definition again. If this alone throws, every later question is moot:
+            //    the answer would be that a definition may be built exactly once per process.
+            answer["schema:sameAgain"] = Attempt(() => Build(probeSchemaId, extraField: false));
+
+            // 3. The question the whole shape rests on: a fourth field under the same identity.
+            answer["schema:extraField"] = Attempt(() => Build(probeSchemaId, extraField: true));
+
+            // 4. Whichever way that went, what does the registry hold now? A definition silently
+            //    replaced would be worse than one refused.
+            var current = Autodesk.Revit.DB.ExtensibleStorage.Schema.Lookup(probeSchemaId);
+            answer["schema:fieldsAfter"] = current is null
+                ? "(gone)"
+                : string.Join(",", current.ListFields().Select(f => f.FieldName));
+
+            if (answer["schema:registered"] != "ok")
+                return answer;
+
+            using var group = new Autodesk.Revit.DB.TransactionGroup(document, "BHS probe: schema");
+            answer["schema:group"] = Attempt(() => group.Start());
+
+            // 5. An entity written under the definition as it stands, read back, and asked about a
+            //    field it may or may not know. RecognizedField reads like the tolerance mechanism;
+            //    whether it is one is exactly what is not known.
+            answer["schema:roundTrip"] = Attempt(() =>
+            {
+                var schema = Autodesk.Revit.DB.ExtensibleStorage.Schema.Lookup(probeSchemaId)!;
+                var entity = new Autodesk.Revit.DB.ExtensibleStorage.Entity(schema);
+                entity.Set("Version", "1");
+                entity.Set<IDictionary<string, string>>("Values",
+                    new Dictionary<string, string> { ["k"] = "v" });
+                entity.Set<IList<string>>("Cleared", new List<string>());
+
+                using var transaction = new Autodesk.Revit.DB.Transaction(document, "BHS probe: schema entity");
+                transaction.Start();
+                var storage = Autodesk.Revit.DB.ExtensibleStorage.DataStorage.Create(document);
+                storage.SetEntity(entity);
+                transaction.Commit();
+
+                var read = storage.GetEntity(schema);
+                answer["schema:readBack"] = read.Get<IDictionary<string, string>>("Values")["k"];
+                answer["schema:schemaGuid"] = read.SchemaGUID == probeSchemaId ? "same" : "different";
+
+                foreach (var field in schema.ListFields())
+                    answer["schema:recognized:" + field.FieldName] =
+                        read.RecognizedField(field) ? "True" : "False";
+            });
+
+            answer["schema:rolledBack"] = Attempt(() => group.RollBack());
+            answer["schema:clean"] = document.IsModified ? "False" : "True";
+
+            return answer;
+        }).ConfigureAwait(false);
+
+        return report;
+    }
+
     /// Writes a project setting into the open model and reads it back.
     /// </summary>
     /// <remarks>

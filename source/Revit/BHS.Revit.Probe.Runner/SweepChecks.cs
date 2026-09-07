@@ -123,7 +123,14 @@ internal static class SweepChecks
         await CheckRibbonAsync(client, options, report);
 
         if (options.WithModel)
+        {
             await CheckModelSettingsAsync(client, report);
+
+            // Right after it, and for the same reason: both need a document, and this one writes
+            // into it. Kept apart because they answer different questions - one that the mechanism
+            // works, one how permanent its identity is.
+            await CheckSchemaEvolutionAsync(client, report);
+        }
 
         // After the ribbon and the model, because one of its questions is about an event that only
         // arrives once Revit has finished starting - and asking a thing that has not happened yet
@@ -700,6 +707,82 @@ internal static class SweepChecks
     }
 
     /// <summary>
+    /// How permanent an Extensible Storage schema really is.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// The three-field shape of <c>BHS.ModelSettings</c> rests on one sentence in <c>CLAUDE.md</c>:
+    /// a schema that has reached somebody else's model can never be changed. That is true of one
+    /// GUID and silent about the price - a schema under a new GUID is a different schema, and a
+    /// reader that tries the new one and falls back to the old migrates on the next write. What the
+    /// shape should be depends on which of those is the real cost, so it is worth measuring before
+    /// the identity leaves this machine.
+    /// </para>
+    /// <para>
+    /// <b>Notes first, assertions second, and the order was the point.</b> When this was written
+    /// nobody knew the answers, so it reported and asserted almost nothing - a check written before
+    /// its answer agrees with whoever wrote it, which is how <c>IsSessionReady</c> got its name and
+    /// kept it until somebody measured. Revit 2024, 2025 and 2027 then answered identically, so the
+    /// notes have become assertions. They now guard the decision rather than inform it: the day
+    /// Autodesk lets a schema grow a field, this goes red, and that is precisely the news worth
+    /// hearing the same day rather than a year later.
+    /// </para>
+    /// </remarks>
+    private static async Task CheckSchemaEvolutionAsync(
+        RevitSideChannel.RevitSideChannelClient client,
+        Report report)
+    {
+        var answer = await client.AskAsync(new AskRequest { Question = "schema" });
+        var values = answer.Values;
+
+        if (values.GetValueOrDefault("schema:document") == "(none)")
+        {
+            report.Note("schema", "no document, so nothing was measured - run with --with-model");
+            return;
+        }
+
+        report.Check("a throwaway schema registers inside Revit",
+            values.GetValueOrDefault("schema:registered") == "ok");
+
+        // Rebuilding the identical definition succeeds, and that is what lets two editions sharing
+        // one BHS.Revit.Host.dll in Revit 2024's AppDomain each call Build and meet on one schema.
+        report.Check("the same schema definition may be built again",
+            values.GetValueOrDefault("schema:sameAgain") == "ok");
+
+        // The one the whole shape rests on. Asserted on the exception type rather than its text:
+        // the message is Revit's, and Revit speaks the language it was installed in.
+        report.Check("but a field may never be added to it",
+            values.GetValueOrDefault("schema:extraField")?.StartsWith("InvalidOperationException", StringComparison.Ordinal) == true);
+
+        // Both sides read from the same answer, so they must be compared against something as well
+        // as against each other: two absent keys are equal, and the check would pass by saying
+        // nothing. Every sibling here compares to a known value; this one had to be told to.
+        var built = values.GetValueOrDefault("schema:fields");
+
+        report.Check("and the refusal leaves the registered definition untouched",
+            !string.IsNullOrEmpty(built) && values.GetValueOrDefault("schema:fieldsAfter") == built);
+
+        report.Check("an entity round-trips through the document",
+            values.GetValueOrDefault("schema:roundTrip") == "ok"
+            && values.GetValueOrDefault("schema:readBack") == "v");
+
+        // Not the tolerance mechanism its name suggests: it answers for the entity's own schema,
+        // which is why it cannot help a definition change. Asserted so that a future release
+        // quietly changing the answer is noticed.
+        var recognized = values.Where(one => one.Key.StartsWith("schema:recognized:", StringComparison.Ordinal)).ToList();
+
+        report.Check("RecognizedField answers for every field of the entity's own schema",
+            recognized.Count == 3 && recognized.All(one => one.Value == "True"));
+
+        report.Note("fields as built", values.GetValueOrDefault("schema:fields") ?? "(missing)");
+        report.Note("a fourth field under the same GUID", values.GetValueOrDefault("schema:extraField") ?? "(missing)");
+
+        // This one is an assertion whatever the rest says: the measurement must not leave the
+        // model dirty, or the sweep meets the save dialog it exists to avoid.
+        report.Check("and the measurement left the document unmodified",
+            values.GetValueOrDefault("schema:clean") == "True");
+    }
+
     /// Settings that belong to the document, written into it and read back.
     /// </summary>
     /// <remarks>

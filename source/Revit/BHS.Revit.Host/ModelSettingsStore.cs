@@ -1,4 +1,4 @@
-using Autodesk.Revit.DB;
+﻿using Autodesk.Revit.DB;
 using Autodesk.Revit.DB.ExtensibleStorage;
 using BHS.Logging;
 using BHS.Revit.Abstractions;
@@ -46,6 +46,57 @@ internal sealed class ModelSettingsStore
     public const string ValuesField = "Values";
     public const string ClearedField = "Cleared";
 
+    /// <summary>
+    /// The identity of the framework that owns this schema, recorded in the schema itself.
+    /// </summary>
+    /// <remarks>
+    /// Not an edition's <c>AddInId</c>, and that is the whole point: one schema serves every
+    /// edition, so any particular edition's id would be wrong for all the others. Set because it
+    /// costs nothing now and cannot be added later - measured, a schema definition is fixed the
+    /// moment it exists.
+    /// </remarks>
+    public static readonly Guid ApplicationId = new("a6f31c74-58d2-4b0e-9e6c-1d84f2705ab9");
+
+    /// <summary>
+    /// The version of the content, not of the schema - the schema has no version and never will.
+    /// </summary>
+    /// <remarks>
+    /// Measured on Revit 2024, 2025 and 2027 alike: a second field set under the same GUID is
+    /// refused with "A different Schema with the same identity already exists". So the shape is
+    /// fixed forever, and this string is the only room left to move - the one thing that lets a
+    /// later reader know it is looking at an epoch it was not written for.
+    ///
+    /// Rebuilding the <b>same</b> definition is fine, which is what lets two editions in the shared
+    /// AppDomain of Revit 2024 each call Build and meet on one schema.
+    /// </remarks>
+    public const string CurrentVersion = "1";
+
+    /// <summary>
+    /// The prefix under which the framework may keep keys of its own inside the map.
+    /// </summary>
+    /// <remarks>
+    /// Reserved before the first write rather than after, because afterwards is too late: a feature
+    /// key that already means something cannot be taken away from it. Nothing uses it yet; that is
+    /// the right moment to claim it. Settings keys are identifiers joined by colons, so a leading
+    /// dollar cannot collide with one by accident.
+    ///
+    /// <b>Reserved and, for now, unusable even by us - said plainly rather than left to be
+    /// discovered.</b> <see cref="Write"/> is the only way in and refuses the prefix from everyone,
+    /// so the framework cannot yet write the keys it has claimed. That is deliberate: a bypass with
+    /// no caller would be a mechanism with nothing to mechanise, which this repository has decided
+    /// against elsewhere. Two things have to be settled together with the first reserved key, and
+    /// neither is settled now:
+    /// <list type="bullet">
+    /// <item>a path that may write it - an internal overload, not a flag on the public one;</item>
+    /// <item>what happens to it on an ordinary feature write. <see cref="Write"/> builds a fresh
+    /// entity and replaces the whole map, so a reserved key would be erased by the next write that
+    /// did not mention it. Framework keys therefore need merging, which is a different contract
+    /// from the replace-everything one features have - and choosing it before there is a key to
+    /// choose it for would be guessing.</item>
+    /// </list>
+    /// </remarks>
+    public const string ReservedPrefix = "$";
+
     private readonly ILog _log = Log.For<ModelSettingsStore>();
 
     /// <summary>
@@ -75,6 +126,19 @@ internal sealed class ModelSettingsStore
 
             if (entity is null || !entity.IsValid())
                 return true;
+
+            // Read before the values, because it says how to believe them. An epoch we do not know
+            // is not a refusal: the fields are the same fields whatever the epoch, so what can be
+            // understood is read, and the surprise is written down rather than thrown. A model that
+            // has met a newer edition of ours must not stop the older one loading inside Revit.
+            var written = entity.Get<string>(VersionField);
+
+            if (!string.Equals(written, CurrentVersion, StringComparison.Ordinal))
+            {
+                _log.Warn("the settings in {0} were written as version {1}, and this build knows {2}; "
+                          + "reading what it understands",
+                    Title(document), string.IsNullOrEmpty(written) ? "(none)" : written, CurrentVersion);
+            }
 
             foreach (var pair in entity.Get<IDictionary<string, string>>(ValuesField))
                 values[pair.Key] = pair.Value;
@@ -108,13 +172,22 @@ internal sealed class ModelSettingsStore
 
         foreach (var pair in values)
         {
+            // The reservation is only a reservation if it is enforced; an unenforced prefix is a
+            // comment. A deterministic programming mistake, so it is raised where it is made.
+            if (pair.Key.StartsWith(ReservedPrefix, StringComparison.Ordinal))
+            {
+                throw new ArgumentException(
+                    $"The key '{pair.Key}' starts with '{ReservedPrefix}', which is reserved for the "
+                    + "framework's own entries in model settings.", nameof(values));
+            }
+
             if (pair.Value is null)
                 cleared.Add(pair.Key);
             else
                 set[pair.Key] = pair.Value;
         }
 
-        entity.Set(VersionField, "1");
+        entity.Set(VersionField, CurrentVersion);
         entity.Set<IDictionary<string, string>>(ValuesField, set);
         entity.Set<IList<string>>(ClearedField, cleared);
 
@@ -144,6 +217,7 @@ internal sealed class ModelSettingsStore
 
         builder.SetSchemaName(SchemaName);
         builder.SetVendorId("BimHouseSoftware");
+        builder.SetApplicationGUID(ApplicationId);
         builder.SetReadAccessLevel(AccessLevel.Public);
         builder.SetWriteAccessLevel(AccessLevel.Vendor);
         builder.SetDocumentation("BHS framework settings that belong to this model.");
