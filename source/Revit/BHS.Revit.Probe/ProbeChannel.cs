@@ -42,6 +42,9 @@ internal sealed class ProbeChannel : RevitSideChannel.RevitSideChannelBase
 
     public ConfigurationPublisher Publisher { get; }
 
+    /// <summary>What Revit is doing, for a watcher that cannot see its screen.</summary>
+    public DiagnosticsPublisher Diagnostics { get; } = new();
+
     /// <summary>Republishes everything this instance knows about itself.</summary>
     /// <remarks>
     /// Called at startup and again whenever a document opens, so a consumer sees the change
@@ -62,6 +65,23 @@ internal sealed class ProbeChannel : RevitSideChannel.RevitSideChannelBase
         IServerStreamWriter<ConfigurationSnapshot> responseStream,
         ServerCallContext context) =>
         Publisher.WatchAsync(responseStream, context.CancellationToken);
+
+    /// <summary>
+    /// Serves the diagnostic stream: the recent past, and then everything as it happens.
+    /// </summary>
+    /// <remarks>
+    /// The handshake is checked here as everywhere else. A watcher that does not name the contract
+    /// is refused rather than served a stream whose fields it may read wrongly - the same position
+    /// taken in Register and in recovery by enumeration.
+    /// </remarks>
+    public override Task WatchDiagnostics(
+        DiagnosticsRequest request,
+        IServerStreamWriter<DiagnosticEvent> responseStream,
+        ServerCallContext context)
+    {
+        Handshake.EnsureCompatible(request.ContractVersion);
+        return Diagnostics.WatchAsync(responseStream, context.CancellationToken);
+    }
 
     public override Task<AskResponse> Ask(AskRequest request, ServerCallContext context)
     {

@@ -241,6 +241,11 @@ internal static class Program
 
         var client = new RevitSideChannel.RevitSideChannelClient(PipeTransport.CreateClient(instance.PipeName));
 
+        // Started here and read at the end. A phase has a beginning and an end, so a watcher that
+        // samples sees neither: the first version listened for twenty seconds and recorded one
+        // event, because the document it was waiting for arrived a minute after it gave up.
+        using var diagnostics = new DiagnosticsWatcher(instance.PipeName);
+
         var snapshot = await client.GetConfigurationAsync(new ConfigurationRequest());
         report.Check(
             "GetConfiguration is answered from inside Revit",
@@ -278,6 +283,10 @@ internal static class Program
 
         await CheckAssembliesAsync(client, installation, addInDirectory, report);
 
+        // Last, because everything above is what the stream was watching. Read any earlier and the
+        // measurement would be of the sweep's own beginning rather than of a Revit doing work.
+        ReportDiagnostics(diagnostics, options, report);
+
         if (options.KeepOpen)
         {
             report.Note("left running", "pid " + revit.Id.ToString(CultureInfo.InvariantCulture));
@@ -305,6 +314,49 @@ internal static class Program
     /// <summary>
     /// The streaming path, end to end, with Revit on the publishing side for the first time.
     /// </summary>
+    /// <summary>
+    /// Says what the diagnostic stream carried, and what it cost.
+    /// </summary>
+    /// <remarks>
+    /// The measurement this mechanism has to survive is its own price. Progress reporting is the
+    /// hottest callback in the Revit process during a model load, so the number that matters is not
+    /// how much arrived but how much was worth passing on - the publisher thins positions to one
+    /// every 250 ms and never thins a change of meaning.
+    ///
+    /// The longest quiet spell is recorded because it is the number a watchdog would be built on:
+    /// waiting on silence only works if you know how long Revit is entitled to be silent.
+    /// </remarks>
+    private static void ReportDiagnostics(DiagnosticsWatcher watcher, Options options, Report report)
+    {
+        if (watcher.Failure.Length > 0)
+            report.Note("diagnostic stream failed", watcher.Failure);
+
+        report.Check("the diagnostic stream carries what Revit is doing", watcher.Received > 0);
+        report.Check("every phase arrived on Revit's API thread", watcher.OffApiThread == 0);
+        report.Check("the publisher accounted for everything it dropped", watcher.Gaps == 0);
+
+        report.Note("diagnostic events", watcher.Summary());
+        report.Note("phases seen", string.Join(", ", watcher.Phases));
+
+        foreach (var caption in watcher.Captions)
+            report.Note("progress caption", caption);
+
+        // The identifier rather than the message: it is stable across languages and releases, and
+        // it is what any future policy - or a person reading a failed sweep - would key on. The
+        // captions above arrive in Revit's UI language, which is not something to build on.
+        foreach (var dialog in watcher.Dialogs)
+            report.Note("modal dialog", dialog);
+
+        // Only with a model: a Revit that opens nothing does almost no work, and asking it to prove
+        // that a load is visible would be asking about a load that never happened.
+        if (options.WithModel)
+        {
+            report.Check(
+                "opening a model is visible as it happens",
+                watcher.Phases.Contains(RevitPhase.OpeningDocument) || watcher.Phases.Contains(RevitPhase.Working));
+        }
+    }
+
     private static async Task CheckConfigurationFlowAsync(
         string pipeName,
         RevitSideChannel.RevitSideChannelClient client,

@@ -91,6 +91,14 @@ public sealed class ProbeApplication : RevitAddInApplication
 
         ProbeLog.Write("startup: serving " + facts.PipeName);
 
+        // The host raises these on Revit API thread, inside its progress reporting, so this handler
+        // does one translation and one non-blocking hand-off and nothing else. If the publisher had
+        // to wait for a reader here, Revit would be waiting for that reader too.
+        DiagnosticObserved += (_, diagnostic) => _channel?.Diagnostics.Publish(Translate(diagnostic));
+
+        if (Diagnostics is null)
+            ProbeLog.Write("startup: diagnostics are off - set Diagnostics:Enabled to watch phases");
+
 
         services.Revit.Controlled.DocumentOpened += OnDocumentOpened;
 
@@ -127,6 +135,30 @@ public sealed class ProbeApplication : RevitAddInApplication
             ProbeLog.Write("shutdown: server would not stop", error);
         }
     }
+
+    /// <summary>
+    /// Turns a host diagnostic into what travels on the wire.
+    /// </summary>
+    /// <remarks>
+    /// The translation lives here rather than in the host because the host does not reference the
+    /// transport: an edition with no channel must not carry Grpc into Revit AppDomain to have a
+    /// phase machine. This is the seam where the two meet, and it is three lines.
+    /// </remarks>
+    private static DiagnosticEvent Translate(RevitDiagnostic diagnostic) => new()
+    {
+        AtUnixMs = new DateTimeOffset(diagnostic.AtUtc, TimeSpan.Zero).ToUnixTimeMilliseconds(),
+        // Same numbers on both sides, and the cast is the whole translation: the proto enum is
+        // written to match Abstractions.RevitPhase value for value, so a mismatch would be a
+        // change somebody made to one of them alone.
+        Phase = (BHS.Transport.Protocol.RevitPhase)(int)diagnostic.Phase,
+        Caption = diagnostic.Caption,
+        Detail = diagnostic.Detail,
+        Position = diagnostic.Position,
+        Lower = diagnostic.Lower,
+        Upper = diagnostic.Upper,
+        DialogId = diagnostic.DialogId,
+        ApiThread = diagnostic.ApiThread,
+    };
 
     private void OnDocumentOpened(object? sender, DocumentOpenedEventArgs args)
     {
