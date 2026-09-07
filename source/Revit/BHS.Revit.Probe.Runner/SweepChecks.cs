@@ -453,31 +453,9 @@ internal static class SweepChecks
         report.Note("opened after registration",
             (DateTime.UtcNow - started).TotalSeconds.ToString("F1", CultureInfo.InvariantCulture) + "s");
 
-        try
-        {
-            File.Delete(model);
-        }
-        catch (Exception error) when (error is IOException or UnauthorizedAccessException)
-        {
-            // Revit still has it open; the temp directory keeps it.
-        }
-
         return arrived;
     }
 
-    /// <summary>
-    /// How strict Revit is about where an availability class lives.
-    /// </summary>
-    /// <remarks>
-    /// The API help says an <c>IExternalCommandAvailability</c> implementation "should share the
-    /// same assembly with add-in External Command". Advice or rule decides whether the ribbon
-    /// generator has to emit a pair of thin classes per command into the edition assembly, or
-    /// whether the framework can supply predicates of its own - roughly half the work either way.
-    /// <para>
-    /// Reported as a measurement rather than a check, because both answers are legitimate; what is
-    /// not legitimate is deciding it by reading the sentence twice.
-    /// </para>
-    /// </remarks>
     /// <summary>
     /// The other shape of add-in: an application with no user interface.
     /// </summary>
@@ -553,6 +531,19 @@ internal static class SweepChecks
         report.Note("db host", $"add-in {values.GetValueOrDefault("db:addInId")}, {hosts} host(s) registered");
     }
 
+    /// <summary>
+    /// How strict Revit is about where an availability class lives.
+    /// </summary>
+    /// <remarks>
+    /// The API help says an <c>IExternalCommandAvailability</c> implementation "should share the
+    /// same assembly with add-in External Command". Advice or rule decides whether the ribbon
+    /// generator has to emit a pair of thin classes per command into the edition assembly, or
+    /// whether the framework can supply predicates of its own - roughly half the work either way.
+    /// <para>
+    /// Reported as a measurement rather than a check, because both answers are legitimate; what is
+    /// not legitimate is deciding it by reading the sentence twice.
+    /// </para>
+    /// </remarks>
     private static async Task CheckRibbonAsync(
         RevitSideChannel.RevitSideChannelClient client,
         Options options,
@@ -924,7 +915,6 @@ internal static class SweepChecks
         return shipped;
     }
 
-    /// <summary>Where the probe writes, worked out the same way the probe works it out.</summary>
     /// <summary>
     /// The log a Revit process wrote, found by its process id.
     /// </summary>

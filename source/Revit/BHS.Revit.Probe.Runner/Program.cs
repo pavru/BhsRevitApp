@@ -66,6 +66,8 @@ internal static class Program
 
         var launcher = new RevitLauncher(registry);
 
+        DiscardStrayModelCopies();
+
         try
         {
             foreach (var installation in selected)
@@ -163,7 +165,87 @@ internal static class Program
         finally
         {
             Finish(session, options, report);
+            await DiscardModelCopyAsync(model);
         }
+    }
+
+    /// <summary>Removes this release's working copy, once Revit has let go of it.</summary>
+    /// <remarks>
+    /// <para>
+    /// It used to be deleted at the end of the document check, which is to say while Revit still had
+    /// the model open - so the delete failed, the exception was swallowed as "Revit still has it
+    /// open; the temp directory keeps it", and the copy stayed forever. Not on the failing path
+    /// only: on every path, because Revit holds the document until it exits. Measured on this
+    /// machine, 51 copies and 3.9 GB, one per release per sweep since the day the option was added.
+    /// </para>
+    /// <para>
+    /// So it belongs here, after <see cref="Finish"/> has closed or killed the process. The handle
+    /// does not always come back the instant the process does, hence a few short attempts; and
+    /// <c>--keep-open</c> is asked for deliberately, so a copy that stays behind it is not a leak.
+    /// Whatever is still left is caught by <see cref="DiscardStrayModelCopies"/> next time.
+    /// </para>
+    /// </remarks>
+    private static async Task DiscardModelCopyAsync(string? model)
+    {
+        if (model is null)
+            return;
+
+        for (var attempt = 0; attempt < 10; attempt++)
+        {
+            try
+            {
+                File.Delete(model);
+                return;
+            }
+            catch (Exception error) when (error is IOException or UnauthorizedAccessException)
+            {
+                await Task.Delay(200);
+            }
+        }
+    }
+
+    /// <summary>Clears working copies an earlier sweep could not.</summary>
+    /// <remarks>
+    /// A sweep killed part way - and this one kills a Revit that will not open its model - never
+    /// reaches its own cleanup, so the copy outlives it. Tidying at the start rather than at the end
+    /// is the only placement that survives being killed, which is the case that leaks.
+    ///
+    /// Only files this runner makes, by its own prefix, and only ones older than an hour: a copy
+    /// still held by a Revit refuses to be deleted anyway, and the age keeps a second sweep from
+    /// tidying away the first one's work while it is using it.
+    /// </remarks>
+    private static void DiscardStrayModelCopies()
+    {
+        var cutoff = DateTime.UtcNow.AddHours(-1);
+        var removed = 0;
+        var left = 0;
+
+        try
+        {
+            foreach (var stray in Directory.EnumerateFiles(Path.GetTempPath(), "bhs-sweep-*.rvt"))
+            {
+                if (File.GetLastWriteTimeUtc(stray) > cutoff)
+                    continue;
+
+                try
+                {
+                    File.Delete(stray);
+                    removed++;
+                }
+                catch (Exception error) when (error is IOException or UnauthorizedAccessException)
+                {
+                    left++;
+                }
+            }
+        }
+        catch (Exception error) when (error is IOException or UnauthorizedAccessException)
+        {
+            return;
+        }
+
+        if (removed > 0 || left > 0)
+            Console.WriteLine($"cleared {removed} model copy(s) left by an earlier sweep"
+                              + (left > 0 ? $", {left} still in use" : string.Empty));
     }
 
     /// <summary>Says what to look at when a Revit never announced itself.</summary>
