@@ -1,5 +1,6 @@
 ﻿using Autodesk.Revit.ApplicationServices;
 using Autodesk.Revit.UI;
+using Autodesk.Revit.UI.Events;
 using BHS.Logging;
 using BHS.Revit.Abstractions;
 using BHS.Settings;
@@ -44,6 +45,7 @@ public abstract class RevitAddInApplication : RevitAddInHost, IExternalApplicati
     private RevitApiPump? _pump;
     private ExternalEvent? _pumpEvent;
     private UIControlledApplication? _application;
+    private bool _watchingDialogs;
 
     public Result OnStartup(UIControlledApplication application)
     {
@@ -52,11 +54,19 @@ public abstract class RevitAddInApplication : RevitAddInHost, IExternalApplicati
         // opening line of the log claims it was written somewhere else.
         LogRouter.PrimaryThreadId = Environment.CurrentManagedThreadId;
 
+        // The same answer, where a diagnostic can reach it. Created inside Revit's own progress
+        // callback, a diagnostic has no context to ask - so the process-wide fact is recorded once,
+        // here, in the only place it is free.
+        RevitDiagnostic.ApiThreadId = Environment.CurrentManagedThreadId;
+
         try
         {
             _application = application;
 
             Start(application.ControlledApplication);
+
+            // After Start, because Start is what decides whether diagnostics were asked for at all.
+            WatchDialogs(application);
         }
         catch (Exception error)
         {
@@ -74,6 +84,12 @@ public abstract class RevitAddInApplication : RevitAddInHost, IExternalApplicati
             // what was deferred was by definition something that could wait.
             _pump?.Dispose();
 
+            if (_watchingDialogs)
+            {
+                application.DialogBoxShowing -= OnDialogBoxShowing;
+                _watchingDialogs = false;
+            }
+
             Stop(application.ControlledApplication);
         }
         catch (Exception error)
@@ -82,6 +98,53 @@ public abstract class RevitAddInApplication : RevitAddInHost, IExternalApplicati
         }
 
         return Result.Succeeded;
+    }
+
+
+    /// <summary>
+    /// Reports modal dialogs into the diagnostic stream. Never answers one.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// The half of diagnostics that only the interface form can provide: <c>DialogBoxShowing</c> is
+    /// declared in RevitAPIUI, which the composition deliberately never names. It is also the half
+    /// worth the most. A modal dialog is the one failure that, from outside the process, looks
+    /// exactly like a slow Revit - twice diagnosed wrongly here, once as a lost request and once as
+    /// a budget needing raising, and seen again the day this was written.
+    /// </para>
+    /// <para>
+    /// <b>It reports and does not answer, and that is a rule rather than a first version.</b>
+    /// <c>OverrideResult</c> would answer every dialog in the process, including other vendors' -
+    /// and answering "yes" to somebody else's "save changes?" is corrupting somebody else's model.
+    /// If answering is ever wanted, it belongs behind an explicit list of dialog ids supplied by
+    /// whoever is watching, in a sweep and never in a product.
+    /// </para>
+    /// </remarks>
+    private void WatchDialogs(UIControlledApplication application)
+    {
+        if (Diagnostics is null)
+            return;
+
+        try
+        {
+            application.DialogBoxShowing += OnDialogBoxShowing;
+            _watchingDialogs = true;
+        }
+        catch (Exception error)
+        {
+            Log.For(Name).Warn(error, "diagnostics: dialogs could not be watched");
+        }
+    }
+
+    private void OnDialogBoxShowing(object? sender, DialogBoxShowingEventArgs args)
+    {
+        var id = args.DialogId ?? string.Empty;
+        var detail = args is TaskDialogShowingEventArgs task ? task.Message ?? string.Empty : string.Empty;
+
+        Diagnostics?.Observe(new RevitDiagnostic(RevitPhase.Blocked, "dialog", detail)
+        {
+            DialogId = id,
+        });
     }
 
     /// <summary>Called on the API thread once everything the framework provides is up.</summary>

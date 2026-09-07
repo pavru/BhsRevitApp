@@ -40,6 +40,20 @@ service RevitSideChannel {
   // needed on day one rather than when OData returns.
   rpc WatchConfiguration (ConfigurationRequest) returns (stream ConfigurationSnapshot);
 
+  // What Revit is doing right now, as it happens.
+  //
+  // Our code is loaded in OnStartup, well before a model - measured at 13 to 25 seconds against a
+  // usable main window roughly twice that - so a watcher subscribing here sees the whole of a
+  // load rather than its end. That is the point: today the runner waits on fixed budgets, and the
+  // same wait has measured 696 seconds and 16.3 seconds on the same machine. A stream of phases
+  // turns "wait 900 seconds" into "wait while something is still happening, and say what it was
+  // when it stops".
+  //
+  // Streaming rather than polling because the interesting states are transitions, and because a
+  // modal dialog - the one failure that looks exactly like a hang from outside - has no state to
+  // poll for. It has an event.
+  rpc WatchDiagnostics (DiagnosticsRequest) returns (stream DiagnosticEvent);
+
   rpc Ask (AskRequest) returns (AskResponse);
   rpc Shutdown (ShutdownRequest) returns (ShutdownResponse);
 }
@@ -116,4 +130,71 @@ message ShutdownRequest {
 }
 
 message ShutdownResponse {
+}
+
+// ---------------------------------------------------------------------------------------------
+// Diagnostics: what Revit is doing, for a watcher that cannot see its screen.
+// ---------------------------------------------------------------------------------------------
+
+message DiagnosticsRequest {
+  // Same handshake as everywhere else: a caller that does not name the contract is refused.
+  string contract_version = 1;
+}
+
+// Coarse enough to be stable across releases, fine enough to answer "is it stuck, and on what".
+enum RevitPhase {
+  REVIT_PHASE_UNSPECIFIED = 0;
+
+  // OnStartup has run; the application has not finished initialising.
+  REVIT_PHASE_STARTING = 1;
+
+  // Nothing in progress. Revit will process an external event now.
+  REVIT_PHASE_IDLE = 2;
+
+  REVIT_PHASE_OPENING_DOCUMENT = 3;
+
+  // A progress operation is running; caption says which, and the range says how far.
+  REVIT_PHASE_WORKING = 4;
+
+  REVIT_PHASE_DOCUMENT_READY = 5;
+
+  // A modal dialog is up and nothing else will happen until somebody answers it. This is the
+  // state that has twice been diagnosed as a slow Revit and once as a lost request.
+  REVIT_PHASE_BLOCKED = 6;
+
+  REVIT_PHASE_CLOSING = 7;
+}
+
+message DiagnosticEvent {
+  // Monotonic per instance. A consumer that sees a gap knows it missed something, which is why
+  // dropped_before exists as well: the gap says how many, this says that the publisher knew.
+  int64 sequence = 1;
+
+  int64 at_unix_ms = 2;
+
+  RevitPhase phase = 3;
+
+  // From ProgressChangedEventArgs.Caption, or the name of whatever else caused the transition.
+  string caption = 4;
+
+  // The progress range as Revit reports it. Zero when the phase carries no progress.
+  int32 position = 5;
+  int32 lower = 6;
+  int32 upper = 7;
+
+  // Set only for REVIT_PHASE_BLOCKED. DialogBoxShowingEventArgs.DialogId, e.g.
+  // TaskDialog_Stop_Operation - the identifier is stable and is what a policy would key on.
+  string dialog_id = 8;
+
+  // Free text for a human reading the log: a dialog's message, a document's title, an error.
+  string detail = 9;
+
+  // How many events were discarded before this one, since the last event that was sent. Progress
+  // arrives far faster than a pipe should carry it, so thinning is deliberate - but a consumer
+  // must be able to tell thinning from silence, because silence is the thing it watches for.
+  int32 dropped_before = 10;
+
+  // Whether the event was raised on Revit's API thread. Recorded because the most frequent mistake
+  // in this repository is assuming which thread something arrives on.
+  bool api_thread = 11;
 }

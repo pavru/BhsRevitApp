@@ -1,5 +1,6 @@
 using Autodesk.Revit.ApplicationServices;
 using Autodesk.Revit.DB;
+using BHS.Revit.Abstractions;
 
 namespace BHS.Revit.Host;
 
@@ -46,6 +47,7 @@ public abstract class RevitDbAddInApplication : RevitAddInHost, IExternalDBAppli
         // The same first statement as the interface form, and true for the same reason: Revit calls
         // this on the thread it will accept API calls from, and nothing later can find out which.
         Logging.LogRouter.PrimaryThreadId = Environment.CurrentManagedThreadId;
+        RevitDiagnostic.ApiThreadId = Environment.CurrentManagedThreadId;
 
         try
         {

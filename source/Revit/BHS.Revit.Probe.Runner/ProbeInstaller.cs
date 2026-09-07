@@ -216,6 +216,11 @@ internal static class ProbeInstaller
             {
               // written by the probe runner; removed with --undeploy
               "Probe": { "Marker": "product", "Layer": "common" },
+              // On for the sweep, off everywhere else. The host reads this before subscribing to
+              // Revit's progress and dialog events, and the default is off because those handlers
+              // run on the API thread of every model load in the process - a cost a product should
+              // not pay to be watched by nobody.
+              "Diagnostics": { "Enabled": true },
               // The DB half's module reads this one, which proves the host narrowed the settings to
               // the module rather than handing it the whole store.
               "ProbeDbModule": { "Marker": "product" },

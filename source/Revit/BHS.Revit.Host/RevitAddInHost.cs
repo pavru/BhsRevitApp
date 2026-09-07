@@ -36,6 +36,7 @@ public abstract class RevitAddInHost
 {
     private RevitContext? _context;
     private LayeredSettings? _settings;
+    private RevitDiagnostics? _diagnostics;
     private FeatureServices? _services;
     private ModelSettingsSource? _models;
     private ILog _log = Log.For<RevitAddInHost>();
@@ -56,6 +57,31 @@ public abstract class RevitAddInHost
 
     /// <summary>What was handed to the modules. Null until startup has got that far.</summary>
     protected IFeatureServices? Services => _services;
+
+    /// <summary>
+    /// What Revit is doing, when the edition has asked to be told.
+    /// </summary>
+    /// <remarks>
+    /// Null unless <c>Diagnostics:Enabled</c> is set. Off by default and stated as a rule: this is
+    /// a way for something outside the process to watch the inside of it, and what we build for our
+    /// own debugging ships to a customer in the same assembly. A door that can be opened by
+    /// configuration is a door somebody eventually opens who is not us.
+    /// </remarks>
+    protected RevitDiagnostics? Diagnostics => _diagnostics;
+
+    /// <summary>
+    /// Raised for every phase change, on whatever thread Revit raised it - usually the API thread.
+    /// </summary>
+    /// <remarks>
+    /// An event rather than a channel, because the host does not reference the transport: an
+    /// edition that never opens one must not carry Grpc and Google.Protobuf into Revit AppDomain
+    /// to get a phase machine. Whoever owns a channel subscribes and translates.
+    ///
+    /// A handler here runs inside Revit progress reporting. It must not block, and it must not
+    /// throw - though a throw is caught and logged rather than allowed to surface as a fault in
+    /// Revit own machinery.
+    /// </remarks>
+    protected event EventHandler<RevitDiagnostic>? DiagnosticObserved;
 
     /// <summary>The context, for a form that needs it before the services exist.</summary>
     private protected RevitContext? Context => _context;
@@ -149,6 +175,11 @@ public abstract class RevitAddInHost
         // event is common to both forms, and so is what it means.
         controlled.ApplicationInitialized += OnApplicationInitialized;
 
+        // After the registry and before the modules: a module that does something slow in Start is
+        // exactly the kind of thing worth seeing in the stream, and by here everything it needs to
+        // report through exists.
+        StartDiagnostics(controlled);
+
         StartModules();
 
         OnStarted(_services);
@@ -156,9 +187,39 @@ public abstract class RevitAddInHost
         _log.Info("{0} started", Name);
     }
 
+    /// <summary>
+    /// Subscribes to Revit progress and document events, if this edition asked for it.
+    /// </summary>
+    /// <remarks>
+    /// Guarded twice over. Failing to start diagnostics must never fail the add-in - the whole
+    /// point is to watch a start, not to be another way of ruining one - and the setting has to be
+    /// asked for explicitly rather than defaulted on, because subscribing to ProgressChanged means
+    /// a callback on the API thread during every model load in the process.
+    /// </remarks>
+    private void StartDiagnostics(ControlledApplication controlled)
+    {
+        if (_settings is null || !_settings.Flag("Diagnostics:Enabled", false))
+            return;
+
+        try
+        {
+            _diagnostics = new RevitDiagnostics(controlled, _log,
+                diagnostic => DiagnosticObserved?.Invoke(this, diagnostic));
+
+            _log.Info("diagnostics: watching Revit phases");
+        }
+        catch (Exception error)
+        {
+            _log.Warn(error, "diagnostics could not be started");
+        }
+    }
+
     /// <summary>The way down, in the reverse order of the way up.</summary>
     protected void Stop(ControlledApplication controlled)
     {
+        _diagnostics?.Dispose();
+        _diagnostics = null;
+
         try
         {
             controlled.DocumentClosing -= OnDocumentClosing;
