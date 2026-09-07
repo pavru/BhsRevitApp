@@ -97,10 +97,14 @@ jobs:
   # execute here. Those run on a developer machine, by hand, through BHS.Revit.Probe.Runner.
   #
   # This job checks the RECORD that run leaves behind: that it exists, was taken on a clean tree,
-  # belongs to a commit no Revit-side change has landed on top of, covers every supported release,
-  # contains no failure, and has not quietly lost a check since the base. That is a real check with
-  # real teeth - a stale or missing record fails the build - and it is still not evidence that Revit
-  # works. It is evidence that somebody's evidence is current.
+  # still matches the content it was taken against, covers every supported release, contains no
+  # failure, and has not quietly lost a check since the base. That is a real check with real teeth -
+  # a stale or missing record fails the build - and it is still not evidence that Revit works. It is
+  # evidence that somebody's evidence is current.
+  #
+  # "Matches the content" rather than "sits on the right commit", and the distinction was bought:
+  # the first version compared commits and broke the hour the first record was merged, because a
+  # squash writes a new commit and the recorded one leaves the history. Tree hashes survive that.
   sweep-evidence:
     name: sweep-evidence
     runs-on: ubuntu-latest
