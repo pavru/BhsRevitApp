@@ -312,9 +312,6 @@ internal static class Program
     }
 
     /// <summary>
-    /// The streaming path, end to end, with Revit on the publishing side for the first time.
-    /// </summary>
-    /// <summary>
     /// Says what the diagnostic stream carried, and what it cost.
     /// </summary>
     /// <remarks>
@@ -351,12 +348,20 @@ internal static class Program
         // that a load is visible would be asking about a load that never happened.
         if (options.WithModel)
         {
+            // OpeningDocument only. Working was in this condition too, and Working appears on every
+            // sweep including the ones that open nothing - so the check passed without a model, which
+            // is the one circumstance it exists to rule out.
             report.Check(
                 "opening a model is visible as it happens",
-                watcher.Phases.Contains(RevitPhase.OpeningDocument) || watcher.Phases.Contains(RevitPhase.Working));
+                watcher.Phases.Contains(RevitPhase.OpeningDocument));
+
+            report.Check("and so is the document becoming usable", watcher.Phases.Contains(RevitPhase.DocumentReady));
         }
     }
 
+    /// <summary>
+    /// The streaming path, end to end, with Revit on the publishing side for the first time.
+    /// </summary>
     private static async Task CheckConfigurationFlowAsync(
         string pipeName,
         RevitSideChannel.RevitSideChannelClient client,

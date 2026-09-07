@@ -94,6 +94,15 @@ public sealed class ProbeApplication : RevitAddInApplication
         // The host raises these on Revit API thread, inside its progress reporting, so this handler
         // does one translation and one non-blocking hand-off and nothing else. If the publisher had
         // to wait for a reader here, Revit would be waiting for that reader too.
+        // The backlog first, then the subscription. Everything between the host starting diagnostics
+        // and this line had nowhere to go - including the very first event, Starting - so a watcher
+        // saw a process that appeared to begin already initialised.
+        if (Diagnostics is not null)
+        {
+            foreach (var early in Diagnostics.Backlog)
+                _channel?.Diagnostics.Publish(Translate(early));
+        }
+
         DiagnosticObserved += (_, diagnostic) => _channel?.Diagnostics.Publish(Translate(diagnostic));
 
         if (Diagnostics is null)

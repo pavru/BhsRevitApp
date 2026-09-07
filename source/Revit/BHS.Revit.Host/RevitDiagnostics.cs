@@ -47,6 +47,19 @@ public sealed class RevitDiagnostics : IDisposable
     private readonly ILog _log;
     private readonly Action<RevitDiagnostic> _observer;
 
+    /// <summary>
+    /// How many early events are held for a subscriber that does not exist yet.
+    /// </summary>
+    /// <remarks>
+    /// Everything raised between the host starting diagnostics and an edition attaching to them
+    /// went nowhere: the delegate was null, and the events vanished uncounted. That included the
+    /// first one this class raises - Starting, from OnStartup - and any module doing something slow
+    /// in Start, which is exactly the traffic the subscription was placed early to catch. Confirmed
+    /// by the committed sweeps: "phases seen" began at Idle on all four releases, never Starting.
+    /// </remarks>
+    public const int BacklogSize = 64;
+
+    private readonly List<RevitDiagnostic> _backlog = new();
     private readonly object _gate = new();
     private DateTime _lastProgress = DateTime.MinValue;
     private string _caption = string.Empty;
@@ -62,6 +75,16 @@ public sealed class RevitDiagnostics : IDisposable
 
     /// <summary>Events actually handed on.</summary>
     public long Published { get; private set; }
+
+    /// <summary>What happened before anybody was listening.</summary>
+    /// <remarks>
+    /// Read by whoever attaches, so that a subscriber arriving late still learns how the process
+    /// began. Bounded: this is a record of a startup, not a log.
+    /// </remarks>
+    public IReadOnlyList<RevitDiagnostic> Backlog
+    {
+        get { lock (_gate) return _backlog.ToList(); }
+    }
 
     public RevitDiagnostics(ControlledApplication controlled, ILog log, Action<RevitDiagnostic> observer)
     {
@@ -109,6 +132,12 @@ public sealed class RevitDiagnostics : IDisposable
 
     private void Hand(RevitDiagnostic diagnostic)
     {
+        lock (_gate)
+        {
+            if (_backlog.Count < BacklogSize)
+                _backlog.Add(diagnostic);
+        }
+
         try
         {
             _observer(diagnostic);
@@ -151,7 +180,13 @@ public sealed class RevitDiagnostics : IDisposable
                 _lastProgress = now;
                 _caption = caption;
 
-                var phase = args.Stage == ProgressStage.Finished ? RevitPhase.Idle : RevitPhase.Working;
+                // Finished does not mean idle, and saying so was wrong. Revit nests progress
+                // operations - a document open raises several inside itself - so an inner Finished
+                // would have declared the whole process idle while the outer open was still
+                // running. For a watchdog built on silence that is the worst possible mislabel:
+                // Idle is the one phase where being quiet looks normal. Idle is now claimed only by
+                // ApplicationInitialized, which means it.
+                var phase = RevitPhase.Working;
                 _phase = phase;
                 Published++;
 
@@ -160,7 +195,6 @@ public sealed class RevitDiagnostics : IDisposable
                     Position = args.Position,
                     Lower = args.LowerRange,
                     Upper = args.UpperRange,
-                    ApiThread = true,
                 };
             }
         }
@@ -170,22 +204,16 @@ public sealed class RevitDiagnostics : IDisposable
     }
 
     private void OnDocumentOpening(object? sender, DocumentOpeningEventArgs args) =>
-        Observe(new RevitDiagnostic(RevitPhase.OpeningDocument, "opening", args.PathName ?? string.Empty)
-        {
-            ApiThread = true,
-        });
+        Observe(new RevitDiagnostic(RevitPhase.OpeningDocument, "opening", args.PathName ?? string.Empty));
 
     private void OnDocumentOpened(object? sender, DocumentOpenedEventArgs args) =>
-        Observe(new RevitDiagnostic(RevitPhase.DocumentReady, "opened", args.Document?.Title ?? string.Empty)
-        {
-            ApiThread = true,
-        });
+        Observe(new RevitDiagnostic(RevitPhase.DocumentReady, "opened", args.Document?.Title ?? string.Empty));
 
     private void OnDocumentClosing(object? sender, DocumentClosingEventArgs args) =>
-        Observe(new RevitDiagnostic(RevitPhase.Closing, "closing document") { ApiThread = true });
+        Observe(new RevitDiagnostic(RevitPhase.Closing, "closing document"));
 
     private void OnInitialized(object? sender, ApplicationInitializedEventArgs args) =>
-        Observe(new RevitDiagnostic(RevitPhase.Idle, "application initialized") { ApiThread = true });
+        Observe(new RevitDiagnostic(RevitPhase.Idle, "application initialized"));
 
     public void Dispose()
     {

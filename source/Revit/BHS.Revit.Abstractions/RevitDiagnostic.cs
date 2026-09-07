@@ -68,13 +68,30 @@ public sealed class RevitDiagnostic
     /// <summary><c>DialogBoxShowingEventArgs.DialogId</c>, set only for <see cref="RevitPhase.Blocked"/>.</summary>
     public string DialogId { get; set; } = string.Empty;
 
+    /// <summary>The managed thread this was raised on.</summary>
+    public int ThreadId { get; } = Environment.CurrentManagedThreadId;
+
     /// <summary>Whether this was raised on Revit's API thread.</summary>
     /// <remarks>
-    /// Recorded rather than assumed. The most frequent mistake in this repository is being wrong
-    /// about which thread something arrives on, and a diagnostic stream that got it wrong would be
-    /// teaching that mistake rather than catching it.
+    /// Compared, not asserted - and that is a correction. Every construction site used to set this
+    /// to a literal true, which made the sweep's check that phases arrive on the API thread green by
+    /// construction: it would have stayed green if Revit had started raising these somewhere else,
+    /// which is precisely what it claims to measure. The most frequent mistake in this repository is
+    /// being wrong about which thread something arrives on, and a check that cannot notice is worse
+    /// than none.
     /// </remarks>
-    public bool ApiThread { get; set; }
+    public bool ApiThread => ThreadId == ApiThreadId;
+
+    /// <summary>
+    /// The thread Revit calls the add-in on, as recorded when OnStartup ran.
+    /// </summary>
+    /// <remarks>
+    /// Static because a diagnostic is created in places that have no context to hand - inside
+    /// Revit's own progress callback - and the answer is a property of the process, established
+    /// once. Set by the host; zero until then, which makes every early event honestly "not the API
+    /// thread" rather than falsely on it.
+    /// </remarks>
+    public static int ApiThreadId { get; set; }
 
     public override string ToString() =>
         Caption.Length > 0 ? $"{Phase} - {Caption}" : Phase.ToString();

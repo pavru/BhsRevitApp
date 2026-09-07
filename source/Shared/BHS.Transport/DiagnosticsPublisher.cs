@@ -44,11 +44,22 @@ public sealed class DiagnosticsPublisher
     private readonly Queue<DiagnosticEvent> _pending = new();
 
     private long _sequence;
-    private int _droppedSinceLastSent;
     private TaskCompletionSource<bool> _arrived = NewWaiter();
 
-    /// <summary>Events discarded because no reader kept up. Reported, never hidden.</summary>
-    public int Dropped { get; private set; }
+    /// <summary>
+    /// Events pushed out of the window to make room. Not the same as events a reader lost.
+    /// </summary>
+    /// <remarks>
+    /// The distinction was got wrong first time and is worth stating. The buffer is a window, so it
+    /// overflows on any long-lived instance no matter how fast the reader is - after Capacity
+    /// events, always. Counting that as a reader-visible loss made every event past the 257th claim
+    /// a gap that never happened: worked on paper, 43 false gaps in 300 events with a reader that
+    /// never fell behind, and green in the sweeps only because none of them published more than 143.
+    ///
+    /// What a reader actually missed is knowable only at delivery, and that is where it is now
+    /// counted.
+    /// </remarks>
+    public int Evicted { get; private set; }
 
     /// <summary>The number of the last event handed out, for a caller that wants to see movement.</summary>
     public long Sequence
@@ -69,8 +80,6 @@ public sealed class DiagnosticsPublisher
         lock (_gate)
         {
             evt.Sequence = ++_sequence;
-            evt.DroppedBefore = _droppedSinceLastSent;
-            _droppedSinceLastSent = 0;
 
             if (evt.AtUnixMs == 0)
                 evt.AtUnixMs = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
@@ -83,8 +92,7 @@ public sealed class DiagnosticsPublisher
             while (_pending.Count > Capacity)
             {
                 _pending.Dequeue();
-                Dropped++;
-                _droppedSinceLastSent++;
+                Evicted++;
             }
 
             waiting = _arrived;
@@ -125,7 +133,17 @@ public sealed class DiagnosticsPublisher
 
             foreach (var evt in batch)
             {
-                await responseStream.WriteAsync(evt);
+                // Counted here, where it is knowable. Sequence numbers are contiguous at the
+                // source, so a hole between what this reader last saw and what it is being handed
+                // now is exactly what this reader missed - however far behind it fell, and no
+                // matter how many other readers there are.
+                //
+                // A copy, because the same instance is handed to every reader and each of them has
+                // missed a different amount.
+                var outgoing = evt.Clone();
+                outgoing.DroppedBefore = delivered == 0 ? 0 : (int)(evt.Sequence - delivered - 1);
+
+                await responseStream.WriteAsync(outgoing);
                 delivered = evt.Sequence;
             }
 

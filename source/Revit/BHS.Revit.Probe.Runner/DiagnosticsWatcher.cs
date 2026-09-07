@@ -22,9 +22,12 @@ namespace BHS.Revit.Probe.Runner;
 /// needs somebody listening the whole time to know what silence is.
 /// </para>
 /// <para>
-/// A connection of its own, because a server stream held open for the length of a sweep would
-/// occupy one of the library's four listeners - PoolSize is a hard constant of 4 - and every other
-/// check would queue behind it.
+/// A connection of its own, which is tidy rather than necessary. The reason first written here -
+/// that a long stream would occupy one of the library's four listeners - is wrong: the forked
+/// GrpcDotNetNamedPipes hands each accepted connection to Task.Run and the listening thread
+/// immediately creates a fresh pipe instance, so a stream held open costs no listener. Corrected
+/// rather than deleted, because a plausible wrong reason is how a decision survives being
+/// re-examined.
 /// </para>
 /// </remarks>
 internal sealed class DiagnosticsWatcher : IDisposable
@@ -41,7 +44,7 @@ internal sealed class DiagnosticsWatcher : IDisposable
     private int _offApiThread;
     private int _gaps;
     private long _lastSequence;
-    private DateTime _lastAt = DateTime.UtcNow;
+    private long _lastAtUnixMs;
     private TimeSpan _longestSilence = TimeSpan.Zero;
     private RevitPhase _silencePhase = RevitPhase.Unspecified;
     private RevitPhase _phase = RevitPhase.Unspecified;
@@ -113,8 +116,14 @@ internal sealed class DiagnosticsWatcher : IDisposable
     {
         lock (_gate)
         {
-            var now = DateTime.UtcNow;
-            var silence = now - _lastAt;
+            // Measured from Revit's own clock, not from when the bytes arrived. WatchAsync replays
+            // the whole buffer on subscribe, so events minutes apart inside Revit land here
+            // back-to-back - which is why the first recording of this number read 0.0s while the
+            // sweep it described had waited through a model load. The wire says when we heard;
+            // at_unix_ms says when it happened, and the watchdog is about the latter.
+            var silence = _lastAtUnixMs == 0
+                ? TimeSpan.Zero
+                : TimeSpan.FromMilliseconds(Math.Max(0, evt.AtUnixMs - _lastAtUnixMs));
 
             if (_received > 0 && silence > _longestSilence)
             {
@@ -127,7 +136,7 @@ internal sealed class DiagnosticsWatcher : IDisposable
                 _silencePhase = _phase;
             }
 
-            _lastAt = now;
+            _lastAtUnixMs = evt.AtUnixMs;
             _received++;
             _dropped += evt.DroppedBefore;
             _phases.Add(evt.Phase);
@@ -171,8 +180,15 @@ internal sealed class DiagnosticsWatcher : IDisposable
 
         // Bounded, because a watcher must never be the reason a sweep hangs - the thing it exists
         // to make visible.
-        try { _reading.Wait(TimeSpan.FromSeconds(5)); } catch (Exception) { }
+        var finished = false;
+        try { finished = _reading.Wait(TimeSpan.FromSeconds(5)); } catch (Exception) { }
 
-        _stopping.Dispose();
+        // Only once nobody is holding its token. Disposing while the reader is still unwinding
+        // would raise ObjectDisposedException inside it, which would then be recorded as the
+        // stream's failure - after the report had already been read, so it would surface as a
+        // mystery in the next run rather than in this one. Leaking one handle for the life of a
+        // sweep is the cheaper mistake.
+        if (finished)
+            _stopping.Dispose();
     }
 }

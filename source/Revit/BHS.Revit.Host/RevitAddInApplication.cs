@@ -54,6 +54,11 @@ public abstract class RevitAddInApplication : RevitAddInHost, IExternalApplicati
         // opening line of the log claims it was written somewhere else.
         LogRouter.PrimaryThreadId = Environment.CurrentManagedThreadId;
 
+        // The same answer, where a diagnostic can reach it. Created inside Revit's own progress
+        // callback, a diagnostic has no context to ask - so the process-wide fact is recorded once,
+        // here, in the only place it is free.
+        RevitDiagnostic.ApiThreadId = Environment.CurrentManagedThreadId;
+
         try
         {
             _application = application;
@@ -139,7 +144,6 @@ public abstract class RevitAddInApplication : RevitAddInHost, IExternalApplicati
         Diagnostics?.Observe(new RevitDiagnostic(RevitPhase.Blocked, "dialog", detail)
         {
             DialogId = id,
-            ApiThread = true,
         });
     }
 
