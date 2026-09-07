@@ -1,4 +1,4 @@
-<#
+﻿<#
 .SYNOPSIS
     Verifies a recorded in-Revit sweep. DOES NOT RUN ONE.
 
@@ -267,6 +267,20 @@ if ($Base) {
         $isThere = @{}
         foreach ($release in $report.Releases) {
             foreach ($check in $release.Checks) { $isThere["$($release.Release)|$($check.Name)"] = $true }
+        }
+
+        # A release that gave up part way is excluded from the comparison entirely, exactly as it is
+        # excluded from the probe's own floor. Its checks did not disappear, they were never asked -
+        # and it has already failed loudly by question 4 above. Measured: an unattended sweep where
+        # Revit 2026 and 2027 both stopped on a modal dialog produced dozens of "a check that used to
+        # run no longer does", every one of them true and every one of them the wrong story.
+        foreach ($release in $report.Releases) {
+            if (-not (Field $release 'Abandoned')) { continue }
+
+            Write-Host "check-sweep-report: Revit $($release.Release) gave up part way, so its checks are not compared." -ForegroundColor Yellow
+            foreach ($key in @($wasThere.Keys)) {
+                if ($key -like "$($release.Release)|*") { $wasThere.Remove($key) }
+            }
         }
 
         $gone = $wasThere.Keys | Where-Object { -not $isThere.ContainsKey($_) } | Sort-Object
