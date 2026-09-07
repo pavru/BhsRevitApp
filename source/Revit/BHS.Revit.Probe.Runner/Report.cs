@@ -11,7 +11,6 @@ internal sealed class Report
 {
     private readonly List<string> _failed = new();
     private ReleaseRecord? _release;
-    private int _abandoned;
 
     /// <summary>
     /// The same sweep, in a form something other than a person can read.
@@ -55,11 +54,17 @@ internal sealed class Report
     /// has already failed loudly by the time this is called. Counting it against the floor as well
     /// adds a second failure that says nothing new, on top of a real one. Measured: a deliberately
     /// broken model produced three failures where two were the story.
+    ///
+    /// <b>It marks the release, and does not close it.</b> The first version called
+    /// <see cref="EndRelease"/>, which detached the record - and the cleanup that runs afterwards
+    /// still reports: a Revit that refused to be killed printed a failing check that counted in the
+    /// totals and appeared in no release, contradicting the one thing this record promises, that
+    /// every line printed is a line recorded.
     /// </remarks>
     public void AbandonRelease()
     {
-        _abandoned++;
-        EndRelease();
+        if (_release is not null)
+            _release.Abandoned = true;
     }
 
     public int Failures => _failed.Count;
@@ -122,21 +127,35 @@ internal sealed class Report
     {
         Console.WriteLine();
 
-        // Only the releases that ran to the end are held to the floor.
-        var completed = Math.Max(releases - _abandoned, 0);
-        var floor = MinimumPerRelease * completed;
-
-        if (completed > 0 && Performed < floor)
+        // Each release answers for itself, and that is a correction. One global total against a
+        // floor that dropped per abandoned release let the two cancel: an abandoned release keeps
+        // the thirty-odd checks it did run in the total while removing forty-five from the bar, so
+        // with two of four abandoned a completed release could lose nearly every check after
+        // registration and still clear it. The guard exists for exactly that disappearance.
+        foreach (var record in Sweep.Releases)
         {
+            if (record.Abandoned || record.Checks.Count >= MinimumPerRelease)
+                continue;
+
             // A symptom, not a diagnosis. The count also drops when a release aborts early - Revit
             // failing to register, say - and this repository has a documented history of chasing
             // wrong diagnoses printed by its own sweep. Naming both causes costs one line and stops
             // the next person from looking for a deleted check that was never deleted.
             Console.WriteLine(
-                $"  [FAIL] only {Performed} checks ran across {releases} release(s), fewer than the " +
-                $"{floor} expected. Either a check stopped running, or a release did not get far " +
-                "enough to ask its questions - the failures above say which.");
-            _failed.Add($"the sweep ran {Performed} checks, fewer than the {floor} expected");
+                $"  [FAIL] Revit {record.Release} reported only {record.Checks.Count} checks, fewer " +
+                $"than the {MinimumPerRelease} expected. Either a check stopped running, or that " +
+                "release did not get far enough to ask its questions - the failures above say which.");
+            _failed.Add($"Revit {record.Release} ran {record.Checks.Count} checks, fewer than the {MinimumPerRelease} expected");
+        }
+
+        // A release selected and never begun leaves no record at all, so the loop above cannot see
+        // it. That is the one thing the old global count did catch, and it is kept.
+        if (Sweep.Releases.Count < releases)
+        {
+            Console.WriteLine(
+                $"  [FAIL] {releases} release(s) were selected but only {Sweep.Releases.Count} " +
+                "reported anything at all.");
+            _failed.Add($"{releases - Sweep.Releases.Count} selected release(s) reported nothing");
         }
 
         Sweep.Performed = Performed;

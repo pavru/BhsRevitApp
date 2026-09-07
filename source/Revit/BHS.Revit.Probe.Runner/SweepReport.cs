@@ -1,4 +1,4 @@
-using System.Globalization;
+﻿using System.Globalization;
 using System.Text.Json;
 
 namespace BHS.Revit.Probe.Runner;
@@ -18,6 +18,14 @@ internal sealed class ReleaseRecord
     public bool? Signed { get; set; }
 
     public List<CheckRecord> Checks { get; set; } = new();
+
+    /// <summary>Whether this release gave up part way, so its missing checks are explained.</summary>
+    /// <remarks>
+    /// Recorded rather than inferred from the count, because the two questions are different: a
+    /// release with few checks either stopped on purpose or lost checks nobody noticed, and the
+    /// floor that guards the second must be able to tell them apart by more than arithmetic.
+    /// </remarks>
+    public bool Abandoned { get; set; }
 
     /// <summary>The measurements: how long registration took, how many assemblies were loaded.</summary>
     /// <remarks>

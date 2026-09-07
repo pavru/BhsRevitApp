@@ -593,15 +593,6 @@ internal static class Program
         }
     }
 
-    /// <summary>
-    /// The second half of registration: the document, which arrives after it.
-    /// </summary>
-    /// <remarks>
-    /// <c>OnStartup</c> has no document, so registration cannot carry one; what a Revit is working
-    /// on comes later, over <c>DocumentOpened</c>, and reaches a consumer as a fresh configuration
-    /// snapshot. Nothing else in the sweep exercises that path, and its budget is not the
-    /// registration budget - a cold Revit registers long before it has opened anything.
-    /// </remarks>
     /// <summary>Why a wait ended.</summary>
     internal enum WaitOutcome
     {
@@ -671,7 +662,8 @@ internal static class Program
         TimeSpan quiet,
         TimeSpan ceiling)
     {
-        var deadline = DateTime.UtcNow + ceiling;
+        var started = DateTime.UtcNow;
+        var deadline = started + ceiling;
         var unanswered = 0;
 
         while (DateTime.UtcNow < deadline)
@@ -708,10 +700,30 @@ internal static class Program
 
             // Nothing has ever been heard: either diagnostics are off or the stream never started.
             // Silence from something that has never spoken says nothing about whether it is working.
-            var listening = watcher.Received > 0;
+            //
+            // And a stream that spoke and then broke is the same case, not the opposite one. The
+            // reader records its failure and stops, after which nothing updates the last-heard mark
+            // ever again - so a pipe that faults thirty seconds into a three-minute model open
+            // leaves this reading "quiet for a minute" about a Revit that is working perfectly, and
+            // the caller kills it and reports that the document never arrived. That is precisely the
+            // false diagnosis this whole wait exists to end, arriving through the instrument.
+            var listening = watcher.Received > 0 && watcher.Failure.Length == 0;
 
-            if (listening && watcher.SinceLastHeard > quiet)
-                return watcher.BlockedBy.Length > 0 ? WaitOutcome.Blocked : WaitOutcome.WentQuiet;
+            // Measured from whichever is later: the last event, or the moment this wait began. The
+            // events before it were about the previous question - registration, settings, the log -
+            // and a wait must not open already out of patience for work it has not yet watched.
+            var watching = DateTime.UtcNow - started;
+            var quietFor = watcher.SinceLastHeard < watching ? watcher.SinceLastHeard : watching;
+
+            if (listening && quietFor > quiet)
+            {
+                // The phase says blocked even when the dialog would not name itself: Revit hands
+                // DialogBoxShowing an id that can be absent, and reading the id alone downgraded
+                // exactly those dialogs to "went quiet" - the answer being a person either way.
+                return watcher.CurrentPhase == RevitPhase.Blocked || watcher.BlockedBy.Length > 0
+                    ? WaitOutcome.Blocked
+                    : WaitOutcome.WentQuiet;
+            }
 
             await Task.Delay(250);
         }
@@ -726,6 +738,15 @@ internal static class Program
         }
     }
 
+    /// <summary>
+    /// The second half of registration: the document, which arrives after it.
+    /// </summary>
+    /// <remarks>
+    /// <c>OnStartup</c> has no document, so registration cannot carry one; what a Revit is working
+    /// on comes later, over <c>DocumentOpened</c>, and reaches a consumer as a fresh configuration
+    /// snapshot. Nothing else in the sweep exercises that path, and its budget is not the
+    /// registration budget - a cold Revit registers long before it has opened anything.
+    /// </remarks>
     private static async Task<bool> CheckDocumentAsync(
         RevitSideChannel.RevitSideChannelClient client,
         string? model,
@@ -768,10 +789,18 @@ internal static class Program
             // was slower than anything measured here.
             report.Note("the wait ended because", outcome switch
             {
-                WaitOutcome.Blocked => "Revit is waiting for somebody to answer " + watcher.BlockedBy,
+                WaitOutcome.Blocked => "Revit is waiting for somebody to answer "
+                    + (watcher.BlockedBy.Length > 0 ? watcher.BlockedBy : "a dialog it did not name"),
                 WaitOutcome.WentQuiet => "Revit said nothing for 60s while " + watcher.CurrentPhase,
                 WaitOutcome.Unreachable => "Revit stopped answering - gone, or held by something that answers for it"
                     + (watcher.BlockedBy.Length > 0 ? ", last seen showing " + watcher.BlockedBy : string.Empty),
+                // The ceiling is reached for two different reasons, and saying which matters: with a
+                // live stream Revit was demonstrably busy the whole time, while without one - never
+                // started, or broken part way - nothing was being watched and the ceiling is all
+                // there was. The second reads as a fifteen-minute hang unless it says otherwise.
+                _ when watcher.Failure.Length > 0 =>
+                    "fifteen minutes passed with the diagnostics stream broken (" + watcher.Failure
+                    + "), so silence proved nothing",
                 _ => watcher.Received > 0
                     ? "fifteen minutes passed while Revit was still working"
                     : "fifteen minutes passed and diagnostics never spoke, so silence proved nothing",

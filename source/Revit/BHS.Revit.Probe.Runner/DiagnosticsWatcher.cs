@@ -112,11 +112,16 @@ internal sealed class DiagnosticsWatcher : IDisposable
     /// the very next event, whatever it was, which loses the dialog the instant anything else
     /// happens while it is still on screen.
     ///
-    /// Now it survives until Revit does something that means it is gone: progress, a document, an
-    /// initialisation. That is a guess either way, and this is the direction the guess should err -
-    /// naming a dialog that has been answered costs a confusing sentence, while forgetting one that
-    /// is still up costs the diagnosis, which is what happened on Revit 2027 the first time the
-    /// watchdog fired.
+    /// Now it survives until Revit does something that means it is gone: progress, a document
+    /// opening or ready, an initialisation, a shutdown. That is a guess either way, and this is the
+    /// direction the guess should err - naming a dialog that has been answered costs a confusing
+    /// sentence, while forgetting one that is still up costs the diagnosis, which is what happened
+    /// on Revit 2027 the first time the watchdog fired.
+    ///
+    /// The clearing set is every phase that means Revit moved on. <c>Starting</c> and
+    /// <c>Unspecified</c> are left out because neither says anything happened. Erring the other way
+    /// has its own cost - a dialog raised during startup and answered, followed by a real hang,
+    /// would send whoever reads the report looking for a modal window that is no longer on screen.
     /// </remarks>
     public string BlockedBy { get { lock (_gate) return _blockedBy; } }
 
@@ -191,7 +196,8 @@ internal sealed class DiagnosticsWatcher : IDisposable
 
             if (evt.Phase == RevitPhase.Blocked)
                 _blockedBy = evt.DialogId;
-            else if (evt.Phase is RevitPhase.Working or RevitPhase.DocumentReady or RevitPhase.Idle)
+            else if (evt.Phase is RevitPhase.Working or RevitPhase.DocumentReady or RevitPhase.Idle
+                     or RevitPhase.OpeningDocument or RevitPhase.Closing)
                 _blockedBy = string.Empty;
 
             var caption = evt.Caption.Length > 0 ? evt.Caption : evt.Phase.ToString();
