@@ -123,7 +123,14 @@ internal static class SweepChecks
         await CheckRibbonAsync(client, options, report);
 
         if (options.WithModel)
+        {
             await CheckModelSettingsAsync(client, report);
+
+            // Right after it, and for the same reason: both need a document, and this one writes
+            // into it. Kept apart because they answer different questions - one that the mechanism
+            // works, one how permanent its identity is.
+            await CheckSchemaEvolutionAsync(client, report);
+        }
 
         // After the ribbon and the model, because one of its questions is about an event that only
         // arrives once Revit has finished starting - and asking a thing that has not happened yet
@@ -708,6 +715,59 @@ internal static class SweepChecks
     /// model says. None of it can be measured from outside Revit, and the storage half cannot be
     /// measured without a document, which is why this runs only with one open.
     /// </remarks>
+    /// <summary>
+    /// How permanent an Extensible Storage schema really is.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// The three-field shape of <c>BHS.ModelSettings</c> rests on one sentence in <c>CLAUDE.md</c>:
+    /// a schema that has reached somebody else's model can never be changed. That is true of one
+    /// GUID and silent about the price - a schema under a new GUID is a different schema, and a
+    /// reader that tries the new one and falls back to the old migrates on the next write. What the
+    /// shape should be depends on which of those is the real cost, so it is worth measuring before
+    /// the identity leaves this machine.
+    /// </para>
+    /// <para>
+    /// <b>Almost everything here is a note rather than a check, and that is the point.</b> Nobody
+    /// knows these answers yet, and a check written before its answer agrees with whoever wrote it -
+    /// this repository has the scar: <c>IsSessionReady</c> was named for a belief and measured into
+    /// <c>IsInitialized</c> only because the question was left open. Two things are asserted,
+    /// because they must hold whatever the answers turn out to be: the throwaway schema registers
+    /// at all, and the document is left unmodified.
+    /// </para>
+    /// </remarks>
+    private static async Task CheckSchemaEvolutionAsync(
+        RevitSideChannel.RevitSideChannelClient client,
+        Report report)
+    {
+        var answer = await client.AskAsync(new AskRequest { Question = "schema" });
+        var values = answer.Values;
+
+        if (values.GetValueOrDefault("schema:document") == "(none)")
+        {
+            report.Note("schema", "no document, so nothing was measured - run with --with-model");
+            return;
+        }
+
+        report.Check("a throwaway schema registers inside Revit",
+            values.GetValueOrDefault("schema:registered") == "True");
+
+        report.Note("fields as built", values.GetValueOrDefault("schema:fields") ?? "(missing)");
+        report.Note("the same definition, a second time", values.GetValueOrDefault("schema:sameAgain") ?? "(missing)");
+        report.Note("a fourth field under the same GUID", values.GetValueOrDefault("schema:extraField") ?? "(missing)");
+        report.Note("what the registry holds afterwards", values.GetValueOrDefault("schema:fieldsAfter") ?? "(missing)");
+        report.Note("an entity round-trip", values.GetValueOrDefault("schema:roundTrip") ?? "(missing)");
+        report.Note("value read back", values.GetValueOrDefault("schema:readBack") ?? "(missing)");
+
+        foreach (var pair in values.Where(one => one.Key.StartsWith("schema:recognized:", StringComparison.Ordinal)))
+            report.Note("RecognizedField " + pair.Key["schema:recognized:".Length..], pair.Value);
+
+        // This one is an assertion whatever the rest says: the measurement must not leave the
+        // model dirty, or the sweep meets the save dialog it exists to avoid.
+        report.Check("and the measurement left the document unmodified",
+            values.GetValueOrDefault("schema:clean") == "True");
+    }
+
     private static async Task CheckModelSettingsAsync(
         RevitSideChannel.RevitSideChannelClient client,
         Report report)
