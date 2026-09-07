@@ -1,4 +1,4 @@
-using System.Globalization;
+﻿using System.Globalization;
 
 namespace BHS.Logging;
 
@@ -60,6 +60,9 @@ public static class LogWriting
     public static void Warn<T0, T1>(this ILog log, string format, T0 arg0, T1 arg1) =>
         Write(log, LogLevel.Warning, format, arg0, arg1);
 
+    public static void Warn<T0, T1, T2>(this ILog log, string format, T0 arg0, T1 arg1, T2 arg2) =>
+        Write(log, LogLevel.Warning, format, arg0, arg1, arg2);
+
     public static void Error(this ILog log, string message) => Write(log, LogLevel.Error, message);
 
     public static void Error<T0>(this ILog log, string format, T0 arg0) => Write(log, LogLevel.Error, format, arg0);
@@ -67,9 +70,18 @@ public static class LogWriting
     public static void Error<T0, T1>(this ILog log, string format, T0 arg0, T1 arg1) =>
         Write(log, LogLevel.Error, format, arg0, arg1);
 
+    public static void Error<T0, T1, T2>(this ILog log, string format, T0 arg0, T1 arg1, T2 arg2) =>
+        Write(log, LogLevel.Error, format, arg0, arg1, arg2);
+
     public static void Critical(this ILog log, string message) => Write(log, LogLevel.Critical, message);
 
     public static void Critical<T0>(this ILog log, string format, T0 arg0) => Write(log, LogLevel.Critical, format, arg0);
+
+    public static void Critical<T0, T1>(this ILog log, string format, T0 arg0, T1 arg1) =>
+        Write(log, LogLevel.Critical, format, arg0, arg1);
+
+    public static void Critical<T0, T1, T2>(this ILog log, string format, T0 arg0, T1 arg1, T2 arg2) =>
+        Write(log, LogLevel.Critical, format, arg0, arg1, arg2);
 
     /// <summary>A failure, with the exception that carried it.</summary>
     public static void Warn(this ILog log, Exception error, string format, params object?[] args) =>
