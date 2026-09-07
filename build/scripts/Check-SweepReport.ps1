@@ -227,6 +227,17 @@ if ($report.Failed -ne 0) {
     Fail "the sweep recorded $($report.Failed) failed check(s)."
 }
 
+# The headline number has to be the checks the record holds, not a figure beside them. Without this
+# a report can say 272 and carry 207, and every question below reads the smaller list while the
+# summary line quotes the larger - which is the shape of failure this script exists to catch, one
+# level up from a check that stopped running.
+$recorded = 0
+foreach ($release in $report.Releases) { $recorded += @($release.Checks).Count }
+
+if ((Field $report 'Performed') -ne $recorded) {
+    Fail "the report says $(Field $report 'Performed') checks but carries $recorded. A record that does not add up describes nothing."
+}
+
 foreach ($release in $report.Releases) {
     foreach ($check in $release.Checks) {
         if (-not (Field $check 'Ok')) { Fail "Revit $($release.Release): $($check.Name)" }
@@ -276,6 +287,19 @@ if ($Base) {
         # run no longer does", every one of them true and every one of them the wrong story.
         foreach ($release in $report.Releases) {
             if (-not (Field $release 'Abandoned')) { continue }
+
+            # Abandonment has to be earned rather than asserted. The flag is written by the runner
+            # being verified, and honouring it switches off both this question and the probe's own
+            # floor for that release - so on one unchecked boolean, every guard against quietly
+            # vanishing checks goes quiet at once. Measured: a report with 65 of a release's 68
+            # checks deleted, Abandoned true and Failed zero, passed green.
+            #
+            # A release that truly gave up failed loudly on the way; one that reports no failure did
+            # not give up, whatever it says about itself.
+            if (-not (@($release.Checks) | Where-Object { -not (Field $_ 'Ok') })) {
+                Fail "Revit $($release.Release) is marked abandoned but recorded no failing check. A release that gave up says so by failing."
+                continue
+            }
 
             Write-Host "check-sweep-report: Revit $($release.Release) gave up part way, so its checks are not compared." -ForegroundColor Yellow
             foreach ($key in @($wasThere.Keys)) {
