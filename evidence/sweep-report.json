@@ -1,22 +1,22 @@
 {
   "Schema": 2,
   "Disclaimer": "Recorded on a developer machine. Revit cannot run on hosted CI, so CI verifies this record rather than reproducing it: no automated check here has ever started a Revit.",
-  "Commit": "deedb30a4db49dfa8e4f7e099c114ce14ece5524",
+  "Commit": "5537ca5cb5878641f2701e37fb4e0e25e022c73a",
   "CommitClean": true,
   "Content": {
-    "source/Revit": "2781f54bde202f410b78e5f081c00ff0565da4d0",
+    "source/Revit": "7d5fa5a975e6801a7f82fea332ef67e93c2c5a32",
     "source/Shared": "613cf6a30882b4be74e38ff08c0a18e216eaaa36",
     "source/WinSide": "5b71abdce4cd8186abf36416137a3dfa7f437a28",
     "build/BHS.Revit.Sdk": "eb401a3b673fabf6b4ba9ee1286cf8a450e3ed1c"
   },
-  "RecordedUtc": "2026-09-07T01:58:11.1993413Z",
+  "RecordedUtc": "2026-09-07T03:40:44.8027919Z",
   "WithModel": false,
   "ShowTab": false,
   "Releases": [
     {
       "Release": 2024,
       "FileVersion": "0.1.0.0",
-      "BuiltUtc": "2026-09-07T01:54:30.9043106Z",
+      "BuiltUtc": "2026-09-07T03:36:51.3120138Z",
       "Signed": true,
       "Checks": [
         {
@@ -247,11 +247,11 @@
       "Notes": [
         {
           "Name": "launched",
-          "Value": "pid 62572"
+          "Value": "pid 48704"
         },
         {
           "Name": "registered after",
-          "Value": "14.7s"
+          "Value": "17.5s"
         },
         {
           "Name": "recovered by enumeration",
@@ -267,11 +267,11 @@
         },
         {
           "Name": "probe log",
-          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2024-62572-20260907-115442.log"
+          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2024-48704-20260907-133704.log"
         },
         {
           "Name": "threads",
-          "Value": "api 1, call 12"
+          "Value": "api 1, call 13"
         },
         {
           "Name": "appdomain",
@@ -295,7 +295,7 @@
         },
         {
           "Name": "log",
-          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2024-62572-20260907-115442.log"
+          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2024-48704-20260907-133704.log"
         },
         {
           "Name": "sinks",
@@ -399,7 +399,7 @@
         },
         {
           "Name": "diagnostic events",
-          "Value": "5 received, 0 dropped by the publisher, longest quiet spell 13.9s during Starting"
+          "Value": "5 received, 0 dropped by the publisher, longest quiet spell 12.3s during Starting"
         },
         {
           "Name": "phases seen",
@@ -415,14 +415,14 @@
         },
         {
           "Name": "closed after",
-          "Value": "26.8s"
+          "Value": "30.8s"
         }
       ]
     },
     {
       "Release": 2025,
       "FileVersion": "0.1.0.0",
-      "BuiltUtc": "2026-09-07T01:54:31.0567633Z",
+      "BuiltUtc": "2026-09-07T03:36:52.1597333Z",
       "Signed": true,
       "Checks": [
         {
@@ -653,11 +653,11 @@
       "Notes": [
         {
           "Name": "launched",
-          "Value": "pid 15920"
+          "Value": "pid 50568"
         },
         {
           "Name": "registered after",
-          "Value": "12.2s"
+          "Value": "12.9s"
         },
         {
           "Name": "recovered by enumeration",
@@ -673,11 +673,11 @@
         },
         {
           "Name": "probe log",
-          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2025-15920-20260907-115537.log"
+          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2025-50568-20260907-133803.log"
         },
         {
           "Name": "threads",
-          "Value": "api 1, call 26"
+          "Value": "api 1, call 23"
         },
         {
           "Name": "appdomain",
@@ -701,7 +701,7 @@
         },
         {
           "Name": "log",
-          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2025-15920-20260907-115537.log"
+          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2025-50568-20260907-133803.log"
         },
         {
           "Name": "sinks",
@@ -841,7 +841,7 @@
         },
         {
           "Name": "assemblies loaded",
-          "Value": "404"
+          "Value": "407"
         },
         {
           "Name": "Revit\u0027s copy won",
@@ -853,7 +853,7 @@
         },
         {
           "Name": "diagnostic events",
-          "Value": "5 received, 0 dropped by the publisher, longest quiet spell 1.5s during Starting"
+          "Value": "5 received, 0 dropped by the publisher, longest quiet spell 1.8s during Starting"
         },
         {
           "Name": "phases seen",
@@ -869,14 +869,14 @@
         },
         {
           "Name": "closed after",
-          "Value": "3.0s"
+          "Value": "3.5s"
         }
       ]
     },
     {
       "Release": 2026,
       "FileVersion": "0.1.0.0",
-      "BuiltUtc": "2026-09-07T01:54:31.4712097Z",
+      "BuiltUtc": "2026-09-07T03:36:52.1647322Z",
       "Signed": true,
       "Checks": [
         {
@@ -1107,11 +1107,11 @@
       "Notes": [
         {
           "Name": "launched",
-          "Value": "pid 59008"
+          "Value": "pid 62904"
         },
         {
           "Name": "registered after",
-          "Value": "24.9s"
+          "Value": "27.9s"
         },
         {
           "Name": "recovered by enumeration",
@@ -1127,11 +1127,11 @@
         },
         {
           "Name": "probe log",
-          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2026-59008-20260907-115555.log"
+          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2026-62904-20260907-133825.log"
         },
         {
           "Name": "threads",
-          "Value": "api 1, call 10"
+          "Value": "api 1, call 19"
         },
         {
           "Name": "appdomain",
@@ -1155,7 +1155,7 @@
         },
         {
           "Name": "log",
-          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2026-59008-20260907-115555.log"
+          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2026-62904-20260907-133825.log"
         },
         {
           "Name": "sinks",
@@ -1271,7 +1271,7 @@
         },
         {
           "Name": "diagnostic events",
-          "Value": "3 received, 0 dropped by the publisher, longest quiet spell 5.9s during Starting"
+          "Value": "3 received, 0 dropped by the publisher, longest quiet spell 6.4s during Starting"
         },
         {
           "Name": "phases seen",
@@ -1287,14 +1287,14 @@
         },
         {
           "Name": "closed after",
-          "Value": "55.4s"
+          "Value": "44.3s"
         }
       ]
     },
     {
       "Release": 2027,
       "FileVersion": "0.1.0.0",
-      "BuiltUtc": "2026-09-07T01:54:31.7673572Z",
+      "BuiltUtc": "2026-09-07T03:36:51.4371733Z",
       "Signed": true,
       "Checks": [
         {
@@ -1525,11 +1525,11 @@
       "Notes": [
         {
           "Name": "launched",
-          "Value": "pid 30216"
+          "Value": "pid 12704"
         },
         {
           "Name": "registered after",
-          "Value": "17.8s"
+          "Value": "16.2s"
         },
         {
           "Name": "recovered by enumeration",
@@ -1545,11 +1545,11 @@
         },
         {
           "Name": "probe log",
-          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2027-30216-20260907-115725.log"
+          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2027-12704-20260907-133944.log"
         },
         {
           "Name": "threads",
-          "Value": "api 2, call 5"
+          "Value": "api 2, call 23"
         },
         {
           "Name": "appdomain",
@@ -1573,7 +1573,7 @@
         },
         {
           "Name": "log",
-          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2027-30216-20260907-115725.log"
+          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2027-12704-20260907-133944.log"
         },
         {
           "Name": "sinks",
@@ -1941,7 +1941,7 @@
         },
         {
           "Name": "diagnostic events",
-          "Value": "3 received, 0 dropped by the publisher, longest quiet spell 5.2s during Starting"
+          "Value": "3 received, 0 dropped by the publisher, longest quiet spell 4.7s during Starting"
         },
         {
           "Name": "phases seen",
@@ -1957,7 +1957,7 @@
         },
         {
           "Name": "closed after",
-          "Value": "34.2s"
+          "Value": "50.0s"
         }
       ]
     }
