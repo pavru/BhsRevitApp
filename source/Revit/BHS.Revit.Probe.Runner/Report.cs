@@ -11,6 +11,7 @@ internal sealed class Report
 {
     private readonly List<string> _failed = new();
     private ReleaseRecord? _release;
+    private int _abandoned;
 
     /// <summary>
     /// The same sweep, in a form something other than a person can read.
@@ -44,6 +45,22 @@ internal sealed class Report
 
     /// <summary>Nothing reported after this belongs to a release.</summary>
     public void EndRelease() => _release = null;
+
+    /// <summary>
+    /// Says that a release stopped early, so its missing checks are explained.
+    /// </summary>
+    /// <remarks>
+    /// The floor exists to catch a check that quietly stopped running. A release that gave up -
+    /// Revit never opened its model, or stopped answering - is a different thing entirely, and it
+    /// has already failed loudly by the time this is called. Counting it against the floor as well
+    /// adds a second failure that says nothing new, on top of a real one. Measured: a deliberately
+    /// broken model produced three failures where two were the story.
+    /// </remarks>
+    public void AbandonRelease()
+    {
+        _abandoned++;
+        EndRelease();
+    }
 
     public int Failures => _failed.Count;
 
@@ -105,9 +122,11 @@ internal sealed class Report
     {
         Console.WriteLine();
 
-        var floor = MinimumPerRelease * Math.Max(releases, 1);
+        // Only the releases that ran to the end are held to the floor.
+        var completed = Math.Max(releases - _abandoned, 0);
+        var floor = MinimumPerRelease * completed;
 
-        if (Performed < floor)
+        if (completed > 0 && Performed < floor)
         {
             // A symptom, not a diagnosis. The count also drops when a release aborts early - Revit
             // failing to register, say - and this repository has a documented history of chasing

@@ -244,7 +244,7 @@ internal static class Program
         // Started here and read at the end. A phase has a beginning and an end, so a watcher that
         // samples sees neither: the first version listened for twenty seconds and recorded one
         // event, because the document it was waiting for arrived a minute after it gave up.
-        using var diagnostics = new DiagnosticsWatcher(instance.PipeName);
+        using var watcher = new DiagnosticsWatcher(instance.PipeName);
 
         var snapshot = await client.GetConfigurationAsync(new ConfigurationRequest());
         report.Check(
@@ -265,7 +265,28 @@ internal static class Program
         await CheckSettingsAsync(client, installation, addInDirectory, report);
         await CheckLoggingAsync(client, revit.Id, report);
 
-        var documentArrived = !options.WithModel || await CheckDocumentAsync(client, model, report);
+        var documentArrived = !options.WithModel || await CheckDocumentAsync(client, model, watcher, report);
+
+        // Straight out, before anything else asks the channel a question. Everything below needs a
+        // document or a Revit that is answering, and this Revit has neither - so continuing was not
+        // resilience, it was a second failure written over the first: measured, the sweep died with
+        // an unhandled RpcException inside the model-settings check, which is a worse report than
+        // "the document never arrived".
+        if (!documentArrived)
+        {
+            // The stream first. The run that went wrong is the one whose phases are worth reading,
+            // and it was the only run that never showed them.
+            ReportDiagnostics(watcher, options, report);
+
+            report.Note("not asking it to close", "the document never arrived, and a request now would land mid-operation");
+            session.Kill();
+            report.Check("the Revit that would not open its model could be killed", !session.IsRunning);
+
+            // Its missing checks are accounted for: this release stopped on purpose, and the floor
+            // is there to notice checks that vanish without anyone noticing.
+            report.AbandonRelease();
+            return;
+        }
 
         // After the document, never before it. Revit asks an availability class only while the tab
         // holding the button is shown, and the probe brings that tab forward when a document opens.
@@ -285,7 +306,7 @@ internal static class Program
 
         // Last, because everything above is what the stream was watching. Read any earlier and the
         // measurement would be of the sweep's own beginning rather than of a Revit doing work.
-        ReportDiagnostics(diagnostics, options, report);
+        ReportDiagnostics(watcher, options, report);
 
         if (options.KeepOpen)
         {
@@ -300,14 +321,6 @@ internal static class Program
         // it is opening, and asks whether to cancel the operation. Nothing outside the process can
         // answer that, so an unattended sweep would sit in front of it until the deadline - the same
         // failure as the unsigned add-in dialog, arrived at from the other side.
-        if (!documentArrived)
-        {
-            report.Note("not asking it to close", "the document never arrived, and a request now would land mid-operation");
-            session.Kill();
-            report.Check("the Revit that would not open its model could be killed", !session.IsRunning);
-            return;
-        }
-
         await CloseAsync(session, registry, options, report);
     }
 
@@ -589,9 +602,134 @@ internal static class Program
     /// snapshot. Nothing else in the sweep exercises that path, and its budget is not the
     /// registration budget - a cold Revit registers long before it has opened anything.
     /// </remarks>
+    /// <summary>Why a wait ended.</summary>
+    internal enum WaitOutcome
+    {
+        /// <summary>What was waited for happened.</summary>
+        Arrived,
+
+        /// <summary>Revit stopped saying anything, for longer than it is entitled to.</summary>
+        WentQuiet,
+
+        /// <summary>Revit is waiting for a person, which is not a hang.</summary>
+        Blocked,
+
+        /// <summary>Neither happened before the last-resort ceiling.</summary>
+        Ceiling,
+
+        /// <summary>Revit stopped answering at all - gone, or taking nobody's calls.</summary>
+        Unreachable,
+    }
+
+    /// <summary>
+    /// Waits while Revit is demonstrably still working, rather than for a fixed number of seconds.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// The budgets this replaces were raised three times, each time by a failure that was not one:
+    /// two minutes while Revit 2026 opened a model perfectly well and finished at 3:51; five minutes
+    /// on a 2024 whose log dates the document at 11:36 after registration. The rule learned each
+    /// time - before raising a timeout, ask whether the work ever began - is exactly what a stream
+    /// of phases answers directly. Measured across four releases with a model opening: Revit is
+    /// never quiet for more than about ten seconds while it is working.
+    /// </para>
+    /// <para>
+    /// <b>Three endings, not two.</b> A wait that only knows "arrived" and "timed out" has to treat
+    /// a modal dialog as a hang, which is how this repository twice diagnosed one wrongly. Blocked
+    /// is reported as itself, with the dialog's identifier, because the answer to it is a person and
+    /// not a longer budget.
+    /// </para>
+    /// <para>
+    /// <b>The ceiling stays.</b> A watchdog that waits forever while events keep arriving is a
+    /// watchdog that can be held open by a Revit busily doing nothing, and an unattended sweep must
+    /// end. It is now a last resort rather than the mechanism.
+    /// </para>
+    /// <para>
+    /// <b>And it falls back honestly.</b> With no diagnostics - an edition that never enabled them,
+    /// or a stream that failed - there is nothing to be silent, so silence must not be inferred:
+    /// the wait reverts to the ceiling alone and says so.
+    /// </para>
+    /// <para>
+    /// <b>Not every dialog is visible, and the watchdog must not promise otherwise.</b> Measured by
+    /// breaking a model on purpose: Revit raised "contains an incorrect schema" on its own thread 3,
+    /// during file loading, and <c>DialogBoxShowing</c> never fired - so the wait reported quiet
+    /// during Starting rather than Blocked. It was still right that Revit had stopped, and still
+    /// ended in a minute rather than fifteen. Blocked is the better answer when it is available; the
+    /// quiet answer is the one that is always available.
+    /// </para>
+    /// <para>
+    /// <b>Not used for the shutdown wait, on purpose.</b> Revit going quiet is what leaving looks
+    /// like: the stream ends because the process is ending, and a watchdog would read its own
+    /// success as a hang. Closing keeps its budget until there is a signal that distinguishes "the
+    /// pipe closed because Revit left" from "the pipe went quiet because Revit stopped" - and there
+    /// is no such signal today.
+    /// </para>
+    /// </remarks>
+    private static async Task<WaitOutcome> WaitWhileWorkingAsync(
+        Func<bool> done,
+        DiagnosticsWatcher watcher,
+        TimeSpan quiet,
+        TimeSpan ceiling)
+    {
+        var deadline = DateTime.UtcNow + ceiling;
+        var unanswered = 0;
+
+        while (DateTime.UtcNow < deadline)
+        {
+            // Asking costs a call over the pipe, and a Revit that has died - or is holding a modal
+            // dialog on the thread that serves it - answers with an exception rather than a value.
+            // The first version let that escape and took the whole sweep down with it, which is the
+            // one outcome a watchdog may never have: it exists for the case where Revit stops
+            // behaving, so it cannot be the thing that breaks when Revit does.
+            //
+            // Found by breaking a model on purpose to see the Blocked path, which is the only reason
+            // it was found at all.
+            bool ready;
+
+            try
+            {
+                ready = done();
+                unanswered = 0;
+            }
+            catch (Exception)
+            {
+                ready = false;
+                unanswered++;
+            }
+
+            if (ready)
+                return WaitOutcome.Arrived;
+
+            // Two seconds of refused calls, not one: a single failure is a pipe being busy, and
+            // saying "gone" about a Revit that is merely occupied would be the same false diagnosis
+            // in the other direction.
+            if (unanswered >= 8)
+                return WaitOutcome.Unreachable;
+
+            // Nothing has ever been heard: either diagnostics are off or the stream never started.
+            // Silence from something that has never spoken says nothing about whether it is working.
+            var listening = watcher.Received > 0;
+
+            if (listening && watcher.SinceLastHeard > quiet)
+                return watcher.BlockedBy.Length > 0 ? WaitOutcome.Blocked : WaitOutcome.WentQuiet;
+
+            await Task.Delay(250);
+        }
+
+        try
+        {
+            return done() ? WaitOutcome.Arrived : WaitOutcome.Ceiling;
+        }
+        catch (Exception)
+        {
+            return WaitOutcome.Unreachable;
+        }
+    }
+
     private static async Task<bool> CheckDocumentAsync(
         RevitSideChannel.RevitSideChannelClient client,
         string? model,
+        DiagnosticsWatcher watcher,
         Report report)
     {
         if (model is null)
@@ -601,23 +739,44 @@ internal static class Program
         var title = string.Empty;
         var started = DateTime.UtcNow;
 
-        // Fifteen minutes, and every raise of this number has been paid for by a failure that was
-        // not one. Two minutes failed while Revit 2026 was opening the model perfectly well - it
-        // finished at 3 minutes 51 seconds. Five minutes then failed on Revit 2024 on a machine that
-        // had already started Revit four times that hour: the add-in log timestamps the document at
-        // 11 minutes 36 seconds after registration, so the work had started, was running, and
-        // finished - the budget was simply shorter than the machine.
+        // Not a budget any more. Every raise of the old one was paid for by a failure that was not
+        // one - two minutes while Revit 2026 opened the model and finished at 3:51, then five
+        // minutes on a 2024 whose log dates the document at 11:36 after registration - and each time
+        // the lesson was the same: ask whether the work began, rather than how long it has taken.
+        // The stream answers that continuously.
         //
-        // The rule this keeps costing to relearn: before raising a timeout, ask whether the work
-        // being waited for ever began. The answer is in the add-in's log and in Revit's journal, not
-        // in the stopwatch. It began every time.
-        var arrived = await WaitForAsync(() =>
-        {
-            title = Value(client.GetConfiguration(new ConfigurationRequest()), "Document:Title");
-            return !string.IsNullOrEmpty(title);
-        }, 900_000);
+        // Sixty seconds of quiet against a measured ten, and the ceiling kept at the old fifteen
+        // minutes as a last resort so an unattended sweep still ends.
+        var outcome = await WaitWhileWorkingAsync(
+            () =>
+            {
+                title = Value(client.GetConfiguration(new ConfigurationRequest()), "Document:Title");
+                return !string.IsNullOrEmpty(title);
+            },
+            watcher,
+            quiet: TimeSpan.FromSeconds(60),
+            ceiling: TimeSpan.FromMinutes(15));
+
+        var arrived = outcome == WaitOutcome.Arrived;
 
         report.Check("the model given on the command line is opened and reported", arrived);
+
+        if (!arrived)
+        {
+            // Said in the terms the ending actually has, because the three are answered differently:
+            // a person answers a dialog, a hang wants investigating, and a ceiling means the machine
+            // was slower than anything measured here.
+            report.Note("the wait ended because", outcome switch
+            {
+                WaitOutcome.Blocked => "Revit is waiting for somebody to answer " + watcher.BlockedBy,
+                WaitOutcome.WentQuiet => "Revit said nothing for 60s while " + watcher.CurrentPhase,
+                WaitOutcome.Unreachable => "Revit stopped answering - gone, or held by something that answers for it"
+                    + (watcher.BlockedBy.Length > 0 ? ", last seen showing " + watcher.BlockedBy : string.Empty),
+                _ => watcher.Received > 0
+                    ? "fifteen minutes passed while Revit was still working"
+                    : "fifteen minutes passed and diagnostics never spoke, so silence proved nothing",
+            });
+        }
 
         report.Check("and it is the one that was asked for",
             string.Equals(title, expected, StringComparison.OrdinalIgnoreCase));

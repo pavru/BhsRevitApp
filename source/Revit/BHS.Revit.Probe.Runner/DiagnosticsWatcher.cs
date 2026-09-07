@@ -45,6 +45,8 @@ internal sealed class DiagnosticsWatcher : IDisposable
     private int _gaps;
     private long _lastSequence;
     private long _lastAtUnixMs;
+    private DateTime _lastHeardUtc = DateTime.UtcNow;
+    private string _blockedBy = string.Empty;
     private TimeSpan _longestSilence = TimeSpan.Zero;
     private RevitPhase _silencePhase = RevitPhase.Unspecified;
     private RevitPhase _phase = RevitPhase.Unspecified;
@@ -87,6 +89,36 @@ internal sealed class DiagnosticsWatcher : IDisposable
 
     /// <summary>What Revit was doing when it went quiet longest.</summary>
     public RevitPhase SilencePhase { get { lock (_gate) return _silencePhase; } }
+
+    /// <summary>The phase of the last event.</summary>
+    public RevitPhase CurrentPhase { get { lock (_gate) return _phase; } }
+
+    /// <summary>
+    /// How long since anything was heard, by this machine's clock.
+    /// </summary>
+    /// <remarks>
+    /// Deliberately not the same measurement as <see cref="LongestSilence"/>, which uses Revit's
+    /// own timestamps. That one answers "how long was Revit quiet", which is a fact about Revit and
+    /// survives a buffer being replayed in one burst. This one answers "how long since we heard
+    /// anything", which is the question a waiting caller actually has - and the only one that can be
+    /// asked about a Revit that has stopped talking, because a stopped Revit stamps no timestamps.
+    /// </remarks>
+    public TimeSpan SinceLastHeard { get { lock (_gate) return DateTime.UtcNow - _lastHeardUtc; } }
+
+    /// <summary>The dialog Revit last raised, if it has not visibly moved on since.</summary>
+    /// <remarks>
+    /// Revit raises nothing when a dialog is dismissed, so "still up" cannot be known directly. What
+    /// can be known is whether Revit has done anything since - and the first version cleared this on
+    /// the very next event, whatever it was, which loses the dialog the instant anything else
+    /// happens while it is still on screen.
+    ///
+    /// Now it survives until Revit does something that means it is gone: progress, a document, an
+    /// initialisation. That is a guess either way, and this is the direction the guess should err -
+    /// naming a dialog that has been answered costs a confusing sentence, while forgetting one that
+    /// is still up costs the diagnosis, which is what happened on Revit 2027 the first time the
+    /// watchdog fired.
+    /// </remarks>
+    public string BlockedBy { get { lock (_gate) return _blockedBy; } }
 
     private async Task ReadAsync(RevitSideChannel.RevitSideChannelClient client, CancellationToken token)
     {
@@ -137,6 +169,7 @@ internal sealed class DiagnosticsWatcher : IDisposable
             }
 
             _lastAtUnixMs = evt.AtUnixMs;
+            _lastHeardUtc = DateTime.UtcNow;
             _received++;
             _dropped += evt.DroppedBefore;
             _phases.Add(evt.Phase);
@@ -155,6 +188,11 @@ internal sealed class DiagnosticsWatcher : IDisposable
 
             if (evt.DialogId.Length > 0 && !_dialogs.Contains(evt.DialogId))
                 _dialogs.Add(evt.DialogId);
+
+            if (evt.Phase == RevitPhase.Blocked)
+                _blockedBy = evt.DialogId;
+            else if (evt.Phase is RevitPhase.Working or RevitPhase.DocumentReady or RevitPhase.Idle)
+                _blockedBy = string.Empty;
 
             var caption = evt.Caption.Length > 0 ? evt.Caption : evt.Phase.ToString();
 
