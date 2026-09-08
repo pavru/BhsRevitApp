@@ -29,6 +29,14 @@ namespace BHS.Revit.Host;
 /// later inside a command.
 /// </para>
 /// <para>
+/// <b>Who this is for, decided by the owner: us.</b> In production exactly one edition is ever
+/// installed - switching editions uninstalls the previous one - so two of ours side by side is a
+/// development state. That does not retire the check; it changes what a hit means. Here it catches
+/// a deployment refreshed out of step with another, and in the field it catches an uninstall that
+/// left a folder or a manifest behind, which is a real defect in an installation. Both deserve the
+/// error level they get.
+/// </para>
+/// <para>
 /// <b>The two axes fail differently, and both were measured with a deliberate mismatch:</b>
 /// </para>
 /// <list type="bullet">
