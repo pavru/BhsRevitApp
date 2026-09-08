@@ -130,6 +130,9 @@ internal static class SweepChecks
             // into it. Kept apart because they answer different questions - one that the mechanism
             // works, one how permanent its identity is.
             await CheckSchemaEvolutionAsync(client, report);
+
+            // Last of the document questions, and the only one that asks rather than asserts.
+            await SurveyCablingAsync(client, options, report);
         }
 
         // After the ribbon and the model, because one of its questions is about an event that only
@@ -704,6 +707,44 @@ internal static class SweepChecks
         report.Check("and the feature assembly loaded only once it was needed", loaded == "True");
 
         report.Note("feature command", $"runs {runs}, host {addInId}");
+    }
+
+    /// <summary>
+    /// What a real project holds, reported so that code is written against it rather than a guess.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// Notes, never checks: nothing here can pass or fail, because there is no right answer to
+    /// "how many trays does this building have". It runs only when a model was named on the command
+    /// line - the synthetic one has nothing to survey, and asking it would print a screen of zeroes
+    /// every sweep.
+    /// </para>
+    /// <para>
+    /// <b>Counts and category names only.</b> These are somebody's real project files and this
+    /// repository is public; family, level, panel and circuit names would identify the building.
+    /// The probe is written to refuse them at the source rather than to filter them here.
+    /// </para>
+    /// </remarks>
+    private static async Task SurveyCablingAsync(
+        RevitSideChannel.RevitSideChannelClient client,
+        Options options,
+        Report report)
+    {
+        if (options.ModelPath.Length == 0)
+            return;
+
+        var answer = await client.AskAsync(new AskRequest { Question = "survey" });
+
+        if (answer.Values.GetValueOrDefault("survey:document") == "(none)")
+        {
+            report.Note("survey", "no document was open");
+            return;
+        }
+
+        Report.Heading("what this model holds");
+
+        foreach (var pair in answer.Values.OrderBy(one => one.Key, StringComparer.Ordinal))
+            report.Note(pair.Key, pair.Value);
     }
 
     /// <summary>
