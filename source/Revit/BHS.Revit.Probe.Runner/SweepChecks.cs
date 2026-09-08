@@ -755,10 +755,19 @@ internal static class SweepChecks
     /// which is how <c>IsSessionReady</c> kept a wrong name until somebody measured.
     /// </para>
     /// <para>
-    /// <b>One question stays a note, because the first pass forgot to ask it.</b> The API was called
-    /// before the await and not after - and "after" is the half that decides whether a command can
-    /// compute in the background and apply in the continuation. Being on the API thread is not the
-    /// same as standing in a context Revit will serve, so the answer is not obvious from the others.
+    /// <b>The half the first pass forgot to ask has since been asked.</b> The API was called before
+    /// the await and not after, and "after" is what decides whether a command can compute in the
+    /// background and apply in the continuation - being on the API thread is not the same as
+    /// standing in a context Revit will serve. It does serve it, on all four releases.
+    /// </para>
+    /// <para>
+    /// <b>Still not measured, and named here so it is not mistaken for settled: a transaction.</b>
+    /// Every read above is a read. Applying a route is a write, and a write means
+    /// <c>Transaction.Start</c> in that same continuation. The gate on modification is the
+    /// transaction rather than the call, so a read succeeding does not answer for one. It will be
+    /// measured with the apply phase, against a real write rolled back in a group - the shape the
+    /// schema check already uses, so that the production path is exercised rather than a rehearsal
+    /// of it.
     /// </para>
     /// </remarks>
     private static async Task CheckModalWindowAsync(
@@ -813,6 +822,16 @@ internal static class SweepChecks
         report.Check(
             "the Revit API answers a direct read from inside the window",
             during.Values.GetValueOrDefault("modal:apiCallWorked") == "True");
+
+        // The one that makes "collect, compute in the background, apply in the continuation" a shape
+        // a command can have. Reads only - a transaction has not been attempted, see the remarks.
+        report.Check(
+            "and it still answers after an await has resumed",
+            during.Values.GetValueOrDefault("modal:apiCallWorkedAfterAwait") == "True");
+
+        report.Check(
+            "the continuation lands back in the window's own context",
+            during.Values.GetValueOrDefault("modal:contextAfterAwait") == "DispatcherSynchronizationContext");
 
         // Both contexts are asserted, and the outer one is the surprise: on the API thread inside an
         // external event Revit's context is WinForms, not WPF. An await taken before a dialog opens
