@@ -133,7 +133,16 @@ public sealed class CarrierReader
                 return true;
 
             default:
-                return false;
+                // Last rung, and the same reasoning as for a panel: a fitting with neither
+                // connectors nor a location still occupies space, and the middle of that space is
+                // a better place to put it than nowhere at all - a dropped carrier is a hole in the
+                // network, and a hole reports itself later as somebody else's connectivity fault.
+                if (element.CentreOrNull() is not { } centre)
+                    return false;
+
+                start = centre;
+                end = centre;
+                return true;
         }
     }
 
@@ -150,7 +159,12 @@ public sealed class CarrierReader
         var origins = new List<XYZ>();
 
         foreach (Connector connector in manager.Connectors)
-            origins.Add(connector.Origin);
+        {
+            // A connector without a place is skipped rather than asked: reading Origin on a logical
+            // one throws. See Connectors.OriginOrNull - measured on a real model.
+            if (connector.OriginOrNull() is { } origin)
+                origins.Add(origin);
+        }
 
         if (origins.Count == 0)
             return false;

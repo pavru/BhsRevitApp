@@ -1,0 +1,24 @@
+<Project Sdk="BHS.Revit.Sdk/1.5.8">
+
+    <!--
+      The cabling feature itself: what an edition loads when somebody presses its button.
+
+      Separate from the edition on purpose, and the separation is measured rather than tidy. On
+      Revit 2024 every add-in shares one AppDomain, so an assembly that loads holds its simple name
+      for the rest of the session - which is why a feature's assembly must stay unloaded until it is
+      wanted. The edition names this command as a string in its manifest and derives an empty entry
+      point from a base declared here; the CLR resolves that base, and this assembly with it, only
+      when Revit constructs the type on a press.
+    -->
+
+    <PropertyGroup>
+        <TargetFrameworks>net48-revit2024;net8.0-revit2025;net8.0-revit2026;net10.0-revit2027</TargetFrameworks>
+        <RootNamespace>BHS.MEP.Cabling.Feature</RootNamespace>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="..\BHS.MEP.Cabling.Revit\BHS.MEP.Cabling.Revit.csproj" />
+        <ProjectReference Include="..\..\..\Revit\BHS.Revit.Abstractions\BHS.Revit.Abstractions.csproj" />
+    </ItemGroup>
+
+</Project>

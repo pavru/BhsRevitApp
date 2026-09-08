@@ -58,6 +58,39 @@ public static class SettingsValues
     }
 
     /// <summary>
+    /// A number that may have a fraction.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// Distances brought this: "treat elements as joined when they are no further apart than this"
+    /// is the user's own setting, and 12.5 mm is an ordinary answer to it. <see cref="Number"/>
+    /// would refuse it, which is right for a count and wrong for a length.
+    /// </para>
+    /// <para>
+    /// <b>Invariant culture, and the comma is refused rather than guessed.</b> The reader is the
+    /// same on a Russian and an English machine, so a file written on one is read the same on the
+    /// other; accepting "12,5" as well would make a file's meaning depend on where it is opened,
+    /// which is the one thing a settings layer must never do. Refusal here is the documented
+    /// behaviour for a value that exists and cannot be read - an unreadable number is a typo, and
+    /// quietly using the default hides it for a month.
+    /// </para>
+    /// </remarks>
+    public static double Real(this ISettings settings, string key, double fallback)
+    {
+        var value = settings?[key];
+
+        if (string.IsNullOrEmpty(value))
+            return fallback;
+
+        if (double.TryParse(value, NumberStyles.Float, CultureInfo.InvariantCulture, out var parsed)
+            && !double.IsNaN(parsed)
+            && !double.IsInfinity(parsed))
+            return parsed;
+
+        throw Unreadable(key, value!, "a number, with a dot for the decimal point");
+    }
+
+    /// <summary>
     /// A duration, written either as a clock or as a plain number of seconds.
     /// </summary>
     /// <remarks>
