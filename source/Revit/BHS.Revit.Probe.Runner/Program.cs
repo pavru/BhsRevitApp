@@ -136,7 +136,7 @@ internal static class Program
         report.BeginRelease(installation.Release.Year, deployed);
         Report.Heading($"Revit {installation.Release} - {installation.ExecutablePath}");
 
-        var model = options.WithModel ? TakeModelCopy(installation, report) : null;
+        var model = options.WithModel ? TakeModelCopy(installation, options, report) : null;
 
         using var session = await launcher.LaunchAsync(
             installation,
@@ -293,9 +293,26 @@ internal static class Program
     /// which release a model belongs to is not a detail: giving 2027 the 2024 file would upgrade it
     /// and prove nothing about opening.
     /// </remarks>
-    private static string? TakeModelCopy(RevitInstallation installation, Report report)
+    private static string? TakeModelCopy(RevitInstallation installation, Options options, Report report)
     {
         var year = installation.Release.Year.ToString(CultureInfo.InvariantCulture);
+
+        // A model named on the command line is somebody's real project: hundreds of megabytes,
+        // outside the repository, and not ours to alter. It is still copied rather than opened in
+        // place, for the same reason the synthetic one is - the probe writes into the document to
+        // check the settings path, and a group that rolls back is a promise rather than a proof.
+        if (options.ModelPath.Length > 0)
+        {
+            if (!File.Exists(options.ModelPath))
+            {
+                report.Check("the model named on the command line exists", false);
+                report.Note("looked for", options.ModelPath);
+                return null;
+            }
+
+            return CopyForRun(options.ModelPath, year, report);
+        }
+
         var root = ProbeInstaller.FindRepositoryRoot();
 
         if (root is null)
@@ -314,6 +331,11 @@ internal static class Program
             return null;
         }
 
+        return CopyForRun(source, year, report);
+    }
+
+    private static string? CopyForRun(string source, string year, Report report)
+    {
         try
         {
             var copy = Path.Combine(Path.GetTempPath(), $"bhs-sweep-{year}-{Guid.NewGuid():N}.rvt");

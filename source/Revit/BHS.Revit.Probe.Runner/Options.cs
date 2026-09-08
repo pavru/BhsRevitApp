@@ -86,6 +86,15 @@ internal sealed class Options
     /// </remarks>
     public bool WithModel { get; set; }
 
+    /// <summary>A model to open instead of the empty one from testdata.</summary>
+    /// <remarks>
+    /// For looking at a real project rather than the synthetic one the sweep normally uses. Real
+    /// models are hundreds of megabytes and belong to somebody, so this takes a path and never a
+    /// copy in the repository - and nothing derived from one is written into the recorded sweep
+    /// beyond counts, because that record is public.
+    /// </remarks>
+    public string ModelPath { get; set; } = string.Empty;
+
     public static Options? Parse(string[] args)
     {
         var options = new Options();
@@ -105,6 +114,12 @@ internal sealed class Options
 
                 case "--undeploy":
                     options.Undeploy = true;
+                    break;
+
+                case "--model" when index + 1 < args.Length:
+                    options.ModelPath = args[index + 1];
+                    options.WithModel = true;
+                    index++;
                     break;
 
                 case "--with-model":
@@ -148,6 +163,7 @@ internal sealed class Options
               --deploy           build the probe and install it into %AppData% first.
               --undeploy         remove the installed probe and stop.
               --with-model       open a model from testdata and check the probe reports it.
+              --model <path>     open this model instead of the one from testdata.
               --keep-open        leave Revit running after the checks.
               --allow-untrusted  launch even when an installed add-in is unsigned and untrusted;
                                  you will have to answer Revit's dialogs by hand.
