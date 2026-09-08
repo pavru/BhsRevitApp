@@ -742,17 +742,23 @@ internal static class SweepChecks
     /// </summary>
     /// <remarks>
     /// <para>
-    /// <b>Notes first, assertions second, and the order is the whole method.</b> The claim under
-    /// test - that an <c>ExternalEvent</c> raised from inside a modal window never fires - is
-    /// written into the routing core's project file as a reason for its shape, and nobody has run
-    /// it. A check written before its answer agrees with whoever wrote it; that is how
-    /// <c>IsSessionReady</c> kept a wrong name until somebody measured.
+    /// <b>These were notes for exactly one run, and now they are assertions.</b> The claim under
+    /// test - that an <c>ExternalEvent</c> raised from inside a modal window never fires, because
+    /// Revit never reaches <c>Idling</c> while the window is up - is written into the routing core's
+    /// project file as a reason for its shape, and nobody had run it. All four releases answered
+    /// identically, so the notes now guard the decision instead of informing it: the day any of them
+    /// changes, the shape of the cabling command has to change with it, and that is news worth a red
+    /// line rather than a number nobody rereads.
     /// </para>
     /// <para>
-    /// Two things are asserted anyway, because they are about this measurement rather than about
-    /// Revit: that the window was raised on the API thread, and that it closed itself. The second
-    /// is the one that keeps an unattended sweep honest - a window that stayed up would be a dialog
-    /// nobody can answer, which is the failure this repository has already diagnosed wrongly twice.
+    /// The order was the point. A check written before its answer agrees with whoever wrote it,
+    /// which is how <c>IsSessionReady</c> kept a wrong name until somebody measured.
+    /// </para>
+    /// <para>
+    /// <b>One question stays a note, because the first pass forgot to ask it.</b> The API was called
+    /// before the await and not after - and "after" is the half that decides whether a command can
+    /// compute in the background and apply in the continuation. Being on the API thread is not the
+    /// same as standing in a context Revit will serve, so the answer is not obvious from the others.
     /// </para>
     /// </remarks>
     private static async Task CheckModalWindowAsync(
@@ -779,6 +785,46 @@ internal static class SweepChecks
 
         report.Check("and it closed itself, with nobody there to close it",
             after.Values.GetValueOrDefault("modal:windowClosed") == "True");
+
+        // The claim the routing core's shape rests on, now guarded rather than believed.
+        report.Check(
+            "work posted to the pump does not run while the window is up",
+            during.Values.GetValueOrDefault("modal:pumpRanWhileModal") == "False");
+
+        // And its other half, which is what a command can count on the moment a dialog is
+        // dismissed: the pump drains its whole queue in one pass, so the wait is not until the next
+        // idle - it is until this stack unwinds.
+        report.Check(
+            "and it runs as soon as the window closes",
+            after.Values.GetValueOrDefault("modal:pumpRanAfterClose") == "True");
+
+        // The finding that changes the design rather than confirming it: a dialog can show progress
+        // while a background search runs, because the continuation comes back to the API thread.
+        report.Check(
+            "an await inside the window resumes",
+            during.Values.GetValueOrDefault("modal:awaitResumed") == "True");
+
+        report.Check(
+            "and it resumes on the API thread",
+            during.Values.GetValueOrDefault("modal:awaitResumedOnApiThread") == "True");
+
+        // Reads need no pump from inside a dialog: the command is already standing in a valid API
+        // context, on the API thread, and the pump exists for callers who are not.
+        report.Check(
+            "the Revit API answers a direct read from inside the window",
+            during.Values.GetValueOrDefault("modal:apiCallWorked") == "True");
+
+        // Both contexts are asserted, and the outer one is the surprise: on the API thread inside an
+        // external event Revit's context is WinForms, not WPF. An await taken before a dialog opens
+        // therefore resumes by a different mechanism than one taken inside it - worth knowing before
+        // something is built on the assumption that they are the same.
+        report.Check(
+            "the context inside the window is WPF's dispatcher",
+            during.Values.GetValueOrDefault("modal:contextInside") == "DispatcherSynchronizationContext");
+
+        report.Check(
+            "and outside it Revit's own context is WinForms",
+            during.Values.GetValueOrDefault("modal:contextOutside") == "WindowsFormsSynchronizationContext");
     }
 
     private static async Task SurveyCablingAsync(

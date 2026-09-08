@@ -71,6 +71,7 @@ internal static class ModalWindowFacts
             // fact that reports success by default.
             ["modal:awaitResumed"] = "False",
             ["modal:apiCallWorked"] = "False",
+            ["modal:apiCallWorkedAfterAwait"] = "False",
             ["modal:pumpRanWhileModal"] = "False",
         };
 
@@ -175,6 +176,22 @@ internal static class ModalWindowFacts
             facts["modal:awaitResumed"] = "True";
             facts["modal:awaitResumedOnApiThread"] = Yes(Environment.CurrentManagedThreadId == before);
             facts["modal:awaitResumedAfter"] = Seconds(Elapsed());
+            facts["modal:contextAfterAwait"] = ContextName();
+
+            // Question four, and the one the first pass forgot to ask: the API was called before the
+            // await, which says nothing about after it. This is what decides whether "compute in the
+            // background, apply in the continuation" is a shape a command can have at all - and
+            // being on the API thread is not the same as standing in a context Revit will serve.
+            try
+            {
+                facts["modal:apiReadAfterAwait"] =
+                    session.Application.ActiveUIDocument?.Document?.Title ?? "(no document)";
+                facts["modal:apiCallWorkedAfterAwait"] = "True";
+            }
+            catch (Exception error)
+            {
+                facts["modal:apiReadAfterAwait"] = error.GetType().Name;
+            }
 
             await Task.Delay(Dwell).ConfigureAwait(true);
         }
