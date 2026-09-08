@@ -135,6 +135,10 @@ internal static class SweepChecks
             await SurveyCablingAsync(client, report);
         }
 
+        // Outside the model block: a modal window stands on the API thread whether or not a document
+        // is open, and the one fact that changes without one is what a read returns.
+        await CheckModalWindowAsync(client, report);
+
         // After the ribbon and the model, because one of its questions is about an event that only
         // arrives once Revit has finished starting - and asking a thing that has not happened yet
         // measures the clock, not the thing.
@@ -733,6 +737,50 @@ internal static class SweepChecks
     /// The probe is written to refuse them at the source rather than to filter them here.
     /// </para>
     /// </remarks>
+    /// <summary>
+    /// What a modal window can still do while it owns the API thread.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <b>Notes first, assertions second, and the order is the whole method.</b> The claim under
+    /// test - that an <c>ExternalEvent</c> raised from inside a modal window never fires - is
+    /// written into the routing core's project file as a reason for its shape, and nobody has run
+    /// it. A check written before its answer agrees with whoever wrote it; that is how
+    /// <c>IsSessionReady</c> kept a wrong name until somebody measured.
+    /// </para>
+    /// <para>
+    /// Two things are asserted anyway, because they are about this measurement rather than about
+    /// Revit: that the window was raised on the API thread, and that it closed itself. The second
+    /// is the one that keeps an unattended sweep honest - a window that stayed up would be a dialog
+    /// nobody can answer, which is the failure this repository has already diagnosed wrongly twice.
+    /// </para>
+    /// </remarks>
+    private static async Task CheckModalWindowAsync(
+        RevitSideChannel.RevitSideChannelClient client,
+        Report report)
+    {
+        Report.Heading("a modal window on the API thread");
+
+        var during = await client.AskAsync(new AskRequest { Question = "modal" });
+
+        foreach (var pair in during.Values.OrderBy(one => one.Key, StringComparer.Ordinal))
+            report.Note(pair.Key, pair.Value);
+
+        var after = await client.AskAsync(new AskRequest { Question = "modalafter" });
+
+        foreach (var pair in after.Values.OrderBy(one => one.Key, StringComparer.Ordinal))
+            report.Note(pair.Key, pair.Value);
+
+        report.Check(
+            "the modal window was raised on the API thread",
+            during.Values.TryGetValue("modal:apiThread", out var api)
+            && during.Values.TryGetValue("modal:windowThread", out var shown)
+            && api == shown);
+
+        report.Check("and it closed itself, with nobody there to close it",
+            after.Values.GetValueOrDefault("modal:windowClosed") == "True");
+    }
+
     private static async Task SurveyCablingAsync(
         RevitSideChannel.RevitSideChannelClient client,
         Report report)
