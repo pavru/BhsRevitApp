@@ -1,4 +1,5 @@
-﻿using Autodesk.Revit.ApplicationServices;
+﻿using System.IO;
+using Autodesk.Revit.ApplicationServices;
 using BHS.Logging;
 using BHS.Revit.Abstractions;
 using BHS.Revit.Common;
@@ -128,14 +129,24 @@ public abstract class RevitAddInHost
     {
         var release = controlled.VersionNumber;
 
+        // Where this add-in actually lives: the folder Revit loaded the edition's own assembly
+        // from. GetType() is the edition's class, so this is its Lib and nobody else's.
+        var ownDirectory = OwnDirectory();
+
         // From disk, before looking for anybody. This is what makes startup order stop mattering:
-        // the side configures itself and runs whether or not a companion exists. The product layer
-        // resolves to the add-in's own Lib folder - measured, because the obvious ways of finding it
-        // both name Revit's installation directory instead.
+        // the side configures itself and runs whether or not a companion exists.
+        //
+        // The product directory is named rather than inferred, and that is a correction. It used to
+        // be left to the default, which resolves relative to BHS.Settings.dll - fine while one
+        // add-in existed, and wrong the moment two do: the assembly that wins the simple name may
+        // belong to the other one, and this add-in would then read its product settings out of a
+        // stranger's folder. No exception, no symptom, just somebody else's appsettings.json.
+        // Found while writing the check below, which is about the same collision one level up.
         _settings = LayeredSettings.Read(new SettingsOptions
         {
             Side = ProcessSide.Revit,
             Release = int.TryParse(release, out var year) ? year : null,
+            ProductDirectory = ownDirectory,
         });
 
         LogSetup.Start(LogRouter.Default, "revit" + release, _settings);
@@ -152,6 +163,12 @@ public abstract class RevitAddInHost
 
         _log = Log.For(Name);
         _log.Info("{0} starting on Revit {1}", Name, release);
+
+        // Straight after the log exists and before anything is built on the framework: if one of
+        // our assemblies came from another add-in's folder at a different version, everything below
+        // is running against a framework it was not built for, and the first symptom would
+        // otherwise be a missing method inside a command an hour later.
+        FrameworkAssemblyCheck.Watch(ownDirectory, _log);
 
         foreach (var pair in _settings.Errors)
             _log.Warn(pair.Value, "settings layer {0} could not be read", pair.Key.Path);
@@ -306,6 +323,37 @@ public abstract class RevitAddInHost
         catch (Exception error)
         {
             _log.Error(error, "could not act on Revit having started");
+        }
+    }
+
+    /// <summary>The folder Revit loaded this edition's own assembly from.</summary>
+    /// <remarks>
+    /// <para>
+    /// <c>GetType()</c> is the edition's class, so this is the edition's assembly and therefore its
+    /// own <c>Lib</c> - which is the point. Every other way of asking names something else:
+    /// <c>AppContext.BaseDirectory</c> and the entry assembly both give Revit's installation
+    /// directory, because the entry assembly here is <c>Revit.exe</c>; and anything resolved from a
+    /// framework assembly gives whichever copy of it won the simple name, which may belong to a
+    /// different add-in altogether.
+    /// </para>
+    /// <para>
+    /// Empty when there is no location to give - a dynamic assembly, or a single-file host. The
+    /// callers treat that as "do not check" rather than as a folder.
+    /// </para>
+    /// </remarks>
+    private string OwnDirectory()
+    {
+        try
+        {
+            var location = GetType().Assembly.Location;
+
+            return string.IsNullOrEmpty(location)
+                ? string.Empty
+                : Path.GetDirectoryName(location) ?? string.Empty;
+        }
+        catch (NotSupportedException)
+        {
+            return string.Empty;
         }
     }
 
