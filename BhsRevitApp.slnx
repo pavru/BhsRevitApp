@@ -62,6 +62,9 @@
          this repository's own idiom rather than a test framework: it runs on net48 too, which is
          half the supported Revit range, and it adds no package. -->
     <Project Path="source/Features/MEP.Cabling/BHS.MEP.Cabling.Routing.Probe/BHS.MEP.Cabling.Routing.Probe.csproj" Type="C#" />
+    <!-- The side that has a Document, and the only side that does. It reads the model; it does not
+         search it. The split is the thread guarantee from the other end. -->
+    <Project Path="source/Features/MEP.Cabling/BHS.MEP.Cabling.Revit/BHS.MEP.Cabling.Revit.csproj" Type="C#" />
   </Folder>
 
   <!-- Revit-side framework: loaded into the Revit process, multi-targeted on the Revit axis. -->
