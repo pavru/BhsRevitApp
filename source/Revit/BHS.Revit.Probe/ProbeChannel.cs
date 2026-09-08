@@ -1,4 +1,5 @@
-﻿using Autodesk.Revit.UI;
+﻿using System.Globalization;
+using Autodesk.Revit.UI;
 using BHS.Logging;
 using BHS.Transport;
 using BHS.Transport.Protocol;
@@ -127,6 +128,11 @@ internal sealed class ProbeChannel : RevitSideChannel.RevitSideChannelBase
                         response.Values.Add(pair.Key, pair.Value);
                     break;
 
+                case "survey":
+                    foreach (var pair in SurveyCabling().GetAwaiter().GetResult())
+                        response.Values.Add(pair.Key, pair.Value);
+                    break;
+
                 case "schema":
                     foreach (var pair in SchemaEvolution().GetAwaiter().GetResult())
                         response.Values.Add(pair.Key, pair.Value);
@@ -229,6 +235,124 @@ internal sealed class ProbeChannel : RevitSideChannel.RevitSideChannelBase
             report["log:sink:" + index.ToString("D2")] = sink.GetType().Name + " >= " + sink.Minimum;
             index++;
         }
+
+        return report;
+    }
+
+    /// <summary>
+    /// What a real project actually holds, before any code is written against a guess.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// The routing core was designed from a predecessor's source and a conversation. This asks the
+    /// model instead: how many carriers, of which categories, in the host or in links, how many
+    /// circuits, and whether the two live in the same file at all - which is the question that
+    /// decides whether <c>CarrierId</c>'s link half is exercised or theoretical.
+    /// </para>
+    /// <para>
+    /// <b>Counts and category names only, and that is a rule rather than an oversight.</b> These are
+    /// somebody's real project files, and this repository is public: family names, level names,
+    /// circuit numbers and panel names would all identify the building and its author. A count
+    /// cannot.
+    /// </para>
+    /// </remarks>
+    private async Task<IReadOnlyDictionary<string, string>> SurveyCabling()
+    {
+        var report = await _services.Pump.PostAsync("probe: cabling survey", session =>
+        {
+            var answer = new Dictionary<string, string>(StringComparer.Ordinal);
+            var document = session.Application.ActiveUIDocument?.Document;
+
+            if (document is null)
+            {
+                answer["survey:document"] = "(none)";
+                return answer;
+            }
+
+            var carriers = new[]
+            {
+                Autodesk.Revit.DB.BuiltInCategory.OST_CableTray,
+                Autodesk.Revit.DB.BuiltInCategory.OST_CableTrayFitting,
+                Autodesk.Revit.DB.BuiltInCategory.OST_Conduit,
+                Autodesk.Revit.DB.BuiltInCategory.OST_ConduitFitting,
+            };
+
+            void CountIn(Autodesk.Revit.DB.Document where, string prefix)
+            {
+                foreach (var category in carriers)
+                {
+                    var found = new Autodesk.Revit.DB.FilteredElementCollector(where)
+                        .OfCategory(category)
+                        .WhereElementIsNotElementType()
+                        .GetElementCount();
+
+                    if (found > 0)
+                        answer[prefix + ":" + category] = found.ToString(CultureInfo.InvariantCulture);
+                }
+
+                var circuits = new Autodesk.Revit.DB.FilteredElementCollector(where)
+                    .OfCategory(Autodesk.Revit.DB.BuiltInCategory.OST_ElectricalCircuit)
+                    .WhereElementIsNotElementType()
+                    .GetElementCount();
+
+                if (circuits > 0)
+                    answer[prefix + ":circuits"] = circuits.ToString(CultureInfo.InvariantCulture);
+            }
+
+            CountIn(document, "host");
+
+            // The question the whole link half of CarrierId rests on: are the carriers in this file
+            // or in another one? Answered by looking rather than by assuming either way.
+            var links = new Autodesk.Revit.DB.FilteredElementCollector(document)
+                .OfClass(typeof(Autodesk.Revit.DB.RevitLinkInstance))
+                .Cast<Autodesk.Revit.DB.RevitLinkInstance>()
+                .ToList();
+
+            answer["survey:links"] = links.Count.ToString(CultureInfo.InvariantCulture);
+
+            var index = 0;
+
+            foreach (var link in links)
+            {
+                index++;
+                var linked = link.GetLinkDocument();
+
+                if (linked is null)
+                {
+                    answer[$"link{index}:state"] = "not loaded";
+                    continue;
+                }
+
+                // Whether a link can be written to at all - inferred so far from the shape of the
+                // API and never attempted. Reported as what Revit says about the document, which is
+                // as close as looking gets; the proof is a transaction, and that belongs in the
+                // command rather than in a survey.
+                answer[$"link{index}:linked"] = linked.IsLinked ? "True" : "False";
+                answer[$"link{index}:readOnly"] = linked.IsReadOnly ? "True" : "False";
+                answer[$"link{index}:modifiable"] = linked.IsModifiable ? "True" : "False";
+
+                CountIn(linked, "link" + index.ToString(CultureInfo.InvariantCulture));
+            }
+
+            // One circuit, examined for the fields the snapshot needs. Nothing that names it.
+            var sample = new Autodesk.Revit.DB.FilteredElementCollector(document)
+                .OfCategory(Autodesk.Revit.DB.BuiltInCategory.OST_ElectricalCircuit)
+                .WhereElementIsNotElementType()
+                .Cast<Autodesk.Revit.DB.Electrical.ElectricalSystem>()
+                .FirstOrDefault();
+
+            if (sample is not null)
+            {
+                answer["sample:pathMode"] = sample.CircuitPathMode.ToString();
+                answer["sample:hasCustomPath"] = sample.HasCustomCircuitPath ? "True" : "False";
+                answer["sample:pathPoints"] = sample.GetCircuitPath().Count.ToString(CultureInfo.InvariantCulture);
+                answer["sample:elements"] = sample.Elements.Size.ToString(CultureInfo.InvariantCulture);
+                answer["sample:hasPanel"] = sample.BaseEquipment is not null ? "True" : "False";
+                answer["sample:length"] = sample.Length.ToString("F2", CultureInfo.InvariantCulture);
+            }
+
+            return answer;
+        }).ConfigureAwait(false);
 
         return report;
     }

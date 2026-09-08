@@ -130,6 +130,9 @@ internal static class SweepChecks
             // into it. Kept apart because they answer different questions - one that the mechanism
             // works, one how permanent its identity is.
             await CheckSchemaEvolutionAsync(client, report);
+
+            // Last of the document questions, and the only one that mostly asks rather than asserts.
+            await SurveyCablingAsync(client, report);
         }
 
         // After the ribbon and the model, because one of its questions is about an event that only
@@ -704,6 +707,63 @@ internal static class SweepChecks
         report.Check("and the feature assembly loaded only once it was needed", loaded == "True");
 
         report.Note("feature command", $"runs {runs}, host {addInId}");
+    }
+
+    /// <summary>
+    /// What a real project holds, reported so that code is written against it rather than a guess.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// The counts are notes, because nothing here can pass or fail: there is no right answer to
+    /// "how many trays does this building have". That the survey <i>answered</i> is a check, and a
+    /// real one - it walks <c>ElectricalSystem</c>, <c>RevitLinkInstance</c> and a circuit collector
+    /// on four runtimes, and compiling against four target frameworks says nothing about whether the
+    /// call survives on any of them.
+    /// </para>
+    /// <para>
+    /// <b>It runs on the synthetic model too, and the earlier reason not to was wrong.</b> This was
+    /// gated on a model named at the command line, on the grounds that an empty file would print a
+    /// screen of zeroes; it prints one line, because the counts are omitted where nothing was found.
+    /// So the gate bought nothing and cost the only place where the new code path runs unattended on
+    /// every release.
+    /// </para>
+    /// <para>
+    /// <b>Counts and category names only.</b> These are somebody's real project files and this
+    /// repository is public; family, level, panel and circuit names would identify the building.
+    /// The probe is written to refuse them at the source rather than to filter them here.
+    /// </para>
+    /// </remarks>
+    private static async Task SurveyCablingAsync(
+        RevitSideChannel.RevitSideChannelClient client,
+        Report report)
+    {
+        AskResponse answer;
+
+        try
+        {
+            answer = await client.AskAsync(new AskRequest { Question = "survey" });
+        }
+        catch (RpcException error)
+        {
+            // Caught narrowly rather than left to abandon the release: a survey that throws is worth
+            // one red line, not the seventy checks that would follow it.
+            report.Check("the model survey answers", false);
+            report.Note("survey failed", error.Status.StatusCode.ToString());
+            return;
+        }
+
+        if (answer.Values.GetValueOrDefault("survey:document") == "(none)")
+        {
+            report.Note("survey", "no document was open");
+            return;
+        }
+
+        report.Check("the model survey answers", answer.Values.ContainsKey("survey:links"));
+
+        Report.Heading("what this model holds");
+
+        foreach (var pair in answer.Values.OrderBy(one => one.Key, StringComparer.Ordinal))
+            report.Note(pair.Key, pair.Value);
     }
 
     /// <summary>
