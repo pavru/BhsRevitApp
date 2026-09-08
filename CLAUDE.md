@@ -3069,6 +3069,8 @@ Revit* (жёстко привязаны к версии API), и внешние 
 | `Revit/BHS.Revit.Probe.Runner` | `net10.0-windows` | прогон пробы. Не грузится в Revit и не на оси Revit; лежит рядом, потому что две половины — один инструмент |
 | `Frontend/WPF/BHS.UI.*` | чистая .NET | `Abstractions`, `Framework`, `UI`, `Translations` |
 | `Features/<Домен>/BHS.<Домен>*` | Revit | плагины как feature-модули |
+| `Features/MEP.Cabling/BHS.MEP.Cabling.Routing` | `net48;net8.0;net10.0` | ядро маршрутизации: поиск, сеть, результат. **Ни одного типа Autodesk** — это и есть гарантия потока, а не вкус |
+| `Features/MEP.Cabling/BHS.MEP.Cabling.Revit` | Revit | единственная сторона, у которой есть `Document`: читает носители и цепи, наводит трансформацию связи, отдаёт снимок. Ничего не ищет |
 | `BHS.<Издание>` (корень `source/`) | Revit | host-проект, точка входа `IExternalApplication` |
 
 Framework — это `BHS.Shared`, `BHS.Revit.*` и `BHS.UI.*`; плагины — это `Features/*`.

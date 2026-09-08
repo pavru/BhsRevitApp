@@ -1,0 +1,24 @@
+<Project Sdk="BHS.Revit.Sdk/1.5.8">
+
+    <!--
+      The side that has a Document, and the only side that does.
+
+      Everything here reads the model; nothing here searches it. That split is the thread guarantee
+      from the other end: BHS.MEP.Cabling.Routing cannot name a Revit type, and this project cannot
+      run off the API thread - so a field somebody forgets to fill is a compile error rather than a
+      Revit that hangs in front of a customer.
+
+      No RevitAPIUI. Reading carriers and circuits needs no interface type, and the reference would
+      only make it possible to reach for one; the DB form of an add-in reads a model perfectly well.
+    -->
+
+    <PropertyGroup>
+        <TargetFrameworks>net48-revit2024;net8.0-revit2025;net8.0-revit2026;net10.0-revit2027</TargetFrameworks>
+        <RootNamespace>BHS.MEP.Cabling.Revit</RootNamespace>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="..\BHS.MEP.Cabling.Routing\BHS.MEP.Cabling.Routing.csproj" />
+    </ItemGroup>
+
+</Project>
