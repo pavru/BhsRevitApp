@@ -1,4 +1,4 @@
-<Solution>
+﻿<Solution>
 
   <Configurations>
     <Platform Name="x64" />
@@ -52,6 +52,12 @@
     <!-- The companion process itself: serves the channel, keeps the register, starts and stops
          Revit on request. A user process rather than a service - Revit needs a desktop. -->
     <Project Path="source/WinSide/BHS.WinSide/BHS.WinSide.csproj" Type="C#" />
+  </Folder>
+
+  <!-- Features: the plugins themselves. Routing is on the plain axis and knows nothing of Revit -
+       that is what lets it run off the API thread, which a modal command owns. -->
+  <Folder Name="/Features/">
+    <Project Path="source/Features/MEP.Cabling/BHS.MEP.Cabling.Routing/BHS.MEP.Cabling.Routing.csproj" Type="C#" />
   </Folder>
 
   <!-- Revit-side framework: loaded into the Revit process, multi-targeted on the Revit axis. -->
