@@ -35,7 +35,18 @@ internal sealed class ProbeSettings
     {
         var report = new Dictionary<string, string>(StringComparer.Ordinal)
         {
-            ["settings:product"] = SettingsLayout.ProductDirectory,
+            // The layer that was actually read, not the static default.
+            //
+            // Measured, and it failed the check that exists for it: SettingsLayout.ProductDirectory
+            // resolves relative to BHS.Settings.dll, and with two of our add-ins installed that is
+            // whichever copy won the simple name. On three releases it was the probe's own and the
+            // answer looked right; on Revit 2027 the edition's copy won, and the probe reported the
+            // edition's folder as its product layer while reading its own.
+            //
+            // The host stopped trusting that default when it started naming its directory itself.
+            // Reporting it here would have gone on being wrong quietly, which is worse than the bug
+            // it was covering.
+            ["settings:product"] = ProductDirectory(),
             ["settings:machine"] = SettingsLayout.MachineDirectory,
             ["settings:user"] = SettingsLayout.UserDirectory,
         };
@@ -62,5 +73,25 @@ internal sealed class ProbeSettings
         }
 
         return report;
+    }
+
+    /// <summary>The directory the product layer was actually read from.</summary>
+    /// <remarks>
+    /// Taken from the layer list rather than from <c>SettingsLayout.ProductDirectory</c>, which is
+    /// a static resolved relative to <c>BHS.Settings.dll</c> - and with two add-ins installed, that
+    /// assembly may belong to the other one. The host names its own directory now; this reports
+    /// what the host did rather than what the default would have said.
+    ///
+    /// Falls back to the static only when there is nothing to read from, where it is the same
+    /// answer the layers would have given.
+    /// </remarks>
+    private string ProductDirectory()
+    {
+        var product = _settings?.Layers.FirstOrDefault(layer => layer.Kind == SettingsLayerKind.Product);
+
+        if (product is null)
+            return SettingsLayout.ProductDirectory;
+
+        return System.IO.Path.GetDirectoryName(product.Path) ?? SettingsLayout.ProductDirectory;
     }
 }

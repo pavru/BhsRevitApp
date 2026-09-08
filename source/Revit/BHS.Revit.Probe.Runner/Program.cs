@@ -34,10 +34,15 @@ internal static class Program
         if (options.Undeploy)
         {
             ProbeInstaller.Undeploy(installed);
+
+            // The edition too, always. Removing one and leaving the other is exactly the drift
+            // --edition exists to prevent, and a stale edition beside a fresh probe is worse than
+            // either alone.
+            EditionInstaller.Undeploy(installed);
             return 0;
         }
 
-        if (options.Deploy && !TryDeploy(installed))
+        if (options.Deploy && !TryDeploy(installed, options))
             return 1;
 
         var selected = SelectReleases(installed, options);
@@ -362,7 +367,7 @@ internal static class Program
         report.Check("the leftover Revit could be killed", session.Kill());
     }
 
-    private static bool TryDeploy(IReadOnlyList<RevitInstallation> installed)
+    private static bool TryDeploy(IReadOnlyList<RevitInstallation> installed, Options options)
     {
         var root = ProbeInstaller.FindRepositoryRoot();
 
@@ -372,11 +377,29 @@ internal static class Program
             return false;
         }
 
-        if (ProbeInstaller.Deploy(root, installed))
+        if (!ProbeInstaller.Deploy(root, installed))
+        {
+            Console.WriteLine("The build failed, so nothing was installed.");
+            return false;
+        }
+
+        if (!options.WithEdition)
             return true;
 
-        Console.WriteLine("The build failed, so nothing was installed.");
-        return false;
+        if (!EditionInstaller.Deploy(root, installed))
+        {
+            // Loudly, and as a failure: the probe has just been refreshed, so a probe without the
+            // edition it was meant to be installed beside is the drift this flag was asked for.
+            Console.WriteLine("The edition did not build, and the probe has already been replaced.");
+            Console.WriteLine("Deploy both again once it builds, or run --undeploy to clear both.");
+            return false;
+        }
+
+        // Asked while both folders are still warm, because this is the one moment when the answer
+        // is cheap to act on: the fix is to run the command again. The same question is asked from
+        // inside Revit by FrameworkAssemblyCheck, but by then somebody is already debugging.
+        EditionInstaller.ReportSharedAssemblies(installed);
+        return true;
     }
 
     private static List<RevitInstallation> SelectReleases(IReadOnlyList<RevitInstallation> installed, Options options)

@@ -14,6 +14,22 @@ internal sealed class Options
     /// <summary>Remove the installed probe and stop. Nothing is launched.</summary>
     public bool Undeploy { get; set; }
 
+    /// <summary>
+    /// Whether the edition is installed beside the probe, from the same build.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <b>It implies <see cref="Deploy"/>, because the point is that they cannot drift.</b>
+    /// Installing the edition against a probe from some earlier build is the failure this flag
+    /// exists to remove, so it is not a state the flag is allowed to produce.
+    /// </para>
+    /// <para>
+    /// Off by default: the probe is an instrument and the edition is a product, and a measurement
+    /// should not install a product into somebody's Revit as a side effect.
+    /// </para>
+    /// </remarks>
+    public bool WithEdition { get; set; }
+
     /// <summary>Leave Revit running after the checks, for a look by hand.</summary>
     public bool KeepOpen { get; set; }
 
@@ -108,6 +124,11 @@ internal sealed class Options
                     index++;
                     break;
 
+                case "--edition":
+                    options.WithEdition = true;
+                    options.Deploy = true;
+                    break;
+
                 case "--deploy":
                     options.Deploy = true;
                     break;
@@ -161,7 +182,10 @@ internal sealed class Options
             Options:
               --release <year>   only this release; may be repeated. Default: every one installed.
               --deploy           build the probe and install it into %AppData% first.
-              --undeploy         remove the installed probe and stop.
+              --edition          install the edition too, from the same build. Implies --deploy,
+                                 because two add-ins installed at different moments share the
+                                 framework's simple names and the older copy wins.
+              --undeploy         remove the installed probe and the edition, and stop.
               --with-model       open a model from testdata and check the probe reports it.
               --model <path>     open this model instead of the one from testdata.
               --keep-open        leave Revit running after the checks.

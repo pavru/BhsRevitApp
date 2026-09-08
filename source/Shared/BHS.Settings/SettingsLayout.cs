@@ -85,9 +85,23 @@ public static class SettingsLayout
     /// Where the shipped defaults are: beside this assembly.
     /// </summary>
     /// <remarks>
+    /// <para>
     /// This assembly rather than the entry one, because inside Revit the entry assembly is Revit.
     /// <c>AppContext.BaseDirectory</c> has the same problem and is only the fallback, for the case
     /// where a location is not available at all.
+    /// </para>
+    /// <para>
+    /// <b>Right only while this assembly is not shared, which inside Revit it is.</b> Two of our
+    /// add-ins each ship a copy of <c>BHS.Settings.dll</c>, one of them wins the simple name in
+    /// Revit's AppDomain, and from then on this property names <i>that</i> add-in's folder for
+    /// everybody. Measured: on three releases the probe's copy won and the answer looked correct;
+    /// on Revit 2027 the edition's won, and the probe reported a product layer it was not reading.
+    /// </para>
+    /// <para>
+    /// So a Revit-side caller names its directory instead - see <c>SettingsOptions.ProductDirectory</c>
+    /// - and takes it from its own add-in assembly. This default belongs to a process with one copy
+    /// of this code in it, which Win-side is and Revit-side is not.
+    /// </para>
     /// </remarks>
     public static string ProductDirectory { get; } = ResolveProductDirectory();
 

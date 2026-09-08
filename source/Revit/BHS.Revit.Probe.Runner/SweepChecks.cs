@@ -1046,6 +1046,7 @@ internal static class SweepChecks
 
         var shipped = ShippedAssemblies(installation);
         var shadowed = new List<string>();
+        var fromOurOther = new List<string>();
 
         foreach (var pair in answer.Values.OrderBy(pair => pair.Key, StringComparer.Ordinal))
         {
@@ -1063,7 +1064,21 @@ internal static class SweepChecks
 
             report.Note($"{name} {version}", $"{origin}  {location}");
 
-            if (shipped.Contains(name) && !ours)
+            if (!shipped.Contains(name) || ours)
+                continue;
+
+            // Ours winning over ours is a different finding, and calling it "Revit's copy" was
+            // wrong the moment a second add-in of ours existed. Measured: with the edition
+            // installed beside the probe on Revit 2027, six BHS assemblies loaded out of the
+            // edition's folder and this check failed them for not being on RefCheck's watchlist -
+            // a list about third-party surfaces, which ours are not.
+            //
+            // It is still worth a line: which of our two add-ins won is exactly what explains a
+            // missing method later. The judgement about it belongs to FrameworkAssemblyCheck,
+            // inside Revit, where both versions are in hand.
+            if (name.StartsWith("BHS.", StringComparison.Ordinal))
+                fromOurOther.Add(name);
+            else
                 shadowed.Add(name);
         }
 
@@ -1071,6 +1086,9 @@ internal static class SweepChecks
 
         foreach (var name in shadowed)
             report.Note("Revit's copy won", name);
+
+        foreach (var name in fromOurOther)
+            report.Note("another add-in of ours won", name);
 
         // Substitution itself is not the question - Revit loads first and always wins. The question
         // is whether the copy that won has been checked, and RefCheck's watchlist is the record of

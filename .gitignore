@@ -72,3 +72,13 @@ appsettings.Development.json
 # 6 MB each, opaque, and rewritten wholesale whenever Revit touches them - four more copies in
 # history on every re-save. Recreate them from Revit, one per supported release.
 /testdata/*.rvt
+
+## Other assistants' local configuration. Ignored rather than committed, by the owner's decision -
+## unlike .claude/agents, which is tracked because those definitions are shared.
+##
+## Not cosmetic: the sweep's record refuses to claim a clean tree, and `git status` counts
+## untracked files as dirty. It is right to - a stray .cs anywhere under source/ would be compiled
+## into what the sweep then measures - so anything living in the tree and belonging to nobody's
+## build has to be named here, or no record can ever be taken again.
+/AGENTS.md
+/.codex/
