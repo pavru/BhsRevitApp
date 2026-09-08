@@ -1,22 +1,22 @@
 {
   "Schema": 2,
   "Disclaimer": "Recorded on a developer machine. Revit cannot run on hosted CI, so CI verifies this record rather than reproducing it: no automated check here has ever started a Revit.",
-  "Commit": "54ec846998a461a4f4f6cc701b1f91031a02f326",
+  "Commit": "110368039cbf1377b55689cd49bba1b815e2d4b3",
   "CommitClean": true,
   "Content": {
-    "source/Revit": "0eeb40707aeaa0db935e215b3b59ad0b4f18c553",
+    "source/Revit": "688cdcde3ad12bde3c0010e17ac58681be115495",
     "source/Shared": "eee7d0ad7ce690ad605b52c1772dded4a3f97cbd",
     "source/WinSide": "5b71abdce4cd8186abf36416137a3dfa7f437a28",
     "build/BHS.Revit.Sdk": "eb401a3b673fabf6b4ba9ee1286cf8a450e3ed1c"
   },
-  "RecordedUtc": "2026-09-08T04:56:20.4283278Z",
+  "RecordedUtc": "2026-09-08T06:43:13.1423678Z",
   "WithModel": true,
   "ShowTab": false,
   "Releases": [
     {
       "Release": 2024,
       "FileVersion": "0.1.0.0",
-      "BuiltUtc": "2026-09-08T04:51:04.7705208Z",
+      "BuiltUtc": "2026-09-08T06:37:28.9417774Z",
       "Signed": true,
       "Checks": [
         {
@@ -236,6 +236,50 @@
           "Ok": true
         },
         {
+          "Name": "the modal window was raised on the API thread",
+          "Ok": true
+        },
+        {
+          "Name": "and it closed itself, with nobody there to close it",
+          "Ok": true
+        },
+        {
+          "Name": "work posted to the pump does not run while the window is up",
+          "Ok": true
+        },
+        {
+          "Name": "and it runs as soon as the window closes",
+          "Ok": true
+        },
+        {
+          "Name": "an await inside the window resumes",
+          "Ok": true
+        },
+        {
+          "Name": "and it resumes on the API thread",
+          "Ok": true
+        },
+        {
+          "Name": "the Revit API answers a direct read from inside the window",
+          "Ok": true
+        },
+        {
+          "Name": "and it still answers after an await has resumed",
+          "Ok": true
+        },
+        {
+          "Name": "the continuation lands back in the window\u0027s own context",
+          "Ok": true
+        },
+        {
+          "Name": "the context inside the window is WPF\u0027s dispatcher",
+          "Ok": true
+        },
+        {
+          "Name": "and outside it Revit\u0027s own context is WinForms",
+          "Ok": true
+        },
+        {
           "Name": "a DBApplication add-in starts the same host",
           "Ok": true
         },
@@ -328,11 +372,11 @@
       "Notes": [
         {
           "Name": "launched",
-          "Value": "pid 71216"
+          "Value": "pid 19288"
         },
         {
           "Name": "registered after",
-          "Value": "19.0s"
+          "Value": "18.4s"
         },
         {
           "Name": "recovered by enumeration",
@@ -348,11 +392,11 @@
         },
         {
           "Name": "probe log",
-          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2024-71216-20260908-145118.log"
+          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2024-19288-20260908-163744.log"
         },
         {
           "Name": "threads",
-          "Value": "api 1, call 22"
+          "Value": "api 1, call 20"
         },
         {
           "Name": "appdomain",
@@ -376,7 +420,7 @@
         },
         {
           "Name": "log",
-          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2024-71216-20260908-145118.log"
+          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2024-19288-20260908-163744.log"
         },
         {
           "Name": "sinks",
@@ -384,11 +428,11 @@
         },
         {
           "Name": "document",
-          "Value": "bhs-sweep-2024-ee45401679cf4109a110ffe41f72ad3a"
+          "Value": "bhs-sweep-2024-58adbe01420f4aa984f1ca98b912ebba"
         },
         {
           "Name": "opened after registration",
-          "Value": "18.4s"
+          "Value": "18.3s"
         },
         {
           "Name": "availability and the press",
@@ -396,7 +440,7 @@
         },
         {
           "Name": "model settings",
-          "Value": "document bhs-sweep-2024-ee45401679cf4109a110ffe41f72ad3a, origin Model"
+          "Value": "document bhs-sweep-2024-58adbe01420f4aa984f1ca98b912ebba, origin Model"
         },
         {
           "Name": "fields as built",
@@ -408,15 +452,15 @@
         },
         {
           "Name": "instance",
-          "Value": "02ab83e0309e4e558dd0664032774e0b"
+          "Value": "3b296b3790cd4ea18753e4345eb24a28"
         },
         {
           "Name": "log",
-          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2024-71216-20260908-145118.log"
+          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2024-19288-20260908-163744.log"
         },
         {
           "Name": "pid",
-          "Value": "71216"
+          "Value": "19288"
         },
         {
           "Name": "release",
@@ -429,6 +473,118 @@
         {
           "Name": "survey:links",
           "Value": "0"
+        },
+        {
+          "Name": "instance",
+          "Value": "3b296b3790cd4ea18753e4345eb24a28"
+        },
+        {
+          "Name": "log",
+          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2024-19288-20260908-163744.log"
+        },
+        {
+          "Name": "modal:apiCallWorked",
+          "Value": "True"
+        },
+        {
+          "Name": "modal:apiCallWorkedAfterAwait",
+          "Value": "True"
+        },
+        {
+          "Name": "modal:apiRead",
+          "Value": "bhs-sweep-2024-58adbe01420f4aa984f1ca98b912ebba"
+        },
+        {
+          "Name": "modal:apiReadAfterAwait",
+          "Value": "bhs-sweep-2024-58adbe01420f4aa984f1ca98b912ebba"
+        },
+        {
+          "Name": "modal:apiThread",
+          "Value": "1"
+        },
+        {
+          "Name": "modal:awaitResumed",
+          "Value": "True"
+        },
+        {
+          "Name": "modal:awaitResumedAfter",
+          "Value": "0.51s"
+        },
+        {
+          "Name": "modal:awaitResumedOnApiThread",
+          "Value": "True"
+        },
+        {
+          "Name": "modal:contextAfterAwait",
+          "Value": "DispatcherSynchronizationContext"
+        },
+        {
+          "Name": "modal:contextInside",
+          "Value": "DispatcherSynchronizationContext"
+        },
+        {
+          "Name": "modal:contextOutside",
+          "Value": "WindowsFormsSynchronizationContext"
+        },
+        {
+          "Name": "modal:pumpRanWhileModal",
+          "Value": "False"
+        },
+        {
+          "Name": "modal:shownFor",
+          "Value": "2.56s"
+        },
+        {
+          "Name": "modal:windowThread",
+          "Value": "1"
+        },
+        {
+          "Name": "pid",
+          "Value": "19288"
+        },
+        {
+          "Name": "release",
+          "Value": "2024"
+        },
+        {
+          "Name": "revision",
+          "Value": "3"
+        },
+        {
+          "Name": "instance",
+          "Value": "3b296b3790cd4ea18753e4345eb24a28"
+        },
+        {
+          "Name": "log",
+          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2024-19288-20260908-163744.log"
+        },
+        {
+          "Name": "modal:measured",
+          "Value": "True"
+        },
+        {
+          "Name": "modal:pumpRanAfterClose",
+          "Value": "True"
+        },
+        {
+          "Name": "modal:pumpRanAt",
+          "Value": "2.56s"
+        },
+        {
+          "Name": "modal:windowClosed",
+          "Value": "True"
+        },
+        {
+          "Name": "pid",
+          "Value": "19288"
+        },
+        {
+          "Name": "release",
+          "Value": "2024"
+        },
+        {
+          "Name": "revision",
+          "Value": "3"
         },
         {
           "Name": "db host",
@@ -540,7 +696,7 @@
         },
         {
           "Name": "diagnostic events",
-          "Value": "160 received, 0 dropped by the publisher, longest quiet spell 12.3s during Starting"
+          "Value": "164 received, 0 dropped by the publisher, longest quiet spell 11.3s during Starting"
         },
         {
           "Name": "phases seen",
@@ -560,7 +716,7 @@
         },
         {
           "Name": "progress caption",
-          "Value": "\u0417\u0430\u0433\u0440\u0443\u0437\u043A\u0430 bhs-sweep-2024-ee45401679cf4109a110ffe41f72ad3a.rvt"
+          "Value": "\u0417\u0430\u0433\u0440\u0443\u0437\u043A\u0430 bhs-sweep-2024-58adbe01420f4aa984f1ca98b912ebba.rvt"
         },
         {
           "Name": "progress caption",
@@ -596,7 +752,7 @@
         },
         {
           "Name": "progress caption",
-          "Value": "\u0427\u0435\u0440\u0442\u0435\u0436: bhs-sweep-2024-ee45401679cf4109a110ffe41f72ad3a.rvt - \u041F\u043B\u0430\u043D \u044D\u0442\u0430\u0436\u0430: \u0423\u0440\u043E\u0432\u0435\u043D\u044C 1"
+          "Value": "\u0427\u0435\u0440\u0442\u0435\u0436: bhs-sweep-2024-58adbe01420f4aa984f1ca98b912ebba.rvt - \u041F\u043B\u0430\u043D \u044D\u0442\u0430\u0436\u0430: \u0423\u0440\u043E\u0432\u0435\u043D\u044C 1"
         },
         {
           "Name": "progress caption",
@@ -608,14 +764,14 @@
         },
         {
           "Name": "closed after",
-          "Value": "22.0s"
+          "Value": "22.5s"
         }
       ]
     },
     {
       "Release": 2025,
       "FileVersion": "0.1.0.0",
-      "BuiltUtc": "2026-09-08T04:51:05.3639599Z",
+      "BuiltUtc": "2026-09-08T06:37:30.2807132Z",
       "Signed": true,
       "Checks": [
         {
@@ -835,6 +991,50 @@
           "Ok": true
         },
         {
+          "Name": "the modal window was raised on the API thread",
+          "Ok": true
+        },
+        {
+          "Name": "and it closed itself, with nobody there to close it",
+          "Ok": true
+        },
+        {
+          "Name": "work posted to the pump does not run while the window is up",
+          "Ok": true
+        },
+        {
+          "Name": "and it runs as soon as the window closes",
+          "Ok": true
+        },
+        {
+          "Name": "an await inside the window resumes",
+          "Ok": true
+        },
+        {
+          "Name": "and it resumes on the API thread",
+          "Ok": true
+        },
+        {
+          "Name": "the Revit API answers a direct read from inside the window",
+          "Ok": true
+        },
+        {
+          "Name": "and it still answers after an await has resumed",
+          "Ok": true
+        },
+        {
+          "Name": "the continuation lands back in the window\u0027s own context",
+          "Ok": true
+        },
+        {
+          "Name": "the context inside the window is WPF\u0027s dispatcher",
+          "Ok": true
+        },
+        {
+          "Name": "and outside it Revit\u0027s own context is WinForms",
+          "Ok": true
+        },
+        {
           "Name": "a DBApplication add-in starts the same host",
           "Ok": true
         },
@@ -927,11 +1127,11 @@
       "Notes": [
         {
           "Name": "launched",
-          "Value": "pid 4992"
+          "Value": "pid 63044"
         },
         {
           "Name": "registered after",
-          "Value": "14.8s"
+          "Value": "13.9s"
         },
         {
           "Name": "recovered by enumeration",
@@ -947,11 +1147,11 @@
         },
         {
           "Name": "probe log",
-          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2025-4992-20260908-145227.log"
+          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2025-63044-20260908-163858.log"
         },
         {
           "Name": "threads",
-          "Value": "api 1, call 7"
+          "Value": "api 1, call 23"
         },
         {
           "Name": "appdomain",
@@ -975,7 +1175,7 @@
         },
         {
           "Name": "log",
-          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2025-4992-20260908-145227.log"
+          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2025-63044-20260908-163858.log"
         },
         {
           "Name": "sinks",
@@ -983,11 +1183,11 @@
         },
         {
           "Name": "document",
-          "Value": "bhs-sweep-2025-d035471be0cb47888a386de9676e2645"
+          "Value": "bhs-sweep-2025-97a4655ffa13495ca36a7c47c3a9a775"
         },
         {
           "Name": "opened after registration",
-          "Value": "8.4s"
+          "Value": "9.1s"
         },
         {
           "Name": "availability and the press",
@@ -995,7 +1195,7 @@
         },
         {
           "Name": "model settings",
-          "Value": "document bhs-sweep-2025-d035471be0cb47888a386de9676e2645, origin Model"
+          "Value": "document bhs-sweep-2025-97a4655ffa13495ca36a7c47c3a9a775, origin Model"
         },
         {
           "Name": "fields as built",
@@ -1007,15 +1207,15 @@
         },
         {
           "Name": "instance",
-          "Value": "943c57a8c5f747beb183bd904f591724"
+          "Value": "2c57992519bb410d9702a4a89e96beba"
         },
         {
           "Name": "log",
-          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2025-4992-20260908-145227.log"
+          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2025-63044-20260908-163858.log"
         },
         {
           "Name": "pid",
-          "Value": "4992"
+          "Value": "63044"
         },
         {
           "Name": "release",
@@ -1028,6 +1228,118 @@
         {
           "Name": "survey:links",
           "Value": "0"
+        },
+        {
+          "Name": "instance",
+          "Value": "2c57992519bb410d9702a4a89e96beba"
+        },
+        {
+          "Name": "log",
+          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2025-63044-20260908-163858.log"
+        },
+        {
+          "Name": "modal:apiCallWorked",
+          "Value": "True"
+        },
+        {
+          "Name": "modal:apiCallWorkedAfterAwait",
+          "Value": "True"
+        },
+        {
+          "Name": "modal:apiRead",
+          "Value": "bhs-sweep-2025-97a4655ffa13495ca36a7c47c3a9a775"
+        },
+        {
+          "Name": "modal:apiReadAfterAwait",
+          "Value": "bhs-sweep-2025-97a4655ffa13495ca36a7c47c3a9a775"
+        },
+        {
+          "Name": "modal:apiThread",
+          "Value": "1"
+        },
+        {
+          "Name": "modal:awaitResumed",
+          "Value": "True"
+        },
+        {
+          "Name": "modal:awaitResumedAfter",
+          "Value": "0.49s"
+        },
+        {
+          "Name": "modal:awaitResumedOnApiThread",
+          "Value": "True"
+        },
+        {
+          "Name": "modal:contextAfterAwait",
+          "Value": "DispatcherSynchronizationContext"
+        },
+        {
+          "Name": "modal:contextInside",
+          "Value": "DispatcherSynchronizationContext"
+        },
+        {
+          "Name": "modal:contextOutside",
+          "Value": "WindowsFormsSynchronizationContext"
+        },
+        {
+          "Name": "modal:pumpRanWhileModal",
+          "Value": "False"
+        },
+        {
+          "Name": "modal:shownFor",
+          "Value": "2.56s"
+        },
+        {
+          "Name": "modal:windowThread",
+          "Value": "1"
+        },
+        {
+          "Name": "pid",
+          "Value": "63044"
+        },
+        {
+          "Name": "release",
+          "Value": "2025"
+        },
+        {
+          "Name": "revision",
+          "Value": "3"
+        },
+        {
+          "Name": "instance",
+          "Value": "2c57992519bb410d9702a4a89e96beba"
+        },
+        {
+          "Name": "log",
+          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2025-63044-20260908-163858.log"
+        },
+        {
+          "Name": "modal:measured",
+          "Value": "True"
+        },
+        {
+          "Name": "modal:pumpRanAfterClose",
+          "Value": "True"
+        },
+        {
+          "Name": "modal:pumpRanAt",
+          "Value": "2.56s"
+        },
+        {
+          "Name": "modal:windowClosed",
+          "Value": "True"
+        },
+        {
+          "Name": "pid",
+          "Value": "63044"
+        },
+        {
+          "Name": "release",
+          "Value": "2025"
+        },
+        {
+          "Name": "revision",
+          "Value": "3"
         },
         {
           "Name": "db host",
@@ -1171,7 +1483,7 @@
         },
         {
           "Name": "diagnostic events",
-          "Value": "83 received, 0 dropped by the publisher, longest quiet spell 3.7s during Working"
+          "Value": "88 received, 0 dropped by the publisher, longest quiet spell 4.1s during Working"
         },
         {
           "Name": "phases seen",
@@ -1199,7 +1511,7 @@
         },
         {
           "Name": "progress caption",
-          "Value": "\u0417\u0430\u0433\u0440\u0443\u0437\u043A\u0430 bhs-sweep-2025-d035471be0cb47888a386de9676e2645.rvt"
+          "Value": "\u0417\u0430\u0433\u0440\u0443\u0437\u043A\u0430 bhs-sweep-2025-97a4655ffa13495ca36a7c47c3a9a775.rvt"
         },
         {
           "Name": "progress caption",
@@ -1227,18 +1539,18 @@
         },
         {
           "Name": "progress caption",
-          "Value": "\u0427\u0435\u0440\u0442\u0435\u0436: bhs-sweep-2025-d035471be0cb47888a386de9676e2645.rvt - \u041F\u043B\u0430\u043D \u044D\u0442\u0430\u0436\u0430: \u0423\u0440\u043E\u0432\u0435\u043D\u044C 1"
+          "Value": "\u0427\u0435\u0440\u0442\u0435\u0436: bhs-sweep-2025-97a4655ffa13495ca36a7c47c3a9a775.rvt - \u041F\u043B\u0430\u043D \u044D\u0442\u0430\u0436\u0430: \u0423\u0440\u043E\u0432\u0435\u043D\u044C 1"
         },
         {
           "Name": "closed after",
-          "Value": "3.7s"
+          "Value": "3.8s"
         }
       ]
     },
     {
       "Release": 2026,
       "FileVersion": "0.1.0.0",
-      "BuiltUtc": "2026-09-08T04:51:04.9077617Z",
+      "BuiltUtc": "2026-09-08T06:37:31.3049066Z",
       "Signed": true,
       "Checks": [
         {
@@ -1458,6 +1770,50 @@
           "Ok": true
         },
         {
+          "Name": "the modal window was raised on the API thread",
+          "Ok": true
+        },
+        {
+          "Name": "and it closed itself, with nobody there to close it",
+          "Ok": true
+        },
+        {
+          "Name": "work posted to the pump does not run while the window is up",
+          "Ok": true
+        },
+        {
+          "Name": "and it runs as soon as the window closes",
+          "Ok": true
+        },
+        {
+          "Name": "an await inside the window resumes",
+          "Ok": true
+        },
+        {
+          "Name": "and it resumes on the API thread",
+          "Ok": true
+        },
+        {
+          "Name": "the Revit API answers a direct read from inside the window",
+          "Ok": true
+        },
+        {
+          "Name": "and it still answers after an await has resumed",
+          "Ok": true
+        },
+        {
+          "Name": "the continuation lands back in the window\u0027s own context",
+          "Ok": true
+        },
+        {
+          "Name": "the context inside the window is WPF\u0027s dispatcher",
+          "Ok": true
+        },
+        {
+          "Name": "and outside it Revit\u0027s own context is WinForms",
+          "Ok": true
+        },
+        {
           "Name": "a DBApplication add-in starts the same host",
           "Ok": true
         },
@@ -1550,11 +1906,11 @@
       "Notes": [
         {
           "Name": "launched",
-          "Value": "pid 70028"
+          "Value": "pid 19304"
         },
         {
           "Name": "registered after",
-          "Value": "25.3s"
+          "Value": "27.7s"
         },
         {
           "Name": "recovered by enumeration",
@@ -1570,11 +1926,11 @@
         },
         {
           "Name": "probe log",
-          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2026-70028-20260908-145254.log"
+          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2026-19304-20260908-163930.log"
         },
         {
           "Name": "threads",
-          "Value": "api 1, call 7"
+          "Value": "api 1, call 20"
         },
         {
           "Name": "appdomain",
@@ -1598,7 +1954,7 @@
         },
         {
           "Name": "log",
-          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2026-70028-20260908-145254.log"
+          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2026-19304-20260908-163930.log"
         },
         {
           "Name": "sinks",
@@ -1606,11 +1962,11 @@
         },
         {
           "Name": "document",
-          "Value": "bhs-sweep-2026-2808a170235747eeb3a0b8e2db8a035c"
+          "Value": "bhs-sweep-2026-0cf1bad7c93d4463a435352ac1122142"
         },
         {
           "Name": "opened after registration",
-          "Value": "29.4s"
+          "Value": "43.9s"
         },
         {
           "Name": "availability and the press",
@@ -1618,7 +1974,7 @@
         },
         {
           "Name": "model settings",
-          "Value": "document bhs-sweep-2026-2808a170235747eeb3a0b8e2db8a035c, origin Model"
+          "Value": "document bhs-sweep-2026-0cf1bad7c93d4463a435352ac1122142, origin Model"
         },
         {
           "Name": "fields as built",
@@ -1630,15 +1986,15 @@
         },
         {
           "Name": "instance",
-          "Value": "87103f50bba542c3b24b0678509dbd8d"
+          "Value": "a8ae339b77cb4c46bff9643a48942484"
         },
         {
           "Name": "log",
-          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2026-70028-20260908-145254.log"
+          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2026-19304-20260908-163930.log"
         },
         {
           "Name": "pid",
-          "Value": "70028"
+          "Value": "19304"
         },
         {
           "Name": "release",
@@ -1651,6 +2007,118 @@
         {
           "Name": "survey:links",
           "Value": "0"
+        },
+        {
+          "Name": "instance",
+          "Value": "a8ae339b77cb4c46bff9643a48942484"
+        },
+        {
+          "Name": "log",
+          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2026-19304-20260908-163930.log"
+        },
+        {
+          "Name": "modal:apiCallWorked",
+          "Value": "True"
+        },
+        {
+          "Name": "modal:apiCallWorkedAfterAwait",
+          "Value": "True"
+        },
+        {
+          "Name": "modal:apiRead",
+          "Value": "bhs-sweep-2026-0cf1bad7c93d4463a435352ac1122142"
+        },
+        {
+          "Name": "modal:apiReadAfterAwait",
+          "Value": "bhs-sweep-2026-0cf1bad7c93d4463a435352ac1122142"
+        },
+        {
+          "Name": "modal:apiThread",
+          "Value": "1"
+        },
+        {
+          "Name": "modal:awaitResumed",
+          "Value": "True"
+        },
+        {
+          "Name": "modal:awaitResumedAfter",
+          "Value": "0.31s"
+        },
+        {
+          "Name": "modal:awaitResumedOnApiThread",
+          "Value": "True"
+        },
+        {
+          "Name": "modal:contextAfterAwait",
+          "Value": "DispatcherSynchronizationContext"
+        },
+        {
+          "Name": "modal:contextInside",
+          "Value": "DispatcherSynchronizationContext"
+        },
+        {
+          "Name": "modal:contextOutside",
+          "Value": "WindowsFormsSynchronizationContext"
+        },
+        {
+          "Name": "modal:pumpRanWhileModal",
+          "Value": "False"
+        },
+        {
+          "Name": "modal:shownFor",
+          "Value": "2.35s"
+        },
+        {
+          "Name": "modal:windowThread",
+          "Value": "1"
+        },
+        {
+          "Name": "pid",
+          "Value": "19304"
+        },
+        {
+          "Name": "release",
+          "Value": "2026"
+        },
+        {
+          "Name": "revision",
+          "Value": "3"
+        },
+        {
+          "Name": "instance",
+          "Value": "a8ae339b77cb4c46bff9643a48942484"
+        },
+        {
+          "Name": "log",
+          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2026-19304-20260908-163930.log"
+        },
+        {
+          "Name": "modal:measured",
+          "Value": "True"
+        },
+        {
+          "Name": "modal:pumpRanAfterClose",
+          "Value": "True"
+        },
+        {
+          "Name": "modal:pumpRanAt",
+          "Value": "2.35s"
+        },
+        {
+          "Name": "modal:windowClosed",
+          "Value": "True"
+        },
+        {
+          "Name": "pid",
+          "Value": "19304"
+        },
+        {
+          "Name": "release",
+          "Value": "2026"
+        },
+        {
+          "Name": "revision",
+          "Value": "3"
         },
         {
           "Name": "db host",
@@ -1758,7 +2226,7 @@
         },
         {
           "Name": "diagnostic events",
-          "Value": "161 received, 0 dropped by the publisher, longest quiet spell 16.9s during Starting"
+          "Value": "172 received, 0 dropped by the publisher, longest quiet spell 30.5s during Starting"
         },
         {
           "Name": "phases seen",
@@ -1782,7 +2250,7 @@
         },
         {
           "Name": "progress caption",
-          "Value": "\u0417\u0430\u0433\u0440\u0443\u0437\u043A\u0430 bhs-sweep-2026-2808a170235747eeb3a0b8e2db8a035c.rvt"
+          "Value": "\u0417\u0430\u0433\u0440\u0443\u0437\u043A\u0430 bhs-sweep-2026-0cf1bad7c93d4463a435352ac1122142.rvt"
         },
         {
           "Name": "progress caption",
@@ -1810,7 +2278,7 @@
         },
         {
           "Name": "progress caption",
-          "Value": "\u0427\u0435\u0440\u0442\u0435\u0436: bhs-sweep-2026-2808a170235747eeb3a0b8e2db8a035c.rvt - \u041F\u043B\u0430\u043D \u044D\u0442\u0430\u0436\u0430: \u0423\u0440\u043E\u0432\u0435\u043D\u044C 1"
+          "Value": "\u0427\u0435\u0440\u0442\u0435\u0436: bhs-sweep-2026-0cf1bad7c93d4463a435352ac1122142.rvt - \u041F\u043B\u0430\u043D \u044D\u0442\u0430\u0436\u0430: \u0423\u0440\u043E\u0432\u0435\u043D\u044C 1"
         },
         {
           "Name": "progress caption",
@@ -1826,14 +2294,14 @@
         },
         {
           "Name": "closed after",
-          "Value": "15.1s"
+          "Value": "15.7s"
         }
       ]
     },
     {
       "Release": 2027,
       "FileVersion": "0.1.0.0",
-      "BuiltUtc": "2026-09-08T04:51:04.2735080Z",
+      "BuiltUtc": "2026-09-08T06:37:29.0811388Z",
       "Signed": true,
       "Checks": [
         {
@@ -2053,6 +2521,50 @@
           "Ok": true
         },
         {
+          "Name": "the modal window was raised on the API thread",
+          "Ok": true
+        },
+        {
+          "Name": "and it closed itself, with nobody there to close it",
+          "Ok": true
+        },
+        {
+          "Name": "work posted to the pump does not run while the window is up",
+          "Ok": true
+        },
+        {
+          "Name": "and it runs as soon as the window closes",
+          "Ok": true
+        },
+        {
+          "Name": "an await inside the window resumes",
+          "Ok": true
+        },
+        {
+          "Name": "and it resumes on the API thread",
+          "Ok": true
+        },
+        {
+          "Name": "the Revit API answers a direct read from inside the window",
+          "Ok": true
+        },
+        {
+          "Name": "and it still answers after an await has resumed",
+          "Ok": true
+        },
+        {
+          "Name": "the continuation lands back in the window\u0027s own context",
+          "Ok": true
+        },
+        {
+          "Name": "the context inside the window is WPF\u0027s dispatcher",
+          "Ok": true
+        },
+        {
+          "Name": "and outside it Revit\u0027s own context is WinForms",
+          "Ok": true
+        },
+        {
           "Name": "a DBApplication add-in starts the same host",
           "Ok": true
         },
@@ -2145,11 +2657,11 @@
       "Notes": [
         {
           "Name": "launched",
-          "Value": "pid 71512"
+          "Value": "pid 44592"
         },
         {
           "Name": "registered after",
-          "Value": "19.9s"
+          "Value": "19.6s"
         },
         {
           "Name": "recovered by enumeration",
@@ -2165,11 +2677,11 @@
         },
         {
           "Name": "probe log",
-          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2027-71512-20260908-145409.log"
+          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2027-44592-20260908-164104.log"
         },
         {
           "Name": "threads",
-          "Value": "api 2, call 15"
+          "Value": "api 2, call 19"
         },
         {
           "Name": "appdomain",
@@ -2193,7 +2705,7 @@
         },
         {
           "Name": "log",
-          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2027-71512-20260908-145409.log"
+          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2027-44592-20260908-164104.log"
         },
         {
           "Name": "sinks",
@@ -2201,11 +2713,11 @@
         },
         {
           "Name": "document",
-          "Value": "bhs-sweep-2027-4d301563fc244caaaaa4bb93bad5cd56"
+          "Value": "bhs-sweep-2027-40c6391a4f0f433a905a336061f61265"
         },
         {
           "Name": "opened after registration",
-          "Value": "49.2s"
+          "Value": "52.3s"
         },
         {
           "Name": "availability and the press",
@@ -2213,7 +2725,7 @@
         },
         {
           "Name": "model settings",
-          "Value": "document bhs-sweep-2027-4d301563fc244caaaaa4bb93bad5cd56, origin Model"
+          "Value": "document bhs-sweep-2027-40c6391a4f0f433a905a336061f61265, origin Model"
         },
         {
           "Name": "fields as built",
@@ -2225,15 +2737,15 @@
         },
         {
           "Name": "instance",
-          "Value": "01c941096e764576a7fe21d81eca41a7"
+          "Value": "7a3a81bdaa864f08b49fc8bb92819a60"
         },
         {
           "Name": "log",
-          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2027-71512-20260908-145409.log"
+          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2027-44592-20260908-164104.log"
         },
         {
           "Name": "pid",
-          "Value": "71512"
+          "Value": "44592"
         },
         {
           "Name": "release",
@@ -2246,6 +2758,118 @@
         {
           "Name": "survey:links",
           "Value": "0"
+        },
+        {
+          "Name": "instance",
+          "Value": "7a3a81bdaa864f08b49fc8bb92819a60"
+        },
+        {
+          "Name": "log",
+          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2027-44592-20260908-164104.log"
+        },
+        {
+          "Name": "modal:apiCallWorked",
+          "Value": "True"
+        },
+        {
+          "Name": "modal:apiCallWorkedAfterAwait",
+          "Value": "True"
+        },
+        {
+          "Name": "modal:apiRead",
+          "Value": "bhs-sweep-2027-40c6391a4f0f433a905a336061f61265"
+        },
+        {
+          "Name": "modal:apiReadAfterAwait",
+          "Value": "bhs-sweep-2027-40c6391a4f0f433a905a336061f61265"
+        },
+        {
+          "Name": "modal:apiThread",
+          "Value": "2"
+        },
+        {
+          "Name": "modal:awaitResumed",
+          "Value": "True"
+        },
+        {
+          "Name": "modal:awaitResumedAfter",
+          "Value": "0.29s"
+        },
+        {
+          "Name": "modal:awaitResumedOnApiThread",
+          "Value": "True"
+        },
+        {
+          "Name": "modal:contextAfterAwait",
+          "Value": "DispatcherSynchronizationContext"
+        },
+        {
+          "Name": "modal:contextInside",
+          "Value": "DispatcherSynchronizationContext"
+        },
+        {
+          "Name": "modal:contextOutside",
+          "Value": "WindowsFormsSynchronizationContext"
+        },
+        {
+          "Name": "modal:pumpRanWhileModal",
+          "Value": "False"
+        },
+        {
+          "Name": "modal:shownFor",
+          "Value": "2.33s"
+        },
+        {
+          "Name": "modal:windowThread",
+          "Value": "2"
+        },
+        {
+          "Name": "pid",
+          "Value": "44592"
+        },
+        {
+          "Name": "release",
+          "Value": "2027"
+        },
+        {
+          "Name": "revision",
+          "Value": "3"
+        },
+        {
+          "Name": "instance",
+          "Value": "7a3a81bdaa864f08b49fc8bb92819a60"
+        },
+        {
+          "Name": "log",
+          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2027-44592-20260908-164104.log"
+        },
+        {
+          "Name": "modal:measured",
+          "Value": "True"
+        },
+        {
+          "Name": "modal:pumpRanAfterClose",
+          "Value": "True"
+        },
+        {
+          "Name": "modal:pumpRanAt",
+          "Value": "2.34s"
+        },
+        {
+          "Name": "modal:windowClosed",
+          "Value": "True"
+        },
+        {
+          "Name": "pid",
+          "Value": "44592"
+        },
+        {
+          "Name": "release",
+          "Value": "2027"
+        },
+        {
+          "Name": "revision",
+          "Value": "3"
         },
         {
           "Name": "db host",
@@ -2605,11 +3229,11 @@
         },
         {
           "Name": "diagnostic events",
-          "Value": "177 received, 0 dropped by the publisher, longest quiet spell 32.8s during Starting"
+          "Value": "166 received, 0 dropped by the publisher, longest quiet spell 37.7s during Starting"
         },
         {
           "Name": "phases seen",
-          "Value": "Starting, Idle, OpeningDocument, Working, DocumentReady, Blocked"
+          "Value": "Starting, Idle, OpeningDocument, Working, DocumentReady"
         },
         {
           "Name": "progress caption",
@@ -2629,11 +3253,7 @@
         },
         {
           "Name": "progress caption",
-          "Value": "\u0417\u0430\u0433\u0440\u0443\u0437\u043A\u0430 bhs-sweep-2027-4d301563fc244caaaaa4bb93bad5cd56.rvt"
-        },
-        {
-          "Name": "progress caption",
-          "Value": "dialog"
+          "Value": "\u0417\u0430\u0433\u0440\u0443\u0437\u043A\u0430 bhs-sweep-2027-40c6391a4f0f433a905a336061f61265.rvt"
         },
         {
           "Name": "progress caption",
@@ -2661,7 +3281,7 @@
         },
         {
           "Name": "progress caption",
-          "Value": "\u0427\u0435\u0440\u0442\u0435\u0436: bhs-sweep-2027-4d301563fc244caaaaa4bb93bad5cd56.rvt - \u041F\u043B\u0430\u043D \u044D\u0442\u0430\u0436\u0430: \u0423\u0440\u043E\u0432\u0435\u043D\u044C 1"
+          "Value": "\u0427\u0435\u0440\u0442\u0435\u0436: bhs-sweep-2027-40c6391a4f0f433a905a336061f61265.rvt - \u041F\u043B\u0430\u043D \u044D\u0442\u0430\u0436\u0430: \u0423\u0440\u043E\u0432\u0435\u043D\u044C 1"
         },
         {
           "Name": "progress caption",
@@ -2676,16 +3296,12 @@
           "Value": "\u0410\u0432\u0442\u043E\u043C\u0430\u0442\u0438\u0447\u0435\u0441\u043A\u043E\u0435 \u0441\u043E\u0435\u0434\u0438\u043D\u0435\u043D\u0438\u0435 \u0438\u0437\u043C\u0435\u043D\u0435\u043D\u043D\u044B\u0445 \u044D\u043B\u0435\u043C\u0435\u043D\u0442\u043E\u0432"
         },
         {
-          "Name": "modal dialog",
-          "Value": "TaskDialog_Stop_Operation"
-        },
-        {
           "Name": "closed after",
-          "Value": "73.7s"
+          "Value": "66.1s"
         }
       ]
     }
   ],
-  "Performed": 304,
+  "Performed": 348,
   "Failed": 0
 }

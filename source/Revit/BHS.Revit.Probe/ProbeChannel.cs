@@ -138,6 +138,19 @@ internal sealed class ProbeChannel : RevitSideChannel.RevitSideChannelBase
                         response.Values.Add(pair.Key, pair.Value);
                     break;
 
+                case "modal":
+                    foreach (var pair in ModalWindow().GetAwaiter().GetResult())
+                        response.Values.Add(pair.Key, pair.Value);
+                    break;
+
+                // Deliberately a second question rather than more of the first: the work posted from
+                // inside the window is queued behind the measurement itself, so it can only have run
+                // once the measurement returned. See ModalWindowFacts.After.
+                case "modalafter":
+                    foreach (var pair in ModalWindowFacts.After())
+                        response.Values.Add(pair.Key, pair.Value);
+                    break;
+
                 case "press":
                     _press.Raise();
                     break;
@@ -256,6 +269,23 @@ internal sealed class ProbeChannel : RevitSideChannel.RevitSideChannelBase
     /// cannot.
     /// </para>
     /// </remarks>
+    /// <summary>
+    /// Opens a modal window on the API thread and reports what still worked from inside it.
+    /// </summary>
+    /// <remarks>
+    /// Posted to the pump rather than run here, because the question is about a window standing
+    /// where a modal command stands - on the API thread, inside a valid API context. A channel call
+    /// arrives on a pool thread, which is the one place the answer would mean nothing.
+    /// </remarks>
+    private async Task<IReadOnlyDictionary<string, string>> ModalWindow()
+    {
+        var pump = _services.Pump;
+
+        return await pump
+            .PostAsync("probe: modal window", session => ModalWindowFacts.Measure(session, pump))
+            .ConfigureAwait(false);
+    }
+
     private async Task<IReadOnlyDictionary<string, string>> SurveyCabling()
     {
         var report = await _services.Pump.PostAsync("probe: cabling survey", session =>

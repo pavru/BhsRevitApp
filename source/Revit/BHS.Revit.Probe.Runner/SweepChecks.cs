@@ -135,6 +135,10 @@ internal static class SweepChecks
             await SurveyCablingAsync(client, report);
         }
 
+        // Outside the model block: a modal window stands on the API thread whether or not a document
+        // is open, and the one fact that changes without one is what a read returns.
+        await CheckModalWindowAsync(client, report);
+
         // After the ribbon and the model, because one of its questions is about an event that only
         // arrives once Revit has finished starting - and asking a thing that has not happened yet
         // measures the clock, not the thing.
@@ -733,6 +737,115 @@ internal static class SweepChecks
     /// The probe is written to refuse them at the source rather than to filter them here.
     /// </para>
     /// </remarks>
+    /// <summary>
+    /// What a modal window can still do while it owns the API thread.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <b>These were notes for exactly one run, and now they are assertions.</b> The claim under
+    /// test - that an <c>ExternalEvent</c> raised from inside a modal window never fires, because
+    /// Revit never reaches <c>Idling</c> while the window is up - is written into the routing core's
+    /// project file as a reason for its shape, and nobody had run it. All four releases answered
+    /// identically, so the notes now guard the decision instead of informing it: the day any of them
+    /// changes, the shape of the cabling command has to change with it, and that is news worth a red
+    /// line rather than a number nobody rereads.
+    /// </para>
+    /// <para>
+    /// The order was the point. A check written before its answer agrees with whoever wrote it,
+    /// which is how <c>IsSessionReady</c> kept a wrong name until somebody measured.
+    /// </para>
+    /// <para>
+    /// <b>The half the first pass forgot to ask has since been asked.</b> The API was called before
+    /// the await and not after, and "after" is what decides whether a command can compute in the
+    /// background and apply in the continuation - being on the API thread is not the same as
+    /// standing in a context Revit will serve. It does serve it, on all four releases.
+    /// </para>
+    /// <para>
+    /// <b>Still not measured, and named here so it is not mistaken for settled: a transaction.</b>
+    /// Every read above is a read. Applying a route is a write, and a write means
+    /// <c>Transaction.Start</c> in that same continuation. The gate on modification is the
+    /// transaction rather than the call, so a read succeeding does not answer for one. It will be
+    /// measured with the apply phase, against a real write rolled back in a group - the shape the
+    /// schema check already uses, so that the production path is exercised rather than a rehearsal
+    /// of it.
+    /// </para>
+    /// </remarks>
+    private static async Task CheckModalWindowAsync(
+        RevitSideChannel.RevitSideChannelClient client,
+        Report report)
+    {
+        Report.Heading("a modal window on the API thread");
+
+        var during = await client.AskAsync(new AskRequest { Question = "modal" });
+
+        foreach (var pair in during.Values.OrderBy(one => one.Key, StringComparer.Ordinal))
+            report.Note(pair.Key, pair.Value);
+
+        var after = await client.AskAsync(new AskRequest { Question = "modalafter" });
+
+        foreach (var pair in after.Values.OrderBy(one => one.Key, StringComparer.Ordinal))
+            report.Note(pair.Key, pair.Value);
+
+        report.Check(
+            "the modal window was raised on the API thread",
+            during.Values.TryGetValue("modal:apiThread", out var api)
+            && during.Values.TryGetValue("modal:windowThread", out var shown)
+            && api == shown);
+
+        report.Check("and it closed itself, with nobody there to close it",
+            after.Values.GetValueOrDefault("modal:windowClosed") == "True");
+
+        // The claim the routing core's shape rests on, now guarded rather than believed.
+        report.Check(
+            "work posted to the pump does not run while the window is up",
+            during.Values.GetValueOrDefault("modal:pumpRanWhileModal") == "False");
+
+        // And its other half, which is what a command can count on the moment a dialog is
+        // dismissed: the pump drains its whole queue in one pass, so the wait is not until the next
+        // idle - it is until this stack unwinds.
+        report.Check(
+            "and it runs as soon as the window closes",
+            after.Values.GetValueOrDefault("modal:pumpRanAfterClose") == "True");
+
+        // The finding that changes the design rather than confirming it: a dialog can show progress
+        // while a background search runs, because the continuation comes back to the API thread.
+        report.Check(
+            "an await inside the window resumes",
+            during.Values.GetValueOrDefault("modal:awaitResumed") == "True");
+
+        report.Check(
+            "and it resumes on the API thread",
+            during.Values.GetValueOrDefault("modal:awaitResumedOnApiThread") == "True");
+
+        // Reads need no pump from inside a dialog: the command is already standing in a valid API
+        // context, on the API thread, and the pump exists for callers who are not.
+        report.Check(
+            "the Revit API answers a direct read from inside the window",
+            during.Values.GetValueOrDefault("modal:apiCallWorked") == "True");
+
+        // The one that makes "collect, compute in the background, apply in the continuation" a shape
+        // a command can have. Reads only - a transaction has not been attempted, see the remarks.
+        report.Check(
+            "and it still answers after an await has resumed",
+            during.Values.GetValueOrDefault("modal:apiCallWorkedAfterAwait") == "True");
+
+        report.Check(
+            "the continuation lands back in the window's own context",
+            during.Values.GetValueOrDefault("modal:contextAfterAwait") == "DispatcherSynchronizationContext");
+
+        // Both contexts are asserted, and the outer one is the surprise: on the API thread inside an
+        // external event Revit's context is WinForms, not WPF. An await taken before a dialog opens
+        // therefore resumes by a different mechanism than one taken inside it - worth knowing before
+        // something is built on the assumption that they are the same.
+        report.Check(
+            "the context inside the window is WPF's dispatcher",
+            during.Values.GetValueOrDefault("modal:contextInside") == "DispatcherSynchronizationContext");
+
+        report.Check(
+            "and outside it Revit's own context is WinForms",
+            during.Values.GetValueOrDefault("modal:contextOutside") == "WindowsFormsSynchronizationContext");
+    }
+
     private static async Task SurveyCablingAsync(
         RevitSideChannel.RevitSideChannelClient client,
         Report report)
