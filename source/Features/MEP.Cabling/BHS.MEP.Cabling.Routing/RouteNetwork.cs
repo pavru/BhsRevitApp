@@ -1,4 +1,4 @@
-namespace BHS.MEP.Cabling.Routing;
+﻿namespace BHS.MEP.Cabling.Routing;
 
 /// <summary>
 /// The cable-bearing structure of one model, as a snapshot that can be searched off the API thread.
@@ -20,15 +20,27 @@ public sealed class RouteNetwork
 {
     private readonly Dictionary<CarrierId, CarrierNode> _nodes;
     private readonly Dictionary<CarrierId, IReadOnlyList<CarrierId>> _adjacency;
+    private readonly CarrierNode[] _byIndex;
+    private readonly SpatialIndex _index;
 
     public RouteNetwork(
         long version,
         IReadOnlyCollection<CarrierNode> nodes,
-        IReadOnlyDictionary<CarrierId, IReadOnlyList<CarrierId>> adjacency)
+        IReadOnlyDictionary<CarrierId, IReadOnlyList<CarrierId>> adjacency,
+        double approachRadius)
     {
         Version = version;
         _nodes = nodes.ToDictionary(one => one.Id);
         _adjacency = adjacency.ToDictionary(one => one.Key, one => one.Value);
+        _byIndex = nodes.ToArray();
+
+        // Sized for the question the router asks - "what is within reach of this device" - which is
+        // a different radius from the one that decided adjacency. Both are grids; keeping them
+        // apart costs one array and stops each from answering the other's question badly.
+        _index = new SpatialIndex(Math.Max(approachRadius, 1e-6));
+
+        for (var i = 0; i < _byIndex.Length; i++)
+            _index.AddSpan(i, _byIndex[i].Start, _byIndex[i].End);
     }
 
     /// <summary>Monotonic, per document. Compared, never interpreted.</summary>
@@ -42,6 +54,18 @@ public sealed class RouteNetwork
 
     public IReadOnlyList<CarrierId> Neighbours(CarrierId id) =>
         _adjacency.TryGetValue(id, out var next) ? next : Array.Empty<CarrierId>();
+
+    /// <summary>The carriers whose ends lie near a point.</summary>
+    /// <remarks>
+    /// <b>Not a convenience.</b> Without it the router asks every terminal about every carrier, and
+    /// a run is circuits times devices times carriers - hundreds by tens by thousands. The index was
+    /// built to keep adjacency out of quadratic time and would have left the router in it.
+    /// </remarks>
+    public IEnumerable<CarrierNode> Near(Point3 at)
+    {
+        foreach (var found in _index.Near(at))
+            yield return _byIndex[found];
+    }
 }
 
 /// <summary>One end of a circuit: where a cable has to reach.</summary>

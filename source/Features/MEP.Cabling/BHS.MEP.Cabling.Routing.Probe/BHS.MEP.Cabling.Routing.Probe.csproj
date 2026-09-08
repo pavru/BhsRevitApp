@@ -1,0 +1,29 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <!--
+      The routing core, run against networks built by hand. A console probe rather than a test
+      framework, and that is this repository's own idiom rather than a shortcut: BHS.Transport.Probe
+      is the same shape, and it buys three things a framework would not.
+
+      It runs on net48, which every test runner worth having gave up years ago - and net48 is half
+      the supported Revit range, so an algorithm that only ever ran on .NET 10 would be unproven
+      exactly where the AppDomain is shared and the arithmetic is oldest.
+
+      It adds no package. The metric here counts assemblies somebody else may also ship, and while
+      a test project never reaches Revit, a package reference is a decision that spreads.
+
+      And it is the thing the owner's first rule asks for: the core, exercised with no Revit in
+      sight. The exit code is the number of failures, so a build server needs no adapter.
+    -->
+
+    <PropertyGroup>
+        <OutputType>Exe</OutputType>
+        <TargetFrameworks>net48;net8.0;net10.0</TargetFrameworks>
+        <RootNamespace>BHS.MEP.Cabling.Routing.Probe</RootNamespace>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="..\BHS.MEP.Cabling.Routing\BHS.MEP.Cabling.Routing.csproj"/>
+    </ItemGroup>
+
+</Project>

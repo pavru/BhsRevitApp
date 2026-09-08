@@ -58,6 +58,10 @@
        that is what lets it run off the API thread, which a modal command owns. -->
   <Folder Name="/Features/">
     <Project Path="source/Features/MEP.Cabling/BHS.MEP.Cabling.Routing/BHS.MEP.Cabling.Routing.csproj" Type="C#" />
+    <!-- The core, run against networks small enough to reason about by hand. A console probe in
+         this repository's own idiom rather than a test framework: it runs on net48 too, which is
+         half the supported Revit range, and it adds no package. -->
+    <Project Path="source/Features/MEP.Cabling/BHS.MEP.Cabling.Routing.Probe/BHS.MEP.Cabling.Routing.Probe.csproj" Type="C#" />
   </Folder>
 
   <!-- Revit-side framework: loaded into the Revit process, multi-targeted on the Revit axis. -->
