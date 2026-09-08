@@ -80,6 +80,11 @@ public sealed class CollectCablingCommand : IFeatureCommand
             snapshot.Circuits.Circuits.Count,
             snapshot.LinksRead);
 
+        // Info rather than Warn: a reserved way in a panel schedule is somebody doing their job.
+        if (snapshot.Circuits.SpareOrSpace > 0)
+            log.Info("cabling: {0} circuit(s) are spare or space, and have nothing to route",
+                snapshot.Circuits.SpareOrSpace);
+
         if (snapshot.CarriersSkipped > 0)
             log.Warn("cabling: {0} carrier(s) had no readable extent and are missing from the network",
                 snapshot.CarriersSkipped);
@@ -113,12 +118,22 @@ public sealed class CollectCablingCommand : IFeatureCommand
     /// </remarks>
     private static void Show(CablingSnapshot snapshot)
     {
+        // Spare and space circuits are named in the main body rather than under "details", because
+        // they are part of the answer to "what is in this model" and not part of what went wrong.
+        var spare = snapshot.Circuits.SpareOrSpace == 0
+            ? string.Empty
+            : string.Format(
+                CultureInfo.CurrentCulture,
+                "\nSpare or space, nothing to route: {0}",
+                snapshot.Circuits.SpareOrSpace);
+
         var found = string.Format(
             CultureInfo.CurrentCulture,
-            "Carriers: {0}\nCircuits: {1}\nLinks read: {2}",
+            "Carriers: {0}\nCircuits: {1}\nLinks read: {2}{3}",
             snapshot.Network.Count,
             snapshot.Circuits.Circuits.Count,
-            snapshot.LinksRead);
+            snapshot.LinksRead,
+            spare);
 
         var missing = Missing(snapshot);
 
