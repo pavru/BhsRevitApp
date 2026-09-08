@@ -131,8 +131,8 @@ internal static class SweepChecks
             // works, one how permanent its identity is.
             await CheckSchemaEvolutionAsync(client, report);
 
-            // Last of the document questions, and the only one that asks rather than asserts.
-            await SurveyCablingAsync(client, options, report);
+            // Last of the document questions, and the only one that mostly asks rather than asserts.
+            await SurveyCablingAsync(client, report);
         }
 
         // After the ribbon and the model, because one of its questions is about an event that only
@@ -714,10 +714,18 @@ internal static class SweepChecks
     /// </summary>
     /// <remarks>
     /// <para>
-    /// Notes, never checks: nothing here can pass or fail, because there is no right answer to
-    /// "how many trays does this building have". It runs only when a model was named on the command
-    /// line - the synthetic one has nothing to survey, and asking it would print a screen of zeroes
-    /// every sweep.
+    /// The counts are notes, because nothing here can pass or fail: there is no right answer to
+    /// "how many trays does this building have". That the survey <i>answered</i> is a check, and a
+    /// real one - it walks <c>ElectricalSystem</c>, <c>RevitLinkInstance</c> and a circuit collector
+    /// on four runtimes, and compiling against four target frameworks says nothing about whether the
+    /// call survives on any of them.
+    /// </para>
+    /// <para>
+    /// <b>It runs on the synthetic model too, and the earlier reason not to was wrong.</b> This was
+    /// gated on a model named at the command line, on the grounds that an empty file would print a
+    /// screen of zeroes; it prints one line, because the counts are omitted where nothing was found.
+    /// So the gate bought nothing and cost the only place where the new code path runs unattended on
+    /// every release.
     /// </para>
     /// <para>
     /// <b>Counts and category names only.</b> These are somebody's real project files and this
@@ -727,19 +735,30 @@ internal static class SweepChecks
     /// </remarks>
     private static async Task SurveyCablingAsync(
         RevitSideChannel.RevitSideChannelClient client,
-        Options options,
         Report report)
     {
-        if (options.ModelPath.Length == 0)
-            return;
+        AskResponse answer;
 
-        var answer = await client.AskAsync(new AskRequest { Question = "survey" });
+        try
+        {
+            answer = await client.AskAsync(new AskRequest { Question = "survey" });
+        }
+        catch (RpcException error)
+        {
+            // Caught narrowly rather than left to abandon the release: a survey that throws is worth
+            // one red line, not the seventy checks that would follow it.
+            report.Check("the model survey answers", false);
+            report.Note("survey failed", error.Status.StatusCode.ToString());
+            return;
+        }
 
         if (answer.Values.GetValueOrDefault("survey:document") == "(none)")
         {
             report.Note("survey", "no document was open");
             return;
         }
+
+        report.Check("the model survey answers", answer.Values.ContainsKey("survey:links"));
 
         Report.Heading("what this model holds");
 
