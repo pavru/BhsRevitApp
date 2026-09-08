@@ -1,0 +1,63 @@
+<Project Sdk="BHS.Revit.Sdk/1.5.8">
+
+    <!--
+      An edition: the add-in Revit actually loads, and the thinnest thing this framework allows.
+
+      It writes one class for the host, one empty entry point per command and one availability
+      class, and declares its ribbon in this file. Nothing else - the composition is the host's, and
+      the work is the feature's.
+
+      UseWPF because BHS.Revit.Host has it, for the placeholder icons. It costs nothing in the
+      output: PresentationCore lives in the GAC on net48 and in the shared framework on the .NET
+      axis, and Revit's own interface is built on it.
+    -->
+
+    <PropertyGroup>
+        <TargetFrameworks>net48-revit2024;net8.0-revit2025;net8.0-revit2026;net10.0-revit2027</TargetFrameworks>
+        <RootNamespace>BHS.FullEdition</RootNamespace>
+        <UseWPF>true</UseWPF>
+        <PublishRevitAddIn>true</PublishRevitAddIn>
+        <RevitPackageName>BHS.FullEdition</RevitPackageName>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="..\Revit\BHS.Revit.Host\BHS.Revit.Host.csproj" />
+        <!--
+          The feature is referenced so that the entry point below can name its command in a type
+          argument. That reference does not load it: the CLR resolves a base type when it first
+          constructs the derived one, which is when somebody presses the button. Measured on all
+          four releases, in the probe, with an assembly that exists for exactly this question.
+        -->
+        <ProjectReference Include="..\Features\MEP.Cabling\BHS.MEP.Cabling.Feature\BHS.MEP.Cabling.Feature.csproj" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <!--
+          Text and ToolTip are English literals in the neutral position - the one that becomes a
+          resource key when declaration strings move into .resx. A Russian literal here could not
+          become a key, and would have to be translated back first.
+        -->
+        <RevitRibbonButton Include="BHS.Cabling.Collect">
+            <Tab>BHS</Tab>
+            <Panel>Cabling</Panel>
+            <Text>Read structure</Text>
+            <ClassName>BHS.FullEdition.CollectCablingEntryPoint</ClassName>
+            <AvailabilityClassName>BHS.FullEdition.NeedsDocument</AvailabilityClassName>
+            <ToolTip>Reads the cable trays, conduits and circuits of this model and its links, and reports what was found.</ToolTip>
+            <Order>1</Order>
+        </RevitRibbonButton>
+    </ItemGroup>
+
+    <ItemGroup>
+        <RevitAddIn Include="BHS.FullEdition.addin">
+            <AddInType>Application</AddInType>
+            <AddInName>BHS Full Edition</AddInName>
+            <FullClassName>BHS.FullEdition.FullEditionApplication</FullClassName>
+            <AddInId>3f8b1d64-9c27-4a5e-8d13-6e0a72c4f5b1</AddInId>
+            <VendorId>$(RevitVendorId)</VendorId>
+            <VendorDescription>$(RevitVendorDescription)</VendorDescription>
+            <Description>BimHouse Software: the full edition.</Description>
+        </RevitAddIn>
+    </ItemGroup>
+
+</Project>

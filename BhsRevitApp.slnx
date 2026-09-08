@@ -65,6 +65,9 @@
     <!-- The side that has a Document, and the only side that does. It reads the model; it does not
          search it. The split is the thread guarantee from the other end. -->
     <Project Path="source/Features/MEP.Cabling/BHS.MEP.Cabling.Revit/BHS.MEP.Cabling.Revit.csproj" Type="C#" />
+    <!-- What an edition loads on a press. Separate from the edition so that it can stay
+         unloaded until then, which on Revit 2024 is the difference that matters. -->
+    <Project Path="source/Features/MEP.Cabling/BHS.MEP.Cabling.Feature/BHS.MEP.Cabling.Feature.csproj" Type="C#" />
   </Folder>
 
   <!-- Revit-side framework: loaded into the Revit process, multi-targeted on the Revit axis. -->
@@ -83,6 +86,13 @@
          that "the feature loads only when its button is pressed" is measured rather than assumed. -->
     <Project Path="source/Revit/BHS.Revit.Probe.Feature/BHS.Revit.Probe.Feature.csproj" Type="C#" />
     <Project Path="source/Revit/BHS.Revit.Probe.Runner/BHS.Revit.Probe.Runner.csproj" Type="C#" />
+  </Folder>
+
+  <!-- Editions: the add-ins Revit actually loads. Each is a host class, an entry point per command
+       and a ribbon declaration - the composition belongs to the framework and the work to the
+       features, so an edition that grows large is a sign something is in the wrong place. -->
+  <Folder Name="/Editions/">
+    <Project Path="source/BHS.FullEdition/BHS.FullEdition.csproj" Type="C#" />
   </Folder>
 
 </Solution>
