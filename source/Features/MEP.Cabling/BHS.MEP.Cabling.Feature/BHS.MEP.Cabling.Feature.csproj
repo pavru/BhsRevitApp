@@ -1,4 +1,4 @@
-<Project Sdk="BHS.Revit.Sdk/1.5.8">
+﻿<Project Sdk="BHS.Revit.Sdk/1.5.8">
 
     <!--
       The cabling feature itself: what an edition loads when somebody presses its button.
@@ -14,10 +14,19 @@
     <PropertyGroup>
         <TargetFrameworks>net48-revit2024;net8.0-revit2025;net8.0-revit2026;net10.0-revit2027</TargetFrameworks>
         <RootNamespace>BHS.MEP.Cabling.Feature</RootNamespace>
+
+        <!-- The routing command opens a Window, so this assembly names WPF types and has to say so.
+             The base SDK checks it twice - once for a project that asked for WPF itself and once for
+             one that merely referenced such a project - and BHS.FullEdition, which references this,
+             already declares it for the same reason. It costs nothing in the output: PresentationCore
+             and its neighbours are in the GAC on net48 and in the shared framework on the .NET axis,
+             and Revit's own interface is built on them. -->
+        <UseWPF>true</UseWPF>
     </PropertyGroup>
 
     <ItemGroup>
         <ProjectReference Include="..\BHS.MEP.Cabling.Revit\BHS.MEP.Cabling.Revit.csproj" />
+        <ProjectReference Include="..\BHS.MEP.Cabling.Ui\BHS.MEP.Cabling.Ui.csproj" />
         <ProjectReference Include="..\..\..\Revit\BHS.Revit.Abstractions\BHS.Revit.Abstractions.csproj" />
     </ItemGroup>
 

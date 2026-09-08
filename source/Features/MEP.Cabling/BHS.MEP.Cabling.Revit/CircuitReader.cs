@@ -1,4 +1,4 @@
-using Autodesk.Revit.DB;
+﻿using Autodesk.Revit.DB;
 using Autodesk.Revit.DB.Electrical;
 using BHS.MEP.Cabling.Routing;
 
@@ -20,14 +20,21 @@ public sealed class CircuitHarvest
         int devicesSkipped,
         int spareOrSpace)
     {
-        Circuits = circuits;
+        Described = circuits;
         WithoutPanel = withoutPanel;
         WithoutDevices = withoutDevices;
         DevicesSkipped = devicesSkipped;
         SpareOrSpace = spareOrSpace;
     }
 
-    public IReadOnlyList<CircuitSnapshot> Circuits { get; }
+    /// <summary>The circuits that could be described well enough to route.</summary>
+    /// <remarks>
+    /// Named for what it holds rather than for its type. It was <c>Circuits</c>, which read as
+    /// <c>snapshot.Circuits.Circuits</c> at every call site - a name that says the word twice and
+    /// the meaning neither time. The counts beside it are the circuits that are <i>not</i> in here,
+    /// and that is the distinction the name has to carry.
+    /// </remarks>
+    public IReadOnlyList<CircuitSnapshot> Described { get; }
 
     /// <summary>Circuits with no panel to start from, which cannot be described at all.</summary>
     public int WithoutPanel { get; }

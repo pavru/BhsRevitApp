@@ -1,4 +1,4 @@
-<Project Sdk="BHS.Revit.Sdk/1.5.8">
+﻿<Project Sdk="BHS.Revit.Sdk/1.5.8">
 
     <!--
       An edition: the add-in Revit actually loads, and the thinnest thing this framework allows.
@@ -45,6 +45,16 @@
             <AvailabilityClassName>BHS.FullEdition.NeedsDocument</AvailabilityClassName>
             <ToolTip>Reads the cable trays, conduits and circuits of this model and its links, and reports what was found.</ToolTip>
             <Order>1</Order>
+        </RevitRibbonButton>
+
+        <RevitRibbonButton Include="BHS.Cabling.Route">
+            <Tab>BHS</Tab>
+            <Panel>Cabling</Panel>
+            <Text>Route cables</Text>
+            <ClassName>BHS.FullEdition.RouteCablingEntryPoint</ClassName>
+            <AvailabilityClassName>BHS.FullEdition.NeedsDocument</AvailabilityClassName>
+            <ToolTip>Routes every circuit through the trays and conduits of this model, and compares the computed length with the one Revit reports.</ToolTip>
+            <Order>2</Order>
         </RevitRibbonButton>
     </ItemGroup>
 

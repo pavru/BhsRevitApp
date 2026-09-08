@@ -1,0 +1,33 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+    <!--
+      The screen the routing run shows, on the plain axis.
+
+      Not on the Revit axis, and not for tidiness: this project holds a window that is opened from a
+      modal command, and the compute phase it drives runs on a background thread. Building it where
+      the type Document does not exist is the same guarantee the routing core takes - a view model
+      that reached for the model would be a Revit call from the wrong thread, and here it does not
+      compile instead.
+
+      What it does need is WPF, so the .NET axis carries the -windows suffix. That is the same shape
+      BHS.Transport already has, and Revit-side projects reference it the same way: the Revit target
+      framework resolves to the nearest plain one - net48 for 2024, net8.0-windows for 2025 and 2026,
+      net10.0-windows for 2027.
+
+      No WPF-UI here yet, deliberately. That package is pinned at 4.0.3 and has never once been
+      loaded inside a live Revit since the set was cut down; the first thing to prove it is the
+      dockable pane, which is where its cost is measured. A dialog that has to work today should not
+      be the experiment that finds out.
+    -->
+
+    <PropertyGroup>
+        <TargetFrameworks>net48;net8.0-windows;net10.0-windows</TargetFrameworks>
+        <RootNamespace>BHS.MEP.Cabling.Ui</RootNamespace>
+        <UseWPF>true</UseWPF>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="..\BHS.MEP.Cabling.Routing\BHS.MEP.Cabling.Routing.csproj" />
+    </ItemGroup>
+
+</Project>

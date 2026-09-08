@@ -1,4 +1,4 @@
-using System.Globalization;
+﻿using System.Globalization;
 using Autodesk.Revit.DB;
 using Autodesk.Revit.UI;
 using BHS.Logging;
@@ -77,7 +77,7 @@ public sealed class CollectCablingCommand : IFeatureCommand
         log.Info(
             "cabling: {0} carriers, {1} circuits, from {2} link(s)",
             snapshot.Network.Count,
-            snapshot.Circuits.Circuits.Count,
+            snapshot.Circuits.Described.Count,
             snapshot.LinksRead);
 
         // Info rather than Warn: a reserved way in a panel schedule is somebody doing their job.
@@ -131,7 +131,7 @@ public sealed class CollectCablingCommand : IFeatureCommand
             CultureInfo.CurrentCulture,
             "Carriers: {0}\nCircuits: {1}\nLinks read: {2}{3}",
             snapshot.Network.Count,
-            snapshot.Circuits.Circuits.Count,
+            snapshot.Circuits.Described.Count,
             snapshot.LinksRead,
             spare);
 

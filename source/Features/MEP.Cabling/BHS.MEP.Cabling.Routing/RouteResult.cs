@@ -1,4 +1,4 @@
-namespace BHS.MEP.Cabling.Routing;
+﻿namespace BHS.MEP.Cabling.Routing;
 
 /// <summary>Why a circuit came out the way it did.</summary>
 /// <remarks>
@@ -71,6 +71,17 @@ public sealed class RouteResult
     /// "no carrier within 2.4 m of Socket 3" is the work itself.
     /// </remarks>
     public string BlockedAt { get; init; } = string.Empty;
+
+    /// <summary>What Revit reports for this same circuit today, in internal feet.</summary>
+    /// <remarks>
+    /// <b>Carried on the result rather than summed beside it, and that is a shape decision.</b> The
+    /// screen owes a comparison - ours against Revit's - and the honest one is over the circuits that
+    /// routed. Held apart, the two totals are computed in different places over different sets, and
+    /// the first version of this compared our forty against Revit's fifty-five: a difference that is
+    /// entirely the missing fifteen, and that the first person to see it reports as a bug in the
+    /// search. Travelling together, the pair cannot be taken from different sets.
+    /// </remarks>
+    public double BuiltInLength { get; init; }
 
     public double TotalLength => AlongCarriers + Approaches;
 }

@@ -31,6 +31,7 @@ public static class Router
             return new RouteResult(circuit.Id, RouteStatus.NothingToRoute, network.Version)
             {
                 BlockedAt = circuit.Number,
+                BuiltInLength = circuit.BuiltInLength,
             };
         }
 
@@ -39,6 +40,7 @@ public static class Router
             return new RouteResult(circuit.Id, RouteStatus.NothingToRoute, network.Version)
             {
                 BlockedAt = circuit.Number,
+                BuiltInLength = circuit.BuiltInLength,
             };
         }
 
@@ -60,6 +62,7 @@ public static class Router
                 return new RouteResult(circuit.Id, leg.Status, network.Version)
                 {
                     BlockedAt = leg.BlockedAt,
+                    BuiltInLength = circuit.BuiltInLength,
                 };
             }
 
@@ -84,6 +87,7 @@ public static class Router
             Path = path,
             AlongCarriers = alongCarriers + (total * options.LengthExtend),
             Approaches = approaches,
+            BuiltInLength = circuit.BuiltInLength,
         };
     }
 

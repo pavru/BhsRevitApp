@@ -14,7 +14,7 @@ namespace BHS.MEP.Cabling.Routing.Probe;
 internal static class Program
 {
     private const double Tolerance = 0.1;
-    private const int Floor = 18;
+    private const int Floor = 27;
 
     private static int _run;
     private static int _failed;
@@ -29,6 +29,7 @@ internal static class Program
         ReportsWhyItFailed();
         ApproachIsAlongAxes();
         LengthIgnoresThePreference();
+        TheRunGroupsItsFailures();
 
         Console.WriteLine();
 
@@ -242,6 +243,71 @@ internal static class Program
 
         return NetworkBuilder.Build(1, carriers, options ?? Options());
     }
+
+    /// <summary>
+    /// What a whole run says about itself, rather than what one circuit says.
+    /// </summary>
+    /// <remarks>
+    /// Built from results directly rather than by routing: the grouping is arithmetic over statuses
+    /// and lengths, and running a search to produce them would test the search again and this not at
+    /// all. The failures here are the shapes a real run produces - some of each cause, and one cause
+    /// that did not happen.
+    /// </remarks>
+    private static void TheRunGroupsItsFailures()
+    {
+        Section("what a run says about itself");
+
+        var results = new List<RouteResult>
+        {
+            Routed(1, alongCarriers: 10, approaches: 2, builtIn: 11),
+            Routed(2, alongCarriers: 20, approaches: 3, builtIn: 21),
+            Failed(3, RouteStatus.NoCarrierNear, "Socket 3", builtIn: 99),
+            Failed(4, RouteStatus.NoCarrierNear, "Socket 4", builtIn: 99),
+            Failed(5, RouteStatus.NothingToRoute, "SP-1, way 12", builtIn: 0),
+        };
+
+        var run = new RouteRun(results, networkVersion: 7, took: TimeSpan.FromSeconds(1.5));
+
+        Check("it counts what routed", run.Found == 2);
+        Check("and counts each cause apart", run.Count(RouteStatus.NoCarrierNear) == 2);
+
+        // The one that never happened. A report that prints it as zero buries the two that did.
+        Check("a cause that did not happen is not a cause",
+            !run.Causes.Contains(RouteStatus.NoConnectivity));
+
+        Check("the causes that did happen are both there",
+            run.Causes.SequenceEqual(new[] { RouteStatus.NoCarrierNear, RouteStatus.NothingToRoute }));
+
+        Check("failures keep the order they were tried in",
+            run.Failures.Select(one => one.Circuit.Value).SequenceEqual(new long[] { 3, 4, 5 }));
+
+        Check("and can be asked for one cause at a time",
+            run.Blocked(RouteStatus.NothingToRoute).Single().BlockedAt == "SP-1, way 12");
+
+        Check("length is summed over what routed", Near(run.TotalLength, 35));
+
+        // The pair that must come from one set. Revit's number for the three that did not route is
+        // 198 ft here on purpose: if either total ever drifts onto all five results, this goes red.
+        Check("and Revit's number over those same circuits, not all of them",
+            Near(run.BuiltInLength, 32));
+
+        Check("the version travels with the run", run.NetworkVersion == 7);
+    }
+
+    private static RouteResult Routed(long circuit, double alongCarriers, double approaches, double builtIn) =>
+        new(new CarrierId(circuit), RouteStatus.Found, 7)
+        {
+            AlongCarriers = alongCarriers,
+            Approaches = approaches,
+            BuiltInLength = builtIn,
+        };
+
+    private static RouteResult Failed(long circuit, RouteStatus status, string blockedAt, double builtIn) =>
+        new(new CarrierId(circuit), status, 7)
+        {
+            BlockedAt = blockedAt,
+            BuiltInLength = builtIn,
+        };
 
     private static CarrierNode Tray(long id, double from, double to) =>
         new(new CarrierId(id), CarrierKind.Segment, "tray", to - from, 0.05, P(from, 0, 0), P(to, 0, 0));

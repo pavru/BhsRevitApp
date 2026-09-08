@@ -1,4 +1,4 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
 
     <!--
       Routing, as a value. No Autodesk reference, and that is the load-bearing part rather than a
@@ -6,9 +6,18 @@
 
       A modal Revit command owns the API thread, which is also Revit's UI thread - so work done on it
       freezes Revit and freezes our own window with it, and a progress bar that cannot repaint is
-      worse than none. The pump does not help either: an ExternalEvent raised from inside a modal
-      window never fires, because Revit never reaches Idling while the window is up. The compute
-      phase therefore has to happen off the API thread and touch nothing of Revit's.
+      worse than none. The compute phase therefore has to happen off the API thread and touch nothing
+      of Revit's.
+
+      The sentence that used to stand here - "the pump does not help either, an ExternalEvent raised
+      from inside a modal window never fires, because Revit never reaches Idling while the window is
+      up" - was never measured, and half of it is wrong. Measured on all four releases: the pump
+      indeed does not run while the window is up, but work posted to it is not lost - it runs the
+      moment the window closes, in the same hundredth of a second, because Execute drains the whole
+      queue. Revit also still answers reads from inside the window, and an await taken there resumes
+      on the API thread. None of that changes this project's shape; it changes the command's, which
+      applies in the continuation rather than handing the work to the pump and closing the window
+      before the work it describes is done.
 
       "Touch nothing of Revit's" is a rule somebody eventually breaks, so it is not left to
       discipline: on this axis the type Document does not exist. A missing field in the snapshot

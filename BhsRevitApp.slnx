@@ -65,6 +65,9 @@
     <!-- The side that has a Document, and the only side that does. It reads the model; it does not
          search it. The split is the thread guarantee from the other end. -->
     <Project Path="source/Features/MEP.Cabling/BHS.MEP.Cabling.Revit/BHS.MEP.Cabling.Revit.csproj" Type="C#" />
+    <!-- The screen, on the plain axis for the same reason as the core: it is driven from a
+         background thread, and here the type Document does not exist to be reached for. -->
+    <Project Path="source/Features/MEP.Cabling/BHS.MEP.Cabling.Ui/BHS.MEP.Cabling.Ui.csproj" Type="C#" />
     <!-- What an edition loads on a press. Separate from the edition so that it can stay
          unloaded until then, which on Revit 2024 is the difference that matters. -->
     <Project Path="source/Features/MEP.Cabling/BHS.MEP.Cabling.Feature/BHS.MEP.Cabling.Feature.csproj" Type="C#" />
