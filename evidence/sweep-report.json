@@ -1,22 +1,22 @@
 {
   "Schema": 2,
   "Disclaimer": "Recorded on a developer machine. Revit cannot run on hosted CI, so CI verifies this record rather than reproducing it: no automated check here has ever started a Revit.",
-  "Commit": "c44a6a711385ab6bce91905607409e0cfdd78c2b",
+  "Commit": "fbe34fcb5354ac519a77b723a1a25c73ff961111",
   "CommitClean": true,
   "Content": {
-    "source/Revit": "f4f7fac4e8dd7af0e407d5638c23e39f54c3d0f2",
+    "source/Revit": "27660d41687d78cb9794d2ef8a7f775b06fb33cc",
     "source/Shared": "74994abc25e47a4a9233275e831de55cc6dbaabb",
     "source/WinSide": "5b71abdce4cd8186abf36416137a3dfa7f437a28",
     "build/BHS.Revit.Sdk": "eb401a3b673fabf6b4ba9ee1286cf8a450e3ed1c"
   },
-  "RecordedUtc": "2026-09-09T05:02:54.5410150Z",
+  "RecordedUtc": "2026-09-09T06:41:08.3027996Z",
   "WithModel": true,
   "ShowTab": false,
   "Releases": [
     {
       "Release": 2024,
       "FileVersion": "0.1.0.0",
-      "BuiltUtc": "2026-09-09T04:30:44.5349600Z",
+      "BuiltUtc": "2026-09-09T06:36:20.2126783Z",
       "Signed": true,
       "Checks": [
         {
@@ -292,6 +292,38 @@
           "Ok": true
         },
         {
+          "Name": "a file is written for every language, not only this Revit\u0027s",
+          "Ok": true
+        },
+        {
+          "Name": "and Revit finds our parameter in each of them",
+          "Ok": true
+        },
+        {
+          "Name": "the two files call one parameter by two names",
+          "Ok": true
+        },
+        {
+          "Name": "the user\u0027s own shared parameter file is put back afterwards",
+          "Ok": true
+        },
+        {
+          "Name": "binding puts every declared parameter into the model",
+          "Ok": true
+        },
+        {
+          "Name": "and the parameter is found by its identifier, not its name",
+          "Ok": true
+        },
+        {
+          "Name": "under the name from the file this Revit reads",
+          "Ok": true
+        },
+        {
+          "Name": "and the group leaves the document without it",
+          "Ok": true
+        },
+        {
           "Name": "a DBApplication add-in starts the same host",
           "Ok": true
         },
@@ -384,11 +416,11 @@
       "Notes": [
         {
           "Name": "launched",
-          "Value": "pid 44552"
+          "Value": "pid 49912"
         },
         {
           "Name": "registered after",
-          "Value": "33.2s"
+          "Value": "17.3s"
         },
         {
           "Name": "recovered by enumeration",
@@ -404,11 +436,11 @@
         },
         {
           "Name": "probe log",
-          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2024-44552-20260909-145516.log"
+          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2024-49912-20260909-163635.log"
         },
         {
           "Name": "threads",
-          "Value": "api 1, call 26"
+          "Value": "api 1, call 19"
         },
         {
           "Name": "appdomain",
@@ -432,7 +464,7 @@
         },
         {
           "Name": "log",
-          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2024-44552-20260909-145516.log"
+          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2024-49912-20260909-163635.log"
         },
         {
           "Name": "sinks",
@@ -440,11 +472,11 @@
         },
         {
           "Name": "document",
-          "Value": "bhs-sweep-2024-e2dc498c924940288ac7c70e5dab8715"
+          "Value": "bhs-sweep-2024-7db650d15b68417ebd9d06b5eccf0abb"
         },
         {
           "Name": "opened after registration",
-          "Value": "37.5s"
+          "Value": "15.8s"
         },
         {
           "Name": "availability and the press",
@@ -452,7 +484,7 @@
         },
         {
           "Name": "model settings",
-          "Value": "document bhs-sweep-2024-e2dc498c924940288ac7c70e5dab8715, origin Model"
+          "Value": "document bhs-sweep-2024-7db650d15b68417ebd9d06b5eccf0abb, origin Model"
         },
         {
           "Name": "fields as built",
@@ -464,15 +496,15 @@
         },
         {
           "Name": "instance",
-          "Value": "6b6c6194491a431ba5eafaf56794ef41"
+          "Value": "a5a676d48b054070aad9717e7e9a5b7e"
         },
         {
           "Name": "log",
-          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2024-44552-20260909-145516.log"
+          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2024-49912-20260909-163635.log"
         },
         {
           "Name": "pid",
-          "Value": "44552"
+          "Value": "49912"
         },
         {
           "Name": "release",
@@ -488,11 +520,11 @@
         },
         {
           "Name": "instance",
-          "Value": "6b6c6194491a431ba5eafaf56794ef41"
+          "Value": "a5a676d48b054070aad9717e7e9a5b7e"
         },
         {
           "Name": "log",
-          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2024-44552-20260909-145516.log"
+          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2024-49912-20260909-163635.log"
         },
         {
           "Name": "modal:apiCallWorked",
@@ -504,11 +536,11 @@
         },
         {
           "Name": "modal:apiRead",
-          "Value": "bhs-sweep-2024-e2dc498c924940288ac7c70e5dab8715"
+          "Value": "bhs-sweep-2024-7db650d15b68417ebd9d06b5eccf0abb"
         },
         {
           "Name": "modal:apiReadAfterAwait",
-          "Value": "bhs-sweep-2024-e2dc498c924940288ac7c70e5dab8715"
+          "Value": "bhs-sweep-2024-7db650d15b68417ebd9d06b5eccf0abb"
         },
         {
           "Name": "modal:apiThread",
@@ -520,7 +552,7 @@
         },
         {
           "Name": "modal:awaitResumedAfter",
-          "Value": "0.44s"
+          "Value": "0.48s"
         },
         {
           "Name": "modal:awaitResumedOnApiThread",
@@ -544,7 +576,7 @@
         },
         {
           "Name": "modal:shownFor",
-          "Value": "2.51s"
+          "Value": "2.55s"
         },
         {
           "Name": "modal:transactionCommit",
@@ -576,7 +608,7 @@
         },
         {
           "Name": "pid",
-          "Value": "44552"
+          "Value": "49912"
         },
         {
           "Name": "release",
@@ -588,11 +620,11 @@
         },
         {
           "Name": "instance",
-          "Value": "6b6c6194491a431ba5eafaf56794ef41"
+          "Value": "a5a676d48b054070aad9717e7e9a5b7e"
         },
         {
           "Name": "log",
-          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2024-44552-20260909-145516.log"
+          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2024-49912-20260909-163635.log"
         },
         {
           "Name": "modal:measured",
@@ -604,7 +636,7 @@
         },
         {
           "Name": "modal:pumpRanAt",
-          "Value": "2.51s"
+          "Value": "2.55s"
         },
         {
           "Name": "modal:windowClosed",
@@ -612,7 +644,99 @@
         },
         {
           "Name": "pid",
-          "Value": "44552"
+          "Value": "49912"
+        },
+        {
+          "Name": "release",
+          "Value": "2024"
+        },
+        {
+          "Name": "revision",
+          "Value": "3"
+        },
+        {
+          "Name": "instance",
+          "Value": "a5a676d48b054070aad9717e7e9a5b7e"
+        },
+        {
+          "Name": "log",
+          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2024-49912-20260909-163635.log"
+        },
+        {
+          "Name": "parameters:bound",
+          "Value": "2"
+        },
+        {
+          "Name": "parameters:categoryResolved",
+          "Value": "True"
+        },
+        {
+          "Name": "parameters:chose",
+          "Value": "Russian"
+        },
+        {
+          "Name": "parameters:documentSkipped",
+          "Value": "False"
+        },
+        {
+          "Name": "parameters:file:en",
+          "Value": "True"
+        },
+        {
+          "Name": "parameters:file:ru",
+          "Value": "True"
+        },
+        {
+          "Name": "parameters:fileBefore",
+          "Value": "E:\\ArchAndDesign\\BimHouse\\Revit Content\\BimHouseRevitSharedParameters.txt"
+        },
+        {
+          "Name": "parameters:filePutBack",
+          "Value": "True"
+        },
+        {
+          "Name": "parameters:filesWritten",
+          "Value": "2"
+        },
+        {
+          "Name": "parameters:foundByGuid",
+          "Value": "True"
+        },
+        {
+          "Name": "parameters:goneAfterRollback",
+          "Value": "True"
+        },
+        {
+          "Name": "parameters:language",
+          "Value": "Russian"
+        },
+        {
+          "Name": "parameters:missingAfter",
+          "Value": "0"
+        },
+        {
+          "Name": "parameters:missingBefore",
+          "Value": "2"
+        },
+        {
+          "Name": "parameters:name:en",
+          "Value": "BHS_Prb_FirstFact"
+        },
+        {
+          "Name": "parameters:name:ru",
+          "Value": "BHS_Prb_\u041F\u0435\u0440\u0432\u044B\u0439\u0424\u0430\u043A\u0442"
+        },
+        {
+          "Name": "parameters:nameExpected",
+          "Value": "BHS_Prb_\u041F\u0435\u0440\u0432\u044B\u0439\u0424\u0430\u043A\u0442"
+        },
+        {
+          "Name": "parameters:nameInModel",
+          "Value": "BHS_Prb_\u041F\u0435\u0440\u0432\u044B\u0439\u0424\u0430\u043A\u0442"
+        },
+        {
+          "Name": "pid",
+          "Value": "49912"
         },
         {
           "Name": "release",
@@ -736,7 +860,7 @@
         },
         {
           "Name": "diagnostic events",
-          "Value": "176 received, 0 dropped by the publisher, longest quiet spell 31.5s during Starting"
+          "Value": "194 received, 0 dropped by the publisher, longest quiet spell 10.2s during Starting"
         },
         {
           "Name": "phases seen",
@@ -756,7 +880,7 @@
         },
         {
           "Name": "progress caption",
-          "Value": "\u0417\u0430\u0433\u0440\u0443\u0437\u043A\u0430 bhs-sweep-2024-e2dc498c924940288ac7c70e5dab8715.rvt"
+          "Value": "\u0417\u0430\u0433\u0440\u0443\u0437\u043A\u0430 bhs-sweep-2024-7db650d15b68417ebd9d06b5eccf0abb.rvt"
         },
         {
           "Name": "progress caption",
@@ -792,7 +916,7 @@
         },
         {
           "Name": "progress caption",
-          "Value": "\u0427\u0435\u0440\u0442\u0435\u0436: bhs-sweep-2024-e2dc498c924940288ac7c70e5dab8715.rvt - \u041F\u043B\u0430\u043D \u044D\u0442\u0430\u0436\u0430: \u0423\u0440\u043E\u0432\u0435\u043D\u044C 1"
+          "Value": "\u0427\u0435\u0440\u0442\u0435\u0436: bhs-sweep-2024-7db650d15b68417ebd9d06b5eccf0abb.rvt - \u041F\u043B\u0430\u043D \u044D\u0442\u0430\u0436\u0430: \u0423\u0440\u043E\u0432\u0435\u043D\u044C 1"
         },
         {
           "Name": "progress caption",
@@ -804,14 +928,14 @@
         },
         {
           "Name": "closed after",
-          "Value": "21.1s"
+          "Value": "20.3s"
         }
       ]
     },
     {
       "Release": 2025,
       "FileVersion": "0.1.0.0",
-      "BuiltUtc": "2026-09-09T04:30:43.7170687Z",
+      "BuiltUtc": "2026-09-09T06:36:22.4294775Z",
       "Signed": true,
       "Checks": [
         {
@@ -1087,6 +1211,38 @@
           "Ok": true
         },
         {
+          "Name": "a file is written for every language, not only this Revit\u0027s",
+          "Ok": true
+        },
+        {
+          "Name": "and Revit finds our parameter in each of them",
+          "Ok": true
+        },
+        {
+          "Name": "the two files call one parameter by two names",
+          "Ok": true
+        },
+        {
+          "Name": "the user\u0027s own shared parameter file is put back afterwards",
+          "Ok": true
+        },
+        {
+          "Name": "binding puts every declared parameter into the model",
+          "Ok": true
+        },
+        {
+          "Name": "and the parameter is found by its identifier, not its name",
+          "Ok": true
+        },
+        {
+          "Name": "under the name from the file this Revit reads",
+          "Ok": true
+        },
+        {
+          "Name": "and the group leaves the document without it",
+          "Ok": true
+        },
+        {
           "Name": "a DBApplication add-in starts the same host",
           "Ok": true
         },
@@ -1179,11 +1335,11 @@
       "Notes": [
         {
           "Name": "launched",
-          "Value": "pid 38780"
+          "Value": "pid 51904"
         },
         {
           "Name": "registered after",
-          "Value": "29.5s"
+          "Value": "14.1s"
         },
         {
           "Name": "recovered by enumeration",
@@ -1199,11 +1355,11 @@
         },
         {
           "Name": "probe log",
-          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2025-38780-20260909-145659.log"
+          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2025-51904-20260909-163740.log"
         },
         {
           "Name": "threads",
-          "Value": "api 1, call 25"
+          "Value": "api 1, call 16"
         },
         {
           "Name": "appdomain",
@@ -1227,7 +1383,7 @@
         },
         {
           "Name": "log",
-          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2025-38780-20260909-145659.log"
+          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2025-51904-20260909-163740.log"
         },
         {
           "Name": "sinks",
@@ -1235,11 +1391,11 @@
         },
         {
           "Name": "document",
-          "Value": "bhs-sweep-2025-a6bb83bde71548c8a664eb493f48799a"
+          "Value": "bhs-sweep-2025-ea39b2b82b61491dbeb95e218e97d57f"
         },
         {
           "Name": "opened after registration",
-          "Value": "9.1s"
+          "Value": "7.5s"
         },
         {
           "Name": "availability and the press",
@@ -1247,7 +1403,7 @@
         },
         {
           "Name": "model settings",
-          "Value": "document bhs-sweep-2025-a6bb83bde71548c8a664eb493f48799a, origin Model"
+          "Value": "document bhs-sweep-2025-ea39b2b82b61491dbeb95e218e97d57f, origin Model"
         },
         {
           "Name": "fields as built",
@@ -1259,15 +1415,15 @@
         },
         {
           "Name": "instance",
-          "Value": "e2e7ba125e5e42728e7a37a40d74f1c7"
+          "Value": "7c56a3a4a13f4ed28f83b573437047a5"
         },
         {
           "Name": "log",
-          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2025-38780-20260909-145659.log"
+          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2025-51904-20260909-163740.log"
         },
         {
           "Name": "pid",
-          "Value": "38780"
+          "Value": "51904"
         },
         {
           "Name": "release",
@@ -1283,11 +1439,11 @@
         },
         {
           "Name": "instance",
-          "Value": "e2e7ba125e5e42728e7a37a40d74f1c7"
+          "Value": "7c56a3a4a13f4ed28f83b573437047a5"
         },
         {
           "Name": "log",
-          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2025-38780-20260909-145659.log"
+          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2025-51904-20260909-163740.log"
         },
         {
           "Name": "modal:apiCallWorked",
@@ -1299,11 +1455,11 @@
         },
         {
           "Name": "modal:apiRead",
-          "Value": "bhs-sweep-2025-a6bb83bde71548c8a664eb493f48799a"
+          "Value": "bhs-sweep-2025-ea39b2b82b61491dbeb95e218e97d57f"
         },
         {
           "Name": "modal:apiReadAfterAwait",
-          "Value": "bhs-sweep-2025-a6bb83bde71548c8a664eb493f48799a"
+          "Value": "bhs-sweep-2025-ea39b2b82b61491dbeb95e218e97d57f"
         },
         {
           "Name": "modal:apiThread",
@@ -1315,7 +1471,7 @@
         },
         {
           "Name": "modal:awaitResumedAfter",
-          "Value": "0.44s"
+          "Value": "0.45s"
         },
         {
           "Name": "modal:awaitResumedOnApiThread",
@@ -1339,7 +1495,7 @@
         },
         {
           "Name": "modal:shownFor",
-          "Value": "2.50s"
+          "Value": "2.51s"
         },
         {
           "Name": "modal:transactionCommit",
@@ -1371,7 +1527,7 @@
         },
         {
           "Name": "pid",
-          "Value": "38780"
+          "Value": "51904"
         },
         {
           "Name": "release",
@@ -1383,11 +1539,11 @@
         },
         {
           "Name": "instance",
-          "Value": "e2e7ba125e5e42728e7a37a40d74f1c7"
+          "Value": "7c56a3a4a13f4ed28f83b573437047a5"
         },
         {
           "Name": "log",
-          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2025-38780-20260909-145659.log"
+          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2025-51904-20260909-163740.log"
         },
         {
           "Name": "modal:measured",
@@ -1399,7 +1555,7 @@
         },
         {
           "Name": "modal:pumpRanAt",
-          "Value": "2.50s"
+          "Value": "2.51s"
         },
         {
           "Name": "modal:windowClosed",
@@ -1407,7 +1563,99 @@
         },
         {
           "Name": "pid",
-          "Value": "38780"
+          "Value": "51904"
+        },
+        {
+          "Name": "release",
+          "Value": "2025"
+        },
+        {
+          "Name": "revision",
+          "Value": "3"
+        },
+        {
+          "Name": "instance",
+          "Value": "7c56a3a4a13f4ed28f83b573437047a5"
+        },
+        {
+          "Name": "log",
+          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2025-51904-20260909-163740.log"
+        },
+        {
+          "Name": "parameters:bound",
+          "Value": "2"
+        },
+        {
+          "Name": "parameters:categoryResolved",
+          "Value": "True"
+        },
+        {
+          "Name": "parameters:chose",
+          "Value": "Russian"
+        },
+        {
+          "Name": "parameters:documentSkipped",
+          "Value": "False"
+        },
+        {
+          "Name": "parameters:file:en",
+          "Value": "True"
+        },
+        {
+          "Name": "parameters:file:ru",
+          "Value": "True"
+        },
+        {
+          "Name": "parameters:fileBefore",
+          "Value": "(none)"
+        },
+        {
+          "Name": "parameters:filePutBack",
+          "Value": "True"
+        },
+        {
+          "Name": "parameters:filesWritten",
+          "Value": "2"
+        },
+        {
+          "Name": "parameters:foundByGuid",
+          "Value": "True"
+        },
+        {
+          "Name": "parameters:goneAfterRollback",
+          "Value": "True"
+        },
+        {
+          "Name": "parameters:language",
+          "Value": "Russian"
+        },
+        {
+          "Name": "parameters:missingAfter",
+          "Value": "0"
+        },
+        {
+          "Name": "parameters:missingBefore",
+          "Value": "2"
+        },
+        {
+          "Name": "parameters:name:en",
+          "Value": "BHS_Prb_FirstFact"
+        },
+        {
+          "Name": "parameters:name:ru",
+          "Value": "BHS_Prb_\u041F\u0435\u0440\u0432\u044B\u0439\u0424\u0430\u043A\u0442"
+        },
+        {
+          "Name": "parameters:nameExpected",
+          "Value": "BHS_Prb_\u041F\u0435\u0440\u0432\u044B\u0439\u0424\u0430\u043A\u0442"
+        },
+        {
+          "Name": "parameters:nameInModel",
+          "Value": "BHS_Prb_\u041F\u0435\u0440\u0432\u044B\u0439\u0424\u0430\u043A\u0442"
+        },
+        {
+          "Name": "pid",
+          "Value": "51904"
         },
         {
           "Name": "release",
@@ -1563,7 +1811,7 @@
         },
         {
           "Name": "diagnostic events",
-          "Value": "100 received, 0 dropped by the publisher, longest quiet spell 3.7s during Working"
+          "Value": "117 received, 0 dropped by the publisher, longest quiet spell 3.5s during Working"
         },
         {
           "Name": "phases seen",
@@ -1591,7 +1839,7 @@
         },
         {
           "Name": "progress caption",
-          "Value": "\u0417\u0430\u0433\u0440\u0443\u0437\u043A\u0430 bhs-sweep-2025-a6bb83bde71548c8a664eb493f48799a.rvt"
+          "Value": "\u0417\u0430\u0433\u0440\u0443\u0437\u043A\u0430 bhs-sweep-2025-ea39b2b82b61491dbeb95e218e97d57f.rvt"
         },
         {
           "Name": "progress caption",
@@ -1619,18 +1867,22 @@
         },
         {
           "Name": "progress caption",
-          "Value": "\u0427\u0435\u0440\u0442\u0435\u0436: bhs-sweep-2025-a6bb83bde71548c8a664eb493f48799a.rvt - \u041F\u043B\u0430\u043D \u044D\u0442\u0430\u0436\u0430: \u0423\u0440\u043E\u0432\u0435\u043D\u044C 1"
+          "Value": "\u0427\u0435\u0440\u0442\u0435\u0436: bhs-sweep-2025-ea39b2b82b61491dbeb95e218e97d57f.rvt - \u041F\u043B\u0430\u043D \u044D\u0442\u0430\u0436\u0430: \u0423\u0440\u043E\u0432\u0435\u043D\u044C 1"
+        },
+        {
+          "Name": "progress caption",
+          "Value": "\u0420\u0435\u0433\u0435\u043D\u0435\u0440\u0430\u0446\u0438\u044F"
         },
         {
           "Name": "closed after",
-          "Value": "49.3s"
+          "Value": "3.5s"
         }
       ]
     },
     {
       "Release": 2026,
       "FileVersion": "0.1.0.0",
-      "BuiltUtc": "2026-09-09T04:30:43.2461555Z",
+      "BuiltUtc": "2026-09-09T06:36:21.1956314Z",
       "Signed": true,
       "Checks": [
         {
@@ -1906,6 +2158,38 @@
           "Ok": true
         },
         {
+          "Name": "a file is written for every language, not only this Revit\u0027s",
+          "Ok": true
+        },
+        {
+          "Name": "and Revit finds our parameter in each of them",
+          "Ok": true
+        },
+        {
+          "Name": "the two files call one parameter by two names",
+          "Ok": true
+        },
+        {
+          "Name": "the user\u0027s own shared parameter file is put back afterwards",
+          "Ok": true
+        },
+        {
+          "Name": "binding puts every declared parameter into the model",
+          "Ok": true
+        },
+        {
+          "Name": "and the parameter is found by its identifier, not its name",
+          "Ok": true
+        },
+        {
+          "Name": "under the name from the file this Revit reads",
+          "Ok": true
+        },
+        {
+          "Name": "and the group leaves the document without it",
+          "Ok": true
+        },
+        {
           "Name": "a DBApplication add-in starts the same host",
           "Ok": true
         },
@@ -1998,11 +2282,11 @@
       "Notes": [
         {
           "Name": "launched",
-          "Value": "pid 51364"
+          "Value": "pid 50380"
         },
         {
           "Name": "registered after",
-          "Value": "25.8s"
+          "Value": "26.6s"
         },
         {
           "Name": "recovered by enumeration",
@@ -2018,11 +2302,11 @@
         },
         {
           "Name": "probe log",
-          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2026-51364-20260909-145817.log"
+          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2026-50380-20260909-163810.log"
         },
         {
           "Name": "threads",
-          "Value": "api 1, call 10"
+          "Value": "api 1, call 32"
         },
         {
           "Name": "appdomain",
@@ -2046,7 +2330,7 @@
         },
         {
           "Name": "log",
-          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2026-51364-20260909-145817.log"
+          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2026-50380-20260909-163810.log"
         },
         {
           "Name": "sinks",
@@ -2054,11 +2338,11 @@
         },
         {
           "Name": "document",
-          "Value": "bhs-sweep-2026-89df12e223cc48998020ede64a149311"
+          "Value": "bhs-sweep-2026-ba72c7afe52842dc832f68c936d42caa"
         },
         {
           "Name": "opened after registration",
-          "Value": "64.6s"
+          "Value": "68.1s"
         },
         {
           "Name": "availability and the press",
@@ -2066,7 +2350,7 @@
         },
         {
           "Name": "model settings",
-          "Value": "document bhs-sweep-2026-89df12e223cc48998020ede64a149311, origin Model"
+          "Value": "document bhs-sweep-2026-ba72c7afe52842dc832f68c936d42caa, origin Model"
         },
         {
           "Name": "fields as built",
@@ -2078,15 +2362,15 @@
         },
         {
           "Name": "instance",
-          "Value": "544d20dfe42f457ebb552dc68ccb7249"
+          "Value": "6a9d4095c2014ed58446b07583518c2a"
         },
         {
           "Name": "log",
-          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2026-51364-20260909-145817.log"
+          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2026-50380-20260909-163810.log"
         },
         {
           "Name": "pid",
-          "Value": "51364"
+          "Value": "50380"
         },
         {
           "Name": "release",
@@ -2102,11 +2386,11 @@
         },
         {
           "Name": "instance",
-          "Value": "544d20dfe42f457ebb552dc68ccb7249"
+          "Value": "6a9d4095c2014ed58446b07583518c2a"
         },
         {
           "Name": "log",
-          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2026-51364-20260909-145817.log"
+          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2026-50380-20260909-163810.log"
         },
         {
           "Name": "modal:apiCallWorked",
@@ -2118,11 +2402,11 @@
         },
         {
           "Name": "modal:apiRead",
-          "Value": "bhs-sweep-2026-89df12e223cc48998020ede64a149311"
+          "Value": "bhs-sweep-2026-ba72c7afe52842dc832f68c936d42caa"
         },
         {
           "Name": "modal:apiReadAfterAwait",
-          "Value": "bhs-sweep-2026-89df12e223cc48998020ede64a149311"
+          "Value": "bhs-sweep-2026-ba72c7afe52842dc832f68c936d42caa"
         },
         {
           "Name": "modal:apiThread",
@@ -2134,7 +2418,7 @@
         },
         {
           "Name": "modal:awaitResumedAfter",
-          "Value": "0.25s"
+          "Value": "0.28s"
         },
         {
           "Name": "modal:awaitResumedOnApiThread",
@@ -2158,7 +2442,7 @@
         },
         {
           "Name": "modal:shownFor",
-          "Value": "2.31s"
+          "Value": "2.35s"
         },
         {
           "Name": "modal:transactionCommit",
@@ -2190,7 +2474,7 @@
         },
         {
           "Name": "pid",
-          "Value": "51364"
+          "Value": "50380"
         },
         {
           "Name": "release",
@@ -2202,11 +2486,11 @@
         },
         {
           "Name": "instance",
-          "Value": "544d20dfe42f457ebb552dc68ccb7249"
+          "Value": "6a9d4095c2014ed58446b07583518c2a"
         },
         {
           "Name": "log",
-          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2026-51364-20260909-145817.log"
+          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2026-50380-20260909-163810.log"
         },
         {
           "Name": "modal:measured",
@@ -2218,7 +2502,7 @@
         },
         {
           "Name": "modal:pumpRanAt",
-          "Value": "2.31s"
+          "Value": "2.35s"
         },
         {
           "Name": "modal:windowClosed",
@@ -2226,7 +2510,99 @@
         },
         {
           "Name": "pid",
-          "Value": "51364"
+          "Value": "50380"
+        },
+        {
+          "Name": "release",
+          "Value": "2026"
+        },
+        {
+          "Name": "revision",
+          "Value": "3"
+        },
+        {
+          "Name": "instance",
+          "Value": "6a9d4095c2014ed58446b07583518c2a"
+        },
+        {
+          "Name": "log",
+          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2026-50380-20260909-163810.log"
+        },
+        {
+          "Name": "parameters:bound",
+          "Value": "2"
+        },
+        {
+          "Name": "parameters:categoryResolved",
+          "Value": "True"
+        },
+        {
+          "Name": "parameters:chose",
+          "Value": "Russian"
+        },
+        {
+          "Name": "parameters:documentSkipped",
+          "Value": "False"
+        },
+        {
+          "Name": "parameters:file:en",
+          "Value": "True"
+        },
+        {
+          "Name": "parameters:file:ru",
+          "Value": "True"
+        },
+        {
+          "Name": "parameters:fileBefore",
+          "Value": "E:\\ArchAndDesign\\BimHouse\\Revit Content\\BimHouseRevitSharedParameters.txt"
+        },
+        {
+          "Name": "parameters:filePutBack",
+          "Value": "True"
+        },
+        {
+          "Name": "parameters:filesWritten",
+          "Value": "2"
+        },
+        {
+          "Name": "parameters:foundByGuid",
+          "Value": "True"
+        },
+        {
+          "Name": "parameters:goneAfterRollback",
+          "Value": "True"
+        },
+        {
+          "Name": "parameters:language",
+          "Value": "Russian"
+        },
+        {
+          "Name": "parameters:missingAfter",
+          "Value": "0"
+        },
+        {
+          "Name": "parameters:missingBefore",
+          "Value": "2"
+        },
+        {
+          "Name": "parameters:name:en",
+          "Value": "BHS_Prb_FirstFact"
+        },
+        {
+          "Name": "parameters:name:ru",
+          "Value": "BHS_Prb_\u041F\u0435\u0440\u0432\u044B\u0439\u0424\u0430\u043A\u0442"
+        },
+        {
+          "Name": "parameters:nameExpected",
+          "Value": "BHS_Prb_\u041F\u0435\u0440\u0432\u044B\u0439\u0424\u0430\u043A\u0442"
+        },
+        {
+          "Name": "parameters:nameInModel",
+          "Value": "BHS_Prb_\u041F\u0435\u0440\u0432\u044B\u0439\u0424\u0430\u043A\u0442"
+        },
+        {
+          "Name": "pid",
+          "Value": "50380"
         },
         {
           "Name": "release",
@@ -2346,7 +2722,7 @@
         },
         {
           "Name": "diagnostic events",
-          "Value": "193 received, 0 dropped by the publisher, longest quiet spell 50.9s during Starting"
+          "Value": "194 received, 0 dropped by the publisher, longest quiet spell 53.8s during Starting"
         },
         {
           "Name": "phases seen",
@@ -2370,7 +2746,7 @@
         },
         {
           "Name": "progress caption",
-          "Value": "\u0417\u0430\u0433\u0440\u0443\u0437\u043A\u0430 bhs-sweep-2026-89df12e223cc48998020ede64a149311.rvt"
+          "Value": "\u0417\u0430\u0433\u0440\u0443\u0437\u043A\u0430 bhs-sweep-2026-ba72c7afe52842dc832f68c936d42caa.rvt"
         },
         {
           "Name": "progress caption",
@@ -2398,7 +2774,7 @@
         },
         {
           "Name": "progress caption",
-          "Value": "\u0427\u0435\u0440\u0442\u0435\u0436: bhs-sweep-2026-89df12e223cc48998020ede64a149311.rvt - \u041F\u043B\u0430\u043D \u044D\u0442\u0430\u0436\u0430: \u0423\u0440\u043E\u0432\u0435\u043D\u044C 1"
+          "Value": "\u0427\u0435\u0440\u0442\u0435\u0436: bhs-sweep-2026-ba72c7afe52842dc832f68c936d42caa.rvt - \u041F\u043B\u0430\u043D \u044D\u0442\u0430\u0436\u0430: \u0423\u0440\u043E\u0432\u0435\u043D\u044C 1"
         },
         {
           "Name": "progress caption",
@@ -2414,14 +2790,14 @@
         },
         {
           "Name": "closed after",
-          "Value": "16.2s"
+          "Value": "16.5s"
         }
       ]
     },
     {
       "Release": 2027,
       "FileVersion": "0.1.0.0",
-      "BuiltUtc": "2026-09-09T04:30:41.0698200Z",
+      "BuiltUtc": "2026-09-09T06:36:22.8389981Z",
       "Signed": true,
       "Checks": [
         {
@@ -2697,6 +3073,38 @@
           "Ok": true
         },
         {
+          "Name": "a file is written for every language, not only this Revit\u0027s",
+          "Ok": true
+        },
+        {
+          "Name": "and Revit finds our parameter in each of them",
+          "Ok": true
+        },
+        {
+          "Name": "the two files call one parameter by two names",
+          "Ok": true
+        },
+        {
+          "Name": "the user\u0027s own shared parameter file is put back afterwards",
+          "Ok": true
+        },
+        {
+          "Name": "binding puts every declared parameter into the model",
+          "Ok": true
+        },
+        {
+          "Name": "and the parameter is found by its identifier, not its name",
+          "Ok": true
+        },
+        {
+          "Name": "under the name from the file this Revit reads",
+          "Ok": true
+        },
+        {
+          "Name": "and the group leaves the document without it",
+          "Ok": true
+        },
+        {
           "Name": "a DBApplication add-in starts the same host",
           "Ok": true
         },
@@ -2789,11 +3197,11 @@
       "Notes": [
         {
           "Name": "launched",
-          "Value": "pid 42004"
+          "Value": "pid 14516"
         },
         {
           "Name": "registered after",
-          "Value": "33.6s"
+          "Value": "18.4s"
         },
         {
           "Name": "recovered by enumeration",
@@ -2809,11 +3217,11 @@
         },
         {
           "Name": "probe log",
-          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2027-42004-20260909-150024.log"
+          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2027-14516-20260909-164008.log"
         },
         {
           "Name": "threads",
-          "Value": "api 2, call 17"
+          "Value": "api 2, call 18"
         },
         {
           "Name": "appdomain",
@@ -2837,7 +3245,7 @@
         },
         {
           "Name": "log",
-          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2027-42004-20260909-150024.log"
+          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2027-14516-20260909-164008.log"
         },
         {
           "Name": "sinks",
@@ -2845,11 +3253,11 @@
         },
         {
           "Name": "document",
-          "Value": "bhs-sweep-2027-a391f3485bd849f28e904e74be5cffc8"
+          "Value": "bhs-sweep-2027-ed38f94e95dc4b62950083b69c13e77f"
         },
         {
           "Name": "opened after registration",
-          "Value": "56.1s"
+          "Value": "36.9s"
         },
         {
           "Name": "availability and the press",
@@ -2857,7 +3265,7 @@
         },
         {
           "Name": "model settings",
-          "Value": "document bhs-sweep-2027-a391f3485bd849f28e904e74be5cffc8, origin Model"
+          "Value": "document bhs-sweep-2027-ed38f94e95dc4b62950083b69c13e77f, origin Model"
         },
         {
           "Name": "fields as built",
@@ -2869,15 +3277,15 @@
         },
         {
           "Name": "instance",
-          "Value": "e1897ba5bf884a93a7c717db132441ea"
+          "Value": "2d3fba923fa64ea196a25d23a6bc0896"
         },
         {
           "Name": "log",
-          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2027-42004-20260909-150024.log"
+          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2027-14516-20260909-164008.log"
         },
         {
           "Name": "pid",
-          "Value": "42004"
+          "Value": "14516"
         },
         {
           "Name": "release",
@@ -2893,11 +3301,11 @@
         },
         {
           "Name": "instance",
-          "Value": "e1897ba5bf884a93a7c717db132441ea"
+          "Value": "2d3fba923fa64ea196a25d23a6bc0896"
         },
         {
           "Name": "log",
-          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2027-42004-20260909-150024.log"
+          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2027-14516-20260909-164008.log"
         },
         {
           "Name": "modal:apiCallWorked",
@@ -2909,11 +3317,11 @@
         },
         {
           "Name": "modal:apiRead",
-          "Value": "bhs-sweep-2027-a391f3485bd849f28e904e74be5cffc8"
+          "Value": "bhs-sweep-2027-ed38f94e95dc4b62950083b69c13e77f"
         },
         {
           "Name": "modal:apiReadAfterAwait",
-          "Value": "bhs-sweep-2027-a391f3485bd849f28e904e74be5cffc8"
+          "Value": "bhs-sweep-2027-ed38f94e95dc4b62950083b69c13e77f"
         },
         {
           "Name": "modal:apiThread",
@@ -2981,7 +3389,7 @@
         },
         {
           "Name": "pid",
-          "Value": "42004"
+          "Value": "14516"
         },
         {
           "Name": "release",
@@ -2993,11 +3401,11 @@
         },
         {
           "Name": "instance",
-          "Value": "e1897ba5bf884a93a7c717db132441ea"
+          "Value": "2d3fba923fa64ea196a25d23a6bc0896"
         },
         {
           "Name": "log",
-          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2027-42004-20260909-150024.log"
+          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2027-14516-20260909-164008.log"
         },
         {
           "Name": "modal:measured",
@@ -3017,7 +3425,99 @@
         },
         {
           "Name": "pid",
-          "Value": "42004"
+          "Value": "14516"
+        },
+        {
+          "Name": "release",
+          "Value": "2027"
+        },
+        {
+          "Name": "revision",
+          "Value": "3"
+        },
+        {
+          "Name": "instance",
+          "Value": "2d3fba923fa64ea196a25d23a6bc0896"
+        },
+        {
+          "Name": "log",
+          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2027-14516-20260909-164008.log"
+        },
+        {
+          "Name": "parameters:bound",
+          "Value": "2"
+        },
+        {
+          "Name": "parameters:categoryResolved",
+          "Value": "True"
+        },
+        {
+          "Name": "parameters:chose",
+          "Value": "Russian"
+        },
+        {
+          "Name": "parameters:documentSkipped",
+          "Value": "False"
+        },
+        {
+          "Name": "parameters:file:en",
+          "Value": "True"
+        },
+        {
+          "Name": "parameters:file:ru",
+          "Value": "True"
+        },
+        {
+          "Name": "parameters:fileBefore",
+          "Value": "(none)"
+        },
+        {
+          "Name": "parameters:filePutBack",
+          "Value": "True"
+        },
+        {
+          "Name": "parameters:filesWritten",
+          "Value": "2"
+        },
+        {
+          "Name": "parameters:foundByGuid",
+          "Value": "True"
+        },
+        {
+          "Name": "parameters:goneAfterRollback",
+          "Value": "True"
+        },
+        {
+          "Name": "parameters:language",
+          "Value": "Russian"
+        },
+        {
+          "Name": "parameters:missingAfter",
+          "Value": "0"
+        },
+        {
+          "Name": "parameters:missingBefore",
+          "Value": "2"
+        },
+        {
+          "Name": "parameters:name:en",
+          "Value": "BHS_Prb_FirstFact"
+        },
+        {
+          "Name": "parameters:name:ru",
+          "Value": "BHS_Prb_\u041F\u0435\u0440\u0432\u044B\u0439\u0424\u0430\u043A\u0442"
+        },
+        {
+          "Name": "parameters:nameExpected",
+          "Value": "BHS_Prb_\u041F\u0435\u0440\u0432\u044B\u0439\u0424\u0430\u043A\u0442"
+        },
+        {
+          "Name": "parameters:nameInModel",
+          "Value": "BHS_Prb_\u041F\u0435\u0440\u0432\u044B\u0439\u0424\u0430\u043A\u0442"
+        },
+        {
+          "Name": "pid",
+          "Value": "14516"
         },
         {
           "Name": "release",
@@ -3413,7 +3913,7 @@
         },
         {
           "Name": "diagnostic events",
-          "Value": "178 received, 0 dropped by the publisher, longest quiet spell 41.1s during Starting"
+          "Value": "202 received, 0 dropped by the publisher, longest quiet spell 24.1s during Starting"
         },
         {
           "Name": "phases seen",
@@ -3437,7 +3937,7 @@
         },
         {
           "Name": "progress caption",
-          "Value": "\u0417\u0430\u0433\u0440\u0443\u0437\u043A\u0430 bhs-sweep-2027-a391f3485bd849f28e904e74be5cffc8.rvt"
+          "Value": "\u0417\u0430\u0433\u0440\u0443\u0437\u043A\u0430 bhs-sweep-2027-ed38f94e95dc4b62950083b69c13e77f.rvt"
         },
         {
           "Name": "progress caption",
@@ -3465,7 +3965,7 @@
         },
         {
           "Name": "progress caption",
-          "Value": "\u0427\u0435\u0440\u0442\u0435\u0436: bhs-sweep-2027-a391f3485bd849f28e904e74be5cffc8.rvt - \u041F\u043B\u0430\u043D \u044D\u0442\u0430\u0436\u0430: \u0423\u0440\u043E\u0432\u0435\u043D\u044C 1"
+          "Value": "\u0427\u0435\u0440\u0442\u0435\u0436: bhs-sweep-2027-ed38f94e95dc4b62950083b69c13e77f.rvt - \u041F\u043B\u0430\u043D \u044D\u0442\u0430\u0436\u0430: \u0423\u0440\u043E\u0432\u0435\u043D\u044C 1"
         },
         {
           "Name": "progress caption",
@@ -3481,11 +3981,11 @@
         },
         {
           "Name": "closed after",
-          "Value": "83.5s"
+          "Value": "13.0s"
         }
       ]
     }
   ],
-  "Performed": 360,
+  "Performed": 392,
   "Failed": 0
 }
