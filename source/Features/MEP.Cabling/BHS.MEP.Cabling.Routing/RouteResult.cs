@@ -59,9 +59,26 @@ public sealed class RouteResult
 
     /// <summary>The drops from the structure to the two ends, in internal feet.</summary>
     /// <remarks>
+    /// <para>
     /// Kept apart from <see cref="AlongCarriers"/> rather than folded in, because the result screen
     /// has to explain why the computed length exceeds Revit's own. "Longer by 9 %" invites a bug
     /// report; "longer by the drops to devices, 2.4 m on average" does not.
+    /// </para>
+    /// <para>
+    /// <b>Each leg pays a drop at both ends, so an intermediate device's drop is counted twice - and
+    /// that is one of two real cases, not the shape of the world.</b> Told by the owner: a device is
+    /// connected either with the cable cut at the terminal, where a doubled cable comes down and a
+    /// new run leaves, and twice is right; or with a single cable cut at a junction box, where the
+    /// trunk stays up and only a spur descends, and twice is roughly double the truth. On the first
+    /// real model the drops were 38 % of the total, so the difference is not a detail.
+    /// </para>
+    /// <para>
+    /// <b>Only the first is implemented, and it arrived as an unstated assumption rather than as a
+    /// decision.</b> The junction box may also be absent from the model where that is nonetheless how
+    /// it is wired, which the owner asks be reported rather than guessed at. The open questions are
+    /// in CLAUDE.md under the compute phase; nothing here should grow past them until they are
+    /// answered.
+    /// </para>
     /// </remarks>
     public double Approaches { get; init; }
 
