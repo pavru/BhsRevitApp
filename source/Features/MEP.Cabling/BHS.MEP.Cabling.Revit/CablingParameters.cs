@@ -1,4 +1,4 @@
-﻿using Autodesk.Revit.DB;
+using Autodesk.Revit.DB;
 using BHS.Revit.Common.Parameters;
 
 namespace BHS.MEP.Cabling.Revit;
@@ -15,9 +15,16 @@ namespace BHS.MEP.Cabling.Revit;
 /// </para>
 /// <para>
 /// <b>The GUIDs are new rather than the predecessor's</b> - the owner's decision, a clean slate. They
-/// are fixed here for ever: the same parameter across models, families and versions of us is the
-/// same GUID, and a different one is a second parameter that looks identical in the palette and
-/// shares nothing.
+/// are fixed here for ever: the same parameter across models, families, languages and versions of us
+/// is the same GUID, and a different one is a second parameter that looks identical in the palette
+/// and shares nothing.
+/// </para>
+/// <para>
+/// <b>Names follow the owner's template, <c>Vendor_Feature_Meaning</c>, and each third answers to a
+/// different rule.</b> The vendor is a mark and stays Latin. The feature is an English abbreviation
+/// and is <i>the same in every file</i> - <c>Cbl</c> here - so the two names of one parameter differ
+/// in exactly one place, which is what makes them recognisable as a pair rather than as two
+/// parameters. Only the meaning is in the file's language.
 /// </para>
 /// </remarks>
 public sealed class CablingParameters : SharedParameterScheme
@@ -27,7 +34,7 @@ public sealed class CablingParameters : SharedParameterScheme
     /// <b>How a junction box is recognised, and the reason it is not recognised by name.</b> A family
     /// or a type gets renamed, and code that matches on a name then goes quiet - "not found" and
     /// "there is no such thing" are indistinguishable from this side. A type parameter with a fixed
-    /// GUID says what the thing is regardless of what it is called.
+    /// GUID says what the thing is regardless of what it, or the parameter itself, is called.
     /// </remarks>
     public static readonly Guid ElementRole = new("37076c5b-ba7c-4f51-b05a-86734af4a0e7");
 
@@ -41,6 +48,12 @@ public sealed class CablingParameters : SharedParameterScheme
     public static readonly Guid CircuitConnection = new("3aae5787-e914-41e5-b488-2921b1c33407");
 
     /// <summary>The value of <see cref="ElementRole"/> that means "this is a junction box".</summary>
+    /// <remarks>
+    /// <b>Values are not translated, and that is deliberate rather than unfinished.</b> The name is
+    /// what a person reads; the value is what code compares. Translate the value and the same family
+    /// means different things depending on which Revit the author had open, which is a defect that
+    /// travels inside the family and shows up in somebody else's office.
+    /// </remarks>
     public const string JunctionBoxRole = "JunctionBox";
 
     /// <summary>Cut at the terminal: a doubled cable, down to the device and away from it.</summary>
@@ -52,8 +65,7 @@ public sealed class CablingParameters : SharedParameterScheme
     /// <summary>Categories a junction box family may belong to, one per kind of carrier.</summary>
     /// <remarks>
     /// A list rather than a pair, and open by intent: the owner expects it to grow to rectangular
-    /// ducts standing in for plastic trunking. The same reason <see cref="CarrierCatalogue"/> is a
-    /// list and not a switch.
+    /// ducts standing in for plastic trunking.
     /// </remarks>
     private static readonly BuiltInCategory[] CarrierFittings =
     {
@@ -67,27 +79,41 @@ public sealed class CablingParameters : SharedParameterScheme
         BuiltInCategory.OST_ElectricalEquipment,
     };
 
-    protected override string GroupName => "BHS Cabling";
+    protected override string GroupName(ParameterLanguage language) => language switch
+    {
+        ParameterLanguage.Russian => "BHS Кабели",
+        _ => "BHS Cabling",
+    };
 
     protected override IReadOnlyList<SharedParameter> Parameters { get; } = new[]
     {
         new SharedParameter(
-            "BHS_ElementRole",
             ElementRole,
             SpecTypeId.String.Text,
             GroupTypeId.Data,
             instance: false,
             CarrierFittings,
-            "What this element is to BHS tools - for example JunctionBox. Set on the type."),
+            english: new ParameterText(
+                "BHS_Cbl_ElementRole",
+                "What this element is to BHS tools - for example JunctionBox. Set on the type."),
+            russian: new ParameterText(
+                "BHS_Cbl_РольЭлемента",
+                "Чем этот элемент является для инструментов BHS - например JunctionBox. "
+                + "Задаётся у типа.")),
 
         new SharedParameter(
-            "BHS_CircuitConnection",
             CircuitConnection,
             SpecTypeId.String.Text,
             GroupTypeId.ElectricalCircuiting,
             instance: true,
             CircuitAndPanel,
-            "How this circuit's devices are connected: Terminal or JunctionBox. "
-            + "Left empty on a circuit, the panel's value is used."),
+            english: new ParameterText(
+                "BHS_Cbl_CircuitConnection",
+                "How this circuit's devices are connected: Terminal or JunctionBox. "
+                + "Left empty on a circuit, the panel's value is used."),
+            russian: new ParameterText(
+                "BHS_Cbl_ПодключениеЦепи",
+                "Как подключены устройства этой цепи: Terminal или JunctionBox. "
+                + "Если у цепи пусто, берётся значение щита.")),
     };
 }

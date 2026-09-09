@@ -143,6 +143,11 @@ internal sealed class ProbeChannel : RevitSideChannel.RevitSideChannelBase
                         response.Values.Add(pair.Key, pair.Value);
                     break;
 
+                case "parameters":
+                    foreach (var pair in SharedParameters().GetAwaiter().GetResult())
+                        response.Values.Add(pair.Key, pair.Value);
+                    break;
+
                 // Deliberately a second question rather than more of the first: the work posted from
                 // inside the window is queued behind the measurement itself, so it can only have run
                 // once the measurement returned. See ModalWindowFacts.After.
@@ -283,6 +288,20 @@ internal sealed class ProbeChannel : RevitSideChannel.RevitSideChannelBase
 
         return await pump
             .PostAsync("probe: modal window", session => ModalWindowFacts.Measure(session, pump))
+            .ConfigureAwait(false);
+    }
+
+    /// <summary>
+    /// Exercises the shared parameter scheme where it lives, and puts the model back.
+    /// </summary>
+    /// <remarks>
+    /// Posted to the pump because it opens a transaction and touches the shared parameter file on
+    /// <c>Application</c> - both are Revit API work, and a channel call arrives on a pool thread.
+    /// </remarks>
+    private async Task<IReadOnlyDictionary<string, string>> SharedParameters()
+    {
+        return await _services.Pump
+            .PostAsync("probe: shared parameters", SharedParameterFacts.Measure)
             .ConfigureAwait(false);
     }
 

@@ -1,19 +1,40 @@
-﻿using System.IO;
+using System.IO;
 using Autodesk.Revit.ApplicationServices;
 using Autodesk.Revit.DB;
 
 namespace BHS.Revit.Common.Parameters;
 
 /// <summary>
-/// A set of shared parameters: the file that declares them, and the binding that puts them in a model.
+/// A set of shared parameters: the files that declare them, and the binding that puts them in a model.
 /// </summary>
 /// <remarks>
 /// <para>
-/// <b>The file is ours and we write it, which is the owner's decision and the only one that works.</b>
-/// <c>OpenSharedParameterFile</c> opens the <i>current</i> file, so creating a definition of our own
-/// means assigning <c>Application.SharedParametersFilename</c>. There is no third way. The predecessor
-/// in <c>..\BHS</c> already does it correctly - remember the previous path, set ours, restore in a
-/// <c>finally</c> - and that form is repeated here.
+/// <b>One file per language, one GUID per parameter.</b> The owner's decision, and it works because
+/// the GUID is what makes a parameter that parameter - the name is only what it is called. So a
+/// family author on a Russian Revit adds <c>BHS_Cbl_РольЭлемента</c> and one on an English Revit
+/// adds <c>BHS_Cbl_ElementRole</c>, and the two families carry <b>the same parameter</b>, schedule
+/// together and are read by the same code.
+/// </para>
+/// <para>
+/// <b>Which file is used is decided by Revit's language, and English is the default</b> - see
+/// <see cref="ParameterLanguages.For"/>. It follows that a model shows whichever name got there
+/// first: a document bound on a Russian Revit keeps the Russian names when it is later opened in
+/// English, because <c>Definition.Name</c> is read-only on all four versions and a shared parameter
+/// already in a model cannot be renamed by this route. That is the intended behaviour, not a
+/// limitation worked around: renaming would rewrite schedules and view filters somebody built.
+/// </para>
+/// <para>
+/// <b>Therefore nothing here, and nothing above here, may look a parameter up by name.</b>
+/// <c>SharedParameterElement.Lookup(document, guid)</c> is the only correct way to find one, and it
+/// is what <see cref="Missing"/> and <see cref="Install"/> use - which also makes "is it bound?" a
+/// question about the document alone, answerable without opening any file of ours.
+/// </para>
+/// <para>
+/// <b>The files are ours and we write them, which is the owner's decision and the only one that
+/// works.</b> <c>OpenSharedParameterFile</c> opens the <i>current</i> file, so creating a definition
+/// of our own means assigning <c>Application.SharedParametersFilename</c>. There is no third way.
+/// The predecessor in <c>..\BHS</c> already does it correctly - remember the previous path, set ours,
+/// restore in a <c>finally</c> - and that form is repeated here.
 /// </para>
 /// <para>
 /// <b>One improvement over it, aimed at the single failure a <c>finally</c> cannot cover.</b> A
@@ -26,7 +47,7 @@ namespace BHS.Revit.Common.Parameters;
 /// API does not reach.
 /// </para>
 /// <para>
-/// <b>Revit writes the file, not us.</b> The shared parameter format is tab-delimited text with a
+/// <b>Revit writes the files, not us.</b> The shared parameter format is tab-delimited text with a
 /// header nobody remembers correctly, and a file that is subtly wrong fails by producing no
 /// definitions rather than by saying so. Creating an empty file and letting Revit fill it through
 /// <c>DefinitionFile</c> costs one API call and cannot be wrong about the format.
@@ -34,28 +55,41 @@ namespace BHS.Revit.Common.Parameters;
 /// </remarks>
 public abstract class SharedParameterScheme
 {
-    /// <summary>The group the definitions live under inside the file.</summary>
-    protected abstract string GroupName { get; }
+    /// <summary>The group the definitions live under inside a file, in that file's language.</summary>
+    protected abstract string GroupName(ParameterLanguage language);
 
     /// <summary>Every parameter this scheme declares.</summary>
     protected abstract IReadOnlyList<SharedParameter> Parameters { get; }
 
-    /// <summary>Where the file we hand to family authors lives.</summary>
+    /// <summary>What this scheme's files are called, before the language tag.</summary>
+    /// <remarks>
+    /// Overridable so a scheme that is not the product's - the probe's, in particular - writes its
+    /// own files rather than adding its parameters to the ones we hand to family authors. Everything
+    /// path-shaped hangs off this, the parked note included, so two schemes cannot restore each
+    /// other's path either.
+    /// </remarks>
+    protected virtual string FileBaseName => "BHS.SharedParameters";
+
+    /// <summary>Where the file we hand to family authors lives, one per language.</summary>
     /// <remarks>
     /// Under the vendor directory rather than beside the add-in, and for the reason the settings
     /// layers are: it has to survive an uninstall and a change of edition, and a family author has
     /// to be able to find it without knowing which of our add-ins is installed.
     /// </remarks>
-    public static string FilePath { get; } = Path.Combine(
+    public string FilePath(ParameterLanguage language) => Path.Combine(
         Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
         "BHS",
-        "BHS.SharedParameters.txt");
+        FileBaseName + "." + ParameterLanguages.Tag(language) + ".txt");
 
     /// <summary>Where the previous path is parked while ours is in place.</summary>
-    private static string RestorePath { get; } = Path.Combine(
+    private string RestorePath => Path.Combine(
         Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
         "BHS",
-        "shared-parameters-restore.txt");
+        FileBaseName + ".restore.txt");
+
+    /// <summary>Whether a path is one of the files this scheme writes.</summary>
+    private bool IsOurs(string? path) => ParameterLanguages.All
+        .Any(language => string.Equals(path, FilePath(language), StringComparison.OrdinalIgnoreCase));
 
     /// <summary>
     /// Puts back a shared parameter file path that an interrupted swap left ours.
@@ -73,7 +107,7 @@ public abstract class SharedParameterScheme
     /// parameters - later than ideal, and still the first moment available.
     /// </para>
     /// </remarks>
-    public static string? RestoreInterrupted(Application application)
+    public string? RestoreInterrupted(Application application)
     {
         if (application is null || !File.Exists(RestorePath))
             return null;
@@ -82,9 +116,9 @@ public abstract class SharedParameterScheme
         {
             var previous = File.ReadAllText(RestorePath).Trim();
 
-            // Only if ours is still the one in place. If the user has since chosen a third file,
-            // putting back the one from before our swap would undo their choice, not ours.
-            if (string.Equals(application.SharedParametersFilename, FilePath, StringComparison.OrdinalIgnoreCase))
+            // Only if one of ours is still the one in place. If the user has since chosen a third
+            // file, putting back the one from before our swap would undo their choice, not ours.
+            if (IsOurs(application.SharedParametersFilename))
                 application.SharedParametersFilename = previous;
 
             File.Delete(RestorePath);
@@ -92,84 +126,106 @@ public abstract class SharedParameterScheme
         }
         catch (Exception)
         {
-            // A path that cannot be put back is not worth failing a startup over; the note stays and
-            // the next launch tries again.
+            // A path that cannot be put back is not worth failing a command over; the note stays and
+            // the next attempt tries again.
             return null;
         }
     }
 
-    /// <summary>Writes the file, creating or refreshing every definition this scheme declares.</summary>
-    /// <returns>The path written.</returns>
-    public string Export(Application application)
+    /// <summary>
+    /// Writes every language's file, creating or refreshing each definition this scheme declares.
+    /// </summary>
+    /// <remarks>
+    /// All of them, not only the one this Revit reads: the author of a family that will be shared
+    /// with a differently-configured office needs the other file to exist without having to install
+    /// another Revit to produce it.
+    /// </remarks>
+    /// <returns>The paths written, in the order of <see cref="ParameterLanguages.All"/>.</returns>
+    public IReadOnlyList<string> Export(Application application)
     {
         if (application is null)
             throw new ArgumentNullException(nameof(application));
 
-        var directory = Path.GetDirectoryName(FilePath);
+        var written = new List<string>();
 
-        if (!string.IsNullOrEmpty(directory))
-            Directory.CreateDirectory(directory);
-
-        if (!File.Exists(FilePath))
-            File.WriteAllText(FilePath, string.Empty);
-
-        WithOurFile(application, file =>
+        foreach (var language in ParameterLanguages.All)
         {
-            var group = Group(file);
+            var path = FilePath(language);
+            var directory = Path.GetDirectoryName(path);
 
-            foreach (var declared in Parameters)
+            if (!string.IsNullOrEmpty(directory))
+                Directory.CreateDirectory(directory);
+
+            if (!File.Exists(path))
+                File.WriteAllText(path, string.Empty);
+
+            WithOurFile(application, language, file =>
             {
-                if (Find(file, declared.Id) is not null)
-                    continue;
+                var group = Group(file, language);
 
-                var options = new ExternalDefinitionCreationOptions(declared.Name, declared.Spec)
+                foreach (var declared in Parameters)
                 {
-                    GUID = declared.Id,
-                    Description = declared.Description,
-                    Visible = true,
-                    UserModifiable = true,
-                };
+                    if (Find(file, declared.Id) is not null)
+                        continue;
 
-                group.Definitions.Create(options);
-            }
-        });
+                    var text = declared.In(language);
 
-        return FilePath;
+                    var options = new ExternalDefinitionCreationOptions(text.Name, declared.Spec)
+                    {
+                        GUID = declared.Id,
+                        Description = text.Description,
+                        Visible = true,
+                        UserModifiable = true,
+                    };
+
+                    group.Definitions.Create(options);
+                }
+            });
+
+            written.Add(path);
+        }
+
+        return written;
     }
 
     /// <summary>Which of our parameters this document does not have bound as declared.</summary>
     /// <remarks>
+    /// <para>
     /// Bound "as declared" means present, on the right side of the instance/type line, and covering
     /// every category. A parameter bound to three of four categories is missing from the fourth, and
     /// saying it is present would be true and useless.
+    /// </para>
+    /// <para>
+    /// <b>Asked by GUID, so no file is opened and no language is chosen.</b> Whether a document has
+    /// the parameter is a fact about the document; routing the question through one of our files
+    /// would have made the answer depend on which Revit asked, and a model bound in Russian would
+    /// have read as unbound on an English one.
+    /// </para>
     /// </remarks>
-    public IReadOnlyList<SharedParameter> Missing(Document document, Application application)
+    public IReadOnlyList<SharedParameter> Missing(Document document)
     {
-        if (document is null || application is null)
+        if (document is null)
             return Parameters;
 
         var missing = new List<SharedParameter>();
         var bindings = document.ParameterBindings;
 
-        WithOurFile(application, file =>
+        foreach (var declared in Parameters)
         {
-            foreach (var declared in Parameters)
+            if (SharedParameterElement.Lookup(document, declared.Id) is not { } element)
             {
-                if (Find(file, declared.Id) is not { } definition)
-                {
-                    missing.Add(declared);
-                    continue;
-                }
-
-                if (bindings.get_Item(definition) is not ElementBinding binding
-                    || (declared.Instance && binding is not InstanceBinding)
-                    || (!declared.Instance && binding is not TypeBinding)
-                    || !Covers(binding, document, declared))
-                {
-                    missing.Add(declared);
-                }
+                missing.Add(declared);
+                continue;
             }
-        });
+
+            if (bindings.get_Item(element.GetDefinition()) is not ElementBinding binding
+                || (declared.Instance && binding is not InstanceBinding)
+                || (!declared.Instance && binding is not TypeBinding)
+                || !Covers(binding, document, declared))
+            {
+                missing.Add(declared);
+            }
+        }
 
         return missing;
     }
@@ -178,10 +234,20 @@ public abstract class SharedParameterScheme
     /// Binds whatever is missing, in a transaction of its own.
     /// </summary>
     /// <remarks>
+    /// <para>
     /// Its own transaction because binding a parameter is a whole act: it either happens or it does
     /// not, and there is nothing a caller would sensibly want to fold it into. The caller is a
     /// command standing on the API thread in an ordinary context - not the measured-and-uncertain
     /// one inside a modal window after an await.
+    /// </para>
+    /// <para>
+    /// <b>A parameter the document already knows is re-bound through the document's own definition,
+    /// never through ours.</b> Only a parameter that is not there at all is created from the file,
+    /// and only then does the language decide what it will be called - for ever, in that model. Feed
+    /// our definition to a document that already holds the parameter under another language's name
+    /// and the best case is that Revit ignores the name; there is no case in which it is what anyone
+    /// wanted.
+    /// </para>
     /// </remarks>
     /// <returns>The parameters that were bound.</returns>
     public IReadOnlyList<SharedParameter> Install(Document document, Application application)
@@ -189,21 +255,30 @@ public abstract class SharedParameterScheme
         if (document is null)
             throw new ArgumentNullException(nameof(document));
 
-        var missing = Missing(document, application);
+        if (application is null)
+            throw new ArgumentNullException(nameof(application));
+
+        var missing = Missing(document);
 
         if (missing.Count == 0)
             return missing;
 
         var bound = new List<SharedParameter>();
+        var language = ParameterLanguages.For(application.Language);
 
-        WithOurFile(application, file =>
+        WithOurFile(application, language, file =>
         {
             using var transaction = new Transaction(document, "BHS: bind shared parameters");
             transaction.Start();
 
             foreach (var declared in missing)
             {
-                if (Find(file, declared.Id) is not { } definition)
+                // The document's own definition when it has one, ours only to introduce it.
+                Definition? definition = SharedParameterElement.Lookup(document, declared.Id) is { } element
+                    ? element.GetDefinition()
+                    : Find(file, declared.Id);
+
+                if (definition is null)
                     continue;
 
                 var categories = application.Create.NewCategorySet();
@@ -234,18 +309,23 @@ public abstract class SharedParameterScheme
         return bound;
     }
 
-    /// <summary>Runs an action with our file as the application's, and always puts the old one back.</summary>
-    private static void WithOurFile(Application application, Action<DefinitionFile> action)
+    /// <summary>Runs an action with one of our files as the application's, and always puts the old one back.</summary>
+    private void WithOurFile(Application application, ParameterLanguage language, Action<DefinitionFile> action)
     {
+        var ours = FilePath(language);
         var previous = application.SharedParametersFilename ?? string.Empty;
-        var swapped = !string.Equals(previous, FilePath, StringComparison.OrdinalIgnoreCase);
+        var swapped = !string.Equals(previous, ours, StringComparison.OrdinalIgnoreCase);
 
-        if (swapped)
+        // Only a path that is not ours is worth parking: parking one of our own would teach
+        // RestoreInterrupted to "restore" the other language's file as if it were the user's.
+        var park = swapped && !IsOurs(previous);
+
+        if (park)
             Park(previous);
 
         try
         {
-            application.SharedParametersFilename = FilePath;
+            application.SharedParametersFilename = ours;
 
             // Null when the file is absent or unreadable. Nothing below can work without it, and
             // pretending otherwise would report "no parameters declared" for "no file".
@@ -255,14 +335,14 @@ public abstract class SharedParameterScheme
         finally
         {
             if (swapped)
-            {
                 application.SharedParametersFilename = previous;
+
+            if (park)
                 Unpark();
-            }
         }
     }
 
-    private static void Park(string previous)
+    private void Park(string previous)
     {
         try
         {
@@ -280,7 +360,7 @@ public abstract class SharedParameterScheme
         }
     }
 
-    private static void Unpark()
+    private void Unpark()
     {
         try
         {
@@ -292,8 +372,11 @@ public abstract class SharedParameterScheme
         }
     }
 
-    private DefinitionGroup Group(DefinitionFile file) =>
-        file.Groups.get_Item(GroupName) ?? file.Groups.Create(GroupName);
+    private DefinitionGroup Group(DefinitionFile file, ParameterLanguage language)
+    {
+        var name = GroupName(language);
+        return file.Groups.get_Item(name) ?? file.Groups.Create(name);
+    }
 
     private static ExternalDefinition? Find(DefinitionFile file, Guid id)
     {
