@@ -132,8 +132,14 @@ public sealed class RouteCablingCommand : IFeatureCommand
         var shape = snapshot.Network.Shape();
         var failedToCross = results.Any(one => one.Status == RouteStatus.NoConnectivity);
 
+        // Measured on every run for now, because it is cheap against the read and because the
+        // question it answers is open. It goes when the answer is in.
+        token.ThrowIfCancellationRequested();
+        var approach = ApproachStudy.Compare(snapshot.Network, circuits, options);
+
         return new RouteRun(results, snapshot.Network.Version, clock.Elapsed)
         {
+            Approach = approach,
             Shape = shape,
             Reading = CablingGaps.Describe(snapshot),
             Tolerances = failedToCross ? Tolerances(snapshot, options, token) : Array.Empty<ToleranceReading>(),

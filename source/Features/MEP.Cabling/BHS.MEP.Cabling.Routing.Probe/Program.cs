@@ -14,7 +14,7 @@ namespace BHS.MEP.Cabling.Routing.Probe;
 internal static class Program
 {
     private const double Tolerance = 0.1;
-    private const int Floor = 38;
+    private const int Floor = 52;
 
     private static int _run;
     private static int _failed;
@@ -32,6 +32,7 @@ internal static class Program
         TheRunGroupsItsFailures();
         TheStructureSaysHowManyPiecesItIsIn();
         AFittingJoinsOnEveryConnector();
+        TheDropIsMeasuredToAnEndAndCouldBeMeasuredAlong();
 
         Console.WriteLine();
 
@@ -327,6 +328,85 @@ internal static class Program
     /// discarded, so the tray on it joined nothing, and half the circuits reported "no connectivity"
     /// over a structure that was drawn correctly.
     /// </remarks>
+    /// <summary>
+    /// What measuring the drop along a carrier would change, against measuring it to the ends.
+    /// </summary>
+    /// <remarks>
+    /// <code>
+    ///   +--------------------[0]--------------------+     tray, 0 -> 20 along X
+    ///   0                     |                    20
+    ///                         | 1 down
+    ///                         S   socket at (10, 0, -1)
+    /// </code>
+    /// Measured to the ends the socket is ten across and one down, i.e. eleven along the axes, and
+    /// out of a three-foot reach. Measured along the tray it is one. This is the defect in the
+    /// small, and the study exists to say how much of it a real model contains.
+    /// </remarks>
+    private static void TheDropIsMeasuredToAnEndAndCouldBeMeasuredAlong()
+    {
+        Section("the drop to a carrier, along it and to its ends");
+
+        var tray = Tray(0, 0, 20);
+
+        Check("the nearest point on a run is under the device",
+            Near(P(10, 0, -1).NearestOn(tray.Start, tray.End).DistanceTo(P(10, 0, 0)), 0));
+
+        Check("and beyond the run it is the end, not a point in the air",
+            Near(P(30, 0, -1).NearestOn(tray.Start, tray.End).DistanceTo(P(20, 0, 0)), 0));
+
+        Check("a carrier answers with that point", Near(tray.NearestPointTo(P(10, 0, -1)).X, 10));
+
+        var network = NetworkBuilder.Build(1, new[] { tray }, Options());
+
+        var circuit = new CircuitSnapshot(
+            new CarrierId(1), "P-1",
+            Terminal(0, 0, 0, "panel"),
+            new[] { Terminal(10, 0, -1, "socket") });
+
+        // Terminal() keys its CarrierId off x, so two ends at the same x would collide; the panel
+        // sits on the tray's start and the socket under its middle.
+        var study = ApproachStudy.Compare(network, new[] { circuit }, Options());
+
+        Check("both ends are looked at", study.Terminals == 2);
+
+        // The panel is on the end and reachable either way; the socket is eleven feet away by the
+        // ends and one foot along the tray, and the reach is six.
+        Check("the socket is out of reach measured to the ends", study.ReachedByTerminals == 1);
+        Check("and in reach measured along the carrier", study.ReachedByNearest == 2);
+        Check("which the study calls a gain", study.Gained == 1);
+        Check("and it does not call that agreement", !study.Agree);
+
+        // The same network as conduit rather than tray: a cable leaves a pipe where it joins
+        // something, so the tray-only figure falls back to the ends and the gain disappears.
+        var pipe = new CarrierNode(
+            new CarrierId(0), CarrierKind.Segment, "conduit", 20, 0.05, P(0, 0, 0), P(20, 0, 0));
+
+        // The decomposition the screen states, and it needs a reach that both measures can see:
+        // a terminal only one of them reaches is excluded from the sums by construction, because a
+        // difference of sums over different sets is not a saving. Shown red exactly there.
+        var wide = Options(reach: 12);
+        var onTray = ApproachStudy.Compare(network, new[] { circuit }, wide);
+
+        Check("both terminals are comparable when both measures reach them", onTray.Comparable == 2);
+        Check("on a tray the saving costs nothing", Near(onTray.BoxSaving, 0) && onTray.FreeSaving > 0);
+
+        var onPipe = ApproachStudy.Compare(
+            NetworkBuilder.Build(3, new[] { pipe }, wide), new[] { circuit }, wide);
+
+        Check("a conduit measured to its ends and along it come to the same",
+            Near(onPipe.ByNearestOnTrays, onPipe.ByTerminals));
+
+        Check("while a tray does not", !Near(onTray.ByNearestOnTrays, onTray.ByTerminals));
+        Check("on a conduit it all waits on a box", Near(onPipe.FreeSaving, 0) && onPipe.BoxSaving > 0);
+        Check("and the two halves add up to the whole",
+            Near(onTray.FreeSaving + onTray.BoxSaving, onTray.ByTerminals - onTray.ByNearest));
+
+        // The defect this measure had until the probe went red: a terminal out of reach one way and
+        // in reach the other made the difference of two sums negative, i.e. a saving that unsaves.
+        Check("a terminal only one measure reaches is left out of the sums", study.Comparable == 1);
+        Check("so no saving can come out negative", study.FreeSaving >= 0 && study.BoxSaving >= 0);
+    }
+
     private static void AFittingJoinsOnEveryConnector()
     {
         Section("a fitting joins on every connector");

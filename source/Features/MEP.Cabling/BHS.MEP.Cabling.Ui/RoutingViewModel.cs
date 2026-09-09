@@ -229,6 +229,46 @@ public sealed class RoutingViewModel : INotifyPropertyChanged
 
     public bool HasStructureSummary => StructureSummary.Length > 0;
 
+    /// <summary>
+    /// What measuring the drop along a carrier, rather than to its ends, would change.
+    /// </summary>
+    /// <remarks>
+    /// <b>A question on screen, not a feature.</b> The router measures a device to a carrier's
+    /// terminals, so a socket under the middle of a long run is measured to an end. Whether that
+    /// matters is a property of the model, and this says so out loud until the answer is acted on -
+    /// then both the line and the study go.
+    /// </remarks>
+    public string ApproachSummary
+    {
+        get
+        {
+            if (Run?.Approach is not { } study || study.Agree)
+                return string.Empty;
+
+            // The decomposition rather than three bare numbers. Measured on a real model, two
+            // thirds of what "measure along the carrier" appeared to save was projection onto
+            // conduits - which a cable cannot leave except where it joins something. Stating the
+            // total alone would promise a saving that is not there, and hide the one that is.
+            var line = $"Drops total {_length(study.ByTerminals)} over {study.ReachedByTerminals} of "
+                + $"{study.Terminals} terminal(s), measured to the ends of carriers.";
+
+            if (study.Gained > 0)
+                line += $" Measured along a carrier, {study.Gained} more terminal(s) would find one.";
+
+            if (study.FreeSaving > 0)
+                line += $" Tapping a tray along its length would save {_length(study.FreeSaving)}"
+                    + " and needs nothing added to the model.";
+
+            if (study.BoxSaving > 0)
+                line += $" A further {_length(study.BoxSaving)} needs junction boxes on conduits, which"
+                    + " a cable can leave only where they join something.";
+
+            return line + $" The largest single drop would shorten by {_length(study.Worst)}.";
+        }
+    }
+
+    public bool HasApproachSummary => ApproachSummary.Length > 0;
+
     /// <summary>What the read of the model left behind, when it left anything.</summary>
     /// <remarks>
     /// Shown on every run that has any, not only a failed one. These are the counts written so that
@@ -360,6 +400,8 @@ public sealed class RoutingViewModel : INotifyPropertyChanged
                 Raise(nameof(LengthSummary));
                 Raise(nameof(StructureSummary));
                 Raise(nameof(HasStructureSummary));
+                Raise(nameof(ApproachSummary));
+                Raise(nameof(HasApproachSummary));
                 Raise(nameof(Reading));
                 Raise(nameof(HasReading));
                 Raise(nameof(Causes));

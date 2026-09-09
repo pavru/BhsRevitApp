@@ -219,17 +219,15 @@ public static class Router
     }
 
     /// <summary>
-    /// How far a cable actually travels between a device and the structure.
+    /// How far a cable travels between a device and the structure.
     /// </summary>
     /// <remarks>
-    /// Along the axes by default, because a cable does not fly: it runs across and then down. The
-    /// straight line is shorter, always available, and wrong by however much the two differ - which
-    /// on a drop from a ceiling tray to a socket is most of the number.
+    /// One definition, shared with <see cref="ApproachStudy"/>, which exists to question this one.
+    /// Two copies would let the study measure something the search does not do - the one way a
+    /// measurement can be worse than none.
     /// </remarks>
     private static double Approach(Point3 from, Point3 to, RoutingOptions options) =>
-        options.AxisAlignedApproach
-            ? Math.Abs(from.X - to.X) + Math.Abs(from.Y - to.Y) + Math.Abs(from.Z - to.Z)
-            : from.DistanceTo(to);
+        Approaches.Measure(from, to, options);
 
     /// <summary>
     /// What walking one carrier costs.
