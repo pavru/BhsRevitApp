@@ -1,4 +1,4 @@
-using System.Diagnostics;
+﻿using System.Diagnostics;
 using System.Globalization;
 using System.Windows;
 using System.Windows.Controls;
@@ -73,6 +73,8 @@ internal static class ModalWindowFacts
             ["modal:apiCallWorked"] = "False",
             ["modal:apiCallWorkedAfterAwait"] = "False",
             ["modal:pumpRanWhileModal"] = "False",
+            ["modal:transactionStartedAfterAwait"] = "False",
+            ["modal:transactionCommittedAfterAwait"] = "False",
         };
 
         lock (Gate)
@@ -193,6 +195,14 @@ internal static class ModalWindowFacts
                 facts["modal:apiReadAfterAwait"] = error.GetType().Name;
             }
 
+            // Question five, and the last one the command's shape rests on. Everything above is a
+            // read; applying a route is a write, and the gate on a modification is Transaction.Start
+            // rather than the call itself - a read that succeeded says nothing about it. If this
+            // fails, "compute in the background and apply in the continuation" is not a shape a
+            // command can have, and the apply phase has to hand the write to the pump and let the
+            // window carrying the results close before the work it describes is done.
+            Write(session, facts);
+
             await Task.Delay(Dwell).ConfigureAwait(true);
         }
         catch (Exception error)
@@ -204,6 +214,80 @@ internal static class ModalWindowFacts
         finally
         {
             window.Close();
+        }
+    }
+
+    /// <summary>
+    /// Whether a real modification opens and commits here, and it is rolled back afterwards.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <b>A real write, in a group that is rolled back — the form this repository already uses for
+    /// the schema check.</b> A transaction that starts and commits with nothing in it is not the
+    /// production path; and a write left committed makes the document modified, so Revit asks about
+    /// saving on the way out, which in a run with nobody watching is a modal window that stops it.
+    /// <c>RollBack</c> on the group undoes transactions already committed inside it, so the path
+    /// tested is the one the product takes.
+    /// </para>
+    /// <para>
+    /// <c>DataStorage.Create</c> is the write, because it is the one this probe already makes
+    /// elsewhere and it needs nothing of the model: no level, no view, no family. What is being
+    /// measured is the gate, not the element.
+    /// </para>
+    /// </remarks>
+    private static void Write(IRevitSession session, Dictionary<string, string> facts)
+    {
+        Autodesk.Revit.DB.Document? document;
+
+        try
+        {
+            document = session.Application.ActiveUIDocument?.Document;
+        }
+        catch (Exception error)
+        {
+            facts["modal:transactionError"] = error.GetType().Name + ": " + error.Message;
+            return;
+        }
+
+        if (document is null)
+        {
+            facts["modal:transactionSkipped"] = "no document";
+            return;
+        }
+
+        try
+        {
+            using var group = new Autodesk.Revit.DB.TransactionGroup(document, "BHS probe: modal write");
+            group.Start();
+
+            using (var transaction = new Autodesk.Revit.DB.Transaction(document, "BHS probe: modal write"))
+            {
+                var started = transaction.Start();
+                facts["modal:transactionStart"] = started.ToString();
+                facts["modal:transactionStartedAfterAwait"] =
+                    Yes(started == Autodesk.Revit.DB.TransactionStatus.Started);
+
+                if (started != Autodesk.Revit.DB.TransactionStatus.Started)
+                {
+                    group.RollBack();
+                    return;
+                }
+
+                var storage = Autodesk.Revit.DB.ExtensibleStorage.DataStorage.Create(document);
+                facts["modal:transactionCreated"] = storage.Id.Value.ToString(CultureInfo.InvariantCulture);
+
+                var committed = transaction.Commit();
+                facts["modal:transactionCommit"] = committed.ToString();
+                facts["modal:transactionCommittedAfterAwait"] =
+                    Yes(committed == Autodesk.Revit.DB.TransactionStatus.Committed);
+            }
+
+            group.RollBack();
+            facts["modal:transactionRolledBack"] = Yes(!document.IsModified);
+        }
+        catch (Exception error)
+        {
+            facts["modal:transactionError"] = error.GetType().Name + ": " + error.Message;
         }
     }
 
