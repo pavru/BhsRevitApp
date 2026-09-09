@@ -17,11 +17,25 @@
 
 name: build
 
+# The pull_request trigger names no base branch on purpose, and that is a correction.
+#
+# It used to say `branches: [master]`, which reads as "check what is about to land on master" and
+# behaves as something else entirely: a pull request onto any other branch got no run at all. Found
+# on the first stacked pull request in this repository - #23 onto #22's branch - where the checks
+# tab was not red and not pending but empty, which is the one appearance this file treats as a
+# defect wherever else it occurs. A check that does not run looks exactly like a check that passed.
+#
+# Stacking is normal here: work that would otherwise diverge from a document being edited in the
+# branch below it is put on top of that branch instead. Every such pull request was unverified, and
+# the verification arrived only later, when the base merged and GitHub retargeted the survivor onto
+# master. That is the wrong order - the point is to know before the merge, not after it.
+#
+# The push trigger stays master-only: pushes to working branches are covered by the pull request
+# they belong to, and running both would double every build for nothing.
 on:
   push:
     branches: [master]
   pull_request:
-    branches: [master]
 
 # Neither job writes anything back. Left unset, the token carries whatever the repository default
 # happens to be, which on an older repository is write access to every scope.
