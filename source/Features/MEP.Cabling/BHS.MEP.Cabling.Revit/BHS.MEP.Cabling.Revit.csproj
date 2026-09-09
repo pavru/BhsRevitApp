@@ -1,4 +1,4 @@
-<Project Sdk="BHS.Revit.Sdk/1.5.8">
+﻿<Project Sdk="BHS.Revit.Sdk/1.5.8">
 
     <!--
       The side that has a Document, and the only side that does.
@@ -19,6 +19,10 @@
 
     <ItemGroup>
         <ProjectReference Include="..\BHS.MEP.Cabling.Routing\BHS.MEP.Cabling.Routing.csproj" />
+        <!-- For the shared parameter scheme. The mechanism is framework work - one file, one binding
+             discipline, one place that touches SharedParametersFilename - and the declaration is
+             ours, so the split falls where it usually does: how in Common, what here. -->
+        <ProjectReference Include="..\..\..\Revit\BHS.Revit.Common\BHS.Revit.Common.csproj" />
     </ItemGroup>
 
 </Project>
