@@ -128,7 +128,11 @@ public sealed class RouteCablingCommand : IFeatureCommand
         }
 
         clock.Stop();
-        return new RouteRun(results, snapshot.Network.Version, clock.Elapsed);
+
+        return new RouteRun(results, snapshot.Network.Version, clock.Elapsed)
+        {
+            Shape = snapshot.Network.Shape(),
+        };
     }
 
     /// <summary>
@@ -159,5 +163,16 @@ public sealed class RouteCablingCommand : IFeatureCommand
 
         foreach (var cause in run.Causes)
             log.Warn("cabling: {0} circuit(s) blocked - {1}", run.Count(cause), cause);
+
+        // Only alongside the failure it explains. A structure line after a run where everything
+        // routed is a true sentence in a file people read to find out what went wrong.
+        if (run.Count(RouteStatus.NoConnectivity) > 0)
+        {
+            log.Warn(
+                "cabling: the structure is {0} connected group(s) over {1} carrier(s), largest {2}",
+                run.Shape.Groups,
+                run.Shape.Carriers,
+                run.Shape.Largest);
+        }
     }
 }

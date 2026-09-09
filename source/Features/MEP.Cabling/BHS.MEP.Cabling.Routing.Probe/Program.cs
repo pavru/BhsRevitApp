@@ -14,7 +14,7 @@ namespace BHS.MEP.Cabling.Routing.Probe;
 internal static class Program
 {
     private const double Tolerance = 0.1;
-    private const int Floor = 27;
+    private const int Floor = 32;
 
     private static int _run;
     private static int _failed;
@@ -30,6 +30,7 @@ internal static class Program
         ApproachIsAlongAxes();
         LengthIgnoresThePreference();
         TheRunGroupsItsFailures();
+        TheStructureSaysHowManyPiecesItIsIn();
 
         Console.WriteLine();
 
@@ -296,6 +297,37 @@ internal static class Program
             Near(run.BuiltInLength, 32));
 
         Check("the version travels with the run", run.NetworkVersion == 7);
+    }
+
+    /// <summary>
+    /// Whether the structure is one thing or many, which is the question "no connectivity" raises.
+    /// </summary>
+    /// <remarks>
+    /// <code>
+    ///   +--[0]--+--[1]--+        +--[2]--+        joined at 0.05, apart by 5
+    ///   0      10      20       25      35
+    /// </code>
+    /// The two cases it has to tell apart are the two a real model produces: everything joined but
+    /// for a stray, and nothing joined to anything. The second is a tolerance, the first is a model.
+    /// </remarks>
+    private static void TheStructureSaysHowManyPiecesItIsIn()
+    {
+        Section("how many pieces the structure is in");
+
+        var carriers = new[] { Tray(0, 0, 10), Tray(1, 10, 20), Tray(2, 25, 35) };
+
+        var together = NetworkBuilder.Build(1, carriers, Options()).Shape();
+
+        Check("it counts every carrier", together.Carriers == 3);
+        Check("the gap of five splits them in two", together.Groups == 2);
+        Check("and names the bigger piece", together.Largest == 2);
+
+        // The same carriers, with a tolerance wide enough to close the gap a person reads as a
+        // joint. One group is what a model that routes looks like.
+        var reached = NetworkBuilder.Build(2, carriers, Options(join: 6)).Shape();
+
+        Check("a wider tolerance makes it one piece", reached.Groups == 1);
+        Check("holding all of them", reached.Largest == 3);
     }
 
     private static RouteResult Routed(long circuit, double alongCarriers, double approaches, double builtIn) =>

@@ -1,4 +1,4 @@
-namespace BHS.MEP.Cabling.Routing;
+﻿namespace BHS.MEP.Cabling.Routing;
 
 /// <summary>
 /// What one pass of the search produced, with the failures grouped rather than counted.
@@ -65,6 +65,14 @@ public sealed class RouteRun
 
     /// <summary>The network these were computed on, so a later answer can say it is stale.</summary>
     public long NetworkVersion { get; }
+
+    /// <summary>What that network looked like as a graph.</summary>
+    /// <remarks>
+    /// Carried on the run rather than fetched from the network by whoever displays it, because the
+    /// network is not kept once the run is over - and the one question this answers is asked exactly
+    /// when the run reports that it could not cross the structure.
+    /// </remarks>
+    public NetworkShape Shape { get; init; }
 
     /// <summary>How long the search itself took, without the reading that preceded it.</summary>
     /// <remarks>

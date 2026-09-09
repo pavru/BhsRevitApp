@@ -179,6 +179,48 @@ public sealed class RoutingViewModel : INotifyPropertyChanged
     }
 
     /// <summary>
+    /// What the structure looks like, said only when the run failed to cross it.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <b>Shown on the one condition that makes it an answer.</b> "No connectivity" for half the
+    /// circuits has two opposite causes - a structure genuinely drawn in pieces, or a join tolerance
+    /// too small to close gaps a person reads as joints - and the status cannot tell them apart. The
+    /// number of groups can.
+    /// </para>
+    /// <para>
+    /// Silent on a clean run, and silent when nothing failed to cross. A line about the shape of the
+    /// structure printed after a run where every circuit routed is a true sentence that buries the
+    /// ones that matter, which this file already says costs the whole report.
+    /// </para>
+    /// </remarks>
+    public string StructureSummary
+    {
+        get
+        {
+            if (Run is not { } run || run.Count(RouteStatus.NoConnectivity) == 0)
+                return string.Empty;
+
+            var shape = run.Shape;
+
+            if (shape.Carriers == 0)
+                return string.Empty;
+
+            var line = $"A route runs inside one connected group. This structure reads as "
+                + $"{shape.Groups} group(s) over {shape.Carriers} carrier(s), the largest holding {shape.Largest}.";
+
+            // Named because the alternative is guessing with a press of the button per guess. It
+            // is a hint about where to look, not a diagnosis: a riser nobody drew produces few
+            // large groups, and no tolerance closes that.
+            return shape.Groups > 1
+                ? line + " If runs are drawn butted together rather than connected, raise Cabling:JoinToleranceMm."
+                : line;
+        }
+    }
+
+    public bool HasStructureSummary => StructureSummary.Length > 0;
+
+    /// <summary>
     /// The failures, grouped by cause, each naming where it stopped.
     /// </summary>
     /// <remarks>
@@ -297,6 +339,8 @@ public sealed class RoutingViewModel : INotifyPropertyChanged
                 Raise(nameof(HasResult));
                 Raise(nameof(Summary));
                 Raise(nameof(LengthSummary));
+                Raise(nameof(StructureSummary));
+                Raise(nameof(HasStructureSummary));
                 Raise(nameof(Causes));
                 Raise(nameof(HasCauses));
                 break;
