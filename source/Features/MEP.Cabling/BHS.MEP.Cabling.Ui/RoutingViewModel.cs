@@ -136,7 +136,19 @@ public sealed class RoutingViewModel : INotifyPropertyChanged
     public string Summary =>
         Run is not { } run
             ? string.Empty
-            : $"{run.Found} of {run.Results.Count} circuit(s) routed, in {run.Took.TotalSeconds:F1} s";
+            : $"{run.Found} of {run.Results.Count} circuit(s) routed, in {Elapsed(run.Took)}";
+
+    /// <summary>How long something took, at a scale that says something.</summary>
+    /// <remarks>
+    /// Measured on the first real run: the search over 55 circuits finished in under a tenth of a
+    /// second, and "in 0.0 s" reads as a broken clock rather than as a fast one. The reading that
+    /// matters is that the search is not where the waiting is - the model read is - and a zero
+    /// cannot say that.
+    /// </remarks>
+    private static string Elapsed(TimeSpan took) =>
+        took.TotalSeconds < 1
+            ? $"{took.TotalMilliseconds:F0} ms"
+            : $"{took.TotalSeconds:F1} s";
 
     /// <summary>
     /// Our length against Revit's, and why they differ.

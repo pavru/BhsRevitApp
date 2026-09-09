@@ -59,9 +59,14 @@ public static class Router
 
             if (leg.Status != RouteStatus.Found)
             {
+                // The circuit's own number in front of the end that stopped it. Measured on the
+                // first real run: the screen groups by cause and says "26 circuits", then lists
+                // addresses that are devices - two different levels, so the list answers a question
+                // nobody asked and leaves the circuits unnamed. A leg does not know which circuit it
+                // belongs to; this is the only place that does.
                 return new RouteResult(circuit.Id, leg.Status, network.Version)
                 {
-                    BlockedAt = leg.BlockedAt,
+                    BlockedAt = circuit.Number + " - " + leg.BlockedAt,
                     BuiltInLength = circuit.BuiltInLength,
                 };
             }

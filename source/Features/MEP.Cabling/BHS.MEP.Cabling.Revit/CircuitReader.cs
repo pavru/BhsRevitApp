@@ -1,4 +1,5 @@
-﻿using Autodesk.Revit.DB;
+﻿using System.Globalization;
+using Autodesk.Revit.DB;
 using Autodesk.Revit.DB.Electrical;
 using BHS.MEP.Cabling.Routing;
 
@@ -161,8 +162,28 @@ public sealed class CircuitReader
 
         return at is null
             ? null
-            : new Terminal(new CarrierId(panel.Id.Value), new Point3(at.X, at.Y, at.Z), panel.Name);
+            : new Terminal(new CarrierId(panel.Id.Value), new Point3(at.X, at.Y, at.Z), Address(panel));
     }
+
+    /// <summary>
+    /// What to call an element on screen so that somebody can go and look at it.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <b>The id, because <c>Element.Name</c> alone was measured to be useless here.</b> On the
+    /// first real run the failure list read as five identical lines - a family instance's Name is
+    /// its <i>type</i> name, and a floor of identical sockets produces the same string for every one
+    /// of them. A cause without an address sends somebody looking; an address that is the same for
+    /// four hundred elements is the same thing wearing a label.
+    /// </para>
+    /// <para>
+    /// An element id is what Revit's own Select by ID takes, so the line is not just identifying but
+    /// actionable. The type name stays in front of it because it is what a person reads; the id is
+    /// what they paste.
+    /// </para>
+    /// </remarks>
+    private static string Address(Element element) =>
+        element.Name + " [" + element.Id.Value.ToString(CultureInfo.InvariantCulture) + "]";
 
     /// <summary>Any electrical connector on the element that has a place.</summary>
     private static XYZ? PhysicalElectrical(Element element)
@@ -205,7 +226,7 @@ public sealed class CircuitReader
                 continue;
             }
 
-            terminals.Add(new Terminal(new CarrierId(element.Id.Value), new Point3(at.X, at.Y, at.Z), element.Name));
+            terminals.Add(new Terminal(new CarrierId(element.Id.Value), new Point3(at.X, at.Y, at.Z), Address(element)));
         }
 
         return terminals;

@@ -38,6 +38,55 @@ internal static class CablingLength
     {
         var units = document.GetUnits();
 
+        WithASymbol(units);
+
         return value => UnitFormatUtils.Format(units, SpecTypeId.Length, value, false);
+    }
+
+    /// <summary>
+    /// Gives the number its unit back, when the document suppresses it.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <b>Measured on the first press, and it is the one place where saying exactly what Revit says
+    /// is wrong.</b> This model's length format suppresses the unit symbol, so the line read
+    /// "470354 computed, Revit reports 281871" - two bare integers, on a dialog, with nothing
+    /// nearby to say what they are. Revit gets away with the same setting because its number sits
+    /// in a row labelled Length in a palette whose units the reader already knows; our sentence has
+    /// neither.
+    /// </para>
+    /// <para>
+    /// So exactly one thing is overridden - whether a symbol is shown - and everything the user
+    /// chose about precision, rounding, separators and the unit itself is left alone. It is written
+    /// on a copy: <c>Document.GetUnits</c> hands one out, and changing the document's own would need
+    /// a transaction, which is how Autodesk's own <c>UnitsAPI</c> sample does it.
+    /// </para>
+    /// </remarks>
+    private static void WithASymbol(Units units)
+    {
+        try
+        {
+            var options = units.GetFormatOptions(SpecTypeId.Length);
+
+            if (!options.CanHaveSymbol() || !options.GetSymbolTypeId().Empty())
+                return;
+
+            foreach (var symbol in FormatOptions.GetValidSymbols(options.GetUnitTypeId()))
+            {
+                // The list leads with the empty one, which is the "no symbol" the document already
+                // chose. The first real entry is the unit's ordinary spelling.
+                if (symbol.Empty())
+                    continue;
+
+                options.SetSymbolTypeId(symbol);
+                units.SetFormatOptions(SpecTypeId.Length, options);
+                return;
+            }
+        }
+        catch (Exception)
+        {
+            // A number without its unit is a poor line; a command that will not open because the
+            // unit settings are shaped unusually is a worse one. The plain format still works.
+        }
     }
 }

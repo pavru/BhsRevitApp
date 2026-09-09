@@ -162,7 +162,11 @@ internal static class Program
             Options());
 
         Check("a device out of reach is NoCarrierNear", far.Status == RouteStatus.NoCarrierNear);
-        Check("and it names the end that was out of reach", far.BlockedAt == "panel");
+        // Both halves, and the check earns its keep by having caught the day the first half was
+        // added: the screen groups by cause and says "26 circuits", so a line naming only the device
+        // answers at a different level from the heading and leaves every circuit unnamed.
+        Check("and it names the circuit as well as the end that was out of reach",
+            far.BlockedAt == "P-1 - panel");
 
         var empty = Router.Route(
             network,
