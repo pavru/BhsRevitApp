@@ -212,13 +212,31 @@ public sealed class RoutingViewModel : INotifyPropertyChanged
             // Named because the alternative is guessing with a press of the button per guess. It
             // is a hint about where to look, not a diagnosis: a riser nobody drew produces few
             // large groups, and no tolerance closes that.
-            return shape.Groups > 1
-                ? line + " If runs are drawn butted together rather than connected, raise Cabling:JoinToleranceMm."
-                : line;
+            if (run.Tolerances.Count == 0)
+                return line;
+
+            // The table rather than the advice. Which value to take is a judgement about this model
+            // - a wider tolerance joins runs a person reads as joined, and also joins two that
+            // merely pass near each other - and the table is what that judgement is made from.
+            var tried = run.Tolerances
+                .Select(one => $"{_length(one.Tolerance)} would give {one.Shape.Groups}")
+                .ToList();
+
+            return line + " Cabling:JoinToleranceMm at " + string.Join(", ", tried) + ".";
         }
     }
 
     public bool HasStructureSummary => StructureSummary.Length > 0;
+
+    /// <summary>What the read of the model left behind, when it left anything.</summary>
+    /// <remarks>
+    /// Shown on every run that has any, not only a failed one. These are the counts written so that
+    /// nothing is lost silently, and a run where every circuit routed can still have been computed
+    /// over a structure missing a link - which makes every length on the screen quietly short.
+    /// </remarks>
+    public IReadOnlyList<string> Reading => Run?.Reading ?? Array.Empty<string>();
+
+    public bool HasReading => Reading.Count > 0;
 
     /// <summary>
     /// The failures, grouped by cause, each naming where it stopped.
@@ -341,6 +359,8 @@ public sealed class RoutingViewModel : INotifyPropertyChanged
                 Raise(nameof(LengthSummary));
                 Raise(nameof(StructureSummary));
                 Raise(nameof(HasStructureSummary));
+                Raise(nameof(Reading));
+                Raise(nameof(HasReading));
                 Raise(nameof(Causes));
                 Raise(nameof(HasCauses));
                 break;

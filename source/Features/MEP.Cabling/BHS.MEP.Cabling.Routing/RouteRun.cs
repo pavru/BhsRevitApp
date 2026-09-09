@@ -66,6 +66,26 @@ public sealed class RouteRun
     /// <summary>The network these were computed on, so a later answer can say it is stale.</summary>
     public long NetworkVersion { get; }
 
+    /// <summary>
+    /// What the side that read the model wants said, in its own words.
+    /// </summary>
+    /// <remarks>
+    /// <b>Strings, carried and never read.</b> What a link is, and what it means for one to be
+    /// placed but not loaded, is knowledge the Revit side has and the search does not. Composing
+    /// them here would need that knowledge; leaving them out would mean a run reports half its
+    /// circuits unroutable while the reason sits in a count nobody was shown.
+    /// </remarks>
+    public IReadOnlyList<string> Reading { get; init; } = Array.Empty<string>();
+
+    /// <summary>What other join tolerances would have made of the same carriers.</summary>
+    /// <remarks>
+    /// Empty unless something failed to cross the structure. It is evidence rather than advice: a
+    /// wider tolerance joins runs a person reads as joined, and also joins two that merely pass
+    /// near each other - so the number to choose is a judgement about a model, and this is the table
+    /// it is made from.
+    /// </remarks>
+    public IReadOnlyList<ToleranceReading> Tolerances { get; init; } = Array.Empty<ToleranceReading>();
+
     /// <summary>What that network looked like as a graph.</summary>
     /// <remarks>
     /// Carried on the run rather than fetched from the network by whoever displays it, because the
@@ -131,4 +151,19 @@ public sealed class RouteRun
             }
         }
     }
+}
+
+/// <summary>What one join tolerance makes of a set of carriers.</summary>
+public readonly struct ToleranceReading
+{
+    public ToleranceReading(double tolerance, NetworkShape shape)
+    {
+        Tolerance = tolerance;
+        Shape = shape;
+    }
+
+    /// <summary>The tolerance tried, in internal feet - the screen formats it as a length.</summary>
+    public double Tolerance { get; }
+
+    public NetworkShape Shape { get; }
 }

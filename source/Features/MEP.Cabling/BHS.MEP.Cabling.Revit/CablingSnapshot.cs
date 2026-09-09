@@ -1,4 +1,4 @@
-using Autodesk.Revit.DB;
+﻿using Autodesk.Revit.DB;
 using BHS.MEP.Cabling.Routing;
 
 namespace BHS.MEP.Cabling.Revit;
@@ -28,6 +28,7 @@ public sealed class CablingSnapshot
     /// </remarks>
     public CablingSnapshot(
         RouteNetwork network,
+        IReadOnlyList<CarrierNode> carriers,
         CircuitHarvest circuits,
         int linksRead,
         int linksNotLoaded,
@@ -35,6 +36,7 @@ public sealed class CablingSnapshot
         int carriersSkipped)
     {
         Network = network;
+        Carriers = carriers;
         Circuits = circuits;
         LinksRead = linksRead;
         LinksNotLoaded = linksNotLoaded;
@@ -43,6 +45,14 @@ public sealed class CablingSnapshot
     }
 
     public RouteNetwork Network { get; }
+
+    /// <summary>The carriers the network was built from.</summary>
+    /// <remarks>
+    /// Kept as well as the network, because the network is the answer to one join tolerance and the
+    /// question that follows a failed run is what a different tolerance would have given. Rebuilding
+    /// from these costs a pass over a few hundred elements; reading the model again costs the read.
+    /// </remarks>
+    public IReadOnlyList<CarrierNode> Carriers { get; }
 
     public CircuitHarvest Circuits { get; }
 
@@ -105,6 +115,7 @@ public sealed class CablingSnapshot
 
         return new CablingSnapshot(
             NetworkBuilder.Build(version, carriers, options),
+            carriers,
             new CircuitReader().Read(host),
             read,
             notLoaded,

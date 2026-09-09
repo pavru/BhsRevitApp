@@ -129,10 +129,68 @@ public sealed class RouteCablingCommand : IFeatureCommand
 
         clock.Stop();
 
+        var shape = snapshot.Network.Shape();
+        var failedToCross = results.Any(one => one.Status == RouteStatus.NoConnectivity);
+
         return new RouteRun(results, snapshot.Network.Version, clock.Elapsed)
         {
-            Shape = snapshot.Network.Shape(),
+            Shape = shape,
+            Reading = CablingGaps.Describe(snapshot),
+            Tolerances = failedToCross ? Tolerances(snapshot, options, token) : Array.Empty<ToleranceReading>(),
         };
+    }
+
+    /// <summary>
+    /// What other join tolerances would have made of the same carriers.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <b>Measured because guessing costs a press of the button each time.</b> A real model came
+    /// back with twenty-six circuits of fifty-five unable to cross a structure that read as
+    /// forty-four groups - which says the tolerance is a suspect and says nothing about what value
+    /// would do. One rebuild per candidate answers that: it is a pass over a few hundred elements,
+    /// against a model read measured in seconds.
+    /// </para>
+    /// <para>
+    /// <b>It is evidence, not a recommendation, and the difference matters.</b> A wider tolerance
+    /// joins runs a person reads as joined - and joins two that merely pass near each other, which
+    /// produces routes nobody can build. The table says what each value does; choosing is a
+    /// judgement about a particular model.
+    /// </para>
+    /// <para>
+    /// Only larger candidates are tried. A smaller one cannot join what the current value did not,
+    /// so a row for it is a line that cannot change the answer.
+    /// </para>
+    /// </remarks>
+    private static IReadOnlyList<ToleranceReading> Tolerances(
+        CablingSnapshot snapshot,
+        RoutingOptions options,
+        CancellationToken token)
+    {
+        var readings = new List<ToleranceReading>();
+
+        foreach (var millimetres in CablingOptions.ToleranceLadder)
+        {
+            token.ThrowIfCancellationRequested();
+
+            var candidate = CablingOptions.ToFeet(millimetres);
+
+            if (candidate <= options.JoinTolerance)
+                continue;
+
+            var network = NetworkBuilder.Build(
+                snapshot.Network.Version,
+                snapshot.Carriers,
+                new RoutingOptions
+                {
+                    JoinTolerance = candidate,
+                    MaxApproach = options.MaxApproach,
+                });
+
+            readings.Add(new ToleranceReading(candidate, network.Shape()));
+        }
+
+        return readings;
     }
 
     /// <summary>
