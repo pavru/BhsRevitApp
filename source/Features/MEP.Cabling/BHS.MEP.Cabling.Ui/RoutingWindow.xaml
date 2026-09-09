@@ -1,0 +1,134 @@
+﻿<Window x:Class="BHS.MEP.Cabling.Ui.RoutingWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:ui="clr-namespace:BHS.MEP.Cabling.Ui"
+        mc:Ignorable="d"
+        d:DataContext="{d:DesignInstance ui:RoutingViewModel}"
+        Title="Cable routing"
+        Width="560"
+        SizeToContent="Height"
+        ResizeMode="NoResize"
+        ShowInTaskbar="False"
+        WindowStartupLocation="CenterOwner">
+
+    <!--
+      Deliberately plain, and dated by that. The look belongs with the dockable pane, where WPF-UI
+      is measured inside a live Revit for the first time since the package set was cut down; a
+      dialog that has to work today should not be the experiment that finds out whether it loads.
+
+      What is here is only what the run has to say: what it is doing, how far along, what it found,
+      how that compares with Revit's own number, and what it could not reach.
+    -->
+
+    <Window.Resources>
+        <BooleanToVisibilityConverter x:Key="Shown" />
+        <ui:NegateBoolean x:Key="Not" />
+    </Window.Resources>
+
+    <Grid Margin="16">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
+
+        <!-- Never a bare bar: a bar says something is happening and nothing about what, and the
+             first thing anybody does is wonder whether it is stuck. -->
+        <TextBlock Grid.Row="0"
+                   Text="{Binding What}"
+                   TextWrapping="Wrap"
+                   FontSize="14" />
+
+        <ProgressBar Grid.Row="1"
+                     Height="6"
+                     Margin="0,12,0,0"
+                     Minimum="0"
+                     Maximum="{Binding Total}"
+                     Value="{Binding Done, Mode=OneWay}"
+                     IsIndeterminate="{Binding IsIndeterminate}"
+                     Visibility="{Binding IsBusy, Converter={StaticResource Shown}}" />
+
+        <TextBlock Grid.Row="2"
+                   Margin="0,16,0,0"
+                   Text="{Binding Summary}"
+                   TextWrapping="Wrap"
+                   Visibility="{Binding HasResult, Converter={StaticResource Shown}}" />
+
+        <!-- The comparison the result owes an explanation for. "Longer by 9 %" invites a bug
+             report; naming the drops to devices does not. -->
+        <TextBlock Grid.Row="3"
+                   Margin="0,6,0,0"
+                   Text="{Binding LengthSummary}"
+                   TextWrapping="Wrap"
+                   Visibility="{Binding HasResult, Converter={StaticResource Shown}}" />
+
+        <!-- Only when a run failed to cross the structure. Then it is the answer; otherwise it is
+             a true sentence that buries the ones that matter. -->
+        <TextBlock Grid.Row="4"
+                   Margin="0,14,0,0"
+                   Text="{Binding StructureSummary}"
+                   TextWrapping="Wrap"
+                   Visibility="{Binding HasStructureSummary, Converter={StaticResource Shown}}" />
+
+        <!-- What the read left behind. Shown on any run that has any, because a run where every
+             circuit routed can still be short by a link that was never opened. -->
+        <ItemsControl Grid.Row="5"
+                      Margin="0,14,0,0"
+                      ItemsSource="{Binding Reading}"
+                      Visibility="{Binding HasReading, Converter={StaticResource Shown}}">
+            <ItemsControl.ItemTemplate>
+                <DataTemplate>
+                    <TextBlock Text="{Binding}" TextWrapping="Wrap" Margin="0,2,0,0" />
+                </DataTemplate>
+            </ItemsControl.ItemTemplate>
+        </ItemsControl>
+
+        <!-- Causes, grouped, each naming where it stopped. A cause without an address sends
+             somebody looking; with one, it is the work itself. -->
+        <ItemsControl Grid.Row="6"
+                      Margin="0,14,0,0"
+                      ItemsSource="{Binding Causes}"
+                      Visibility="{Binding HasCauses, Converter={StaticResource Shown}}">
+            <ItemsControl.ItemTemplate>
+                <DataTemplate>
+                    <TextBlock Text="{Binding}" TextWrapping="Wrap" Margin="0,2,0,0" />
+                </DataTemplate>
+            </ItemsControl.ItemTemplate>
+        </ItemsControl>
+
+        <StackPanel Grid.Row="7"
+                    Orientation="Horizontal"
+                    HorizontalAlignment="Right"
+                    Margin="0,20,0,0">
+
+            <TextBlock Text="{Binding Failure}"
+                       TextWrapping="Wrap"
+                       MaxWidth="360"
+                       VerticalAlignment="Center"
+                       Margin="0,0,12,0"
+                       Visibility="{Binding HasFailure, Converter={StaticResource Shown}}" />
+
+            <Button Content="Stop"
+                    MinWidth="96"
+                    Margin="0,0,8,0"
+                    Click="OnCancel"
+                    Visibility="{Binding CanCancel, Converter={StaticResource Shown}}" />
+
+            <!-- Disabled rather than hidden while the search runs: a Close button that vanishes and
+                 comes back moves the one next to it under the pointer. -->
+            <Button Content="Close"
+                    MinWidth="96"
+                    IsDefault="True"
+                    IsCancel="True"
+                    Click="OnClose"
+                    IsEnabled="{Binding IsBusy, Converter={StaticResource Not}}" />
+        </StackPanel>
+    </Grid>
+</Window>

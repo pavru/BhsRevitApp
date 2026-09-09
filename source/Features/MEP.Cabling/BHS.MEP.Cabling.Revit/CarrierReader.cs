@@ -1,4 +1,4 @@
-using Autodesk.Revit.DB;
+﻿using Autodesk.Revit.DB;
 using BHS.MEP.Cabling.Routing;
 
 namespace BHS.MEP.Cabling.Revit;
@@ -67,7 +67,7 @@ public sealed class CarrierReader
 
     private static CarrierNode? Read(Element element, long source, Transform transform, string carrierClass)
     {
-        if (!TryExtent(element, out var start, out var end))
+        if (!TryExtent(element, out var start, out var end, out var joins))
             return null;
 
         start = transform.OfPoint(start);
@@ -75,6 +75,17 @@ public sealed class CarrierReader
 
         var from = new Point3(start.X, start.Y, start.Z);
         var to = new Point3(end.X, end.Y, end.Z);
+
+        // Every join point, through the same transform. A fitting may carry any number of
+        // connectors - the owner's own correction, and the reason nothing here counts them - so this
+        // is a list rather than a third and fourth field.
+        var terminals = new Point3[joins.Count];
+
+        for (var i = 0; i < joins.Count; i++)
+        {
+            var at = transform.OfPoint(joins[i]);
+            terminals[i] = new Point3(at.X, at.Y, at.Z);
+        }
 
         // A fitting is a joint rather than a run: it connects, and its own length is not walked.
         var kind = element is MEPCurve ? CarrierKind.Segment : CarrierKind.Fitting;
@@ -90,7 +101,8 @@ public sealed class CarrierReader
             kind == CarrierKind.Segment ? from.DistanceTo(to) : 0,
             CrossSection(element, carrierClass),
             from,
-            to);
+            to,
+            terminals);
     }
 
     /// <summary>
@@ -105,10 +117,11 @@ public sealed class CarrierReader
     /// would otherwise drop out of the network, and a missing carrier does not fail loudly - it
     /// turns into "no connectivity" for every circuit whose route went through it.
     /// </remarks>
-    private static bool TryExtent(Element element, out XYZ start, out XYZ end)
+    private static bool TryExtent(Element element, out XYZ start, out XYZ end, out IReadOnlyList<XYZ> joins)
     {
         start = XYZ.Zero;
         end = XYZ.Zero;
+        joins = Array.Empty<XYZ>();
 
         var manager = element switch
         {
@@ -117,19 +130,23 @@ public sealed class CarrierReader
             _ => null,
         };
 
-        if (manager is not null && TryExtremes(manager, out start, out end))
+        if (manager is not null && TryExtremes(manager, out start, out end, out joins))
             return true;
 
+        // Every rung below describes the element by two points at most, and both are join points:
+        // a run joins at the ends of its curve, and an element known only by one point joins there.
         switch (element.Location)
         {
             case LocationCurve located when located.Curve is not null:
                 start = located.Curve.GetEndPoint(0);
                 end = located.Curve.GetEndPoint(1);
+                joins = new[] { start, end };
                 return true;
 
             case LocationPoint located:
                 start = located.Point;
                 end = located.Point;
+                joins = new[] { start };
                 return true;
 
             default:
@@ -142,19 +159,38 @@ public sealed class CarrierReader
 
                 start = centre;
                 end = centre;
+                joins = new[] { centre };
                 return true;
         }
     }
 
-    /// <summary>The two connector origins that lie farthest apart.</summary>
+    /// <summary>
+    /// The extremes of a carrier's reach, and every point at which something may join it.
+    /// </summary>
     /// <remarks>
-    /// A tee has three and a cross has four, and any two of them describe the fitting badly; the
-    /// extremes describe its reach, which is what adjacency and the index are asking about.
+    /// <para>
+    /// <b>The old comment here named the defect and then committed it.</b> It said "a tee has three
+    /// and a cross has four, and any two of them describe the fitting badly" - and returned two,
+    /// because adjacency and the index only asked for two. The branch of every tee was therefore
+    /// invisible, and a tray landing on it joined nothing.
+    /// </para>
+    /// <para>
+    /// <b>The count is not three or four either.</b> The owner's correction: a fitting may have as
+    /// many connectors as it likes. So nothing here counts them, nothing assumes a shape, and the
+    /// origins travel as a list - see <see cref="BHS.MEP.Cabling.Routing.CarrierNode.Terminals"/>.
+    /// </para>
+    /// <para>
+    /// The extremes are still computed, because a length and a drawing want the reach; they are now
+    /// a summary of the terminals rather than a replacement for them. The pairwise walk that finds
+    /// them is quadratic in the connector count, which is why it runs over the origins already
+    /// gathered rather than asking Revit again.
+    /// </para>
     /// </remarks>
-    private static bool TryExtremes(ConnectorManager manager, out XYZ start, out XYZ end)
+    private static bool TryExtremes(ConnectorManager manager, out XYZ start, out XYZ end, out IReadOnlyList<XYZ> joins)
     {
         start = XYZ.Zero;
         end = XYZ.Zero;
+        joins = Array.Empty<XYZ>();
 
         var origins = new List<XYZ>();
 
@@ -169,6 +205,7 @@ public sealed class CarrierReader
         if (origins.Count == 0)
             return false;
 
+        joins = origins;
         start = origins[0];
         end = origins[0];
         var widest = 0.0;

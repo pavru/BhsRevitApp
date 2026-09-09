@@ -40,7 +40,7 @@ public sealed class RouteNetwork
         _index = new SpatialIndex(Math.Max(approachRadius, 1e-6));
 
         for (var i = 0; i < _byIndex.Length; i++)
-            _index.AddSpan(i, _byIndex[i].Start, _byIndex[i].End);
+            _index.AddAll(i, _byIndex[i].Terminals);
     }
 
     /// <summary>Monotonic, per document. Compared, never interpreted.</summary>
@@ -54,6 +54,64 @@ public sealed class RouteNetwork
 
     public IReadOnlyList<CarrierId> Neighbours(CarrierId id) =>
         _adjacency.TryGetValue(id, out var next) ? next : Array.Empty<CarrierId>();
+
+    /// <summary>
+    /// How many separate pieces the structure falls into.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <b>Written because a real model answered "no connectivity" for twenty-six circuits out of
+    /// fifty-five, and the status alone cannot say whose fault that is.</b> Both ends reached the
+    /// structure and nothing joined them - which is either a structure genuinely drawn in pieces, or
+    /// a join tolerance too small to close gaps a person reads as joints. Those two want opposite
+    /// actions, and guessing between them costs a press of the button each time.
+    /// </para>
+    /// <para>
+    /// One walk over the graph answers it. A hundred groups is a tolerance; two is a model with a
+    /// riser nobody drew.
+    /// </para>
+    /// </remarks>
+    public NetworkShape Shape()
+    {
+        var seen = new HashSet<CarrierId>();
+        var groups = 0;
+        var largest = 0;
+        var junctions = 0;
+        var stack = new Stack<CarrierId>();
+
+        foreach (var node in _nodes.Values)
+        {
+            if (node.Terminals.Count > 2)
+                junctions++;
+        }
+
+        foreach (var start in _nodes.Keys)
+        {
+            if (!seen.Add(start))
+                continue;
+
+            groups++;
+            var size = 1;
+            stack.Push(start);
+
+            while (stack.Count > 0)
+            {
+                foreach (var next in Neighbours(stack.Pop()))
+                {
+                    if (!seen.Add(next))
+                        continue;
+
+                    size++;
+                    stack.Push(next);
+                }
+            }
+
+            if (size > largest)
+                largest = size;
+        }
+
+        return new NetworkShape(_nodes.Count, groups, largest, junctions);
+    }
 
     /// <summary>The carriers whose ends lie near a point.</summary>
     /// <remarks>
@@ -137,4 +195,39 @@ public sealed class CircuitSnapshot
 
     /// <summary>Cross-section of the cable, for the fill calculation. Zero when unknown.</summary>
     public double CableArea { get; init; }
+}
+
+/// <summary>What the structure looks like as a graph, for when a search says it could not cross it.</summary>
+public readonly struct NetworkShape
+{
+    public NetworkShape(int carriers, int groups, int largest, int junctions = 0)
+    {
+        Carriers = carriers;
+        Groups = groups;
+        Largest = largest;
+        Junctions = junctions;
+    }
+
+    /// <summary>Every carrier that was read.</summary>
+    public int Carriers { get; }
+
+    /// <summary>How many disconnected pieces they form.</summary>
+    public int Groups { get; }
+
+    /// <summary>How many carriers are in the biggest of those pieces.</summary>
+    /// <remarks>
+    /// The number that decides what to do. One group holding almost everything means the structure
+    /// is continuous and a few strays are loose; groups all of a similar small size means nothing is
+    /// joined to anything, which is a tolerance rather than a model.
+    /// </remarks>
+    public int Largest { get; }
+
+    /// <summary>Carriers with more than two points at which something can join them.</summary>
+    /// <remarks>
+    /// <b>Evidence for one particular defect, kept because that defect was expensive.</b> A carrier
+    /// was once described by two points only, so every tee lost its branch and every cross lost two.
+    /// A model with many junctions and a badly fragmented structure is the signature; a model with
+    /// none says the fragmentation is somewhere else entirely.
+    /// </remarks>
+    public int Junctions { get; }
 }

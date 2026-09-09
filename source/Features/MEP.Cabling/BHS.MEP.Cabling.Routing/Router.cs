@@ -31,6 +31,7 @@ public static class Router
             return new RouteResult(circuit.Id, RouteStatus.NothingToRoute, network.Version)
             {
                 BlockedAt = circuit.Number,
+                BuiltInLength = circuit.BuiltInLength,
             };
         }
 
@@ -39,6 +40,7 @@ public static class Router
             return new RouteResult(circuit.Id, RouteStatus.NothingToRoute, network.Version)
             {
                 BlockedAt = circuit.Number,
+                BuiltInLength = circuit.BuiltInLength,
             };
         }
 
@@ -57,9 +59,15 @@ public static class Router
 
             if (leg.Status != RouteStatus.Found)
             {
+                // The circuit's own number in front of the end that stopped it. Measured on the
+                // first real run: the screen groups by cause and says "26 circuits", then lists
+                // addresses that are devices - two different levels, so the list answers a question
+                // nobody asked and leaves the circuits unnamed. A leg does not know which circuit it
+                // belongs to; this is the only place that does.
                 return new RouteResult(circuit.Id, leg.Status, network.Version)
                 {
-                    BlockedAt = leg.BlockedAt,
+                    BlockedAt = circuit.Number + " - " + leg.BlockedAt,
+                    BuiltInLength = circuit.BuiltInLength,
                 };
             }
 
@@ -84,6 +92,7 @@ public static class Router
             Path = path,
             AlongCarriers = alongCarriers + (total * options.LengthExtend),
             Approaches = approaches,
+            BuiltInLength = circuit.BuiltInLength,
         };
     }
 
@@ -192,7 +201,12 @@ public static class Router
 
         foreach (var node in network.Near(terminal.At))
         {
-            var distance = Math.Min(Approach(terminal.At, node.Start, options), Approach(terminal.At, node.End, options));
+            // Every terminal, not the two extremes: a device is often dropped from the branch of a
+            // tee, which is neither of them. Same correction as adjacency, and for the same reason.
+            var distance = double.MaxValue;
+
+            foreach (var at in node.Terminals)
+                distance = Math.Min(distance, Approach(terminal.At, at, options));
 
             if (distance > options.MaxApproach)
                 continue;

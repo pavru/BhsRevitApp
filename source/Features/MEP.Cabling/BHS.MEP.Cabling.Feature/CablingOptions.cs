@@ -1,4 +1,4 @@
-using Autodesk.Revit.DB;
+﻿using Autodesk.Revit.DB;
 using BHS.MEP.Cabling.Routing;
 using BHS.Settings;
 
@@ -34,6 +34,17 @@ internal static class CablingOptions
     /// next room. It is the setting most likely to be changed per project.
     /// </remarks>
     private const double DefaultMaxApproachMm = 3000;
+
+    /// <summary>
+    /// The join tolerances a failed run is measured against, in millimetres.
+    /// </summary>
+    /// <remarks>
+    /// Spread rather than stepped: the question is which order of magnitude closes the gaps, and
+    /// five values across a factor of forty answer it where twenty values a millimetre apart would
+    /// only make a longer list. A metre is the top because a tolerance that wide joins runs in
+    /// different rooms, and past that the table stops being about joints.
+    /// </remarks>
+    public static IReadOnlyList<double> ToleranceLadder { get; } = new[] { 50.0, 100, 250, 500, 1000 };
 
     public static RoutingOptions Read(ISettings settings)
     {
@@ -74,6 +85,6 @@ internal static class CablingOptions
     /// suggest this conversion depends on the model, and the next person would keep it.
     /// </para>
     /// </remarks>
-    private static double ToFeet(double millimetres) =>
+    public static double ToFeet(double millimetres) =>
         UnitUtils.ConvertToInternalUnits(millimetres, UnitTypeId.Millimeters);
 }

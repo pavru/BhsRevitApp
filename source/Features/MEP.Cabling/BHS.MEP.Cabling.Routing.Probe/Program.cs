@@ -14,7 +14,7 @@ namespace BHS.MEP.Cabling.Routing.Probe;
 internal static class Program
 {
     private const double Tolerance = 0.1;
-    private const int Floor = 18;
+    private const int Floor = 38;
 
     private static int _run;
     private static int _failed;
@@ -29,6 +29,9 @@ internal static class Program
         ReportsWhyItFailed();
         ApproachIsAlongAxes();
         LengthIgnoresThePreference();
+        TheRunGroupsItsFailures();
+        TheStructureSaysHowManyPiecesItIsIn();
+        AFittingJoinsOnEveryConnector();
 
         Console.WriteLine();
 
@@ -161,7 +164,11 @@ internal static class Program
             Options());
 
         Check("a device out of reach is NoCarrierNear", far.Status == RouteStatus.NoCarrierNear);
-        Check("and it names the end that was out of reach", far.BlockedAt == "panel");
+        // Both halves, and the check earns its keep by having caught the day the first half was
+        // added: the screen groups by cause and says "26 circuits", so a line naming only the device
+        // answers at a different level from the heading and leaves every circuit unnamed.
+        Check("and it names the circuit as well as the end that was out of reach",
+            far.BlockedAt == "P-1 - panel");
 
         var empty = Router.Route(
             network,
@@ -242,6 +249,159 @@ internal static class Program
 
         return NetworkBuilder.Build(1, carriers, options ?? Options());
     }
+
+    /// <summary>
+    /// What a whole run says about itself, rather than what one circuit says.
+    /// </summary>
+    /// <remarks>
+    /// Built from results directly rather than by routing: the grouping is arithmetic over statuses
+    /// and lengths, and running a search to produce them would test the search again and this not at
+    /// all. The failures here are the shapes a real run produces - some of each cause, and one cause
+    /// that did not happen.
+    /// </remarks>
+    private static void TheRunGroupsItsFailures()
+    {
+        Section("what a run says about itself");
+
+        var results = new List<RouteResult>
+        {
+            Routed(1, alongCarriers: 10, approaches: 2, builtIn: 11),
+            Routed(2, alongCarriers: 20, approaches: 3, builtIn: 21),
+            Failed(3, RouteStatus.NoCarrierNear, "Socket 3", builtIn: 99),
+            Failed(4, RouteStatus.NoCarrierNear, "Socket 4", builtIn: 99),
+            Failed(5, RouteStatus.NothingToRoute, "SP-1, way 12", builtIn: 0),
+        };
+
+        var run = new RouteRun(results, networkVersion: 7, took: TimeSpan.FromSeconds(1.5));
+
+        Check("it counts what routed", run.Found == 2);
+        Check("and counts each cause apart", run.Count(RouteStatus.NoCarrierNear) == 2);
+
+        // The one that never happened. A report that prints it as zero buries the two that did.
+        Check("a cause that did not happen is not a cause",
+            !run.Causes.Contains(RouteStatus.NoConnectivity));
+
+        Check("the causes that did happen are both there",
+            run.Causes.SequenceEqual(new[] { RouteStatus.NoCarrierNear, RouteStatus.NothingToRoute }));
+
+        Check("failures keep the order they were tried in",
+            run.Failures.Select(one => one.Circuit.Value).SequenceEqual(new long[] { 3, 4, 5 }));
+
+        Check("and can be asked for one cause at a time",
+            run.Blocked(RouteStatus.NothingToRoute).Single().BlockedAt == "SP-1, way 12");
+
+        Check("length is summed over what routed", Near(run.TotalLength, 35));
+
+        // The pair that must come from one set. Revit's number for the three that did not route is
+        // 198 ft here on purpose: if either total ever drifts onto all five results, this goes red.
+        Check("and Revit's number over those same circuits, not all of them",
+            Near(run.BuiltInLength, 32));
+
+        Check("the version travels with the run", run.NetworkVersion == 7);
+    }
+
+    /// <summary>
+    /// Whether the structure is one thing or many, which is the question "no connectivity" raises.
+    /// </summary>
+    /// <remarks>
+    /// <code>
+    ///   +--[0]--+--[1]--+        +--[2]--+        joined at 0.05, apart by 5
+    ///   0      10      20       25      35
+    /// </code>
+    /// The two cases it has to tell apart are the two a real model produces: everything joined but
+    /// for a stray, and nothing joined to anything. The second is a tolerance, the first is a model.
+    /// </remarks>
+    /// <summary>
+    /// A branch joins, even though it is not one of the two points that lie farthest apart.
+    /// </summary>
+    /// <remarks>
+    /// <code>
+    ///                      +--[3]-- branch tray, from (5,0,0) to (5,10,0)
+    ///                      |
+    ///   --[0]--+--[1 tee]--+--[2]--
+    ///   0     10          14      24
+    ///           tee terminals: (10,0,0) (14,0,0) (12,0,0)
+    /// </code>
+    /// The tee's extremes are its two through connectors; the branch sits between them and is
+    /// nearer to neither than two feet. This is the defect measured on a real model: the branch was
+    /// discarded, so the tray on it joined nothing, and half the circuits reported "no connectivity"
+    /// over a structure that was drawn correctly.
+    /// </remarks>
+    private static void AFittingJoinsOnEveryConnector()
+    {
+        Section("a fitting joins on every connector");
+
+        var tee = new CarrierNode(
+            new CarrierId(1), CarrierKind.Fitting, "tray", 0, 0.05,
+            P(10, 0, 0), P(14, 0, 0),
+            new[] { P(10, 0, 0), P(14, 0, 0), P(12, 0, 0) });
+
+        var branch = new CarrierNode(
+            new CarrierId(3), CarrierKind.Segment, "tray", 10, 0.05,
+            P(12, 0, 0), P(12, 10, 0));
+
+        var network = NetworkBuilder.Build(1, new[] { Tray(0, 0, 10), tee, Tray(2, 14, 24), branch }, Options());
+
+        Check("the branch is not one of the extremes",
+            !Near(tee.Start.DistanceTo(P(12, 0, 0)), 0) && !Near(tee.End.DistanceTo(P(12, 0, 0)), 0));
+
+        Check("and the tee still reaches it", network.Neighbours(new CarrierId(1)).Contains(new CarrierId(3)));
+        Check("both ways", network.Neighbours(new CarrierId(3)).Contains(new CarrierId(1)));
+        Check("so the whole thing is one piece", network.Shape().Groups == 1);
+
+        // The count is not three: a fitting may carry any number of connectors, so nothing anywhere
+        // assumes a shape. Five here, four of them join points nothing else would have found.
+        var manifold = new CarrierNode(
+            new CarrierId(4), CarrierKind.Fitting, "tray", 0, 0.05,
+            P(0, 0, 0), P(4, 0, 0),
+            new[] { P(0, 0, 0), P(4, 0, 0), P(1, 0, 0), P(2, 0, 0), P(3, 0, 0) });
+
+        var onMiddle = new CarrierNode(
+            new CarrierId(5), CarrierKind.Segment, "tray", 10, 0.05,
+            P(2, 0, 0), P(2, 10, 0));
+
+        var many = NetworkBuilder.Build(2, new[] { manifold, onMiddle }, Options());
+
+        Check("a fitting with five connectors joins on the middle one",
+            many.Neighbours(new CarrierId(4)).Contains(new CarrierId(5)));
+
+        Check("and a route can be found across it", many.Shape().Groups == 1);
+    }
+
+    private static void TheStructureSaysHowManyPiecesItIsIn()
+    {
+        Section("how many pieces the structure is in");
+
+        var carriers = new[] { Tray(0, 0, 10), Tray(1, 10, 20), Tray(2, 25, 35) };
+
+        var together = NetworkBuilder.Build(1, carriers, Options()).Shape();
+
+        Check("it counts every carrier", together.Carriers == 3);
+        Check("the gap of five splits them in two", together.Groups == 2);
+        Check("and names the bigger piece", together.Largest == 2);
+
+        // The same carriers, with a tolerance wide enough to close the gap a person reads as a
+        // joint. One group is what a model that routes looks like.
+        var reached = NetworkBuilder.Build(2, carriers, Options(join: 6)).Shape();
+
+        Check("a wider tolerance makes it one piece", reached.Groups == 1);
+        Check("holding all of them", reached.Largest == 3);
+    }
+
+    private static RouteResult Routed(long circuit, double alongCarriers, double approaches, double builtIn) =>
+        new(new CarrierId(circuit), RouteStatus.Found, 7)
+        {
+            AlongCarriers = alongCarriers,
+            Approaches = approaches,
+            BuiltInLength = builtIn,
+        };
+
+    private static RouteResult Failed(long circuit, RouteStatus status, string blockedAt, double builtIn) =>
+        new(new CarrierId(circuit), status, 7)
+        {
+            BlockedAt = blockedAt,
+            BuiltInLength = builtIn,
+        };
 
     private static CarrierNode Tray(long id, double from, double to) =>
         new(new CarrierId(id), CarrierKind.Segment, "tray", to - from, 0.05, P(from, 0, 0), P(to, 0, 0));

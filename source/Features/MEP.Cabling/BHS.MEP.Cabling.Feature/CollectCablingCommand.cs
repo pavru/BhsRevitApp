@@ -1,4 +1,4 @@
-using System.Globalization;
+﻿using System.Globalization;
 using Autodesk.Revit.DB;
 using Autodesk.Revit.UI;
 using BHS.Logging;
@@ -77,7 +77,7 @@ public sealed class CollectCablingCommand : IFeatureCommand
         log.Info(
             "cabling: {0} carriers, {1} circuits, from {2} link(s)",
             snapshot.Network.Count,
-            snapshot.Circuits.Circuits.Count,
+            snapshot.Circuits.Described.Count,
             snapshot.LinksRead);
 
         // Info rather than Warn: a reserved way in a panel schedule is somebody doing their job.
@@ -131,11 +131,11 @@ public sealed class CollectCablingCommand : IFeatureCommand
             CultureInfo.CurrentCulture,
             "Carriers: {0}\nCircuits: {1}\nLinks read: {2}{3}",
             snapshot.Network.Count,
-            snapshot.Circuits.Circuits.Count,
+            snapshot.Circuits.Described.Count,
             snapshot.LinksRead,
             spare);
 
-        var missing = Missing(snapshot);
+        var missing = CablingGaps.AsText(snapshot);
 
         var dialog = new TaskDialog("Cable-bearing structure")
         {
@@ -148,25 +148,5 @@ public sealed class CollectCablingCommand : IFeatureCommand
         };
 
         dialog.Show();
-    }
-
-    private static string Missing(CablingSnapshot snapshot)
-    {
-        var lines = new List<string>();
-
-        Add(lines, snapshot.CarriersSkipped, "carriers with no readable geometry");
-        Add(lines, snapshot.LinksNotLoaded, "links placed but not loaded");
-        Add(lines, snapshot.NestedLinksIgnored, "links inside links, not followed");
-        Add(lines, snapshot.Circuits.WithoutPanel, "circuits with no panel");
-        Add(lines, snapshot.Circuits.WithoutDevices, "circuits with no reachable device");
-        Add(lines, snapshot.Circuits.DevicesSkipped, "devices dropped from circuits that were described");
-
-        return lines.Count == 0 ? string.Empty : string.Join("\n", lines);
-    }
-
-    private static void Add(List<string> lines, int count, string what)
-    {
-        if (count > 0)
-            lines.Add(count.ToString(CultureInfo.CurrentCulture) + " " + what);
     }
 }
