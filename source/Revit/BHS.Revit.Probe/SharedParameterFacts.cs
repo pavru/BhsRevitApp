@@ -129,6 +129,12 @@ internal static class SharedParameterFacts
         answer["parameters:missingBefore"] = scheme.Missing(document).Count
             .ToString(CultureInfo.InvariantCulture);
 
+        // Reported rather than inferred, because "nothing was bound" has more than one cause and the
+        // first run could not tell them apart: a category the document does not have, a definition
+        // missing from the file, or the binding call itself refusing. This rules out the first.
+        answer["parameters:categoryResolved"] =
+            Category.GetCategory(document, BuiltInCategory.OST_GenericModel) is not null ? "True" : "False";
+
         using (var group = new TransactionGroup(document, "BHS probe: shared parameters"))
         {
             group.Start();

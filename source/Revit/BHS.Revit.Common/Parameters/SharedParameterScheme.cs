@@ -241,6 +241,12 @@ public abstract class SharedParameterScheme
     /// one inside a modal window after an await.
     /// </para>
     /// <para>
+    /// <b>Insert is tried before ReInsert, and that order is measured rather than assumed.</b>
+    /// ReInsert repairs a binding that covers too few categories; on a parameter the model does not
+    /// have yet it returns false and binds nothing - so a scheme that only ever called ReInsert bound
+    /// nothing at all on a fresh model, which is the case that always comes first.
+    /// </para>
+    /// <para>
     /// <b>A parameter the document already knows is re-bound through the document's own definition,
     /// never through ours.</b> Only a parameter that is not there at all is created from the file,
     /// and only then does the language decide what it will be called - for ever, in that model. Feed
@@ -296,11 +302,23 @@ public abstract class SharedParameterScheme
                     ? (ElementBinding)application.Create.NewInstanceBinding(categories)
                     : application.Create.NewTypeBinding(categories);
 
-                // ReInsert rather than Insert: Insert refuses when the definition is already bound,
-                // and "bound to three of the four categories we want" is exactly the state Missing
-                // reports and this has to repair.
-                if (document.ParameterBindings.ReInsert(definition, binding, declared.Group))
+                // Insert first, ReInsert only if it refuses - and the order is the whole point.
+                //
+                // This was ReInsert alone, on the reasoning that Insert refuses when the definition
+                // is already bound and "bound to three of the four categories we want" is exactly
+                // the state Missing reports. The reasoning is right about the repair case and wrong
+                // about the ordinary one: measured on 2024, 2025 and 2026, ReInsert on a parameter
+                // the model does not have yet returns false and binds nothing. Which meant the
+                // command bound nothing at all on a fresh model - the only case that ever happens
+                // first.
+                //
+                // It failed silently, too: nothing threw, Install returned an empty list, and the
+                // dialog said "Nothing could be bound". Found by the probe's first run.
+                if (document.ParameterBindings.Insert(definition, binding, declared.Group)
+                    || document.ParameterBindings.ReInsert(definition, binding, declared.Group))
+                {
                     bound.Add(declared);
+                }
             }
 
             transaction.Commit();
