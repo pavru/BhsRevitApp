@@ -139,6 +139,10 @@ internal static class SweepChecks
         // is open, and the one fact that changes without one is what a read returns.
         await CheckModalWindowAsync(client, report);
 
+        // Same shape, same reason: writing the files needs no document at all, and only the binding
+        // half does. Both halves say so rather than falling silent.
+        await CheckSharedParametersAsync(client, report);
+
         // After the ribbon and the model, because one of its questions is about an event that only
         // arrives once Revit has finished starting - and asking a thing that has not happened yet
         // measures the clock, not the thing.
@@ -872,6 +876,105 @@ internal static class SweepChecks
         report.Check(
             "and outside it Revit's own context is WinForms",
             during.Values.GetValueOrDefault("modal:contextOutside") == "WindowsFormsSynchronizationContext");
+    }
+
+    /// <summary>
+    /// The shared parameter scheme, which until now had no automated check of any kind.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// Three claims, and each of them is load-bearing for a decision already taken. That the swap of
+    /// <c>SharedParametersFilename</c> puts the user's own choice back - the whole reason writing our
+    /// own file was acceptable at all. That two files carrying the same GUIDs under different names
+    /// really are one parameter - the owner's two-file requirement rests on it. And that a document
+    /// reads as bound by GUID rather than by name, which is what lets a model built in one language
+    /// be understood by a Revit running in the other.
+    /// </para>
+    /// <para>
+    /// The last one is the one that would have failed silently: a wrong answer there does not throw,
+    /// it re-binds a parameter the model already has and leaves two names for one thing.
+    /// </para>
+    /// </remarks>
+    private static async Task CheckSharedParametersAsync(
+        RevitSideChannel.RevitSideChannelClient client,
+        Report report)
+    {
+        Report.Heading("the shared parameter scheme");
+
+        AskResponse answer;
+
+        try
+        {
+            answer = await client.AskAsync(new AskRequest { Question = "parameters" });
+        }
+        catch (RpcException error)
+        {
+            report.Check("the parameter scheme answers", false);
+            report.Note("parameters failed", error.Status.StatusCode.ToString());
+            return;
+        }
+
+        foreach (var pair in answer.Values.OrderBy(one => one.Key, StringComparer.Ordinal))
+            report.Note(pair.Key, pair.Value);
+
+        report.Check(
+            "a file is written for every language, not only this Revit's",
+            answer.Values.GetValueOrDefault("parameters:filesWritten") == "2");
+
+        report.Check(
+            "and Revit finds our parameter in each of them",
+            answer.Values.GetValueOrDefault("parameters:name:en") == "BHS_Prb_FirstFact"
+            && answer.Values.GetValueOrDefault("parameters:name:ru") == "BHS_Prb_ПервыйФакт");
+
+        // The point of two files. Same GUID, different name: if these matched, the check would be
+        // asserting nothing and would keep passing after the translation was lost.
+        report.Check(
+            "the two files call one parameter by two names",
+            answer.Values.GetValueOrDefault("parameters:name:en")
+            != answer.Values.GetValueOrDefault("parameters:name:ru"));
+
+        // The swap is the one liberty this mechanism takes with state that belongs to everybody, so
+        // the promise that it is put back is the one that has to be checked rather than believed.
+        report.Check(
+            "the user's own shared parameter file is put back afterwards",
+            answer.Values.GetValueOrDefault("parameters:filePutBack") == "True");
+
+        var skipped = answer.Values.GetValueOrDefault("parameters:documentSkipped");
+
+        if (skipped != "False")
+        {
+            // Said out loud, for the same reason the modal window's transaction is: a binding check
+            // that quietly does nothing on a model-less run reads as one that passed.
+            report.Note("binding was not attempted", "no document is open - run with --with-model");
+            return;
+        }
+
+        report.Check(
+            "binding puts every declared parameter into the model",
+            answer.Values.GetValueOrDefault("parameters:missingAfter") == "0");
+
+        report.Check(
+            "and the parameter is found by its identifier, not its name",
+            answer.Values.GetValueOrDefault("parameters:foundByGuid") == "True");
+
+        // What the model ended up calling it, against what this Revit's language should have given.
+        // A mismatch here means the name a document takes is not the one we think it is - and every
+        // claim about the two files being interchangeable is built on knowing which one lands.
+        //
+        // Both sides are required to be present, and that is not belt and braces: comparing two
+        // absent keys makes null equal null, so the check would have been green on a probe that
+        // reported neither - the exact shape of failure this file spends a chapter on.
+        var inModel = answer.Values.GetValueOrDefault("parameters:nameInModel") ?? string.Empty;
+        var expected = answer.Values.GetValueOrDefault("parameters:nameExpected") ?? string.Empty;
+
+        report.Check(
+            "under the name from the file this Revit reads",
+            inModel.Length > 0 && string.Equals(inModel, expected, StringComparison.Ordinal));
+
+        // And the run leaves the model as it found it, or Revit asks about saving on the way out.
+        report.Check(
+            "and the group leaves the document without it",
+            answer.Values.GetValueOrDefault("parameters:goneAfterRollback") == "True");
     }
 
     private static async Task SurveyCablingAsync(
