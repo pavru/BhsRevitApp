@@ -252,6 +252,9 @@ public sealed class RoutingViewModel : INotifyPropertyChanged
             if (study.Gained > 0)
                 line += $", over {study.ReachedByNearest} - {study.Gained} more would find one";
 
+            line += $", or {_length(study.ByNearestOnTrays)} if a cable may only leave a conduit "
+                + "where it joins something";
+
             return line + $". The largest single drop would shorten by {_length(study.Worst)}.";
         }
     }

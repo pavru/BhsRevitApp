@@ -37,6 +37,7 @@ public static class ApproachStudy
         var terminals = 0;
         var byTerminals = 0.0;
         var byNearest = 0.0;
+        var byNearestOnTrays = 0.0;
         var reachedByTerminals = 0;
         var reachedByNearest = 0;
         var worst = 0.0;
@@ -49,15 +50,25 @@ public static class ApproachStudy
 
                 var toTerminals = double.MaxValue;
                 var toNearest = double.MaxValue;
+                var toNearestOnTrays = double.MaxValue;
 
                 foreach (var node in network.Nodes)
                 {
-                    foreach (var at in node.Terminals)
-                        toTerminals = Math.Min(toTerminals, Approaches.Measure(terminal.At, at, options));
+                    var ends = double.MaxValue;
 
-                    toNearest = Math.Min(
-                        toNearest,
-                        Approaches.Measure(terminal.At, node.NearestPointTo(terminal.At), options));
+                    foreach (var at in node.Terminals)
+                        ends = Math.Min(ends, Approaches.Measure(terminal.At, at, options));
+
+                    var along = Approaches.Measure(terminal.At, node.NearestPointTo(terminal.At), options);
+
+                    toTerminals = Math.Min(toTerminals, ends);
+                    toNearest = Math.Min(toNearest, along);
+
+                    // A tray is open and a cable leaves it anywhere along its length; a conduit is a
+                    // closed pipe and a cable leaves it at a fitting or an end. Whether that is how
+                    // it is really run is the owner's to say - this measures the difference so the
+                    // question has a number attached rather than an argument.
+                    toNearestOnTrays = Math.Min(toNearestOnTrays, IsConduit(node) ? ends : along);
                 }
 
                 if (toTerminals <= options.MaxApproach)
@@ -72,6 +83,9 @@ public static class ApproachStudy
                     byNearest += toNearest;
                 }
 
+                if (toNearestOnTrays <= options.MaxApproach)
+                    byNearestOnTrays += toNearestOnTrays;
+
                 // Only over the ones both measures can see. A terminal reachable by one and not the
                 // other has no difference to report - it has a different answer entirely, and that
                 // is what the counts say.
@@ -80,8 +94,18 @@ public static class ApproachStudy
             }
         }
 
-        return new ApproachComparison(terminals, reachedByTerminals, reachedByNearest, byTerminals, byNearest, worst);
+        return new ApproachComparison(
+            terminals, reachedByTerminals, reachedByNearest, byTerminals, byNearest, byNearestOnTrays, worst);
     }
+
+    /// <summary>Whether a cable may only leave this carrier where it joins another.</summary>
+    /// <remarks>
+    /// The same test the conduit preference uses, and for the same reason the class is a string: the
+    /// set of carrier categories belongs to the user, so a category they add says which of the two
+    /// it behaves like.
+    /// </remarks>
+    private static bool IsConduit(CarrierNode node) =>
+        string.Equals(node.Class, "conduit", StringComparison.OrdinalIgnoreCase);
 
     private static IEnumerable<Terminal> Ends(CircuitSnapshot circuit)
     {
@@ -101,6 +125,7 @@ public sealed class ApproachComparison
         int reachedByNearest,
         double byTerminals,
         double byNearest,
+        double byNearestOnTrays,
         double worst)
     {
         Terminals = terminals;
@@ -108,6 +133,7 @@ public sealed class ApproachComparison
         ReachedByNearest = reachedByNearest;
         ByTerminals = byTerminals;
         ByNearest = byNearest;
+        ByNearestOnTrays = byNearestOnTrays;
         Worst = worst;
     }
 
@@ -125,6 +151,16 @@ public sealed class ApproachComparison
 
     /// <summary>Summed drop over what the other measure can reach.</summary>
     public double ByNearest { get; }
+
+    /// <summary>
+    /// The same, but a cable leaves a conduit only where it joins something.
+    /// </summary>
+    /// <remarks>
+    /// Between the other two by construction, and how far towards each says how much of the gain
+    /// belongs to trays. A tray is open along its length; a conduit is a pipe, and a cable comes out
+    /// of it at a fitting or an end rather than through its wall.
+    /// </remarks>
+    public double ByNearestOnTrays { get; }
 
     /// <summary>The largest single drop the change would shorten.</summary>
     public double Worst { get; }

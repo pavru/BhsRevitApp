@@ -14,7 +14,7 @@ namespace BHS.MEP.Cabling.Routing.Probe;
 internal static class Program
 {
     private const double Tolerance = 0.1;
-    private const int Floor = 45;
+    private const int Floor = 47;
 
     private static int _run;
     private static int _failed;
@@ -375,6 +375,17 @@ internal static class Program
         Check("and in reach measured along the carrier", study.ReachedByNearest == 2);
         Check("which the study calls a gain", study.Gained == 1);
         Check("and it does not call that agreement", !study.Agree);
+
+        // The same network as conduit rather than tray: a cable leaves a pipe where it joins
+        // something, so the tray-only figure falls back to the ends and the gain disappears.
+        var pipe = new CarrierNode(
+            new CarrierId(0), CarrierKind.Segment, "conduit", 20, 0.05, P(0, 0, 0), P(20, 0, 0));
+
+        var piped = ApproachStudy.Compare(
+            NetworkBuilder.Build(2, new[] { pipe }, Options()), new[] { circuit }, Options());
+
+        Check("a conduit gives the same answer both ways", Near(piped.ByNearestOnTrays, piped.ByTerminals));
+        Check("while a tray does not", !Near(study.ByNearestOnTrays, study.ByTerminals));
     }
 
     private static void AFittingJoinsOnEveryConnector()
