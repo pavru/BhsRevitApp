@@ -86,6 +86,15 @@ public sealed class RouteRun
     /// </remarks>
     public IReadOnlyList<ToleranceReading> Tolerances { get; init; } = Array.Empty<ToleranceReading>();
 
+    /// <summary>
+    /// How the drops would differ if measured along a carrier rather than to its ends.
+    /// </summary>
+    /// <remarks>
+    /// Null until asked for. It is a measurement standing in for a decision - see
+    /// <see cref="ApproachStudy"/> - and it goes when the decision is made, one way or the other.
+    /// </remarks>
+    public ApproachComparison? Approach { get; init; }
+
     /// <summary>What that network looked like as a graph.</summary>
     /// <remarks>
     /// Carried on the run rather than fetched from the network by whoever displays it, because the

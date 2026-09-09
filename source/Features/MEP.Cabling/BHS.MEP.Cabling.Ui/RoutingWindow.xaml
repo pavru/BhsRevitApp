@@ -37,6 +37,7 @@
             <RowDefinition Height="Auto" />
             <RowDefinition Height="Auto" />
             <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
         </Grid.RowDefinitions>
 
         <!-- Never a bare bar: a bar says something is happening and nothing about what, and the
@@ -77,9 +78,17 @@
                    TextWrapping="Wrap"
                    Visibility="{Binding HasStructureSummary, Converter={StaticResource Shown}}" />
 
+        <!-- A question standing on screen until it is answered: does measuring the drop along a
+             carrier rather than to its ends change anything on this model? -->
+        <TextBlock Grid.Row="5"
+                   Margin="0,14,0,0"
+                   Text="{Binding ApproachSummary}"
+                   TextWrapping="Wrap"
+                   Visibility="{Binding HasApproachSummary, Converter={StaticResource Shown}}" />
+
         <!-- What the read left behind. Shown on any run that has any, because a run where every
              circuit routed can still be short by a link that was never opened. -->
-        <ItemsControl Grid.Row="5"
+        <ItemsControl Grid.Row="6"
                       Margin="0,14,0,0"
                       ItemsSource="{Binding Reading}"
                       Visibility="{Binding HasReading, Converter={StaticResource Shown}}">
@@ -92,7 +101,7 @@
 
         <!-- Causes, grouped, each naming where it stopped. A cause without an address sends
              somebody looking; with one, it is the work itself. -->
-        <ItemsControl Grid.Row="6"
+        <ItemsControl Grid.Row="7"
                       Margin="0,14,0,0"
                       ItemsSource="{Binding Causes}"
                       Visibility="{Binding HasCauses, Converter={StaticResource Shown}}">
@@ -103,7 +112,7 @@
             </ItemsControl.ItemTemplate>
         </ItemsControl>
 
-        <StackPanel Grid.Row="7"
+        <StackPanel Grid.Row="8"
                     Orientation="Horizontal"
                     HorizontalAlignment="Right"
                     Margin="0,20,0,0">

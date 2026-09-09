@@ -229,6 +229,35 @@ public sealed class RoutingViewModel : INotifyPropertyChanged
 
     public bool HasStructureSummary => StructureSummary.Length > 0;
 
+    /// <summary>
+    /// What measuring the drop along a carrier, rather than to its ends, would change.
+    /// </summary>
+    /// <remarks>
+    /// <b>A question on screen, not a feature.</b> The router measures a device to a carrier's
+    /// terminals, so a socket under the middle of a long run is measured to an end. Whether that
+    /// matters is a property of the model, and this says so out loud until the answer is acted on -
+    /// then both the line and the study go.
+    /// </remarks>
+    public string ApproachSummary
+    {
+        get
+        {
+            if (Run?.Approach is not { } study || study.Agree)
+                return string.Empty;
+
+            var line = $"Drops are measured to the ends of carriers: {_length(study.ByTerminals)} over "
+                + $"{study.ReachedByTerminals} of {study.Terminals} terminal(s). Measured to the nearest "
+                + $"point along a carrier they would be {_length(study.ByNearest)}";
+
+            if (study.Gained > 0)
+                line += $", over {study.ReachedByNearest} - {study.Gained} more would find one";
+
+            return line + $". The largest single drop would shorten by {_length(study.Worst)}.";
+        }
+    }
+
+    public bool HasApproachSummary => ApproachSummary.Length > 0;
+
     /// <summary>What the read of the model left behind, when it left anything.</summary>
     /// <remarks>
     /// Shown on every run that has any, not only a failed one. These are the counts written so that
@@ -360,6 +389,8 @@ public sealed class RoutingViewModel : INotifyPropertyChanged
                 Raise(nameof(LengthSummary));
                 Raise(nameof(StructureSummary));
                 Raise(nameof(HasStructureSummary));
+                Raise(nameof(ApproachSummary));
+                Raise(nameof(HasApproachSummary));
                 Raise(nameof(Reading));
                 Raise(nameof(HasReading));
                 Raise(nameof(Causes));

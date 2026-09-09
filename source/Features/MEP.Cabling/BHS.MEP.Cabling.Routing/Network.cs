@@ -101,6 +101,33 @@ public readonly struct Point3
 
         return Math.Sqrt((dx * dx) + (dy * dy) + (dz * dz));
     }
+
+    /// <summary>The point on the segment from <paramref name="from"/> to <paramref name="to"/> nearest to this one.</summary>
+    /// <remarks>
+    /// Clamped to the segment, not to the infinite line: a device beyond the end of a tray taps the
+    /// tray at its end, not at a point in the air past it.
+    /// </remarks>
+    public Point3 NearestOn(Point3 from, Point3 to)
+    {
+        var dx = to.X - from.X;
+        var dy = to.Y - from.Y;
+        var dz = to.Z - from.Z;
+        var square = (dx * dx) + (dy * dy) + (dz * dz);
+
+        // A degenerate segment is a point, and a fitting whose connectors coincide is exactly that.
+        if (square <= 1e-12)
+            return from;
+
+        var along = (((X - from.X) * dx) + ((Y - from.Y) * dy) + ((Z - from.Z) * dz)) / square;
+
+        if (along <= 0)
+            return from;
+
+        if (along >= 1)
+            return to;
+
+        return new Point3(from.X + (along * dx), from.Y + (along * dy), from.Z + (along * dz));
+    }
 }
 
 /// <summary>What kind of thing a carrier is.</summary>
@@ -181,6 +208,43 @@ public sealed class CarrierNode
     /// </para>
     /// </remarks>
     public IReadOnlyList<Point3> Terminals { get; }
+
+    /// <summary>
+    /// The point on this carrier nearest to <paramref name="at"/>, wherever along it that falls.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <b>A terminal is where a carrier joins another; this is where a cable can leave it.</b> The two
+    /// are different questions and the code answered only the first, which is why a socket under the
+    /// middle of a twenty-metre tray was measured to the tray's nearest end.
+    /// </para>
+    /// <para>
+    /// A segment is a straight run between its extremes, so the answer is the projection onto it,
+    /// clamped. A fitting is not a straight anything - its body turns - so the honest answer there is
+    /// the nearest terminal, and no worse than what a fitting's short length allows.
+    /// </para>
+    /// </remarks>
+    public Point3 NearestPointTo(Point3 at)
+    {
+        if (Kind == CarrierKind.Segment)
+            return at.NearestOn(Start, End);
+
+        var best = Terminals.Count > 0 ? Terminals[0] : Start;
+        var distance = at.DistanceTo(best);
+
+        for (var i = 1; i < Terminals.Count; i++)
+        {
+            var candidate = at.DistanceTo(Terminals[i]);
+
+            if (candidate >= distance)
+                continue;
+
+            distance = candidate;
+            best = Terminals[i];
+        }
+
+        return best;
+    }
 
     /// <summary>The name a person would recognise, carried because <c>Element.Name</c> is an API call.</summary>
     public string Label { get; init; } = string.Empty;
