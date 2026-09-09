@@ -56,6 +56,16 @@
             <ToolTip>Routes every circuit through the trays and conduits of this model, and compares the computed length with the one Revit reports.</ToolTip>
             <Order>2</Order>
         </RevitRibbonButton>
+
+        <RevitRibbonButton Include="BHS.Cabling.Parameters">
+            <Tab>BHS</Tab>
+            <Panel>Cabling</Panel>
+            <Text>Shared parameters</Text>
+            <ClassName>BHS.FullEdition.InstallParametersEntryPoint</ClassName>
+            <AvailabilityClassName>BHS.FullEdition.NeedsDocument</AvailabilityClassName>
+            <ToolTip>Writes the shared parameter file for family authors and binds the parameters this model is missing.</ToolTip>
+            <Order>3</Order>
+        </RevitRibbonButton>
     </ItemGroup>
 
     <ItemGroup>
