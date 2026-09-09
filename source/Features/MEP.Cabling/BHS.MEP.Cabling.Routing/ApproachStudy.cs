@@ -35,6 +35,7 @@ public static class ApproachStudy
         RoutingOptions options)
     {
         var terminals = 0;
+        var comparable = 0;
         var byTerminals = 0.0;
         var byNearest = 0.0;
         var byNearestOnTrays = 0.0;
@@ -72,30 +73,35 @@ public static class ApproachStudy
                 }
 
                 if (toTerminals <= options.MaxApproach)
-                {
                     reachedByTerminals++;
-                    byTerminals += toTerminals;
-                }
 
                 if (toNearest <= options.MaxApproach)
-                {
                     reachedByNearest++;
-                    byNearest += toNearest;
+
+                // Every sum is over the terminals all three measures can reach, and that is the
+                // whole difference between a comparison and a pair of numbers. Summing each measure
+                // over its own reachable set makes the difference of two sums not a saving at all:
+                // shown red in the probe, where a socket out of reach by the ends and in reach along
+                // the tray made the "saving" negative. What each measure reaches on its own is a
+                // count, and the counts are above.
+                if (toTerminals > options.MaxApproach
+                    || toNearest > options.MaxApproach
+                    || toNearestOnTrays > options.MaxApproach)
+                {
+                    continue;
                 }
 
-                if (toNearestOnTrays <= options.MaxApproach)
-                    byNearestOnTrays += toNearestOnTrays;
-
-                // Only over the ones both measures can see. A terminal reachable by one and not the
-                // other has no difference to report - it has a different answer entirely, and that
-                // is what the counts say.
-                if (toTerminals <= options.MaxApproach && toNearest <= options.MaxApproach)
-                    worst = Math.Max(worst, toTerminals - toNearest);
+                comparable++;
+                byTerminals += toTerminals;
+                byNearest += toNearest;
+                byNearestOnTrays += toNearestOnTrays;
+                worst = Math.Max(worst, toTerminals - toNearest);
             }
         }
 
         return new ApproachComparison(
-            terminals, reachedByTerminals, reachedByNearest, byTerminals, byNearest, byNearestOnTrays, worst);
+            terminals, comparable, reachedByTerminals, reachedByNearest,
+            byTerminals, byNearest, byNearestOnTrays, worst);
     }
 
     /// <summary>Whether a cable may only leave this carrier where it joins another.</summary>
@@ -121,6 +127,7 @@ public sealed class ApproachComparison
 {
     public ApproachComparison(
         int terminals,
+        int comparable,
         int reachedByTerminals,
         int reachedByNearest,
         double byTerminals,
@@ -129,6 +136,7 @@ public sealed class ApproachComparison
         double worst)
     {
         Terminals = terminals;
+        Comparable = comparable;
         ReachedByTerminals = reachedByTerminals;
         ReachedByNearest = reachedByNearest;
         ByTerminals = byTerminals;
@@ -140,16 +148,19 @@ public sealed class ApproachComparison
     /// <summary>Every panel and device end that was looked at.</summary>
     public int Terminals { get; }
 
+    /// <summary>How many of them every measure can reach, and therefore how many the sums are over.</summary>
+    public int Comparable { get; }
+
     /// <summary>How many of them find a carrier when measured to its terminals - what happens today.</summary>
     public int ReachedByTerminals { get; }
 
     /// <summary>How many would, measured to the nearest point along a carrier.</summary>
     public int ReachedByNearest { get; }
 
-    /// <summary>Summed drop, in internal feet, over what today's measure can reach.</summary>
+    /// <summary>Summed drop over the comparable terminals, measured to carrier ends.</summary>
     public double ByTerminals { get; }
 
-    /// <summary>Summed drop over what the other measure can reach.</summary>
+    /// <summary>The same terminals, measured to the nearest point along a carrier.</summary>
     public double ByNearest { get; }
 
     /// <summary>
@@ -168,10 +179,30 @@ public sealed class ApproachComparison
     /// <summary>Terminals that have no carrier today and would have one.</summary>
     public int Gained => ReachedByNearest - ReachedByTerminals;
 
+    /// <summary>
+    /// What tapping a tray along its length would save, with nothing added to the model.
+    /// </summary>
+    /// <remarks>
+    /// The half that is free. A tray is open, so a cable leaves it where it likes, and the only
+    /// thing standing between us and this number is that the code measures to a carrier's ends.
+    /// </remarks>
+    public double FreeSaving => ByTerminals - ByNearestOnTrays;
+
+    /// <summary>
+    /// What junction boxes on conduits would save on top of that.
+    /// </summary>
+    /// <remarks>
+    /// <b>Not an impossible number - a priced one.</b> A cable leaves a conduit only where it joins
+    /// something, so this saving is unavailable today and becomes available the moment a box is
+    /// there. That makes it the value of the box recommendation, in the same units as everything
+    /// else on the screen, rather than a feature argued for on principle.
+    /// </remarks>
+    public double BoxSaving => ByNearestOnTrays - ByNearest;
+
     /// <summary>True when the two measures agree closely enough that the work would buy nothing.</summary>
     /// <remarks>
-    /// A tenth of a foot over a whole model, and no terminal changing from unreachable to reachable,
-    /// is agreement: the model's segments are short and their ends are already where the cable
+    /// A tenth of a foot over the comparable terminals, and none changing from unreachable to
+    /// reachable, is agreement: the model's segments are short and their ends are already where the cable
     /// leaves. Anything more is the case for doing the work.
     /// </remarks>
     public bool Agree => Gained == 0 && Math.Abs(ByTerminals - ByNearest) < 0.1;

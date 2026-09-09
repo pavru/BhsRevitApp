@@ -14,7 +14,7 @@ namespace BHS.MEP.Cabling.Routing.Probe;
 internal static class Program
 {
     private const double Tolerance = 0.1;
-    private const int Floor = 47;
+    private const int Floor = 52;
 
     private static int _run;
     private static int _failed;
@@ -381,11 +381,30 @@ internal static class Program
         var pipe = new CarrierNode(
             new CarrierId(0), CarrierKind.Segment, "conduit", 20, 0.05, P(0, 0, 0), P(20, 0, 0));
 
-        var piped = ApproachStudy.Compare(
-            NetworkBuilder.Build(2, new[] { pipe }, Options()), new[] { circuit }, Options());
+        // The decomposition the screen states, and it needs a reach that both measures can see:
+        // a terminal only one of them reaches is excluded from the sums by construction, because a
+        // difference of sums over different sets is not a saving. Shown red exactly there.
+        var wide = Options(reach: 12);
+        var onTray = ApproachStudy.Compare(network, new[] { circuit }, wide);
 
-        Check("a conduit gives the same answer both ways", Near(piped.ByNearestOnTrays, piped.ByTerminals));
-        Check("while a tray does not", !Near(study.ByNearestOnTrays, study.ByTerminals));
+        Check("both terminals are comparable when both measures reach them", onTray.Comparable == 2);
+        Check("on a tray the saving costs nothing", Near(onTray.BoxSaving, 0) && onTray.FreeSaving > 0);
+
+        var onPipe = ApproachStudy.Compare(
+            NetworkBuilder.Build(3, new[] { pipe }, wide), new[] { circuit }, wide);
+
+        Check("a conduit measured to its ends and along it come to the same",
+            Near(onPipe.ByNearestOnTrays, onPipe.ByTerminals));
+
+        Check("while a tray does not", !Near(onTray.ByNearestOnTrays, onTray.ByTerminals));
+        Check("on a conduit it all waits on a box", Near(onPipe.FreeSaving, 0) && onPipe.BoxSaving > 0);
+        Check("and the two halves add up to the whole",
+            Near(onTray.FreeSaving + onTray.BoxSaving, onTray.ByTerminals - onTray.ByNearest));
+
+        // The defect this measure had until the probe went red: a terminal out of reach one way and
+        // in reach the other made the difference of two sums negative, i.e. a saving that unsaves.
+        Check("a terminal only one measure reaches is left out of the sums", study.Comparable == 1);
+        Check("so no saving can come out negative", study.FreeSaving >= 0 && study.BoxSaving >= 0);
     }
 
     private static void AFittingJoinsOnEveryConnector()

@@ -245,17 +245,25 @@ public sealed class RoutingViewModel : INotifyPropertyChanged
             if (Run?.Approach is not { } study || study.Agree)
                 return string.Empty;
 
-            var line = $"Drops are measured to the ends of carriers: {_length(study.ByTerminals)} over "
-                + $"{study.ReachedByTerminals} of {study.Terminals} terminal(s). Measured to the nearest "
-                + $"point along a carrier they would be {_length(study.ByNearest)}";
+            // The decomposition rather than three bare numbers. Measured on a real model, two
+            // thirds of what "measure along the carrier" appeared to save was projection onto
+            // conduits - which a cable cannot leave except where it joins something. Stating the
+            // total alone would promise a saving that is not there, and hide the one that is.
+            var line = $"Drops total {_length(study.ByTerminals)} over {study.ReachedByTerminals} of "
+                + $"{study.Terminals} terminal(s), measured to the ends of carriers.";
 
             if (study.Gained > 0)
-                line += $", over {study.ReachedByNearest} - {study.Gained} more would find one";
+                line += $" Measured along a carrier, {study.Gained} more terminal(s) would find one.";
 
-            line += $", or {_length(study.ByNearestOnTrays)} if a cable may only leave a conduit "
-                + "where it joins something";
+            if (study.FreeSaving > 0)
+                line += $" Tapping a tray along its length would save {_length(study.FreeSaving)}"
+                    + " and needs nothing added to the model.";
 
-            return line + $". The largest single drop would shorten by {_length(study.Worst)}.";
+            if (study.BoxSaving > 0)
+                line += $" A further {_length(study.BoxSaving)} needs junction boxes on conduits, which"
+                    + " a cable can leave only where they join something.";
+
+            return line + $" The largest single drop would shorten by {_length(study.Worst)}.";
         }
     }
 
