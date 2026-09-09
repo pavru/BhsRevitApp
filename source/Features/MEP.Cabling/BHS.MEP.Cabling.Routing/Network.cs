@@ -127,7 +127,8 @@ public sealed class CarrierNode
         double length,
         double crossSectionArea,
         Point3 start,
-        Point3 end)
+        Point3 end,
+        IReadOnlyList<Point3>? terminals = null)
     {
         Id = id;
         Kind = kind;
@@ -136,6 +137,7 @@ public sealed class CarrierNode
         CrossSectionArea = crossSectionArea;
         Start = start;
         End = end;
+        Terminals = terminals ?? new[] { start, end };
     }
 
     public CarrierId Id { get; }
@@ -153,6 +155,32 @@ public sealed class CarrierNode
     public Point3 Start { get; }
 
     public Point3 End { get; }
+
+    /// <summary>
+    /// Every point at which another carrier may join this one.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <b>Two is the common case and not the general one, and the difference was measured as a
+    /// defect.</b> A carrier used to be described by <see cref="Start"/> and <see cref="End"/> alone,
+    /// taken as the two connector origins that lie farthest apart. For a straight run that is exact.
+    /// For a tee it silently discards the branch, and for a cross it discards two - so a tray landing
+    /// on the branch of a tee is near no recorded point of it, and does not join.
+    /// </para>
+    /// <para>
+    /// On a real model that turned twenty-six circuits of fifty-five into "both ends reachable, but
+    /// nothing joins them", over a structure that read as forty-four separate groups. The signature
+    /// was in the tolerance ladder: the groups fell away gradually - 44, 31, 14, 3, 1 across 50 mm to
+    /// a metre - rather than at one step. Slop at a joint clusters at one size; half a fitting's
+    /// length varies with the size of the tray, which is exactly a spread.
+    /// </para>
+    /// <para>
+    /// <see cref="Start"/> and <see cref="End"/> stay, and stay the extremes: they are the carrier's
+    /// reach, which is what a length and a drawing want. Joining is a different question and now has
+    /// its own answer.
+    /// </para>
+    /// </remarks>
+    public IReadOnlyList<Point3> Terminals { get; }
 
     /// <summary>The name a person would recognise, carried because <c>Element.Name</c> is an API call.</summary>
     public string Label { get; init; } = string.Empty;

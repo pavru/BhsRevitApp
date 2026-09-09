@@ -201,7 +201,12 @@ public static class Router
 
         foreach (var node in network.Near(terminal.At))
         {
-            var distance = Math.Min(Approach(terminal.At, node.Start, options), Approach(terminal.At, node.End, options));
+            // Every terminal, not the two extremes: a device is often dropped from the branch of a
+            // tee, which is neither of them. Same correction as adjacency, and for the same reason.
+            var distance = double.MaxValue;
+
+            foreach (var at in node.Terminals)
+                distance = Math.Min(distance, Approach(terminal.At, at, options));
 
             if (distance > options.MaxApproach)
                 continue;

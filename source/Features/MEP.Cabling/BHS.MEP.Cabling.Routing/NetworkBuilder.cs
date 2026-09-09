@@ -41,7 +41,7 @@ public static class NetworkBuilder
         var index = new SpatialIndex(Math.Max(joinTolerance, 1e-6));
 
         for (var i = 0; i < carriers.Count; i++)
-            index.AddSpan(i, carriers[i].Start, carriers[i].End);
+            index.AddAll(i, carriers[i].Terminals);
 
         var adjacency = new Dictionary<CarrierId, IReadOnlyList<CarrierId>>(carriers.Count);
         var neighbours = new List<CarrierId>();
@@ -71,17 +71,30 @@ public static class NetworkBuilder
 
     private static IEnumerable<int> Candidates(SpatialIndex index, CarrierNode one)
     {
-        foreach (var candidate in index.Near(one.Start))
-            yield return candidate;
-
-        foreach (var candidate in index.Near(one.End))
-            yield return candidate;
+        foreach (var at in one.Terminals)
+        {
+            foreach (var candidate in index.Near(at))
+                yield return candidate;
+        }
     }
 
-    /// <summary>Whether any end of one carrier is within reach of any end of the other.</summary>
-    private static bool Touches(CarrierNode a, CarrierNode b, double tolerance) =>
-        a.Start.DistanceTo(b.Start) <= tolerance
-        || a.Start.DistanceTo(b.End) <= tolerance
-        || a.End.DistanceTo(b.Start) <= tolerance
-        || a.End.DistanceTo(b.End) <= tolerance;
+    /// <summary>Whether any terminal of one carrier is within reach of any terminal of the other.</summary>
+    /// <remarks>
+    /// Terminals rather than the two extremes - see <see cref="CarrierNode.Terminals"/>. The four
+    /// comparisons this used to make were exact for two straight runs and wrong at every tee, where
+    /// the branch is not one of the two points that lie farthest apart.
+    /// </remarks>
+    private static bool Touches(CarrierNode a, CarrierNode b, double tolerance)
+    {
+        foreach (var one in a.Terminals)
+        {
+            foreach (var other in b.Terminals)
+            {
+                if (one.DistanceTo(other) <= tolerance)
+                    return true;
+            }
+        }
+
+        return false;
+    }
 }

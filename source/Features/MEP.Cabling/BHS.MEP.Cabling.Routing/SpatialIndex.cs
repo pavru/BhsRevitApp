@@ -1,4 +1,4 @@
-namespace BHS.MEP.Cabling.Routing;
+﻿namespace BHS.MEP.Cabling.Routing;
 
 /// <summary>
 /// Finds what is near a point, without looking at everything.
@@ -37,22 +37,36 @@ internal sealed class SpatialIndex
 
     public void Add(int item, Point3 at) => Cell(Key(at)).Add(item);
 
-    /// <summary>Adds an item under both ends, so a long run is found from either.</summary>
+    /// <summary>Adds an item under every point at which it can be met.</summary>
     /// <remarks>
-    /// A tray run is metres long and lands in one cell by its start alone, which makes it invisible
-    /// to a query near its other end. Indexing both ends is what makes the grid honest about
-    /// segments rather than about points; a run longer than the cell is still only reachable near an
-    /// end, and that is exactly right - carriers join at their ends.
+    /// Replaces the two-ended form. A tee is met at three points and a cross at four, and indexing
+    /// only the two that lie farthest apart makes the branch invisible to a query standing on it -
+    /// which is a hole in the network that reports itself later as somebody's missing route.
+    /// Duplicate cells are skipped, so a short fitting whose terminals share one cell is listed once.
+    /// <para>
+    /// The skipping is done with a set rather than by comparing each point against the ones before
+    /// it. A fitting may carry any number of connectors - the owner's correction, and the reason
+    /// nothing in this code counts them - and the pairwise form would be quadratic in a number we
+    /// have decided not to bound.
+    /// </para>
     /// </remarks>
-    public void AddSpan(int item, Point3 start, Point3 end)
+    public void AddAll(int item, IReadOnlyList<Point3> points)
     {
-        var a = Key(start);
-        var b = Key(end);
+        if (points.Count == 1)
+        {
+            Cell(Key(points[0])).Add(item);
+            return;
+        }
 
-        Cell(a).Add(item);
+        var seen = new HashSet<(int X, int Y, int Z)>();
 
-        if (!a.Equals(b))
-            Cell(b).Add(item);
+        foreach (var at in points)
+        {
+            var key = Key(at);
+
+            if (seen.Add(key))
+                Cell(key).Add(item);
+        }
     }
 
     /// <summary>Everything indexed within one cell of the point, in no particular order.</summary>

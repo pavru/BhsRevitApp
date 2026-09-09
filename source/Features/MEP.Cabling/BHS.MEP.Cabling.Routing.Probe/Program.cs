@@ -14,7 +14,7 @@ namespace BHS.MEP.Cabling.Routing.Probe;
 internal static class Program
 {
     private const double Tolerance = 0.1;
-    private const int Floor = 32;
+    private const int Floor = 38;
 
     private static int _run;
     private static int _failed;
@@ -31,6 +31,7 @@ internal static class Program
         LengthIgnoresThePreference();
         TheRunGroupsItsFailures();
         TheStructureSaysHowManyPiecesItIsIn();
+        AFittingJoinsOnEveryConnector();
 
         Console.WriteLine();
 
@@ -310,6 +311,63 @@ internal static class Program
     /// The two cases it has to tell apart are the two a real model produces: everything joined but
     /// for a stray, and nothing joined to anything. The second is a tolerance, the first is a model.
     /// </remarks>
+    /// <summary>
+    /// A branch joins, even though it is not one of the two points that lie farthest apart.
+    /// </summary>
+    /// <remarks>
+    /// <code>
+    ///                      +--[3]-- branch tray, from (5,0,0) to (5,10,0)
+    ///                      |
+    ///   --[0]--+--[1 tee]--+--[2]--
+    ///   0     10          14      24
+    ///           tee terminals: (10,0,0) (14,0,0) (12,0,0)
+    /// </code>
+    /// The tee's extremes are its two through connectors; the branch sits between them and is
+    /// nearer to neither than two feet. This is the defect measured on a real model: the branch was
+    /// discarded, so the tray on it joined nothing, and half the circuits reported "no connectivity"
+    /// over a structure that was drawn correctly.
+    /// </remarks>
+    private static void AFittingJoinsOnEveryConnector()
+    {
+        Section("a fitting joins on every connector");
+
+        var tee = new CarrierNode(
+            new CarrierId(1), CarrierKind.Fitting, "tray", 0, 0.05,
+            P(10, 0, 0), P(14, 0, 0),
+            new[] { P(10, 0, 0), P(14, 0, 0), P(12, 0, 0) });
+
+        var branch = new CarrierNode(
+            new CarrierId(3), CarrierKind.Segment, "tray", 10, 0.05,
+            P(12, 0, 0), P(12, 10, 0));
+
+        var network = NetworkBuilder.Build(1, new[] { Tray(0, 0, 10), tee, Tray(2, 14, 24), branch }, Options());
+
+        Check("the branch is not one of the extremes",
+            !Near(tee.Start.DistanceTo(P(12, 0, 0)), 0) && !Near(tee.End.DistanceTo(P(12, 0, 0)), 0));
+
+        Check("and the tee still reaches it", network.Neighbours(new CarrierId(1)).Contains(new CarrierId(3)));
+        Check("both ways", network.Neighbours(new CarrierId(3)).Contains(new CarrierId(1)));
+        Check("so the whole thing is one piece", network.Shape().Groups == 1);
+
+        // The count is not three: a fitting may carry any number of connectors, so nothing anywhere
+        // assumes a shape. Five here, four of them join points nothing else would have found.
+        var manifold = new CarrierNode(
+            new CarrierId(4), CarrierKind.Fitting, "tray", 0, 0.05,
+            P(0, 0, 0), P(4, 0, 0),
+            new[] { P(0, 0, 0), P(4, 0, 0), P(1, 0, 0), P(2, 0, 0), P(3, 0, 0) });
+
+        var onMiddle = new CarrierNode(
+            new CarrierId(5), CarrierKind.Segment, "tray", 10, 0.05,
+            P(2, 0, 0), P(2, 10, 0));
+
+        var many = NetworkBuilder.Build(2, new[] { manifold, onMiddle }, Options());
+
+        Check("a fitting with five connectors joins on the middle one",
+            many.Neighbours(new CarrierId(4)).Contains(new CarrierId(5)));
+
+        Check("and a route can be found across it", many.Shape().Groups == 1);
+    }
+
     private static void TheStructureSaysHowManyPiecesItIsIn()
     {
         Section("how many pieces the structure is in");

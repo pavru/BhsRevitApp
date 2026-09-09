@@ -207,7 +207,8 @@ public sealed class RoutingViewModel : INotifyPropertyChanged
                 return string.Empty;
 
             var line = $"A route runs inside one connected group. This structure reads as "
-                + $"{shape.Groups} group(s) over {shape.Carriers} carrier(s), the largest holding {shape.Largest}.";
+                + $"{shape.Groups} group(s) over {shape.Carriers} carrier(s), the largest holding {shape.Largest}"
+                + $", of which {shape.Junctions} join at more than two points.";
 
             // Named because the alternative is guessing with a press of the button per guess. It
             // is a hint about where to look, not a diagnosis: a riser nobody drew produces few
