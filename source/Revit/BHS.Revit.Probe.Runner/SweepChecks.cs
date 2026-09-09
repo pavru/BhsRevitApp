@@ -824,10 +824,38 @@ internal static class SweepChecks
             during.Values.GetValueOrDefault("modal:apiCallWorked") == "True");
 
         // The one that makes "collect, compute in the background, apply in the continuation" a shape
-        // a command can have. Reads only - a transaction has not been attempted, see the remarks.
+        // a command can have.
         report.Check(
             "and it still answers after an await has resumed",
             during.Values.GetValueOrDefault("modal:apiCallWorkedAfterAwait") == "True");
+
+        // And the write, which is a different gate from the read and was named unmeasured until now.
+        // A route is applied inside a transaction, and Transaction.Start is what a modification is
+        // refused at - a successful read does not answer for it. Skipped, loudly, when no document is
+        // open: a check that quietly passes on a model-less run reports success by default.
+        var write = during.Values.GetValueOrDefault("modal:transactionSkipped") ?? string.Empty;
+
+        if (write.Length > 0)
+        {
+            report.Note("a transaction inside the window was not attempted", write);
+        }
+        else
+        {
+            report.Check(
+                "a transaction opens inside the window after an await",
+                during.Values.GetValueOrDefault("modal:transactionStartedAfterAwait") == "True");
+
+            report.Check(
+                "and commits a real modification there",
+                during.Values.GetValueOrDefault("modal:transactionCommittedAfterAwait") == "True");
+
+            // The write is undone by the group, so the run leaves the document as it found it -
+            // otherwise Revit asks about saving on the way out, and that is a modal window in a run
+            // nobody is watching. Same form as the schema check.
+            report.Check(
+                "and the group puts the document back as it was",
+                during.Values.GetValueOrDefault("modal:transactionRolledBack") == "True");
+        }
 
         report.Check(
             "the continuation lands back in the window's own context",
