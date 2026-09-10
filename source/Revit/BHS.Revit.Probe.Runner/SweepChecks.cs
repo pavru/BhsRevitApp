@@ -30,6 +30,31 @@ namespace BHS.Revit.Probe.Runner;
 /// </remarks>
 internal static class SweepChecks
 {
+    /// <summary>
+    /// How long Revit is entitled to say nothing before a wait calls it a hang.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// Raised from sixty seconds on the third and fourth readings of the same quantity. The first
+    /// two runs put the worst silence at 11.5 s and 8.3 s, so sixty looked like a fivefold margin;
+    /// the runs of 2026-09-09 measured 50.9 s and then 53.8 s on Revit 2026, back to back. A value
+    /// that holds where it stands twice is that release's working norm on this machine, not an
+    /// outlier - and the threshold was sitting six seconds above it.
+    /// </para>
+    /// <para>
+    /// Three times over the worst measured, because this repository has raised four budgets and
+    /// every one of them was paid for by a failure that was not one. The rule those cost is to
+    /// count from the upper bound and not to shave it: a threshold tuned to a lucky run is a false
+    /// alarm postponed. It is still six times faster than the 900 s budget the watchdog replaced,
+    /// which is the whole point of watching work rather than the clock.
+    /// </para>
+    /// <para>
+    /// Said once so that the number and the sentence reporting it cannot drift apart - two places
+    /// stating one fact is how this file's own documentation came to say <c>2 of 2</c> after the
+    /// third check was made required.
+    /// </para>
+    /// </remarks>
+    private static readonly TimeSpan Quiet = TimeSpan.FromSeconds(150);
     /// <summary>Everything worth asking a Revit that has announced itself.</summary>
     internal static async Task InspectAsync(
         RevitInstallation installation,
@@ -133,6 +158,10 @@ internal static class SweepChecks
 
             // Last of the document questions, and the only one that mostly asks rather than asserts.
             await SurveyCablingAsync(client, report);
+
+            // And the newest of them, which asks rather than asserts for the same reason the survey
+            // did when it was new: nobody here knows yet what the owner's indicator family is.
+            await RecommendedBoxAsync(client, report);
         }
 
         // Outside the model block: a modal window stands on the API thread whether or not a document
@@ -423,8 +452,8 @@ internal static class SweepChecks
         // the lesson was the same: ask whether the work began, rather than how long it has taken.
         // The stream answers that continuously.
         //
-        // Sixty seconds of quiet against a measured ten, and the ceiling kept at the old fifteen
-        // minutes as a last resort so an unattended sweep still ends.
+        // Quiet is what Revit is allowed to withhold; the ceiling stays at the old fifteen minutes
+        // as a last resort so an unattended sweep still ends.
         var outcome = await WorkWatch.WaitWhileWorkingAsync(
             () =>
             {
@@ -432,7 +461,7 @@ internal static class SweepChecks
                 return !string.IsNullOrEmpty(title);
             },
             watcher,
-            quiet: TimeSpan.FromSeconds(60),
+            quiet: Quiet,
             ceiling: TimeSpan.FromMinutes(15));
 
         var arrived = outcome == WaitOutcome.Arrived;
@@ -448,7 +477,8 @@ internal static class SweepChecks
             {
                 WaitOutcome.Blocked => "Revit is waiting for somebody to answer "
                     + (watcher.BlockedBy.Length > 0 ? watcher.BlockedBy : "a dialog it did not name"),
-                WaitOutcome.WentQuiet => "Revit said nothing for 60s while " + watcher.CurrentPhase,
+                WaitOutcome.WentQuiet => "Revit said nothing for "
+                    + Quiet.TotalSeconds.ToString("F0", CultureInfo.InvariantCulture) + "s while " + watcher.CurrentPhase,
                 WaitOutcome.Unreachable => "Revit stopped answering - gone, or held by something that answers for it"
                     + (watcher.BlockedBy.Length > 0 ? ", last seen showing " + watcher.BlockedBy : string.Empty),
                 // The ceiling is reached for two different reasons, and saying which matters: with a
@@ -975,6 +1005,55 @@ internal static class SweepChecks
         report.Check(
             "and the group leaves the document without it",
             answer.Values.GetValueOrDefault("parameters:goneAfterRollback") == "True");
+    }
+
+    /// <summary>
+    /// What a real model says about the family chosen as a recommended-box indicator.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// Three questions the design is currently guessing at: the category of the owner's family,
+    /// whether it is placed with a point or wants a host, and whether an instance of it is connected
+    /// to anything. The last one carries the hazard - a fitting-category indicator is collected as a
+    /// carrier by category alone, and the network then holds a node the project does not have.
+    /// </para>
+    /// <para>
+    /// <b>Notes rather than checks, deliberately, and the same order as everywhere else here.</b>
+    /// An assertion written before its answer agrees with whoever wrote it. Only that the survey
+    /// answered is a check: it walks <c>FamilyInstanceFilter</c>, <c>FamilyPlacementType</c> and a
+    /// connector manager on four runtimes, and compiling against four target frameworks says nothing
+    /// about whether the calls survive on any of them.
+    /// </para>
+    /// </remarks>
+    private static async Task RecommendedBoxAsync(
+        RevitSideChannel.RevitSideChannelClient client,
+        Report report)
+    {
+        AskResponse answer;
+
+        try
+        {
+            answer = await client.AskAsync(new AskRequest { Question = "box" });
+        }
+        catch (RpcException error)
+        {
+            report.Check("the recommended-box survey answers", false);
+            report.Note("box survey failed", error.Status.StatusCode.ToString());
+            return;
+        }
+
+        if (answer.Values.GetValueOrDefault("box:documentSkipped") == "True")
+        {
+            report.Note("recommended box", "no document was open");
+            return;
+        }
+
+        report.Check("the recommended-box survey answers", answer.Values.ContainsKey("box:ourSymbols"));
+
+        Report.Heading("the indicator family, and what a text parameter holds");
+
+        foreach (var pair in answer.Values.OrderBy(one => one.Key, StringComparer.Ordinal))
+            report.Note(pair.Key, pair.Value);
     }
 
     private static async Task SurveyCablingAsync(
