@@ -148,6 +148,13 @@ public static class RevitTestRun
             clock.Stop();
             return new RevitTestResult(suite.Name, test.Name, RevitTestOutcome.Passed, string.Empty, clock.Elapsed, notes);
         }
+        catch (RevitTestSkipped stood)
+        {
+            // Before the failure clause deliberately: standing down is not failing, and the two are
+            // told apart here rather than by the runner reading a message.
+            clock.Stop();
+            return new RevitTestResult(suite.Name, test.Name, RevitTestOutcome.Skipped, stood.Message, clock.Elapsed, notes);
+        }
         catch (RevitTestFailure failure)
         {
             clock.Stop();
@@ -225,8 +232,13 @@ public static class RevitTestRun
 
             for (var note = 0; note < result.Notes.Count; note++)
             {
-                map[prefix + "note:" + note.ToString("D2", CultureInfo.InvariantCulture)] =
-                    result.Notes[note].Key + " = " + result.Notes[note].Value;
+                // Two keys rather than one joined by a separator. The runner prints label and value
+                // as its own report already prints them, and nothing has to be split back apart on
+                // a character that could one day appear inside a label.
+                var at = prefix + "note:" + note.ToString("D2", CultureInfo.InvariantCulture);
+
+                map[at + ":what"] = result.Notes[note].Key;
+                map[at + ":value"] = result.Notes[note].Value;
             }
 
             switch (result.Outcome)

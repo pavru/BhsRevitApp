@@ -116,6 +116,7 @@ public sealed class CablingReadingTests : IRevitTestSuite
             known.Add(catalogue.ClassOf(category));
 
         var snapshot = Read(context, catalogue, boxes: null);
+        NeedsCarriers(snapshot);
 
         foreach (var carrier in snapshot.Carriers)
         {
@@ -135,6 +136,7 @@ public sealed class CablingReadingTests : IRevitTestSuite
     private static void EveryCarrierHasATerminal(RevitTestContext context)
     {
         var snapshot = Read(context, new CarrierCatalogue(), boxes: null);
+        NeedsCarriers(snapshot);
 
         foreach (var carrier in snapshot.Carriers)
         {
@@ -162,6 +164,9 @@ public sealed class CablingReadingTests : IRevitTestSuite
     {
         var catalogue = new CarrierCatalogue();
         var plain = Read(context, catalogue, boxes: null);
+
+        NeedsCarriers(plain);
+
         var filtered = Read(context, catalogue, new RecommendedBoxes(
             RecommendedBoxes.DefaultFamily,
             RecommendedBoxes.DefaultType));
@@ -212,6 +217,9 @@ public sealed class CablingReadingTests : IRevitTestSuite
     {
         var catalogue = new CarrierCatalogue();
         var first = Read(context, catalogue, boxes: null);
+
+        NeedsCarriers(first);
+
         var second = Read(context, catalogue, boxes: null);
 
         Expect.Same(first.Carriers.Count, second.Carriers.Count, "carriers on a second read of the same model");
@@ -229,6 +237,28 @@ public sealed class CablingReadingTests : IRevitTestSuite
 
         context.Note("total carrier length, internal feet", one.ToString("F3", CultureInfo.InvariantCulture));
     }
+
+    /// <summary>
+    /// Stands the case down when the model holds nothing to assert about.
+    /// </summary>
+    /// <remarks>
+    /// <b>Written after the first run of this suite, which was green and about nothing.</b> Every
+    /// case here says "for each carrier ...", and that is true of no carriers - so on the empty
+    /// model a sweep opens from <c>testdata</c> four of them passed without examining anything. A
+    /// vacuous pass is worse than a skip: it cannot be told from a real one, and it counts towards
+    /// the floor that is meant to notice checks disappearing.
+    ///
+    /// The models in <c>testdata</c> are empty on purpose - the real ones are somebody's building
+    /// and this repository is public - so this is the sweep's condition rather than a fault, and it
+    /// will stay that way until either a case builds its own carriers and rolls them back, or a
+    /// small purpose-made model joins <c>testdata</c>. Until then these cases prove themselves
+    /// against the owner's model when the sweep is pointed at one, and say so plainly when it is
+    /// not.
+    /// </remarks>
+    private static void NeedsCarriers(CablingSnapshot snapshot) =>
+        Skip.When(
+            snapshot.Carriers.Count == 0,
+            "the model this sweep opened holds no carriers, so there is nothing here to assert about");
 
     /// <summary>
     /// The production reading path, unchanged: a case that read the model its own way would prove

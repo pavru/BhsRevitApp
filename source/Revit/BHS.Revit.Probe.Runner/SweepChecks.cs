@@ -1154,10 +1154,10 @@ internal static class SweepChecks
             {
                 var key = prefix + "note:" + note.ToString("D2", CultureInfo.InvariantCulture);
 
-                if (!answer.Values.TryGetValue(key, out var value))
+                if (!answer.Values.TryGetValue(key + ":what", out var label))
                     break;
 
-                report.Note(name, value);
+                report.Note(label, answer.Values.GetValueOrDefault(key + ":value") ?? string.Empty);
             }
         }
 
