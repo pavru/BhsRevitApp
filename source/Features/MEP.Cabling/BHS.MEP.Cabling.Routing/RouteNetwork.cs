@@ -37,10 +37,11 @@ public sealed class RouteNetwork
         // Sized for the question the router asks - "what is within reach of this device" - which is
         // a different radius from the one that decided adjacency. Both are grids; keeping them
         // apart costs one array and stops each from answering the other's question badly.
-        _index = new SpatialIndex(Math.Max(approachRadius, 1e-6));
+        var cell = Math.Max(approachRadius, 1e-6);
+        _index = new SpatialIndex(cell);
 
         for (var i = 0; i < _byIndex.Length; i++)
-            _index.AddAll(i, _byIndex[i].Terminals);
+            _index.AddAll(i, Occupies(_byIndex[i], cell));
     }
 
     /// <summary>Monotonic, per document. Compared, never interpreted.</summary>
@@ -113,7 +114,7 @@ public sealed class RouteNetwork
         return new NetworkShape(_nodes.Count, groups, largest, junctions);
     }
 
-    /// <summary>The carriers whose ends lie near a point.</summary>
+    /// <summary>The carriers that pass near a point.</summary>
     /// <remarks>
     /// <b>Not a convenience.</b> Without it the router asks every terminal about every carrier, and
     /// a run is circuits times devices times carriers - hundreds by tens by thousands. The index was
@@ -123,6 +124,54 @@ public sealed class RouteNetwork
     {
         foreach (var found in _index.Near(at))
             yield return _byIndex[found];
+    }
+
+    /// <summary>
+    /// Where a carrier can be met: its terminals, and for an open run the length between them.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <b>Filing a run under its ends alone hides its middle, and that was measured rather than
+    /// suspected.</b> A twenty-metre tray whose middle is over a socket sits in cells ten metres
+    /// away, so a query standing under it finds nothing - which is why <see cref="ApproachStudy"/>
+    /// had to compare by brute force to say anything at all about the difference.
+    /// </para>
+    /// <para>
+    /// <b>The extra cells are not overhead; they are the cells the tray is in.</b> A carrier that
+    /// crosses ten cells is met in ten cells, and listing it in one of them was the defect. The
+    /// count is proportional to length over cell size, which is the smallest a truthful answer can
+    /// be.
+    /// </para>
+    /// <para>
+    /// Only along an <see cref="CarrierNode.OpenAlongItsLength"/> run: a cable cannot leave a pipe
+    /// mid-run, so filing a conduit's middle would offer the router an entry it must refuse - and an
+    /// offer refused later is work done twice.
+    /// </para>
+    /// </remarks>
+    private static IReadOnlyList<Point3> Occupies(CarrierNode node, double cell)
+    {
+        if (node.Kind != CarrierKind.Segment || !node.OpenAlongItsLength)
+            return node.Terminals;
+
+        var span = node.Start.DistanceTo(node.End);
+
+        if (span <= cell)
+            return node.Terminals;
+
+        var points = new List<Point3>(node.Terminals);
+        var steps = (int)Math.Ceiling(span / cell);
+
+        for (var i = 1; i < steps; i++)
+        {
+            var t = i / (double)steps;
+
+            points.Add(new Point3(
+                node.Start.X + ((node.End.X - node.Start.X) * t),
+                node.Start.Y + ((node.End.Y - node.Start.Y) * t),
+                node.Start.Z + ((node.End.Z - node.Start.Z) * t)));
+        }
+
+        return points;
     }
 }
 

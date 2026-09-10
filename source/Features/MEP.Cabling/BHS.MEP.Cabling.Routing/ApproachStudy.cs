@@ -111,7 +111,7 @@ public static class ApproachStudy
     /// it behaves like.
     /// </remarks>
     private static bool IsConduit(CarrierNode node) =>
-        string.Equals(node.Class, "conduit", StringComparison.OrdinalIgnoreCase);
+        !node.OpenAlongItsLength;
 
     private static IEnumerable<Terminal> Ends(CircuitSnapshot circuit)
     {

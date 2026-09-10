@@ -33,6 +33,7 @@ internal static class Program
         TheStructureSaysHowManyPiecesItIsIn();
         AFittingJoinsOnEveryConnector();
         TheDropIsMeasuredToAnEndAndCouldBeMeasuredAlong();
+        ACableLeavesATrayWhereItLikesAndPaysForWhatItWalks();
 
         Console.WriteLine();
 
@@ -201,11 +202,15 @@ internal static class Program
         var straightOptions = Options(axisAligned: false, reach: 10);
         var network = Trays(1, 10, axesOptions);
 
+        // Three across the run and four below it. The offset used to be along the run, which stopped
+        // saying anything the day the drop began to be taken to the nearest point on the run rather
+        // than to its end: the socket was then directly underneath, and both measures answered four.
+        // The arithmetic is the same 3-4-5; only the direction of the offset had to move.
         var circuit = new CircuitSnapshot(
             new CarrierId(100),
             "P-1",
             Terminal(0, 0, 0, "panel"),
-            new[] { Terminal(3, 0, -4, "socket") });
+            new[] { Terminal(3, 3, -4, "socket") });
 
         var axes = Router.Route(network, circuit, axesOptions);
         var straight = Router.Route(network, circuit, straightOptions);
@@ -405,6 +410,90 @@ internal static class Program
         // in reach the other made the difference of two sums negative, i.e. a saving that unsaves.
         Check("a terminal only one measure reaches is left out of the sums", study.Comparable == 1);
         Check("so no saving can come out negative", study.FreeSaving >= 0 && study.BoxSaving >= 0);
+    }
+
+    /// <summary>
+    /// A socket under the middle of one long tray: the search has to reach it, and to charge for
+    /// the half of the tray the cable actually walks.
+    /// <code>
+    ///   P                    S
+    ///   +---------[0]---------+
+    ///   0         10         20
+    ///             |
+    ///             s  (1 ft below the tray, at x = 10)
+    /// </code>
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <b>Two defects of one origin, and both are measured elsewhere as sums rather than as
+    /// behaviour.</b> <see cref="ApproachStudy"/> already says the drop to a run should be taken to
+    /// the nearest point along it and quantifies what that is worth on a real model; what it cannot
+    /// say is what the search does with that point, because the search does not use it. Here it
+    /// costs a route outright: the socket is a foot below the tray and eleven feet from either end,
+    /// so at any ordinary reach the circuit is reported <c>NoCarrierNear</c>.
+    /// </para>
+    /// <para>
+    /// The second is the price of entering mid-run. Every carrier on a path contributes its whole
+    /// length exactly once - deliberately, and the probe guards it, because without it a route that
+    /// enters and leaves the same carrier pays nothing for it. But a cable that joins a
+    /// twenty-foot tray at its middle and leaves at one end walks ten feet, not twenty, and the
+    /// invariant as written cannot express the difference.
+    /// </para>
+    /// <para>
+    /// <b>A tray only.</b> A conduit is a pipe: a cable comes out where the pipe ends or at a
+    /// fitting, so measuring to a point along it would buy a saving that cannot be built. That
+    /// distinction is the whole of the difference between the two figures the study reports.
+    /// </para>
+    /// </remarks>
+    private static void ACableLeavesATrayWhereItLikesAndPaysForWhatItWalks()
+    {
+        Section("entering a tray in the middle");
+
+        var network = NetworkBuilder.Build(1, new[] { Tray(0, 0, 20) }, Options());
+
+        var circuit = new CircuitSnapshot(
+            new CarrierId(1), "P-1",
+            Terminal(0, 0, 0, "panel"),
+            new[] { Terminal(10, 0, -1, "socket") });
+
+        var result = Router.Route(network, circuit, Options());
+
+        // Eleven feet to either end, one foot to the tray itself, and a reach of six.
+        Check("a socket under the middle of a tray is reachable", result.Status == RouteStatus.Found);
+        Check("the drop is measured to the tray, not to its end", Near(result.Approaches, 1));
+        Check("and the cable pays for the half it walks", Near(result.AlongCarriers, 10));
+
+        // The same geometry as a pipe, where the saving cannot be built.
+        var pipe = new CarrierNode(
+            new CarrierId(0), CarrierKind.Segment, "conduit", 20, 0.05, P(0, 0, 0), P(20, 0, 0));
+
+        var inPipe = Router.Route(
+            NetworkBuilder.Build(2, new[] { pipe }, Options(reach: 12)),
+            circuit,
+            Options(reach: 12));
+
+        Check("a cable does not leave a conduit mid-run", Near(inPipe.Approaches, 11));
+
+        // Both ends of the pipe are eleven feet from the socket, so the cable enters and leaves at
+        // the same one - and a carrier entered and left at one point has not been walked. The old
+        // answer here was twenty, because a carrier on a path used to cost its whole length however
+        // little of it was used; twenty feet of pipe that no cable is inside is not a length anybody
+        // would cut.
+        Check("and a pipe entered and left at one end is not walked at all", Near(inPipe.AlongCarriers, 0));
+
+        // The invariant that made the old rule worth having, stated where it can still be broken:
+        // a route that goes in one end and out the other pays for all of it.
+        var across = new CircuitSnapshot(
+            new CarrierId(3), "P-2",
+            Terminal(0, 0, 0, "panel"),
+            new[] { Terminal(20, 0, -1, "socket") });
+
+        var through = Router.Route(
+            NetworkBuilder.Build(4, new[] { pipe }, Options(reach: 12)),
+            across,
+            Options(reach: 12));
+
+        Check("while a pipe walked end to end costs all of it", Near(through.AlongCarriers, 20));
     }
 
     private static void AFittingJoinsOnEveryConnector()

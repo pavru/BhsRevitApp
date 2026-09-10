@@ -246,6 +246,24 @@ public sealed class CarrierNode
         return best;
     }
 
+    /// <summary>Whether a cable may leave this carrier anywhere along it, or only where it ends.</summary>
+    /// <remarks>
+    /// <para>
+    /// <b>A tray is open and a conduit is a pipe</b> - the owner's correction, and it is the whole
+    /// difference between the two figures <see cref="ApproachStudy"/> reports. Measured on a real
+    /// model, two thirds of what tapping a run "anywhere" appeared to save belonged to conduits,
+    /// which is a saving that cannot be built: a cable comes out of a pipe where the pipe ends or at
+    /// a fitting.
+    /// </para>
+    /// <para>
+    /// Keyed on the class rather than a flag on the node, because the class is what the user
+    /// configures. Somebody adding a category says which of the two it behaves like, and that answer
+    /// has to reach here without a second list to keep in step.
+    /// </para>
+    /// </remarks>
+    public bool OpenAlongItsLength =>
+        !string.Equals(Class, "conduit", StringComparison.OrdinalIgnoreCase);
+
     /// <summary>The name a person would recognise, carried because <c>Element.Name</c> is an API call.</summary>
     public string Label { get; init; } = string.Empty;
 }
