@@ -158,6 +158,10 @@ internal static class SweepChecks
 
             // Last of the document questions, and the only one that mostly asks rather than asserts.
             await SurveyCablingAsync(client, report);
+
+            // And the newest of them, which asks rather than asserts for the same reason the survey
+            // did when it was new: nobody here knows yet what the owner's indicator family is.
+            await RecommendedBoxAsync(client, report);
         }
 
         // Outside the model block: a modal window stands on the API thread whether or not a document
@@ -1001,6 +1005,55 @@ internal static class SweepChecks
         report.Check(
             "and the group leaves the document without it",
             answer.Values.GetValueOrDefault("parameters:goneAfterRollback") == "True");
+    }
+
+    /// <summary>
+    /// What a real model says about the family chosen as a recommended-box indicator.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// Three questions the design is currently guessing at: the category of the owner's family,
+    /// whether it is placed with a point or wants a host, and whether an instance of it is connected
+    /// to anything. The last one carries the hazard - a fitting-category indicator is collected as a
+    /// carrier by category alone, and the network then holds a node the project does not have.
+    /// </para>
+    /// <para>
+    /// <b>Notes rather than checks, deliberately, and the same order as everywhere else here.</b>
+    /// An assertion written before its answer agrees with whoever wrote it. Only that the survey
+    /// answered is a check: it walks <c>FamilyInstanceFilter</c>, <c>FamilyPlacementType</c> and a
+    /// connector manager on four runtimes, and compiling against four target frameworks says nothing
+    /// about whether the calls survive on any of them.
+    /// </para>
+    /// </remarks>
+    private static async Task RecommendedBoxAsync(
+        RevitSideChannel.RevitSideChannelClient client,
+        Report report)
+    {
+        AskResponse answer;
+
+        try
+        {
+            answer = await client.AskAsync(new AskRequest { Question = "box" });
+        }
+        catch (RpcException error)
+        {
+            report.Check("the recommended-box survey answers", false);
+            report.Note("box survey failed", error.Status.StatusCode.ToString());
+            return;
+        }
+
+        if (answer.Values.GetValueOrDefault("box:documentSkipped") == "True")
+        {
+            report.Note("recommended box", "no document was open");
+            return;
+        }
+
+        report.Check("the recommended-box survey answers", answer.Values.ContainsKey("box:ourSymbols"));
+
+        Report.Heading("the indicator family, and what a text parameter holds");
+
+        foreach (var pair in answer.Values.OrderBy(one => one.Key, StringComparer.Ordinal))
+            report.Note(pair.Key, pair.Value);
     }
 
     private static async Task SurveyCablingAsync(

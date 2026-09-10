@@ -148,6 +148,11 @@ internal sealed class ProbeChannel : RevitSideChannel.RevitSideChannelBase
                         response.Values.Add(pair.Key, pair.Value);
                     break;
 
+                case "box":
+                    foreach (var pair in RecommendedBox().GetAwaiter().GetResult())
+                        response.Values.Add(pair.Key, pair.Value);
+                    break;
+
                 // Deliberately a second question rather than more of the first: the work posted from
                 // inside the window is queued behind the measurement itself, so it can only have run
                 // once the measurement returned. See ModalWindowFacts.After.
@@ -302,6 +307,21 @@ internal sealed class ProbeChannel : RevitSideChannel.RevitSideChannelBase
     {
         return await _services.Pump
             .PostAsync("probe: shared parameters", SharedParameterFacts.Measure)
+            .ConfigureAwait(false);
+    }
+
+    /// <summary>
+    /// What a real model says about the family chosen as a recommended-box indicator.
+    /// </summary>
+    /// <remarks>
+    /// Separate from <see cref="SurveyCabling"/> because it answers a different kind of question:
+    /// the survey counts what a building holds, this asks what one family is. Merging them would
+    /// make every future question about the indicator arrive inside a method named after counting.
+    /// </remarks>
+    private async Task<IReadOnlyDictionary<string, string>> RecommendedBox()
+    {
+        return await _services.Pump
+            .PostAsync("probe: recommended box", RecommendedBoxFacts.Measure)
             .ConfigureAwait(false);
     }
 
