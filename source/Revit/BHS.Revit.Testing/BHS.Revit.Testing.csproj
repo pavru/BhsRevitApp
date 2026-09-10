@@ -1,0 +1,26 @@
+﻿<Project Sdk="BHS.Revit.Sdk/1.5.8">
+
+    <!--
+      What a test written against Revit is, and how a run of them is reported.
+
+      A separate assembly rather than a corner of BHS.Revit.Abstractions, because these types are
+      referenced only by test assemblies and by whoever hosts them: nothing a customer receives
+      names them. That is the same reason BHS.Transport.Configuration is not part of BHS.Transport.
+
+      Revit-TFM, because a test that reads a model names Revit types by definition. RevitAPIUI is
+      referenced for one member - the session a case is handed is a UIApplication, which is what the
+      pump gives out - and for nothing else; a case that only reads a model can ignore it.
+
+      No init-only properties on purpose: net48 needs an IsExternalInit polyfill for them, and a
+      polyfill in an assembly this small buys a syntax that a constructor already provides.
+    -->
+
+    <PropertyGroup>
+        <TargetFrameworks>net48-revit2024;net8.0-revit2025;net8.0-revit2026;net10.0-revit2027</TargetFrameworks>
+        <RootNamespace>BHS.Revit.Testing</RootNamespace>
+        <UseRevitApi>true</UseRevitApi>
+        <UseRevitApiUi>true</UseRevitApiUi>
+        <IsPackable>false</IsPackable>
+    </PropertyGroup>
+
+</Project>
