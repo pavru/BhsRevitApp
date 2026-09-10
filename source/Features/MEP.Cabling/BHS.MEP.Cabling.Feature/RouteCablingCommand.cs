@@ -47,8 +47,13 @@ public sealed class RouteCablingCommand : IFeatureCommand
         var options = CablingOptions.Read(services.Settings);
         var log = services.Log;
 
+        // Read here rather than inside the search: this is the API thread, and the model layer of
+        // the settings lives in the document. Everything after this point runs on a background
+        // thread and may not ask Revit anything.
+        var boxes = RecommendedBoxes.Read(services.ModelSettings.For(document));
+
         var model = new RoutingViewModel(
-            (progress, token) => ComputeAsync(document, options, progress, token, log),
+            (progress, token) => ComputeAsync(document, options, boxes, progress, token, log),
             CablingLength.Formatter(document));
 
         var window = new RoutingWindow(model);
@@ -84,6 +89,7 @@ public sealed class RouteCablingCommand : IFeatureCommand
     private static Task<RouteRun> ComputeAsync(
         Document document,
         RoutingOptions options,
+        RecommendedBoxes boxes,
         IProgress<RoutingProgress> progress,
         CancellationToken token,
         ILog log)
@@ -92,7 +98,7 @@ public sealed class RouteCablingCommand : IFeatureCommand
 
         var version = Interlocked.Increment(ref _version);
         var read = Stopwatch.StartNew();
-        var snapshot = CablingSnapshot.Build(document, options, new CarrierCatalogue(), version);
+        var snapshot = CablingSnapshot.Build(document, options, new CarrierCatalogue(), version, boxes);
         read.Stop();
 
         log.Info(

@@ -97,125 +97,245 @@ public static class Router
     }
 
     /// <summary>One leg: from one terminal to the next, through the structure.</summary>
+    /// <remarks>
+    /// <para>
+    /// <b>The vertex is a terminal of a carrier, not the carrier.</b> With carriers as vertices a
+    /// carrier has one cost, so every route that touches it pays its whole length - which was
+    /// deliberate and guarded, because the alternative at the time was paying nothing at all. But a
+    /// cable that joins a twenty-foot tray at its middle and leaves at one end walks ten feet, and a
+    /// single number per carrier cannot say ten to one route and twenty to another.
+    /// </para>
+    /// <para>
+    /// So a carrier is entered at a point and left at a terminal, and what it costs is the distance
+    /// between those two. Carriers that touch are joined by an edge of nothing, which is what
+    /// touching means. The graph grows by the number of terminals - two to four apiece - and answers
+    /// a question the old one could only approximate.
+    /// </para>
+    /// <para>
+    /// <b>And the finish is taken on the way in, never on the way out.</b> A device hanging under a
+    /// carrier is reached from the point where the cable enters that carrier; asking at the terminal
+    /// we arrived at would walk the carrier to its end and then back down it.
+    /// </para>
+    /// </remarks>
     private static RouteResult Leg(RouteNetwork network, Terminal from, Terminal to, RoutingOptions options)
     {
-        var entries = Reachable(network, from, options);
+        var entries = Approachable(network, from, options);
 
         if (entries.Count == 0)
             return Blocked(RouteStatus.NoCarrierNear, from);
 
-        var exits = Reachable(network, to, options);
+        var exits = Approachable(network, to, options);
 
         if (exits.Count == 0)
             return Blocked(RouteStatus.NoCarrierNear, to);
 
-        // Every entry is a start, seeded with the approach to it PLUS the cost of walking it. The
-        // second half was missing at first and the probe caught it on its first run: without it, a
-        // route that enters and leaves the same carrier never pays for that carrier at all, so a
-        // 24-foot conduit and a 20-foot tray between the same two points cost exactly the same and
-        // the search picked whichever the heap happened to pop. Every carrier on a path now
-        // contributes its weight exactly once, wherever on the path it sits.
-        var best = new Dictionary<CarrierId, double>();
-        var came = new Dictionary<CarrierId, CarrierId>();
+        var best = new Dictionary<Port, double>();
+        var came = new Dictionary<Port, Port>();
+        var entered = new Dictionary<Port, Point3>();
         var queue = new PriorityQueue();
+
+        var finish = double.MaxValue;
+        var finishAt = default(CarrierId);
+        var finishFrom = default(Port);
+        var finishSeeded = false;
+        var finishEntry = default(Point3);
+
+        void Arrive(CarrierNode node, Point3 at, double before, Port previous, bool hasPrevious)
+        {
+            var factor = Factor(node, options);
+
+            if (exits.TryGetValue(node.Id, out var exit))
+            {
+                var whole = before + (Along(node, at, exit.At) * factor) + exit.Cost;
+
+                if (whole < finish)
+                {
+                    finish = whole;
+                    finishAt = node.Id;
+                    finishFrom = previous;
+                    finishSeeded = !hasPrevious;
+                    finishEntry = at;
+                }
+            }
+
+            for (var t = 0; t < node.Terminals.Count; t++)
+            {
+                var port = new Port(node.Id, t);
+                var cost = before + (Along(node, at, node.Terminals[t]) * factor);
+
+                if (best.TryGetValue(port, out var known) && known <= cost)
+                    continue;
+
+                best[port] = cost;
+                entered[port] = at;
+
+                if (hasPrevious)
+                    came[port] = previous;
+                else
+                    came.Remove(port);
+
+                queue.Push(port, cost);
+            }
+        }
 
         foreach (var entry in entries)
         {
-            var node = network.Node(entry.Key);
-
-            if (node is null)
-                continue;
-
-            var seeded = entry.Value + Weight(node, options);
-            best[entry.Key] = seeded;
-            queue.Push(entry.Key, seeded);
+            if (network.Node(entry.Key) is { } node)
+                Arrive(node, entry.Value.At, entry.Value.Cost, default, false);
         }
 
-        var settled = new HashSet<CarrierId>();
+        var settled = new HashSet<Port>();
 
-        while (queue.TryPop(out var at, out var cost))
+        while (queue.TryPop(out var port, out var cost))
         {
-            if (!settled.Add(at))
+            if (!settled.Add(port) || cost >= finish)
                 continue;
 
-            if (exits.TryGetValue(at, out var exitCost))
+            if (network.Node(port.Carrier) is not { } node)
+                continue;
+
+            var reached = node.Terminals[port.Terminal];
+
+            foreach (var next in network.Neighbours(port.Carrier))
             {
-                var path = Unwind(came, at);
-
-                // The true length, walked again over the chosen path - not the cost the search
-                // minimised. The two differ by the conduit preference, which is a thumb on the
-                // scale for choosing a route and has no business in the number we write into a
-                // parameter. Reporting the cost would inflate every tray route by the preference
-                // and quietly disagree with a tape measure.
-                var length = 0.0;
-
-                foreach (var step in path)
-                {
-                    var node = network.Node(step);
-
-                    if (node is not null)
-                        length += node.Length;
-                }
-
-                entries.TryGetValue(path[0], out var entryCost);
-
-                return new RouteResult(default, RouteStatus.Found, network.Version)
-                {
-                    Path = path,
-                    AlongCarriers = length,
-                    Approaches = entryCost + exitCost,
-                };
-            }
-
-            foreach (var next in network.Neighbours(at))
-            {
-                if (settled.Contains(next))
+                if (network.Node(next) is not { } other)
                     continue;
 
-                var node = network.Node(next);
+                // Which terminal of the neighbour this one meets. Adjacency says the two carriers
+                // touch somewhere; the search needs to know where, because that is where the cable
+                // enters and what it then has to walk is measured from it.
+                var touch = Touching(other, reached, options.JoinTolerance);
 
-                if (node is null)
-                    continue;
-
-                var step = cost + Weight(node, options);
-
-                if (best.TryGetValue(next, out var known) && known <= step)
-                    continue;
-
-                best[next] = step;
-                came[next] = at;
-                queue.Push(next, step);
+                if (touch >= 0)
+                    Arrive(other, other.Terminals[touch], cost, port, true);
             }
         }
 
-        return Blocked(RouteStatus.NoConnectivity, to);
+        if (finish >= double.MaxValue)
+            return Blocked(RouteStatus.NoConnectivity, to);
+
+        var carriers = new List<CarrierId>();
+
+        // The true length, walked again over the chosen path - not the cost the search minimised.
+        // The two differ by the conduit preference, which is a thumb on the scale for choosing a
+        // route and has no business in the number we write into a parameter. Reporting the cost
+        // would inflate every tray route by the preference and quietly disagree with a tape measure.
+        var length = 0.0;
+
+        if (!finishSeeded)
+        {
+            var walk = new List<Port>();
+            var cursor = finishFrom;
+
+            while (true)
+            {
+                walk.Add(cursor);
+
+                if (!came.TryGetValue(cursor, out var previous))
+                    break;
+
+                cursor = previous;
+            }
+
+            walk.Reverse();
+
+            foreach (var step in walk)
+            {
+                if (network.Node(step.Carrier) is not { } node)
+                    continue;
+
+                carriers.Add(step.Carrier);
+                length += Along(node, entered[step], node.Terminals[step.Terminal]);
+            }
+        }
+
+        if (network.Node(finishAt) is { } last)
+        {
+            carriers.Add(finishAt);
+            length += Along(last, finishEntry, exits[finishAt].At);
+        }
+
+        var seed = carriers.Count > 0 ? carriers[0] : finishAt;
+        var approach = entries.TryGetValue(seed, out var seeded) ? seeded.Cost : 0;
+
+        return new RouteResult(default, RouteStatus.Found, network.Version)
+        {
+            Path = carriers,
+            AlongCarriers = length,
+            Approaches = approach + exits[finishAt].Cost,
+        };
     }
 
-    /// <summary>The carriers a terminal can reach directly, and what reaching each one costs.</summary>
-    private static Dictionary<CarrierId, double> Reachable(
+    /// <summary>The carriers a terminal can reach, where it meets each one, and what that costs.</summary>
+    /// <remarks>
+    /// <b>Where, and not only how far.</b> A tray is open along its length, so a cable joins it at
+    /// the point nearest the device; a conduit is a pipe and is joined where it ends. The old form
+    /// measured to the nearest terminal of everything, which put a socket under the middle of a
+    /// twenty-metre tray eleven metres from a run it was one metre below.
+    /// </remarks>
+    private static Dictionary<CarrierId, (Point3 At, double Cost)> Approachable(
         RouteNetwork network,
         Terminal terminal,
         RoutingOptions options)
     {
-        var found = new Dictionary<CarrierId, double>();
+        var found = new Dictionary<CarrierId, (Point3 At, double Cost)>();
 
         foreach (var node in network.Near(terminal.At))
         {
-            // Every terminal, not the two extremes: a device is often dropped from the branch of a
-            // tee, which is neither of them. Same correction as adjacency, and for the same reason.
-            var distance = double.MaxValue;
+            var at = node.OpenAlongItsLength
+                ? node.NearestPointTo(terminal.At)
+                : NearestTerminal(node, terminal.At);
 
-            foreach (var at in node.Terminals)
-                distance = Math.Min(distance, Approach(terminal.At, at, options));
+            var distance = Approach(terminal.At, at, options);
 
             if (distance > options.MaxApproach)
                 continue;
 
-            if (!found.TryGetValue(node.Id, out var known) || distance < known)
-                found[node.Id] = distance;
+            if (!found.TryGetValue(node.Id, out var known) || distance < known.Cost)
+                found[node.Id] = (at, distance);
         }
 
         return found;
+    }
+
+    /// <summary>The terminal of this carrier nearest a point, whatever the distance.</summary>
+    private static Point3 NearestTerminal(CarrierNode node, Point3 at)
+    {
+        var best = node.Terminals.Count > 0 ? node.Terminals[0] : node.Start;
+        var distance = at.DistanceTo(best);
+
+        for (var i = 1; i < node.Terminals.Count; i++)
+        {
+            var candidate = at.DistanceTo(node.Terminals[i]);
+
+            if (candidate >= distance)
+                continue;
+
+            distance = candidate;
+            best = node.Terminals[i];
+        }
+
+        return best;
+    }
+
+    /// <summary>Which terminal of a carrier meets this point, or -1 when none is within reach.</summary>
+    private static int Touching(CarrierNode node, Point3 at, double tolerance)
+    {
+        var best = -1;
+        var distance = double.MaxValue;
+
+        for (var i = 0; i < node.Terminals.Count; i++)
+        {
+            var candidate = at.DistanceTo(node.Terminals[i]);
+
+            if (candidate > tolerance || candidate >= distance)
+                continue;
+
+            distance = candidate;
+            best = i;
+        }
+
+        return best;
     }
 
     /// <summary>
@@ -230,32 +350,43 @@ public static class Router
         Approaches.Measure(from, to, options);
 
     /// <summary>
-    /// What walking one carrier costs.
+    /// How much of a carrier lies between two points on it.
     /// </summary>
     /// <remarks>
-    /// Its length, made more expensive when the preference says so. The preference is expressed on
-    /// the carrier's class rather than on the route as a whole, which is the correction to the
-    /// predecessor: it multiplied the finished route's length, so a route through both conduit and
-    /// tray was penalised as though all of it were tray.
+    /// <para>
+    /// <b>Scaled to the length the model reports rather than taken off the geometry.</b> Revit says
+    /// what a run is, and that number is the one that gets ordered and cut; the endpoints are where
+    /// its connectors sit, and the two need not agree to the millimetre. Taking the fraction and
+    /// applying it to the reported length keeps a whole traversal exactly equal to that length,
+    /// which is what every check here and every schedule already expects.
+    /// </para>
+    /// <para>
+    /// A fitting is not a straight anything - its body turns - so passing through one costs what it
+    /// says it is, and entering and leaving by the same connector costs nothing.
+    /// </para>
     /// </remarks>
-    private static double Weight(CarrierNode node, RoutingOptions options) =>
-        string.Equals(node.Class, "conduit", StringComparison.OrdinalIgnoreCase)
-            ? node.Length
-            : node.Length * (1.0 + options.PreferConduitUntil);
-
-    private static IReadOnlyList<CarrierId> Unwind(Dictionary<CarrierId, CarrierId> came, CarrierId at)
+    private static double Along(CarrierNode node, Point3 a, Point3 b)
     {
-        var path = new List<CarrierId> { at };
+        if (node.Kind != CarrierKind.Segment)
+            return a.DistanceTo(b) <= 1e-9 ? 0 : node.Length;
 
-        while (came.TryGetValue(at, out var previous))
-        {
-            at = previous;
-            path.Add(at);
-        }
+        var span = node.Start.DistanceTo(node.End);
 
-        path.Reverse();
-        return path;
+        return span <= 1e-9 ? node.Length : a.DistanceTo(b) * (node.Length / span);
     }
+
+    /// <summary>
+    /// What a foot of this carrier costs the search, as against what it measures.
+    /// </summary>
+    /// <remarks>
+    /// The preference is expressed on the class of the carrier rather than on the route as a whole,
+    /// which is the correction to the predecessor: it multiplied the finished length, so a route
+    /// through both conduit and tray was penalised as though all of it were tray.
+    /// </remarks>
+    private static double Factor(CarrierNode node, RoutingOptions options) =>
+        string.Equals(node.Class, "conduit", StringComparison.OrdinalIgnoreCase)
+            ? 1.0
+            : 1.0 + options.PreferConduitUntil;
 
     private static RouteResult Blocked(RouteStatus status, Terminal at) =>
         new(default, status, 0)
@@ -273,9 +404,9 @@ public static class Router
 /// </remarks>
 internal sealed class PriorityQueue
 {
-    private readonly List<(CarrierId Item, double Cost)> _heap = new();
+    private readonly List<(Port Item, double Cost)> _heap = new();
 
-    public void Push(CarrierId item, double cost)
+    public void Push(Port item, double cost)
     {
         _heap.Add((item, cost));
 
@@ -293,7 +424,7 @@ internal sealed class PriorityQueue
         }
     }
 
-    public bool TryPop(out CarrierId item, out double cost)
+    public bool TryPop(out Port item, out double cost)
     {
         if (_heap.Count == 0)
         {

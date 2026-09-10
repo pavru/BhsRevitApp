@@ -25,7 +25,30 @@ public sealed class CarrierReader
 {
     private readonly CarrierCatalogue _catalogue;
 
-    public CarrierReader(CarrierCatalogue catalogue) => _catalogue = catalogue;
+    private readonly RecommendedBoxes? _boxes;
+
+    public CarrierReader(CarrierCatalogue catalogue, RecommendedBoxes? boxes = null)
+    {
+        _catalogue = catalogue;
+        _boxes = boxes;
+    }
+
+    /// <summary>Markers of ours met while reading, which are not structure and were left out.</summary>
+    /// <remarks>
+    /// <b>Counted rather than dropped in silence, because the count is the proof the exclusion
+    /// works.</b> Measured on the owner model: one free-standing marker of a cable-tray-fitting
+    /// family took the carrier count from 358 to 359, so an exclusion that quietly did nothing would
+    /// look exactly like an exclusion that worked.
+    /// </remarks>
+    public int Markers { get; private set; }
+
+    /// <summary>Whether the document being read holds the configured marker type at all.</summary>
+    /// <remarks>
+    /// False is not automatically wrong - most models have never had a marker placed. It becomes
+    /// news when a run has placed some before, and the way to notice is a project that renamed the
+    /// type: the markers stay in the model and are read as structure from then on.
+    /// </remarks>
+    public bool MarkerTypeKnown { get; private set; }
 
     /// <summary>Carriers that were collected and could not be placed, over every call so far.</summary>
     /// <remarks>
@@ -45,6 +68,14 @@ public sealed class CarrierReader
     /// <param name="transform">The link's total transform, or the identity for the host.</param>
     public IEnumerable<CarrierNode> Read(Document document, long source, Transform transform)
     {
+        // Resolved once per document rather than per element: the lookup walks every family symbol,
+        // and a survey crosses the host and every link.
+        var markers = _boxes is null
+            ? RecommendedBoxMarkers.None
+            : RecommendedBoxMarkers.For(document, _boxes);
+
+        MarkerTypeKnown |= markers.Known;
+
         foreach (var category in _catalogue.Categories)
         {
             var carrierClass = _catalogue.ClassOf(category);
@@ -55,6 +86,15 @@ public sealed class CarrierReader
 
             foreach (var element in found)
             {
+                // Ours, and therefore not structure. A marker sits on the trace by construction and
+                // its family is usually a fitting, so without this it is collected as a carrier and
+                // the network grows a node the project does not have.
+                if (markers.Marks(element))
+                {
+                    Markers++;
+                    continue;
+                }
+
                 var node = Read(element, source, transform, carrierClass);
 
                 if (node is null)
