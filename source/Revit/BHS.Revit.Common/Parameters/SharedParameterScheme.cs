@@ -1,4 +1,4 @@
-using System.IO;
+﻿using System.IO;
 using Autodesk.Revit.ApplicationServices;
 using Autodesk.Revit.DB;
 
@@ -202,7 +202,7 @@ public abstract class SharedParameterScheme
     /// have read as unbound on an English one.
     /// </para>
     /// </remarks>
-    public IReadOnlyList<SharedParameter> Missing(Document document)
+    public IReadOnlyList<SharedParameter> Missing(Document document, RuntimeCategories? extra = null)
     {
         if (document is null)
             return Parameters;
@@ -221,7 +221,7 @@ public abstract class SharedParameterScheme
             if (bindings.get_Item(element.GetDefinition()) is not ElementBinding binding
                 || (declared.Instance && binding is not InstanceBinding)
                 || (!declared.Instance && binding is not TypeBinding)
-                || !Covers(binding, document, declared))
+                || !Covers(binding, document, declared, extra))
             {
                 missing.Add(declared);
             }
@@ -256,7 +256,10 @@ public abstract class SharedParameterScheme
     /// </para>
     /// </remarks>
     /// <returns>The parameters that were bound.</returns>
-    public IReadOnlyList<SharedParameter> Install(Document document, Application application)
+    public IReadOnlyList<SharedParameter> Install(
+        Document document,
+        Application application,
+        RuntimeCategories? extra = null)
     {
         if (document is null)
             throw new ArgumentNullException(nameof(document));
@@ -264,7 +267,7 @@ public abstract class SharedParameterScheme
         if (application is null)
             throw new ArgumentNullException(nameof(application));
 
-        var missing = Missing(document);
+        var missing = Missing(document, extra);
 
         if (missing.Count == 0)
             return missing;
@@ -289,7 +292,7 @@ public abstract class SharedParameterScheme
 
                 var categories = application.Create.NewCategorySet();
 
-                foreach (var category in declared.Categories)
+                foreach (var category in Wanted(declared, extra))
                 {
                     if (Category.GetCategory(document, category) is { } found)
                         categories.Insert(found);
@@ -410,9 +413,13 @@ public abstract class SharedParameterScheme
         return null;
     }
 
-    private static bool Covers(ElementBinding binding, Document document, SharedParameter declared)
+    private static bool Covers(
+        ElementBinding binding,
+        Document document,
+        SharedParameter declared,
+        RuntimeCategories? extra)
     {
-        foreach (var wanted in declared.Categories)
+        foreach (var wanted in Wanted(declared, extra))
         {
             if (Category.GetCategory(document, wanted) is not { } category)
                 continue;
@@ -422,5 +429,27 @@ public abstract class SharedParameterScheme
         }
 
         return true;
+    }
+
+    /// <summary>Everything a parameter should cover: what it declares, plus what the caller adds.</summary>
+    /// <remarks>
+    /// <b>One place, because two would drift and the drift would be silent.</b> <c>Missing</c> and
+    /// <c>Install</c> have to agree about which categories count: if the check ignored a runtime
+    /// category the binding covers, it would report a bound parameter as missing for ever; if the
+    /// binding ignored one the check wants, every run would report it missing and bind nothing new.
+    /// </remarks>
+    private static IEnumerable<BuiltInCategory> Wanted(SharedParameter declared, RuntimeCategories? extra)
+    {
+        foreach (var category in declared.Categories)
+            yield return category;
+
+        if (extra is null)
+            yield break;
+
+        foreach (var category in extra.For(declared.Id))
+        {
+            if (!declared.Categories.Contains(category))
+                yield return category;
+        }
     }
 }
