@@ -1,0 +1,27 @@
+﻿<Project Sdk="BHS.Revit.Sdk/1.5.8">
+
+    <!--
+        The first test that runs inside the Revit database engine rather than beside it.
+
+        It lives under tests/ rather than source/Revit/ on purpose: the sweep record tracks
+        source/Revit, source/Shared, source/WinSide and build/BHS.Revit.Sdk, and a test project is
+        not something Revit loads. Filing it there would make every test edit cost half an hour of
+        Revit for a record that says nothing about it.
+    -->
+    <PropertyGroup>
+        <TargetFrameworks>net48-revit2024;net8.0-revit2025;net8.0-revit2026;net10.0-revit2027</TargetFrameworks>
+        <UserRevitTUnit>true</UserRevitTUnit>
+        <OutputType>Exe</OutputType>
+
+        <!--
+            The package runs every test on a dispatcher thread of its own, and a dispatcher is
+            WindowsBase. Without this the run fails before the first test with "Could not load file
+            or assembly WindowsBase" - measured, and the message names the assembly rather than the
+            reason, which is that the WindowsDesktop framework was never asked for.
+        -->
+        <UseWPF>true</UseWPF>
+        <IsPackable>false</IsPackable>
+        <PublishRevitAddIn>false</PublishRevitAddIn>
+    </PropertyGroup>
+
+</Project>
