@@ -54,7 +54,12 @@ public sealed class CollectCablingCommand : IFeatureCommand
         var options = CablingOptions.Read(services.Settings);
         var version = Interlocked.Increment(ref _version);
 
-        var snapshot = CablingSnapshot.Build(document, options, new CarrierCatalogue(), version);
+        // Which family stands for a recommended box is a project rule, so it comes from the model
+        // chain rather than the person one - and it is read here, on the API thread, because the
+        // model layer lives in the document.
+        var boxes = RecommendedBoxes.Read(services.ModelSettings.For(document));
+
+        var snapshot = CablingSnapshot.Build(document, options, new CarrierCatalogue(), version, boxes);
 
         Report(services, snapshot);
         Show(snapshot);
@@ -88,6 +93,14 @@ public sealed class CollectCablingCommand : IFeatureCommand
         if (snapshot.CarriersSkipped > 0)
             log.Warn("cabling: {0} carrier(s) had no readable extent and are missing from the network",
                 snapshot.CarriersSkipped);
+
+        // Info, not Warn: leaving our own markers out of the structure is the mechanism working.
+        // It is logged because it is the only evidence that it worked - measured on a real model,
+        // one marker of a tray-fitting family takes the carrier count from 358 to 359, so an
+        // exclusion that matched nothing looks exactly like an exclusion that matched everything.
+        if (snapshot.MarkersExcluded > 0)
+            log.Info("cabling: {0} recommended-box marker(s) of ours were left out of the structure",
+                snapshot.MarkersExcluded);
 
         if (snapshot.LinksNotLoaded > 0)
             log.Warn("cabling: {0} link(s) are placed but not loaded, so their carriers are absent",

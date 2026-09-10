@@ -33,7 +33,9 @@ public sealed class CablingSnapshot
         int linksRead,
         int linksNotLoaded,
         int nestedLinksIgnored,
-        int carriersSkipped)
+        int carriersSkipped,
+        int markersExcluded = 0,
+        bool markerTypeKnown = false)
     {
         Network = network;
         Carriers = carriers;
@@ -42,6 +44,8 @@ public sealed class CablingSnapshot
         LinksNotLoaded = linksNotLoaded;
         NestedLinksIgnored = nestedLinksIgnored;
         CarriersSkipped = carriersSkipped;
+        MarkersExcluded = markersExcluded;
+        MarkerTypeKnown = markerTypeKnown;
     }
 
     public RouteNetwork Network { get; }
@@ -77,14 +81,33 @@ public sealed class CablingSnapshot
     /// number: it surfaces later as somebody's circuit having no connectivity.</remarks>
     public int CarriersSkipped { get; }
 
+    /// <summary>Markers of ours that were met and left out of the structure.</summary>
+    /// <remarks>
+    /// <b>Zero on a model nobody has run the calculation against, and that is the normal case.</b>
+    /// It becomes interesting the second time: markers of the previous run are still there, and the
+    /// number says the exclusion found them. Measured on the owner model - one free-standing marker
+    /// takes the carrier count from 358 to 359 - so an exclusion that quietly matched nothing would
+    /// be indistinguishable from one that worked.
+    /// </remarks>
+    public int MarkersExcluded { get; }
+
+    /// <summary>Whether the model holds the marker type the project names.</summary>
+    /// <remarks>
+    /// False is ordinary on a model that has never been calculated. It is worth saying out loud
+    /// anyway, because the way this goes wrong is a renamed type: the markers stay in the model,
+    /// stop being recognised, and are read as structure from that day on.
+    /// </remarks>
+    public bool MarkerTypeKnown { get; }
+
     /// <summary>Reads the host and its links, and builds the network and the circuits.</summary>
     public static CablingSnapshot Build(
         Document host,
         RoutingOptions options,
         CarrierCatalogue catalogue,
-        long version)
+        long version,
+        RecommendedBoxes? boxes = null)
     {
-        var reader = new CarrierReader(catalogue);
+        var reader = new CarrierReader(catalogue, boxes);
         var carriers = new List<CarrierNode>(reader.Read(host, 0, Transform.Identity));
 
         var links = new FilteredElementCollector(host)
@@ -120,6 +143,8 @@ public sealed class CablingSnapshot
             read,
             notLoaded,
             nested,
-            reader.Skipped);
+            reader.Skipped,
+            reader.Markers,
+            reader.MarkerTypeKnown);
     }
 }
