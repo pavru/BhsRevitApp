@@ -153,6 +153,14 @@ internal sealed class ProbeChannel : RevitSideChannel.RevitSideChannelBase
                         response.Values.Add(pair.Key, pair.Value);
                     break;
 
+                // The declared test suites, run inside this Revit against whatever model is open.
+                // One question rather than one per suite: the cases compare readings of the same
+                // document, and separate calls would let it close between two of them.
+                case "tests":
+                    foreach (var pair in DeclaredTests().GetAwaiter().GetResult())
+                        response.Values.Add(pair.Key, pair.Value);
+                    break;
+
                 // Deliberately a second question rather than more of the first: the work posted from
                 // inside the window is queued behind the measurement itself, so it can only have run
                 // once the measurement returned. See ModalWindowFacts.After.
@@ -318,6 +326,22 @@ internal sealed class ProbeChannel : RevitSideChannel.RevitSideChannelBase
     /// the survey counts what a building holds, this asks what one family is. Merging them would
     /// make every future question about the indicator arrive inside a method named after counting.
     /// </remarks>
+    /// <summary>
+    /// Runs the declared suites through the pump, because every one of them touches the Revit API.
+    /// </summary>
+    /// <remarks>
+    /// The whole run is one post. A case takes as long as it takes and the pump is busy while it
+    /// does, which is the same bargain every other measurement here makes; what would not be
+    /// acceptable is a run whose cases each waited their turn behind whatever else arrived between
+    /// them.
+    /// </remarks>
+    private async Task<IReadOnlyDictionary<string, string>> DeclaredTests()
+    {
+        return await _services.Pump
+            .PostAsync("probe: declared tests", RevitTests.Measure)
+            .ConfigureAwait(false);
+    }
+
     private async Task<IReadOnlyDictionary<string, string>> RecommendedBox()
     {
         return await _services.Pump

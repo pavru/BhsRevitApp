@@ -71,6 +71,10 @@
     <!-- What an edition loads on a press. Separate from the edition so that it can stay
          unloaded until then, which on Revit 2024 is the difference that matters. -->
     <Project Path="source/Features/MEP.Cabling/BHS.MEP.Cabling.Feature/BHS.MEP.Cabling.Feature.csproj" Type="C#" />
+    <!-- What the reading half asserts about itself, inside a live Revit. A separate assembly, so it
+         sees the public surface an edition sees and nothing shipped carries a line of it. Listed by
+         hand in BHS.Revit.Probe; nothing runs it on its own. -->
+    <Project Path="source/Features/MEP.Cabling/BHS.MEP.Cabling.Revit.Tests/BHS.MEP.Cabling.Revit.Tests.csproj" Type="C#" />
   </Folder>
 
   <!-- Revit-side framework: loaded into the Revit process, multi-targeted on the Revit axis. -->
@@ -84,6 +88,10 @@
     <!-- The verification pair: an add-in that reports what it sees, and the runner that starts
          Revit and asks it. The runner is not loaded into Revit and is not on the Revit axis; it
          sits here because the two halves are one instrument. -->
+    <!-- What a test written against Revit is. Referenced only by test assemblies and by whoever
+         hosts them, which is why it is not a corner of Abstractions: nothing a customer receives
+         names these types. -->
+    <Project Path="source/Revit/BHS.Revit.Testing/BHS.Revit.Testing.csproj" Type="C#" />
     <Project Path="source/Revit/BHS.Revit.Probe/BHS.Revit.Probe.csproj" Type="C#" />
     <!-- A stand-in feature: one command, referencing the contracts and never the host. It exists so
          that "the feature loads only when its button is pressed" is measured rather than assumed. -->

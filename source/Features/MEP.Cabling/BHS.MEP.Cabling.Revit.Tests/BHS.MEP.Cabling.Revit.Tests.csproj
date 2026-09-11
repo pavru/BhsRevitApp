@@ -1,0 +1,30 @@
+﻿<Project Sdk="BHS.Revit.Sdk/1.5.8">
+
+    <!--
+      What the reading half of the cabling feature asserts about itself, run inside a real Revit
+      against a real model.
+
+      A separate assembly, and that is the owner's decision of 2026-09-11. It sees only the public
+      surface of BHS.MEP.Cabling.Revit - which is the surface an edition uses - and nothing a
+      customer receives carries a line of it. The alternative, cases compiled into the feature
+      itself behind a #if, would see the internals and would put test code in a shipped assembly.
+
+      Revit-TFM for the same reason the assembly under test is: these cases name Document.
+
+      Nothing runs this by itself. It is listed by hand in BHS.Revit.Probe, the sweep loads it into
+      a live Revit and reports each case as a check - see RevitTests there, and the section of
+      CLAUDE.md about why we do not lift the Revit engine into a process of our own.
+    -->
+
+    <PropertyGroup>
+        <TargetFrameworks>net48-revit2024;net8.0-revit2025;net8.0-revit2026;net10.0-revit2027</TargetFrameworks>
+        <RootNamespace>BHS.MEP.Cabling.Revit.Tests</RootNamespace>
+        <IsPackable>false</IsPackable>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="..\BHS.MEP.Cabling.Revit\BHS.MEP.Cabling.Revit.csproj"/>
+        <ProjectReference Include="..\..\..\Revit\BHS.Revit.Testing\BHS.Revit.Testing.csproj"/>
+    </ItemGroup>
+
+</Project>

@@ -1,22 +1,22 @@
 {
   "Schema": 2,
   "Disclaimer": "Recorded on a developer machine. Revit cannot run on hosted CI, so CI verifies this record rather than reproducing it: no automated check here has ever started a Revit.",
-  "Commit": "2b893559406c5c06c20120c7c85ec4fa98780e9f",
+  "Commit": "7aa4d7000a630cfc21adb71e62a5501d9387a72a",
   "CommitClean": true,
   "Content": {
-    "source/Revit": "4c567bd99de0f94f24b9082f3f8669423d66ee99",
+    "source/Revit": "0d80eedaf69dc9010d492dde493fbfef90a19a75",
     "source/Shared": "74994abc25e47a4a9233275e831de55cc6dbaabb",
     "source/WinSide": "5b71abdce4cd8186abf36416137a3dfa7f437a28",
     "build/BHS.Revit.Sdk": "eb401a3b673fabf6b4ba9ee1286cf8a450e3ed1c"
   },
-  "RecordedUtc": "2026-09-10T21:02:14.0338483Z",
+  "RecordedUtc": "2026-09-10T22:40:37.4085854Z",
   "WithModel": true,
   "ShowTab": false,
   "Releases": [
     {
       "Release": 2024,
       "FileVersion": "0.1.0.0",
-      "BuiltUtc": "2026-09-10T20:55:41.8703559Z",
+      "BuiltUtc": "2026-09-10T22:36:35.2700896Z",
       "Signed": true,
       "Checks": [
         {
@@ -376,6 +376,26 @@
           "Ok": true
         },
         {
+          "Name": "the declared test suites ran",
+          "Ok": true
+        },
+        {
+          "Name": "Cabling: the default catalogue collects fittings, not only runs",
+          "Ok": true
+        },
+        {
+          "Name": "Cabling: a marker type this model does not have is reported unknown, not assumed absent",
+          "Ok": true
+        },
+        {
+          "Name": "every declared case came back",
+          "Ok": true
+        },
+        {
+          "Name": "at least one case actually asserted something",
+          "Ok": true
+        },
+        {
           "Name": "every assembly Revit substituted is one RefCheck vets",
           "Ok": true
         },
@@ -420,11 +440,11 @@
       "Notes": [
         {
           "Name": "launched",
-          "Value": "pid 68896"
+          "Value": "pid 71000"
         },
         {
           "Name": "registered after",
-          "Value": "33.5s"
+          "Value": "15.6s"
         },
         {
           "Name": "recovered by enumeration",
@@ -440,11 +460,11 @@
         },
         {
           "Name": "probe log",
-          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2024-68896-20260911-065623.log"
+          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2024-71000-20260911-083648.log"
         },
         {
           "Name": "threads",
-          "Value": "api 1, call 16"
+          "Value": "api 1, call 12"
         },
         {
           "Name": "appdomain",
@@ -468,7 +488,7 @@
         },
         {
           "Name": "log",
-          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2024-68896-20260911-065623.log"
+          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2024-71000-20260911-083648.log"
         },
         {
           "Name": "sinks",
@@ -476,11 +496,11 @@
         },
         {
           "Name": "document",
-          "Value": "bhs-sweep-2024-3324be3c0a4a4d0e9457893c8bafaf83"
+          "Value": "bhs-sweep-2024-7a2e093a5e184b62934bc64790e32f5f"
         },
         {
           "Name": "opened after registration",
-          "Value": "38.5s"
+          "Value": "23.6s"
         },
         {
           "Name": "availability and the press",
@@ -488,7 +508,7 @@
         },
         {
           "Name": "model settings",
-          "Value": "document bhs-sweep-2024-3324be3c0a4a4d0e9457893c8bafaf83, origin Model"
+          "Value": "document bhs-sweep-2024-7a2e093a5e184b62934bc64790e32f5f, origin Model"
         },
         {
           "Name": "fields as built",
@@ -500,15 +520,15 @@
         },
         {
           "Name": "instance",
-          "Value": "1eb17c7b86e942c19ceb092c553acd26"
+          "Value": "90a04a9bea8340e982b1022443029f0e"
         },
         {
           "Name": "log",
-          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2024-68896-20260911-065623.log"
+          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2024-71000-20260911-083648.log"
         },
         {
           "Name": "pid",
-          "Value": "68896"
+          "Value": "71000"
         },
         {
           "Name": "release",
@@ -532,15 +552,15 @@
         },
         {
           "Name": "instance",
-          "Value": "1eb17c7b86e942c19ceb092c553acd26"
+          "Value": "90a04a9bea8340e982b1022443029f0e"
         },
         {
           "Name": "log",
-          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2024-68896-20260911-065623.log"
+          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2024-71000-20260911-083648.log"
         },
         {
           "Name": "pid",
-          "Value": "68896"
+          "Value": "71000"
         },
         {
           "Name": "place:symbol",
@@ -600,11 +620,11 @@
         },
         {
           "Name": "instance",
-          "Value": "1eb17c7b86e942c19ceb092c553acd26"
+          "Value": "90a04a9bea8340e982b1022443029f0e"
         },
         {
           "Name": "log",
-          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2024-68896-20260911-065623.log"
+          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2024-71000-20260911-083648.log"
         },
         {
           "Name": "modal:apiCallWorked",
@@ -616,11 +636,11 @@
         },
         {
           "Name": "modal:apiRead",
-          "Value": "bhs-sweep-2024-3324be3c0a4a4d0e9457893c8bafaf83"
+          "Value": "bhs-sweep-2024-7a2e093a5e184b62934bc64790e32f5f"
         },
         {
           "Name": "modal:apiReadAfterAwait",
-          "Value": "bhs-sweep-2024-3324be3c0a4a4d0e9457893c8bafaf83"
+          "Value": "bhs-sweep-2024-7a2e093a5e184b62934bc64790e32f5f"
         },
         {
           "Name": "modal:apiThread",
@@ -632,7 +652,7 @@
         },
         {
           "Name": "modal:awaitResumedAfter",
-          "Value": "0.48s"
+          "Value": "0.44s"
         },
         {
           "Name": "modal:awaitResumedOnApiThread",
@@ -656,7 +676,7 @@
         },
         {
           "Name": "modal:shownFor",
-          "Value": "2.56s"
+          "Value": "2.50s"
         },
         {
           "Name": "modal:transactionCommit",
@@ -688,7 +708,7 @@
         },
         {
           "Name": "pid",
-          "Value": "68896"
+          "Value": "71000"
         },
         {
           "Name": "release",
@@ -700,11 +720,11 @@
         },
         {
           "Name": "instance",
-          "Value": "1eb17c7b86e942c19ceb092c553acd26"
+          "Value": "90a04a9bea8340e982b1022443029f0e"
         },
         {
           "Name": "log",
-          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2024-68896-20260911-065623.log"
+          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2024-71000-20260911-083648.log"
         },
         {
           "Name": "modal:measured",
@@ -716,7 +736,7 @@
         },
         {
           "Name": "modal:pumpRanAt",
-          "Value": "2.56s"
+          "Value": "2.50s"
         },
         {
           "Name": "modal:windowClosed",
@@ -724,7 +744,7 @@
         },
         {
           "Name": "pid",
-          "Value": "68896"
+          "Value": "71000"
         },
         {
           "Name": "release",
@@ -736,11 +756,11 @@
         },
         {
           "Name": "instance",
-          "Value": "1eb17c7b86e942c19ceb092c553acd26"
+          "Value": "90a04a9bea8340e982b1022443029f0e"
         },
         {
           "Name": "log",
-          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2024-68896-20260911-065623.log"
+          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2024-71000-20260911-083648.log"
         },
         {
           "Name": "parameters:bound",
@@ -816,7 +836,7 @@
         },
         {
           "Name": "pid",
-          "Value": "68896"
+          "Value": "71000"
         },
         {
           "Name": "release",
@@ -831,6 +851,34 @@
           "Value": "add-in 79613878-acf3-4f56-83fc-11412bb53c24, 3 host(s) registered"
         },
         {
+          "Name": "suites declared",
+          "Value": "1"
+        },
+        {
+          "Name": "catalogue categories",
+          "Value": "4"
+        },
+        {
+          "Name": "skipped - Cabling: every carrier reports a class the catalogue names",
+          "Value": "the model this sweep opened holds no carriers, so there is nothing here to assert about"
+        },
+        {
+          "Name": "skipped - Cabling: every carrier has somewhere a cable can enter it",
+          "Value": "the model this sweep opened holds no carriers, so there is nothing here to assert about"
+        },
+        {
+          "Name": "skipped - Cabling: our own markers are excluded, and the count accounts for the difference",
+          "Value": "the model this sweep opened holds no carriers, so there is nothing here to assert about"
+        },
+        {
+          "Name": "skipped - Cabling: reading the same model twice reads the same network",
+          "Value": "the model this sweep opened holds no carriers, so there is nothing here to assert about"
+        },
+        {
+          "Name": "cases skipped",
+          "Value": "4"
+        },
+        {
           "Name": "BHS.FullEdition 0.1.0.0",
           "Value": "elsewhere  C:\\Users\\alex\\AppData\\Roaming\\Autodesk\\Revit\\Addins\\2024\\BimHouseSoftware\\BHS.FullEdition\\Lib\\BHS.FullEdition.dll"
         },
@@ -841,6 +889,18 @@
         {
           "Name": "BHS.Logging 0.1.0.0",
           "Value": "ours  C:\\Users\\alex\\AppData\\Roaming\\Autodesk\\Revit\\Addins\\2024\\BimHouseSoftware\\BHS.Revit.Probe\\Lib\\BHS.Logging.dll"
+        },
+        {
+          "Name": "BHS.MEP.Cabling.Revit 0.1.0.0",
+          "Value": "ours  C:\\Users\\alex\\AppData\\Roaming\\Autodesk\\Revit\\Addins\\2024\\BimHouseSoftware\\BHS.Revit.Probe\\Lib\\BHS.MEP.Cabling.Revit.dll"
+        },
+        {
+          "Name": "BHS.MEP.Cabling.Revit.Tests 0.1.0.0",
+          "Value": "ours  C:\\Users\\alex\\AppData\\Roaming\\Autodesk\\Revit\\Addins\\2024\\BimHouseSoftware\\BHS.Revit.Probe\\Lib\\BHS.MEP.Cabling.Revit.Tests.dll"
+        },
+        {
+          "Name": "BHS.MEP.Cabling.Routing 0.1.0.0",
+          "Value": "ours  C:\\Users\\alex\\AppData\\Roaming\\Autodesk\\Revit\\Addins\\2024\\BimHouseSoftware\\BHS.Revit.Probe\\Lib\\BHS.MEP.Cabling.Routing.dll"
         },
         {
           "Name": "BHS.Revit.Abstractions 0.1.0.0",
@@ -857,6 +917,10 @@
         {
           "Name": "BHS.Revit.Probe 0.1.0.0",
           "Value": "ours  C:\\Users\\alex\\AppData\\Roaming\\Autodesk\\Revit\\Addins\\2024\\BimHouseSoftware\\BHS.Revit.Probe\\Lib\\BHS.Revit.Probe.dll"
+        },
+        {
+          "Name": "BHS.Revit.Testing 0.1.0.0",
+          "Value": "ours  C:\\Users\\alex\\AppData\\Roaming\\Autodesk\\Revit\\Addins\\2024\\BimHouseSoftware\\BHS.Revit.Probe\\Lib\\BHS.Revit.Testing.dll"
         },
         {
           "Name": "BHS.Settings 0.1.0.0",
@@ -920,7 +984,7 @@
         },
         {
           "Name": "assemblies loaded",
-          "Value": "677"
+          "Value": "681"
         },
         {
           "Name": "Revit\u0027s copy won",
@@ -940,7 +1004,7 @@
         },
         {
           "Name": "diagnostic events",
-          "Value": "267 received, 0 dropped by the publisher, longest quiet spell 31.7s during Starting"
+          "Value": "302 received, 0 dropped by the publisher, longest quiet spell 17.6s during Starting"
         },
         {
           "Name": "phases seen",
@@ -960,7 +1024,7 @@
         },
         {
           "Name": "progress caption",
-          "Value": "\u0417\u0430\u0433\u0440\u0443\u0437\u043A\u0430 bhs-sweep-2024-3324be3c0a4a4d0e9457893c8bafaf83.rvt"
+          "Value": "\u0417\u0430\u0433\u0440\u0443\u0437\u043A\u0430 bhs-sweep-2024-7a2e093a5e184b62934bc64790e32f5f.rvt"
         },
         {
           "Name": "progress caption",
@@ -996,7 +1060,7 @@
         },
         {
           "Name": "progress caption",
-          "Value": "\u0427\u0435\u0440\u0442\u0435\u0436: bhs-sweep-2024-3324be3c0a4a4d0e9457893c8bafaf83.rvt - \u041F\u043B\u0430\u043D \u044D\u0442\u0430\u0436\u0430: \u0423\u0440\u043E\u0432\u0435\u043D\u044C 1"
+          "Value": "\u0427\u0435\u0440\u0442\u0435\u0436: bhs-sweep-2024-7a2e093a5e184b62934bc64790e32f5f.rvt - \u041F\u043B\u0430\u043D \u044D\u0442\u0430\u0436\u0430: \u0423\u0440\u043E\u0432\u0435\u043D\u044C 1"
         },
         {
           "Name": "progress caption",
@@ -1008,14 +1072,14 @@
         },
         {
           "Name": "closed after",
-          "Value": "20.8s"
+          "Value": "20.2s"
         }
       ]
     },
     {
       "Release": 2025,
       "FileVersion": "0.1.0.0",
-      "BuiltUtc": "2026-09-10T20:55:42.8551396Z",
+      "BuiltUtc": "2026-09-10T22:36:36.6884294Z",
       "Signed": true,
       "Checks": [
         {
@@ -1375,6 +1439,26 @@
           "Ok": true
         },
         {
+          "Name": "the declared test suites ran",
+          "Ok": true
+        },
+        {
+          "Name": "Cabling: the default catalogue collects fittings, not only runs",
+          "Ok": true
+        },
+        {
+          "Name": "Cabling: a marker type this model does not have is reported unknown, not assumed absent",
+          "Ok": true
+        },
+        {
+          "Name": "every declared case came back",
+          "Ok": true
+        },
+        {
+          "Name": "at least one case actually asserted something",
+          "Ok": true
+        },
+        {
           "Name": "every assembly Revit substituted is one RefCheck vets",
           "Ok": true
         },
@@ -1419,11 +1503,11 @@
       "Notes": [
         {
           "Name": "launched",
-          "Value": "pid 47016"
+          "Value": "pid 77588"
         },
         {
           "Name": "registered after",
-          "Value": "21.4s"
+          "Value": "15.0s"
         },
         {
           "Name": "recovered by enumeration",
@@ -1439,11 +1523,11 @@
         },
         {
           "Name": "probe log",
-          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2025-47016-20260911-065802.log"
+          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2025-77588-20260911-083801.log"
         },
         {
           "Name": "threads",
-          "Value": "api 1, call 26"
+          "Value": "api 1, call 5"
         },
         {
           "Name": "appdomain",
@@ -1467,7 +1551,7 @@
         },
         {
           "Name": "log",
-          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2025-47016-20260911-065802.log"
+          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2025-77588-20260911-083801.log"
         },
         {
           "Name": "sinks",
@@ -1475,11 +1559,11 @@
         },
         {
           "Name": "document",
-          "Value": "bhs-sweep-2025-b497cafa1b8246108cb4e81e20f83839"
+          "Value": "bhs-sweep-2025-e7f25495cf4b41648dddfdeb7ed5cf37"
         },
         {
           "Name": "opened after registration",
-          "Value": "8.5s"
+          "Value": "9.2s"
         },
         {
           "Name": "availability and the press",
@@ -1487,7 +1571,7 @@
         },
         {
           "Name": "model settings",
-          "Value": "document bhs-sweep-2025-b497cafa1b8246108cb4e81e20f83839, origin Model"
+          "Value": "document bhs-sweep-2025-e7f25495cf4b41648dddfdeb7ed5cf37, origin Model"
         },
         {
           "Name": "fields as built",
@@ -1499,15 +1583,15 @@
         },
         {
           "Name": "instance",
-          "Value": "42ee29a799e54bbba54e6b7eedf97bba"
+          "Value": "97a077a88f6b443990d9d9fe8f74fc45"
         },
         {
           "Name": "log",
-          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2025-47016-20260911-065802.log"
+          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2025-77588-20260911-083801.log"
         },
         {
           "Name": "pid",
-          "Value": "47016"
+          "Value": "77588"
         },
         {
           "Name": "release",
@@ -1531,15 +1615,15 @@
         },
         {
           "Name": "instance",
-          "Value": "42ee29a799e54bbba54e6b7eedf97bba"
+          "Value": "97a077a88f6b443990d9d9fe8f74fc45"
         },
         {
           "Name": "log",
-          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2025-47016-20260911-065802.log"
+          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2025-77588-20260911-083801.log"
         },
         {
           "Name": "pid",
-          "Value": "47016"
+          "Value": "77588"
         },
         {
           "Name": "place:symbol",
@@ -1599,11 +1683,11 @@
         },
         {
           "Name": "instance",
-          "Value": "42ee29a799e54bbba54e6b7eedf97bba"
+          "Value": "97a077a88f6b443990d9d9fe8f74fc45"
         },
         {
           "Name": "log",
-          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2025-47016-20260911-065802.log"
+          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2025-77588-20260911-083801.log"
         },
         {
           "Name": "modal:apiCallWorked",
@@ -1615,11 +1699,11 @@
         },
         {
           "Name": "modal:apiRead",
-          "Value": "bhs-sweep-2025-b497cafa1b8246108cb4e81e20f83839"
+          "Value": "bhs-sweep-2025-e7f25495cf4b41648dddfdeb7ed5cf37"
         },
         {
           "Name": "modal:apiReadAfterAwait",
-          "Value": "bhs-sweep-2025-b497cafa1b8246108cb4e81e20f83839"
+          "Value": "bhs-sweep-2025-e7f25495cf4b41648dddfdeb7ed5cf37"
         },
         {
           "Name": "modal:apiThread",
@@ -1631,7 +1715,7 @@
         },
         {
           "Name": "modal:awaitResumedAfter",
-          "Value": "0.46s"
+          "Value": "0.42s"
         },
         {
           "Name": "modal:awaitResumedOnApiThread",
@@ -1655,7 +1739,7 @@
         },
         {
           "Name": "modal:shownFor",
-          "Value": "2.52s"
+          "Value": "2.48s"
         },
         {
           "Name": "modal:transactionCommit",
@@ -1687,7 +1771,7 @@
         },
         {
           "Name": "pid",
-          "Value": "47016"
+          "Value": "77588"
         },
         {
           "Name": "release",
@@ -1699,11 +1783,11 @@
         },
         {
           "Name": "instance",
-          "Value": "42ee29a799e54bbba54e6b7eedf97bba"
+          "Value": "97a077a88f6b443990d9d9fe8f74fc45"
         },
         {
           "Name": "log",
-          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2025-47016-20260911-065802.log"
+          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2025-77588-20260911-083801.log"
         },
         {
           "Name": "modal:measured",
@@ -1715,7 +1799,7 @@
         },
         {
           "Name": "modal:pumpRanAt",
-          "Value": "2.52s"
+          "Value": "2.48s"
         },
         {
           "Name": "modal:windowClosed",
@@ -1723,7 +1807,7 @@
         },
         {
           "Name": "pid",
-          "Value": "47016"
+          "Value": "77588"
         },
         {
           "Name": "release",
@@ -1735,11 +1819,11 @@
         },
         {
           "Name": "instance",
-          "Value": "42ee29a799e54bbba54e6b7eedf97bba"
+          "Value": "97a077a88f6b443990d9d9fe8f74fc45"
         },
         {
           "Name": "log",
-          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2025-47016-20260911-065802.log"
+          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2025-77588-20260911-083801.log"
         },
         {
           "Name": "parameters:bound",
@@ -1815,7 +1899,7 @@
         },
         {
           "Name": "pid",
-          "Value": "47016"
+          "Value": "77588"
         },
         {
           "Name": "release",
@@ -1830,6 +1914,34 @@
           "Value": "add-in 79613878-acf3-4f56-83fc-11412bb53c24, 3 host(s) registered"
         },
         {
+          "Name": "suites declared",
+          "Value": "1"
+        },
+        {
+          "Name": "catalogue categories",
+          "Value": "4"
+        },
+        {
+          "Name": "skipped - Cabling: every carrier reports a class the catalogue names",
+          "Value": "the model this sweep opened holds no carriers, so there is nothing here to assert about"
+        },
+        {
+          "Name": "skipped - Cabling: every carrier has somewhere a cable can enter it",
+          "Value": "the model this sweep opened holds no carriers, so there is nothing here to assert about"
+        },
+        {
+          "Name": "skipped - Cabling: our own markers are excluded, and the count accounts for the difference",
+          "Value": "the model this sweep opened holds no carriers, so there is nothing here to assert about"
+        },
+        {
+          "Name": "skipped - Cabling: reading the same model twice reads the same network",
+          "Value": "the model this sweep opened holds no carriers, so there is nothing here to assert about"
+        },
+        {
+          "Name": "cases skipped",
+          "Value": "4"
+        },
+        {
           "Name": "BHS.FullEdition 0.1.0.0",
           "Value": "elsewhere  C:\\Users\\alex\\AppData\\Roaming\\Autodesk\\Revit\\Addins\\2025\\BimHouseSoftware\\BHS.FullEdition\\Lib\\BHS.FullEdition.dll"
         },
@@ -1840,6 +1952,18 @@
         {
           "Name": "BHS.Logging 0.1.0.0",
           "Value": "ours  C:\\Users\\alex\\AppData\\Roaming\\Autodesk\\Revit\\Addins\\2025\\BimHouseSoftware\\BHS.Revit.Probe\\Lib\\BHS.Logging.dll"
+        },
+        {
+          "Name": "BHS.MEP.Cabling.Revit 0.1.0.0",
+          "Value": "ours  C:\\Users\\alex\\AppData\\Roaming\\Autodesk\\Revit\\Addins\\2025\\BimHouseSoftware\\BHS.Revit.Probe\\Lib\\BHS.MEP.Cabling.Revit.dll"
+        },
+        {
+          "Name": "BHS.MEP.Cabling.Revit.Tests 0.1.0.0",
+          "Value": "ours  C:\\Users\\alex\\AppData\\Roaming\\Autodesk\\Revit\\Addins\\2025\\BimHouseSoftware\\BHS.Revit.Probe\\Lib\\BHS.MEP.Cabling.Revit.Tests.dll"
+        },
+        {
+          "Name": "BHS.MEP.Cabling.Routing 0.1.0.0",
+          "Value": "ours  C:\\Users\\alex\\AppData\\Roaming\\Autodesk\\Revit\\Addins\\2025\\BimHouseSoftware\\BHS.Revit.Probe\\Lib\\BHS.MEP.Cabling.Routing.dll"
         },
         {
           "Name": "BHS.Revit.Abstractions 0.1.0.0",
@@ -1856,6 +1980,10 @@
         {
           "Name": "BHS.Revit.Probe 0.1.0.0",
           "Value": "ours  C:\\Users\\alex\\AppData\\Roaming\\Autodesk\\Revit\\Addins\\2025\\BimHouseSoftware\\BHS.Revit.Probe\\Lib\\BHS.Revit.Probe.dll"
+        },
+        {
+          "Name": "BHS.Revit.Testing 0.1.0.0",
+          "Value": "ours  C:\\Users\\alex\\AppData\\Roaming\\Autodesk\\Revit\\Addins\\2025\\BimHouseSoftware\\BHS.Revit.Probe\\Lib\\BHS.Revit.Testing.dll"
         },
         {
           "Name": "BHS.Settings 0.1.0.0",
@@ -1959,7 +2087,7 @@
         },
         {
           "Name": "assemblies loaded",
-          "Value": "444"
+          "Value": "448"
         },
         {
           "Name": "Revit\u0027s copy won",
@@ -1971,7 +2099,7 @@
         },
         {
           "Name": "diagnostic events",
-          "Value": "190 received, 0 dropped by the publisher, longest quiet spell 3.7s during Working"
+          "Value": "222 received, 0 dropped by the publisher, longest quiet spell 3.9s during Working"
         },
         {
           "Name": "phases seen",
@@ -1999,7 +2127,7 @@
         },
         {
           "Name": "progress caption",
-          "Value": "\u0417\u0430\u0433\u0440\u0443\u0437\u043A\u0430 bhs-sweep-2025-b497cafa1b8246108cb4e81e20f83839.rvt"
+          "Value": "\u0417\u0430\u0433\u0440\u0443\u0437\u043A\u0430 bhs-sweep-2025-e7f25495cf4b41648dddfdeb7ed5cf37.rvt"
         },
         {
           "Name": "progress caption",
@@ -2027,7 +2155,7 @@
         },
         {
           "Name": "progress caption",
-          "Value": "\u0427\u0435\u0440\u0442\u0435\u0436: bhs-sweep-2025-b497cafa1b8246108cb4e81e20f83839.rvt - \u041F\u043B\u0430\u043D \u044D\u0442\u0430\u0436\u0430: \u0423\u0440\u043E\u0432\u0435\u043D\u044C 1"
+          "Value": "\u0427\u0435\u0440\u0442\u0435\u0436: bhs-sweep-2025-e7f25495cf4b41648dddfdeb7ed5cf37.rvt - \u041F\u043B\u0430\u043D \u044D\u0442\u0430\u0436\u0430: \u0423\u0440\u043E\u0432\u0435\u043D\u044C 1"
         },
         {
           "Name": "progress caption",
@@ -2035,14 +2163,14 @@
         },
         {
           "Name": "closed after",
-          "Value": "3.6s"
+          "Value": "3.0s"
         }
       ]
     },
     {
       "Release": 2026,
       "FileVersion": "0.1.0.0",
-      "BuiltUtc": "2026-09-10T20:55:42.8551396Z",
+      "BuiltUtc": "2026-09-10T22:36:36.1872010Z",
       "Signed": true,
       "Checks": [
         {
@@ -2402,6 +2530,26 @@
           "Ok": true
         },
         {
+          "Name": "the declared test suites ran",
+          "Ok": true
+        },
+        {
+          "Name": "Cabling: the default catalogue collects fittings, not only runs",
+          "Ok": true
+        },
+        {
+          "Name": "Cabling: a marker type this model does not have is reported unknown, not assumed absent",
+          "Ok": true
+        },
+        {
+          "Name": "every declared case came back",
+          "Ok": true
+        },
+        {
+          "Name": "at least one case actually asserted something",
+          "Ok": true
+        },
+        {
           "Name": "every assembly Revit substituted is one RefCheck vets",
           "Ok": true
         },
@@ -2446,11 +2594,11 @@
       "Notes": [
         {
           "Name": "launched",
-          "Value": "pid 61444"
+          "Value": "pid 79348"
         },
         {
           "Name": "registered after",
-          "Value": "46.3s"
+          "Value": "24.6s"
         },
         {
           "Name": "recovered by enumeration",
@@ -2466,11 +2614,11 @@
         },
         {
           "Name": "probe log",
-          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2026-61444-20260911-065849.log"
+          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2026-79348-20260911-083833.log"
         },
         {
           "Name": "threads",
-          "Value": "api 1, call 10"
+          "Value": "api 1, call 19"
         },
         {
           "Name": "appdomain",
@@ -2494,7 +2642,7 @@
         },
         {
           "Name": "log",
-          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2026-61444-20260911-065849.log"
+          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2026-79348-20260911-083833.log"
         },
         {
           "Name": "sinks",
@@ -2502,11 +2650,11 @@
         },
         {
           "Name": "document",
-          "Value": "bhs-sweep-2026-ea394f4737e84b3ba5754cff3a0cca41"
+          "Value": "bhs-sweep-2026-83a070bc1c2a4a269199c404dded0f27"
         },
         {
           "Name": "opened after registration",
-          "Value": "95.0s"
+          "Value": "32.1s"
         },
         {
           "Name": "availability and the press",
@@ -2514,7 +2662,7 @@
         },
         {
           "Name": "model settings",
-          "Value": "document bhs-sweep-2026-ea394f4737e84b3ba5754cff3a0cca41, origin Model"
+          "Value": "document bhs-sweep-2026-83a070bc1c2a4a269199c404dded0f27, origin Model"
         },
         {
           "Name": "fields as built",
@@ -2526,15 +2674,15 @@
         },
         {
           "Name": "instance",
-          "Value": "593796a6f2d942019679cffca9b903ed"
+          "Value": "84fc43388b0d4c8182bc1db05e02b8cf"
         },
         {
           "Name": "log",
-          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2026-61444-20260911-065849.log"
+          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2026-79348-20260911-083833.log"
         },
         {
           "Name": "pid",
-          "Value": "61444"
+          "Value": "79348"
         },
         {
           "Name": "release",
@@ -2558,15 +2706,15 @@
         },
         {
           "Name": "instance",
-          "Value": "593796a6f2d942019679cffca9b903ed"
+          "Value": "84fc43388b0d4c8182bc1db05e02b8cf"
         },
         {
           "Name": "log",
-          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2026-61444-20260911-065849.log"
+          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2026-79348-20260911-083833.log"
         },
         {
           "Name": "pid",
-          "Value": "61444"
+          "Value": "79348"
         },
         {
           "Name": "place:symbol",
@@ -2626,11 +2774,11 @@
         },
         {
           "Name": "instance",
-          "Value": "593796a6f2d942019679cffca9b903ed"
+          "Value": "84fc43388b0d4c8182bc1db05e02b8cf"
         },
         {
           "Name": "log",
-          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2026-61444-20260911-065849.log"
+          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2026-79348-20260911-083833.log"
         },
         {
           "Name": "modal:apiCallWorked",
@@ -2642,11 +2790,11 @@
         },
         {
           "Name": "modal:apiRead",
-          "Value": "bhs-sweep-2026-ea394f4737e84b3ba5754cff3a0cca41"
+          "Value": "bhs-sweep-2026-83a070bc1c2a4a269199c404dded0f27"
         },
         {
           "Name": "modal:apiReadAfterAwait",
-          "Value": "bhs-sweep-2026-ea394f4737e84b3ba5754cff3a0cca41"
+          "Value": "bhs-sweep-2026-83a070bc1c2a4a269199c404dded0f27"
         },
         {
           "Name": "modal:apiThread",
@@ -2658,7 +2806,7 @@
         },
         {
           "Name": "modal:awaitResumedAfter",
-          "Value": "0.27s"
+          "Value": "0.25s"
         },
         {
           "Name": "modal:awaitResumedOnApiThread",
@@ -2682,7 +2830,7 @@
         },
         {
           "Name": "modal:shownFor",
-          "Value": "2.33s"
+          "Value": "2.31s"
         },
         {
           "Name": "modal:transactionCommit",
@@ -2714,7 +2862,7 @@
         },
         {
           "Name": "pid",
-          "Value": "61444"
+          "Value": "79348"
         },
         {
           "Name": "release",
@@ -2726,11 +2874,11 @@
         },
         {
           "Name": "instance",
-          "Value": "593796a6f2d942019679cffca9b903ed"
+          "Value": "84fc43388b0d4c8182bc1db05e02b8cf"
         },
         {
           "Name": "log",
-          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2026-61444-20260911-065849.log"
+          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2026-79348-20260911-083833.log"
         },
         {
           "Name": "modal:measured",
@@ -2742,7 +2890,7 @@
         },
         {
           "Name": "modal:pumpRanAt",
-          "Value": "2.33s"
+          "Value": "2.32s"
         },
         {
           "Name": "modal:windowClosed",
@@ -2750,7 +2898,7 @@
         },
         {
           "Name": "pid",
-          "Value": "61444"
+          "Value": "79348"
         },
         {
           "Name": "release",
@@ -2762,11 +2910,11 @@
         },
         {
           "Name": "instance",
-          "Value": "593796a6f2d942019679cffca9b903ed"
+          "Value": "84fc43388b0d4c8182bc1db05e02b8cf"
         },
         {
           "Name": "log",
-          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2026-61444-20260911-065849.log"
+          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2026-79348-20260911-083833.log"
         },
         {
           "Name": "parameters:bound",
@@ -2842,7 +2990,7 @@
         },
         {
           "Name": "pid",
-          "Value": "61444"
+          "Value": "79348"
         },
         {
           "Name": "release",
@@ -2857,6 +3005,34 @@
           "Value": "add-in 79613878-acf3-4f56-83fc-11412bb53c24, 3 host(s) registered"
         },
         {
+          "Name": "suites declared",
+          "Value": "1"
+        },
+        {
+          "Name": "catalogue categories",
+          "Value": "4"
+        },
+        {
+          "Name": "skipped - Cabling: every carrier reports a class the catalogue names",
+          "Value": "the model this sweep opened holds no carriers, so there is nothing here to assert about"
+        },
+        {
+          "Name": "skipped - Cabling: every carrier has somewhere a cable can enter it",
+          "Value": "the model this sweep opened holds no carriers, so there is nothing here to assert about"
+        },
+        {
+          "Name": "skipped - Cabling: our own markers are excluded, and the count accounts for the difference",
+          "Value": "the model this sweep opened holds no carriers, so there is nothing here to assert about"
+        },
+        {
+          "Name": "skipped - Cabling: reading the same model twice reads the same network",
+          "Value": "the model this sweep opened holds no carriers, so there is nothing here to assert about"
+        },
+        {
+          "Name": "cases skipped",
+          "Value": "4"
+        },
+        {
           "Name": "BHS.FullEdition 0.1.0.0",
           "Value": "elsewhere  C:\\Users\\alex\\AppData\\Roaming\\Autodesk\\Revit\\Addins\\2026\\BimHouseSoftware\\BHS.FullEdition\\Lib\\BHS.FullEdition.dll"
         },
@@ -2867,6 +3043,18 @@
         {
           "Name": "BHS.Logging 0.1.0.0",
           "Value": "ours  C:\\Users\\alex\\AppData\\Roaming\\Autodesk\\Revit\\Addins\\2026\\BimHouseSoftware\\BHS.Revit.Probe\\Lib\\BHS.Logging.dll"
+        },
+        {
+          "Name": "BHS.MEP.Cabling.Revit 0.1.0.0",
+          "Value": "ours  C:\\Users\\alex\\AppData\\Roaming\\Autodesk\\Revit\\Addins\\2026\\BimHouseSoftware\\BHS.Revit.Probe\\Lib\\BHS.MEP.Cabling.Revit.dll"
+        },
+        {
+          "Name": "BHS.MEP.Cabling.Revit.Tests 0.1.0.0",
+          "Value": "ours  C:\\Users\\alex\\AppData\\Roaming\\Autodesk\\Revit\\Addins\\2026\\BimHouseSoftware\\BHS.Revit.Probe\\Lib\\BHS.MEP.Cabling.Revit.Tests.dll"
+        },
+        {
+          "Name": "BHS.MEP.Cabling.Routing 0.1.0.0",
+          "Value": "ours  C:\\Users\\alex\\AppData\\Roaming\\Autodesk\\Revit\\Addins\\2026\\BimHouseSoftware\\BHS.Revit.Probe\\Lib\\BHS.MEP.Cabling.Routing.dll"
         },
         {
           "Name": "BHS.Revit.Abstractions 0.1.0.0",
@@ -2883,6 +3071,10 @@
         {
           "Name": "BHS.Revit.Probe 0.1.0.0",
           "Value": "ours  C:\\Users\\alex\\AppData\\Roaming\\Autodesk\\Revit\\Addins\\2026\\BimHouseSoftware\\BHS.Revit.Probe\\Lib\\BHS.Revit.Probe.dll"
+        },
+        {
+          "Name": "BHS.Revit.Testing 0.1.0.0",
+          "Value": "ours  C:\\Users\\alex\\AppData\\Roaming\\Autodesk\\Revit\\Addins\\2026\\BimHouseSoftware\\BHS.Revit.Probe\\Lib\\BHS.Revit.Testing.dll"
         },
         {
           "Name": "BHS.Settings 0.1.0.0",
@@ -2950,7 +3142,7 @@
         },
         {
           "Name": "assemblies loaded",
-          "Value": "857"
+          "Value": "861"
         },
         {
           "Name": "Revit\u0027s copy won",
@@ -2962,7 +3154,7 @@
         },
         {
           "Name": "diagnostic events",
-          "Value": "287 received, 0 dropped by the publisher, longest quiet spell 81.1s during Starting"
+          "Value": "301 received, 0 dropped by the publisher, longest quiet spell 19.5s during Starting"
         },
         {
           "Name": "phases seen",
@@ -2986,7 +3178,7 @@
         },
         {
           "Name": "progress caption",
-          "Value": "\u0417\u0430\u0433\u0440\u0443\u0437\u043A\u0430 bhs-sweep-2026-ea394f4737e84b3ba5754cff3a0cca41.rvt"
+          "Value": "\u0417\u0430\u0433\u0440\u0443\u0437\u043A\u0430 bhs-sweep-2026-83a070bc1c2a4a269199c404dded0f27.rvt"
         },
         {
           "Name": "progress caption",
@@ -3014,7 +3206,7 @@
         },
         {
           "Name": "progress caption",
-          "Value": "\u0427\u0435\u0440\u0442\u0435\u0436: bhs-sweep-2026-ea394f4737e84b3ba5754cff3a0cca41.rvt - \u041F\u043B\u0430\u043D \u044D\u0442\u0430\u0436\u0430: \u0423\u0440\u043E\u0432\u0435\u043D\u044C 1"
+          "Value": "\u0427\u0435\u0440\u0442\u0435\u0436: bhs-sweep-2026-83a070bc1c2a4a269199c404dded0f27.rvt - \u041F\u043B\u0430\u043D \u044D\u0442\u0430\u0436\u0430: \u0423\u0440\u043E\u0432\u0435\u043D\u044C 1"
         },
         {
           "Name": "progress caption",
@@ -3030,14 +3222,14 @@
         },
         {
           "Name": "closed after",
-          "Value": "16.5s"
+          "Value": "14.7s"
         }
       ]
     },
     {
       "Release": 2027,
       "FileVersion": "0.1.0.0",
-      "BuiltUtc": "2026-09-10T20:55:41.8703559Z",
+      "BuiltUtc": "2026-09-10T22:36:37.5004308Z",
       "Signed": true,
       "Checks": [
         {
@@ -3397,6 +3589,26 @@
           "Ok": true
         },
         {
+          "Name": "the declared test suites ran",
+          "Ok": true
+        },
+        {
+          "Name": "Cabling: the default catalogue collects fittings, not only runs",
+          "Ok": true
+        },
+        {
+          "Name": "Cabling: a marker type this model does not have is reported unknown, not assumed absent",
+          "Ok": true
+        },
+        {
+          "Name": "every declared case came back",
+          "Ok": true
+        },
+        {
+          "Name": "at least one case actually asserted something",
+          "Ok": true
+        },
+        {
           "Name": "every assembly Revit substituted is one RefCheck vets",
           "Ok": true
         },
@@ -3441,11 +3653,11 @@
       "Notes": [
         {
           "Name": "launched",
-          "Value": "pid 58492"
+          "Value": "pid 70144"
         },
         {
           "Name": "registered after",
-          "Value": "29.5s"
+          "Value": "16.5s"
         },
         {
           "Name": "recovered by enumeration",
@@ -3461,11 +3673,11 @@
         },
         {
           "Name": "probe log",
-          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2027-58492-20260911-070128.log"
+          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2027-70144-20260911-083950.log"
         },
         {
           "Name": "threads",
-          "Value": "api 2, call 20"
+          "Value": "api 2, call 7"
         },
         {
           "Name": "appdomain",
@@ -3489,7 +3701,7 @@
         },
         {
           "Name": "log",
-          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2027-58492-20260911-070128.log"
+          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2027-70144-20260911-083950.log"
         },
         {
           "Name": "sinks",
@@ -3497,11 +3709,11 @@
         },
         {
           "Name": "document",
-          "Value": "bhs-sweep-2027-6020fae57e8e4f14b49c39f9cb7b7d67"
+          "Value": "bhs-sweep-2027-fc648a1501254231adfe5d5eca847a22"
         },
         {
           "Name": "opened after registration",
-          "Value": "21.5s"
+          "Value": "24.4s"
         },
         {
           "Name": "availability and the press",
@@ -3509,7 +3721,7 @@
         },
         {
           "Name": "model settings",
-          "Value": "document bhs-sweep-2027-6020fae57e8e4f14b49c39f9cb7b7d67, origin Model"
+          "Value": "document bhs-sweep-2027-fc648a1501254231adfe5d5eca847a22, origin Model"
         },
         {
           "Name": "fields as built",
@@ -3521,15 +3733,15 @@
         },
         {
           "Name": "instance",
-          "Value": "03e3b70c5aec48c193c8cf592434994b"
+          "Value": "7cd0153012384ad790e6de085bd87a01"
         },
         {
           "Name": "log",
-          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2027-58492-20260911-070128.log"
+          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2027-70144-20260911-083950.log"
         },
         {
           "Name": "pid",
-          "Value": "58492"
+          "Value": "70144"
         },
         {
           "Name": "release",
@@ -3553,15 +3765,15 @@
         },
         {
           "Name": "instance",
-          "Value": "03e3b70c5aec48c193c8cf592434994b"
+          "Value": "7cd0153012384ad790e6de085bd87a01"
         },
         {
           "Name": "log",
-          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2027-58492-20260911-070128.log"
+          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2027-70144-20260911-083950.log"
         },
         {
           "Name": "pid",
-          "Value": "58492"
+          "Value": "70144"
         },
         {
           "Name": "place:symbol",
@@ -3621,11 +3833,11 @@
         },
         {
           "Name": "instance",
-          "Value": "03e3b70c5aec48c193c8cf592434994b"
+          "Value": "7cd0153012384ad790e6de085bd87a01"
         },
         {
           "Name": "log",
-          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2027-58492-20260911-070128.log"
+          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2027-70144-20260911-083950.log"
         },
         {
           "Name": "modal:apiCallWorked",
@@ -3637,11 +3849,11 @@
         },
         {
           "Name": "modal:apiRead",
-          "Value": "bhs-sweep-2027-6020fae57e8e4f14b49c39f9cb7b7d67"
+          "Value": "bhs-sweep-2027-fc648a1501254231adfe5d5eca847a22"
         },
         {
           "Name": "modal:apiReadAfterAwait",
-          "Value": "bhs-sweep-2027-6020fae57e8e4f14b49c39f9cb7b7d67"
+          "Value": "bhs-sweep-2027-fc648a1501254231adfe5d5eca847a22"
         },
         {
           "Name": "modal:apiThread",
@@ -3677,7 +3889,7 @@
         },
         {
           "Name": "modal:shownFor",
-          "Value": "2.36s"
+          "Value": "2.33s"
         },
         {
           "Name": "modal:transactionCommit",
@@ -3709,7 +3921,7 @@
         },
         {
           "Name": "pid",
-          "Value": "58492"
+          "Value": "70144"
         },
         {
           "Name": "release",
@@ -3721,11 +3933,11 @@
         },
         {
           "Name": "instance",
-          "Value": "03e3b70c5aec48c193c8cf592434994b"
+          "Value": "7cd0153012384ad790e6de085bd87a01"
         },
         {
           "Name": "log",
-          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2027-58492-20260911-070128.log"
+          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2027-70144-20260911-083950.log"
         },
         {
           "Name": "modal:measured",
@@ -3737,7 +3949,7 @@
         },
         {
           "Name": "modal:pumpRanAt",
-          "Value": "2.36s"
+          "Value": "2.33s"
         },
         {
           "Name": "modal:windowClosed",
@@ -3745,7 +3957,7 @@
         },
         {
           "Name": "pid",
-          "Value": "58492"
+          "Value": "70144"
         },
         {
           "Name": "release",
@@ -3757,11 +3969,11 @@
         },
         {
           "Name": "instance",
-          "Value": "03e3b70c5aec48c193c8cf592434994b"
+          "Value": "7cd0153012384ad790e6de085bd87a01"
         },
         {
           "Name": "log",
-          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2027-58492-20260911-070128.log"
+          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2027-70144-20260911-083950.log"
         },
         {
           "Name": "parameters:bound",
@@ -3837,7 +4049,7 @@
         },
         {
           "Name": "pid",
-          "Value": "58492"
+          "Value": "70144"
         },
         {
           "Name": "release",
@@ -3852,6 +4064,34 @@
           "Value": "add-in 79613878-acf3-4f56-83fc-11412bb53c24, 3 host(s) registered"
         },
         {
+          "Name": "suites declared",
+          "Value": "1"
+        },
+        {
+          "Name": "catalogue categories",
+          "Value": "4"
+        },
+        {
+          "Name": "skipped - Cabling: every carrier reports a class the catalogue names",
+          "Value": "the model this sweep opened holds no carriers, so there is nothing here to assert about"
+        },
+        {
+          "Name": "skipped - Cabling: every carrier has somewhere a cable can enter it",
+          "Value": "the model this sweep opened holds no carriers, so there is nothing here to assert about"
+        },
+        {
+          "Name": "skipped - Cabling: our own markers are excluded, and the count accounts for the difference",
+          "Value": "the model this sweep opened holds no carriers, so there is nothing here to assert about"
+        },
+        {
+          "Name": "skipped - Cabling: reading the same model twice reads the same network",
+          "Value": "the model this sweep opened holds no carriers, so there is nothing here to assert about"
+        },
+        {
+          "Name": "cases skipped",
+          "Value": "4"
+        },
+        {
           "Name": "BHS.FullEdition 0.1.0.0",
           "Value": "elsewhere  C:\\Users\\alex\\AppData\\Roaming\\Autodesk\\Revit\\Addins\\2027\\BimHouseSoftware\\BHS.FullEdition\\Lib\\BHS.FullEdition.dll"
         },
@@ -3862,6 +4102,18 @@
         {
           "Name": "BHS.Logging 0.1.0.0",
           "Value": "elsewhere  C:\\Users\\alex\\AppData\\Roaming\\Autodesk\\Revit\\Addins\\2027\\BimHouseSoftware\\BHS.FullEdition\\Lib\\BHS.Logging.dll"
+        },
+        {
+          "Name": "BHS.MEP.Cabling.Revit 0.1.0.0",
+          "Value": "elsewhere  C:\\Users\\alex\\AppData\\Roaming\\Autodesk\\Revit\\Addins\\2027\\BimHouseSoftware\\BHS.FullEdition\\Lib\\BHS.MEP.Cabling.Revit.dll"
+        },
+        {
+          "Name": "BHS.MEP.Cabling.Revit.Tests 0.1.0.0",
+          "Value": "ours  C:\\Users\\alex\\AppData\\Roaming\\Autodesk\\Revit\\Addins\\2027\\BimHouseSoftware\\BHS.Revit.Probe\\Lib\\BHS.MEP.Cabling.Revit.Tests.dll"
+        },
+        {
+          "Name": "BHS.MEP.Cabling.Routing 0.1.0.0",
+          "Value": "elsewhere  C:\\Users\\alex\\AppData\\Roaming\\Autodesk\\Revit\\Addins\\2027\\BimHouseSoftware\\BHS.FullEdition\\Lib\\BHS.MEP.Cabling.Routing.dll"
         },
         {
           "Name": "BHS.Revit.Abstractions 0.1.0.0",
@@ -3878,6 +4130,10 @@
         {
           "Name": "BHS.Revit.Probe 0.1.0.0",
           "Value": "ours  C:\\Users\\alex\\AppData\\Roaming\\Autodesk\\Revit\\Addins\\2027\\BimHouseSoftware\\BHS.Revit.Probe\\Lib\\BHS.Revit.Probe.dll"
+        },
+        {
+          "Name": "BHS.Revit.Testing 0.1.0.0",
+          "Value": "ours  C:\\Users\\alex\\AppData\\Roaming\\Autodesk\\Revit\\Addins\\2027\\BimHouseSoftware\\BHS.Revit.Probe\\Lib\\BHS.Revit.Testing.dll"
         },
         {
           "Name": "BHS.Settings 0.1.0.0",
@@ -4197,7 +4453,7 @@
         },
         {
           "Name": "assemblies loaded",
-          "Value": "771"
+          "Value": "774"
         },
         {
           "Name": "Revit\u0027s copy won",
@@ -4210,6 +4466,14 @@
         {
           "Name": "another add-in of ours won",
           "Value": "BHS.Logging"
+        },
+        {
+          "Name": "another add-in of ours won",
+          "Value": "BHS.MEP.Cabling.Revit"
+        },
+        {
+          "Name": "another add-in of ours won",
+          "Value": "BHS.MEP.Cabling.Routing"
         },
         {
           "Name": "another add-in of ours won",
@@ -4233,7 +4497,7 @@
         },
         {
           "Name": "diagnostic events",
-          "Value": "280 received, 0 dropped by the publisher, longest quiet spell 9.1s during Idle"
+          "Value": "288 received, 0 dropped by the publisher, longest quiet spell 10.1s during Starting"
         },
         {
           "Name": "phases seen",
@@ -4257,7 +4521,7 @@
         },
         {
           "Name": "progress caption",
-          "Value": "\u0417\u0430\u0433\u0440\u0443\u0437\u043A\u0430 bhs-sweep-2027-6020fae57e8e4f14b49c39f9cb7b7d67.rvt"
+          "Value": "\u0417\u0430\u0433\u0440\u0443\u0437\u043A\u0430 bhs-sweep-2027-fc648a1501254231adfe5d5eca847a22.rvt"
         },
         {
           "Name": "progress caption",
@@ -4285,7 +4549,7 @@
         },
         {
           "Name": "progress caption",
-          "Value": "\u0427\u0435\u0440\u0442\u0435\u0436: bhs-sweep-2027-6020fae57e8e4f14b49c39f9cb7b7d67.rvt - \u041F\u043B\u0430\u043D \u044D\u0442\u0430\u0436\u0430: \u0423\u0440\u043E\u0432\u0435\u043D\u044C 1"
+          "Value": "\u0427\u0435\u0440\u0442\u0435\u0436: bhs-sweep-2027-fc648a1501254231adfe5d5eca847a22.rvt - \u041F\u043B\u0430\u043D \u044D\u0442\u0430\u0436\u0430: \u0423\u0440\u043E\u0432\u0435\u043D\u044C 1"
         },
         {
           "Name": "progress caption",
@@ -4301,11 +4565,11 @@
         },
         {
           "Name": "closed after",
-          "Value": "13.4s"
+          "Value": "12.5s"
         }
       ]
     }
   ],
-  "Performed": 396,
+  "Performed": 416,
   "Failed": 0
 }

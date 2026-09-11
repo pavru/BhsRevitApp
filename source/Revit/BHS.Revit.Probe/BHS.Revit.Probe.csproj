@@ -62,6 +62,17 @@
         <!-- The edition names its feature's command in a one-line entry point, so it references
              the feature at compile time - and still must not load it until the button is pressed. -->
         <ProjectReference Include="..\BHS.Revit.Probe.Feature\BHS.Revit.Probe.Feature.csproj"/>
+        <!--
+          The declared test suites, and the assemblies they are about. Listed here rather than found
+          by scanning, for the reason in RevitTests.cs; referenced at compile time because the list
+          is code, and a list of assembly names in a file would be a list nothing verifies.
+
+          This is what makes the probe carry the cabling assemblies into Revit. Named as a cost in
+          RevitTests.cs: the assembly counts the sweep notes go up, the metric that matters - what
+          somebody else might also ship - does not move, because all of them are ours.
+        -->
+        <ProjectReference Include="..\BHS.Revit.Testing\BHS.Revit.Testing.csproj"/>
+        <ProjectReference Include="..\..\Features\MEP.Cabling\BHS.MEP.Cabling.Revit.Tests\BHS.MEP.Cabling.Revit.Tests.csproj"/>
         <!-- Through the host, which is the point: the probe is no longer a second host, and
              the sweep that checks it on four live releases now checks the host with it. -->
     </ItemGroup>

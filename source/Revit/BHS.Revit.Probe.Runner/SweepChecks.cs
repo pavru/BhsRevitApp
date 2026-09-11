@@ -177,6 +177,12 @@ internal static class SweepChecks
         // measures the clock, not the thing.
         await CheckDbHostAsync(client, report);
 
+        // Outside the model block on purpose. A case that needs a document and has none is reported
+        // skipped, by name and with the reason - which is the whole difference between a check that
+        // was not asked and a check that quietly disappeared. One case in the first suite needs no
+        // document at all, so a plain sweep still proves the harness is alive.
+        await CheckDeclaredTestsAsync(client, report);
+
         await CheckAssembliesAsync(client, installation, addInDirectory, report);
 
         // Last, because everything above is what the stream was watching. Read any earlier and the
@@ -1055,6 +1061,134 @@ internal static class SweepChecks
         foreach (var pair in answer.Values.OrderBy(one => one.Key, StringComparer.Ordinal))
             report.Note(pair.Key, pair.Value);
     }
+
+    /// <summary>
+    /// Runs the test suites the probe declares, and turns each case into a line of this report.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <b>This is where the sweep stops being about the probe.</b> Until now every check here was a
+    /// question about the framework or about Revit itself; the code an edition actually runs -
+    /// <c>source/Features</c>, <c>source/BHS.FullEdition</c> - had no automated check of any kind,
+    /// and its three known defects were all found by a person installing the edition and pressing
+    /// the button. See CLAUDE.md on why the runner grew into a test runner rather than a headless
+    /// engine being lifted into a process of ours.
+    /// </para>
+    /// <para>
+    /// <b>One case, one check.</b> The floor that catches a check which stopped running counts
+    /// lines, so a case has to be a line; and the record CI compares against names checks by their
+    /// text, so a case that is renamed reads as one disappearing and one appearing. Case names are
+    /// therefore as stable as check names, which is to say they are written once.
+    /// </para>
+    /// <para>
+    /// <b>Skipped is said out loud and counts as nothing.</b> Not as a passing check, because it
+    /// asserted nothing; not silently, because a skipped check nobody mentions reads exactly like a
+    /// passing one - this repository has spent whole runs proving nothing that way. Instead the
+    /// count of skips is noted, and the arithmetic below insists that every declared case came back
+    /// as one of the three outcomes.
+    /// </para>
+    /// </remarks>
+    private static async Task CheckDeclaredTestsAsync(
+        RevitSideChannel.RevitSideChannelClient client,
+        Report report)
+    {
+        AskResponse answer;
+
+        try
+        {
+            answer = await client.AskAsync(new AskRequest { Question = "tests" });
+        }
+        catch (RpcException error)
+        {
+            // One red line rather than the abandonment of the release: the suites failing to run is
+            // a finding about them, and everything after this still has questions worth asking.
+            report.Check("the declared test suites ran", false);
+            report.Note("tests failed", error.Status.StatusCode + ": " + error.Status.Detail);
+            return;
+        }
+
+        Report.Heading("declared tests, run inside this Revit");
+
+        var reported = Number(answer, "tests:reported");
+        var suites = Number(answer, "tests:suites");
+
+        report.Check("the declared test suites ran", reported >= 0 && suites > 0);
+        report.Note("suites declared", suites.ToString(CultureInfo.InvariantCulture));
+
+        if (reported < 0)
+            return;
+
+        var seen = 0;
+        var skipped = 0;
+
+        for (var index = 0; ; index++)
+        {
+            var prefix = "tests:" + index.ToString("D3", CultureInfo.InvariantCulture) + ":";
+
+            if (!answer.Values.TryGetValue(prefix + "name", out var name))
+                break;
+
+            seen++;
+
+            var suite = answer.Values.GetValueOrDefault(prefix + "suite") ?? string.Empty;
+            var outcome = answer.Values.GetValueOrDefault(prefix + "outcome") ?? string.Empty;
+            var detail = answer.Values.GetValueOrDefault(prefix + "detail") ?? string.Empty;
+            var what = suite.Length > 0 ? suite + ": " + name : name;
+
+            if (string.Equals(outcome, "Skipped", StringComparison.Ordinal))
+            {
+                skipped++;
+                report.Note("skipped - " + what, detail);
+            }
+            else
+            {
+                report.Check(what, string.Equals(outcome, "Passed", StringComparison.Ordinal));
+
+                if (detail.Length > 0)
+                    report.Note("why", detail);
+            }
+
+            // The case's own measurements, which is where a test puts a count it refuses to assert
+            // against somebody's live building.
+            for (var note = 0; ; note++)
+            {
+                var key = prefix + "note:" + note.ToString("D2", CultureInfo.InvariantCulture);
+
+                if (!answer.Values.TryGetValue(key + ":what", out var label))
+                    break;
+
+                report.Note(label, answer.Values.GetValueOrDefault(key + ":value") ?? string.Empty);
+            }
+        }
+
+        // The arithmetic, and it is not ceremony: the results cross a channel as a flat map, and a
+        // map that lost entries on the way would arrive looking like a smaller run that went
+        // perfectly. Both sides count independently and the two are made to agree.
+        report.Check(
+            "every declared case came back",
+            seen == reported &&
+            reported == Number(answer, "tests:passed") + Number(answer, "tests:failed") + Number(answer, "tests:skipped"));
+
+        // A suite list that lost its contents, or a mode in which everything is skipped, would
+        // otherwise be a clean run with nothing in it.
+        report.Check(
+            "at least one case actually asserted something",
+            Number(answer, "tests:passed") + Number(answer, "tests:failed") > 0);
+
+        report.Note("cases skipped", skipped.ToString(CultureInfo.InvariantCulture));
+    }
+
+    /// <summary>A count from the answer, or -1 when it is missing or not a number.</summary>
+    /// <remarks>
+    /// Negative rather than zero for absent, because zero is a legitimate answer to every one of
+    /// these questions and the two must not be confused: "no case failed" and "the run did not say"
+    /// are the difference between a green sweep and one that proved nothing.
+    /// </remarks>
+    private static int Number(AskResponse answer, string key) =>
+        answer.Values.TryGetValue(key, out var text) &&
+        int.TryParse(text, NumberStyles.Integer, CultureInfo.InvariantCulture, out var value)
+            ? value
+            : -1;
 
     private static async Task SurveyCablingAsync(
         RevitSideChannel.RevitSideChannelClient client,
