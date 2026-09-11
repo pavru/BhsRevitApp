@@ -102,6 +102,32 @@ internal sealed class Options
     /// </remarks>
     public bool WithModel { get; set; }
 
+    /// <summary>Open the linked set from <c>testdata/linked</c> rather than the empty model.</summary>
+    /// <remarks>
+    /// <para>
+    /// <b>A folder, not a file, and that is the owner's instruction rather than a detail.</b> The set
+    /// is three models - the electrical one that is opened, and the architecture and cabling-network
+    /// models it links. Revit finds a link by the path it stored, relative to the host; copy the host
+    /// alone, or copy the three under new names, and the links do not load and the host opens as a
+    /// building with no walls and no carriers in it. So the whole folder is copied into a fresh
+    /// directory with every file name kept.
+    /// </para>
+    /// <para>
+    /// A separate switch rather than what <c>--with-model</c> does by default, for now. It changes
+    /// what the recorded sweep is about - the empty model asserts nothing about carriers, this one
+    /// does - and which one is canonical is the owner's to say once it has been measured.
+    /// </para>
+    /// </remarks>
+    public bool Linked { get; set; }
+
+    /// <summary>The model of the linked set that is opened; the others are what it links.</summary>
+    /// <remarks>
+    /// Named here rather than discovered, because nothing outside Revit can tell which of three
+    /// models links the other two - and opening the wrong one would look like a model without links
+    /// rather than like a mistake.
+    /// </remarks>
+    public const string LinkedHost = "TestCabling-ЭОМ.rvt";
+
     /// <summary>A model to open instead of the empty one from testdata.</summary>
     /// <remarks>
     /// For looking at a real project rather than the synthetic one the sweep normally uses. Real
@@ -147,6 +173,11 @@ internal sealed class Options
                     options.WithModel = true;
                     break;
 
+                case "--linked":
+                    options.Linked = true;
+                    options.WithModel = true;
+                    break;
+
                 case "--report" when index + 1 < args.Length:
                     options.ReportPath = args[index + 1];
                     index++;
@@ -187,6 +218,8 @@ internal sealed class Options
                                  framework's simple names and the older copy wins.
               --undeploy         remove the installed probe and the edition, and stop.
               --with-model       open a model from testdata and check the probe reports it.
+              --linked           open the linked set from testdata/linked - a host and its links,
+                                 copied as one folder so the links still resolve.
               --model <path>     open this model instead of the one from testdata.
               --keep-open        leave Revit running after the checks.
               --allow-untrusted  launch even when an installed add-in is unsigned and untrusted;

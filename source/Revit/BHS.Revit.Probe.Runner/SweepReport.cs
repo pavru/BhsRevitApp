@@ -97,6 +97,15 @@ internal sealed class SweepReport
 
     public bool ShowTab { get; set; }
 
+    /// <summary>Whether the model opened was the linked set rather than the empty one.</summary>
+    /// <remarks>
+    /// Part of the mode, and the verifier compares check lists only between records of the same
+    /// mode. The empty model and the linked set ask the same questions but answer different numbers
+    /// of them: the carrier cases stand down on the first and assert on the second, so a list taken
+    /// against one would show checks "disappearing" when compared with the other.
+    /// </remarks>
+    public bool Linked { get; set; }
+
     public List<ReleaseRecord> Releases { get; set; } = new();
 
     public int Performed { get; set; }

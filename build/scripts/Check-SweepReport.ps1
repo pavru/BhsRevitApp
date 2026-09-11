@@ -108,6 +108,7 @@ function Field($object, [string] $name) {
 function Summarise {
     $mode = if ($report.WithModel) { 'with a model' } else { 'without a model' }
     $mode += if ($report.ShowTab) { ', ribbon exercised' } else { ', ribbon not exercised' }
+    if (Field $report 'Linked') { $mode += ', linked model set' }
     # Formatted rather than printed as it comes: ConvertFrom-Json turns the ISO string into a
     # DateTime, and Write-Host then renders it in the runner's culture - "09/06/2026", which is
     # either the sixth of September or the ninth of June depending on where the reader is from.
@@ -263,7 +264,10 @@ if ($Base) {
         # and the ribbon pressed is 288, so comparing across modes would report seventy checks as
         # "disappeared" the first time somebody recorded the cheaper one - and a check that cries
         # wolf is worse than no check, because it is the one people learn to skip.
-        if ($before.WithModel -ne $report.WithModel -or $before.ShowTab -ne $report.ShowTab) {
+        # Linked through Field, because records written before it existed do not carry it - and an
+        # absent flag has to read as false rather than as a property that is not there.
+        if ($before.WithModel -ne $report.WithModel -or $before.ShowTab -ne $report.ShowTab -or
+            [bool](Field $before 'Linked') -ne [bool](Field $report 'Linked')) {
             Write-Host "check-sweep-report: the base report was recorded in a different mode, so the two check lists are not comparable." -ForegroundColor Yellow
             if ($problems -eq 0) { Summarise } 
             exit $problems

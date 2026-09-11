@@ -110,6 +110,7 @@ internal static class Program
             report.Sweep.Content = content;
             report.Sweep.RecordedUtc = DateTime.UtcNow.ToString("O", CultureInfo.InvariantCulture);
             report.Sweep.WithModel = options.WithModel;
+            report.Sweep.Linked = options.Linked;
             // Both conditions, because the ribbon is only exercised when both hold - the check
             // itself asks for WithModel as well. Recording the environment variable alone would
             // claim "ribbon exercised" for a run that skipped it, and worse: the verifier compares
@@ -195,11 +196,21 @@ internal static class Program
         if (model is null)
             return;
 
+        // A linked set lives in a directory of its own, and the whole directory goes: deleting the
+        // host alone would leave its links behind, one set per release per sweep.
+        var directory = Path.GetDirectoryName(model);
+        var ownDirectory = directory is not null
+                           && Path.GetFileName(directory).StartsWith("bhs-sweep-", StringComparison.Ordinal);
+
         for (var attempt = 0; attempt < 10; attempt++)
         {
             try
             {
-                File.Delete(model);
+                if (ownDirectory)
+                    Directory.Delete(directory!, recursive: true);
+                else
+                    File.Delete(model);
+
                 return;
             }
             catch (Exception error) when (error is IOException or UnauthorizedAccessException)
@@ -235,6 +246,23 @@ internal static class Program
                 try
                 {
                     File.Delete(stray);
+                    removed++;
+                }
+                catch (Exception error) when (error is IOException or UnauthorizedAccessException)
+                {
+                    left++;
+                }
+            }
+
+            // The linked sets, one directory each - they leak the same way and are twice the size.
+            foreach (var stray in Directory.EnumerateDirectories(Path.GetTempPath(), "bhs-sweep-*"))
+            {
+                if (Directory.GetLastWriteTimeUtc(stray) > cutoff)
+                    continue;
+
+                try
+                {
+                    Directory.Delete(stray, recursive: true);
                     removed++;
                 }
                 catch (Exception error) when (error is IOException or UnauthorizedAccessException)
@@ -326,6 +354,9 @@ internal static class Program
             return null;
         }
 
+        if (options.Linked)
+            return CopyLinkedSetForRun(Path.Combine(root, "testdata", "linked", year), year, report);
+
         var source = Path.Combine(root, "testdata", $"Empty Revit Model {year}.rvt");
 
         if (!File.Exists(source))
@@ -337,6 +368,62 @@ internal static class Program
         }
 
         return CopyForRun(source, year, report);
+    }
+
+    /// <summary>
+    /// The whole linked set, in a directory of its own, with every file name kept.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <b>The owner's instruction, and the reason is how Revit finds a link.</b> The host stores the
+    /// path of each link relative to itself; the single-file copy this runner makes of the empty
+    /// model renames it to <c>bhs-sweep-...rvt</c> and puts it beside nothing, and a host treated
+    /// that way opens with every link unresolved. So the folder is copied as it is, into
+    /// <c>bhs-sweep-&lt;year&gt;-&lt;guid&gt;</c>, and the host is opened from inside it.
+    /// </para>
+    /// <para>
+    /// Still a copy, for the reason every model here is one: opening can rewrite a file, and the
+    /// probe writes into the document to check its paths. A directory per run, because two releases
+    /// must never share one - the first to close would leave the second its links half deleted.
+    /// </para>
+    /// </remarks>
+    private static string? CopyLinkedSetForRun(string source, string year, Report report)
+    {
+        var host = Path.Combine(source, Options.LinkedHost);
+
+        if (!File.Exists(host))
+        {
+            report.Check($"the linked test set for Revit {year} is available", false);
+            report.Note("expected at", host);
+            report.Note("how to make one", "see testdata/readme.md - they are deliberately not in git");
+            return null;
+        }
+
+        try
+        {
+            var directory = Path.Combine(Path.GetTempPath(), $"bhs-sweep-{year}-{Guid.NewGuid():N}");
+            Directory.CreateDirectory(directory);
+
+            var copied = 0;
+
+            foreach (var file in Directory.EnumerateFiles(source, "*.rvt"))
+            {
+                File.Copy(file, Path.Combine(directory, Path.GetFileName(file)), overwrite: false);
+                copied++;
+            }
+
+            // Counted rather than named. The file names are the owner's, and the record this lands
+            // in is public; how many models came along is what a reader needs to tell "the links
+            // were there" from "only the host was".
+            report.Note("linked set", copied.ToString(CultureInfo.InvariantCulture) + " model(s), host and links copied together");
+            return Path.Combine(directory, Options.LinkedHost);
+        }
+        catch (Exception error) when (error is IOException or UnauthorizedAccessException)
+        {
+            report.Check($"the linked test set for Revit {year} could be copied", false);
+            report.Note("why", error.Message);
+            return null;
+        }
     }
 
     private static string? CopyForRun(string source, string year, Report report)
