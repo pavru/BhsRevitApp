@@ -71,7 +71,7 @@ appsettings.Development.json
 # Empty Revit models used by the launch and document checks. Kept out of git on purpose: about
 # 6 MB each, opaque, and rewritten wholesale whenever Revit touches them - four more copies in
 # history on every re-save. Recreate them from Revit, one per supported release.
-/testdata/*.rvt
+/testdata/**/*.rvt
 
 ## Other assistants' local configuration. Ignored rather than committed, by the owner's decision -
 ## unlike .claude/agents, which is tracked because those definitions are shared.
