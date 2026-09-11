@@ -113,9 +113,11 @@ internal sealed class Options
     /// directory with every file name kept.
     /// </para>
     /// <para>
-    /// A separate switch rather than what <c>--with-model</c> does by default, for now. It changes
-    /// what the recorded sweep is about - the empty model asserts nothing about carriers, this one
-    /// does - and which one is canonical is the owner's to say once it has been measured.
+    /// <b>This is the canonical mode for the recorded sweep - the owner's decision, 2026-09-11.</b>
+    /// On the empty model the carrier cases stand down; on this set they assert. A separate switch
+    /// rather than what <c>--with-model</c> now means, because a clean machine has the empty models
+    /// and not this set, and a flag that silently changed meaning with what happens to be on disk
+    /// would record one mode while claiming another.
     /// </para>
     /// </remarks>
     public bool Linked { get; set; }

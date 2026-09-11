@@ -209,7 +209,7 @@ $path changed since the sweep was recorded, so the record no longer describes th
 
 $(if ($changed) { ($changed | ForEach-Object { "  $path/$_" } | Out-String) })
 Sweep again and commit the new report:
-  dotnet run --project source/Revit/BHS.Revit.Probe.Runner -- --deploy --report evidence/sweep-report.json
+  dotnet run --project source/Revit/BHS.Revit.Probe.Runner -- --deploy --linked --report evidence/sweep-report.json
 "@
         }
     }
