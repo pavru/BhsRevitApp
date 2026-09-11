@@ -19,8 +19,10 @@ public sealed class CircuitHarvest
         int withoutPanel,
         int withoutDevices,
         int devicesSkipped,
-        int spareOrSpace)
+        int spareOrSpace,
+        IReadOnlyList<string>? unreadableConnection = null)
     {
+        UnreadableConnection = unreadableConnection ?? Array.Empty<string>();
         Described = circuits;
         WithoutPanel = withoutPanel;
         WithoutDevices = withoutDevices;
@@ -61,6 +63,17 @@ public sealed class CircuitHarvest
     /// tell them about the abnormal ones either.
     /// </remarks>
     public int SpareOrSpace { get; }
+
+    /// <summary>
+    /// Circuits whose connection parameter - their own or their panel's - holds something that is
+    /// neither Terminal nor JunctionBox, each named with what it held.
+    /// </summary>
+    /// <remarks>
+    /// Routed with the project's default and listed, rather than either refused or quietly defaulted.
+    /// Refusing would stop a whole run on one typo; defaulting in silence would put a fifth of the
+    /// headline length on a guess nobody knows was made.
+    /// </remarks>
+    public IReadOnlyList<string> UnreadableConnection { get; }
 }
 
 /// <summary>
@@ -81,8 +94,15 @@ public sealed class CircuitReader
     /// out of a link would also be pointless in the other direction - nothing can be written back
     /// to one.
     /// </remarks>
+    private readonly CircuitConnection _default;
+
+    /// <param name="defaultConnection">The project's answer, for a circuit and panel that give none.</param>
+    public CircuitReader(CircuitConnection defaultConnection = CircuitConnection.AtTerminal) =>
+        _default = defaultConnection;
+
     public CircuitHarvest Read(Document host)
     {
+        var unreadable = new List<string>();
         var circuits = new List<CircuitSnapshot>();
         var withoutPanel = 0;
         var withoutDevices = 0;
@@ -123,6 +143,7 @@ public sealed class CircuitReader
             {
                 BuiltInLength = system.Length,
                 HasCustomPath = system.HasCustomCircuitPath,
+                Connection = Connection(system, unreadable),
 
                 // OurRouteId stays empty until the parameter scheme exists. It is what tells our own
                 // custom path from somebody else's, and reading it before we can write it would be a
@@ -130,7 +151,46 @@ public sealed class CircuitReader
             });
         }
 
-        return new CircuitHarvest(circuits, withoutPanel, withoutDevices, devicesSkipped, spareOrSpace);
+        return new CircuitHarvest(circuits, withoutPanel, withoutDevices, devicesSkipped, spareOrSpace, unreadable);
+    }
+
+    /// <summary>
+    /// The circuit's own answer, else its panel's, else the project's - the owner's order.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// A power panel does all of its circuits through boxes and an RS485 panel through terminals, so
+    /// the panel is where the answer usually lives, and a circuit that differs from its panel says so
+    /// on itself.
+    /// </para>
+    /// <para>
+    /// <b>By identifier, never by name</b> - the rule the parameter scheme stands on. A model where the
+    /// parameter arrived on a Russian Revit calls it <c>BHS_Cbl_ПодключениеЦепи</c> for ever, and a
+    /// lookup by the English name would read every such model as saying nothing.
+    /// </para>
+    /// <para>
+    /// An empty answer passes the question up the chain; an unreadable one stops there, is recorded
+    /// with the circuit's number, and routes with the project's default - a typo on a circuit should
+    /// not be silently overruled by its panel either, because then nobody learns about it.
+    /// </para>
+    /// </remarks>
+    private CircuitConnection Connection(ElectricalSystem system, List<string> unreadable)
+    {
+        foreach (var owner in new Element?[] { system, system.BaseEquipment })
+        {
+            var text = owner?.get_Parameter(CablingParameters.CircuitConnection)?.AsString();
+
+            if (string.IsNullOrWhiteSpace(text))
+                continue;
+
+            if (CircuitConnections.TryParse(text!, out var connection))
+                return connection;
+
+            unreadable.Add(Number(system) + ": '" + text + "'");
+            return _default;
+        }
+
+        return _default;
     }
 
     /// <summary>The panel end, taken from the connector the circuit is actually fed from.</summary>

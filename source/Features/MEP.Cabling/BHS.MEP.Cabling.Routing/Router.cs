@@ -49,13 +49,20 @@ public static class Router
         // the order is the electrician's, not the search's, and reordering it would silently produce
         // a route nobody wired.
         var path = new List<CarrierId>();
+        var taps = new List<Tap>();
         var alongCarriers = 0.0;
         var approaches = 0.0;
         var from = circuit.Source;
 
+        // Where the trunk stands when the cable is cut in boxes. The next leg starts there, on the
+        // structure, instead of at the device: the trunk does not go down to a device and back up,
+        // only a spur does, so what the terminal mode counts twice this mode counts once.
+        var boxes = circuit.Connection == CircuitConnection.AtJunctionBox;
+        Tap? trunk = null;
+
         foreach (var to in circuit.Devices)
         {
-            var leg = Leg(network, from, to, options);
+            var (leg, tap) = Leg(network, from, trunk, to, options);
 
             if (leg.Status != RouteStatus.Found)
             {
@@ -82,7 +89,11 @@ public static class Router
 
             alongCarriers += leg.AlongCarriers;
             approaches += leg.Approaches;
+            taps.Add(tap!);
             from = to;
+
+            if (boxes)
+                trunk = tap;
         }
 
         var total = alongCarriers + approaches;
@@ -93,6 +104,8 @@ public static class Router
             AlongCarriers = alongCarriers + (total * options.LengthExtend),
             Approaches = approaches,
             BuiltInLength = circuit.BuiltInLength,
+            Connection = circuit.Connection,
+            Taps = taps,
         };
     }
 
@@ -117,17 +130,29 @@ public static class Router
     /// we arrived at would walk the carrier to its end and then back down it.
     /// </para>
     /// </remarks>
-    private static RouteResult Leg(RouteNetwork network, Terminal from, Terminal to, RoutingOptions options)
+    /// <param name="trunk">
+    /// Where the trunk already stands, when the cable is cut in boxes and this is not the first leg.
+    /// The leg then starts on the structure at that point, at no cost, instead of climbing up from
+    /// <paramref name="from"/> - which is the whole difference between the two connection modes.
+    /// </param>
+    private static (RouteResult Leg, Tap? Tap) Leg(
+        RouteNetwork network,
+        Terminal from,
+        Tap? trunk,
+        Terminal to,
+        RoutingOptions options)
     {
-        var entries = Approachable(network, from, options);
+        var entries = trunk is not null && network.Node(trunk.Carrier) is not null
+            ? new Dictionary<CarrierId, (Point3 At, double Cost)> { [trunk.Carrier] = (trunk.At, 0) }
+            : Approachable(network, from, options);
 
         if (entries.Count == 0)
-            return Blocked(RouteStatus.NoCarrierNear, from);
+            return (Blocked(RouteStatus.NoCarrierNear, from), null);
 
         var exits = Approachable(network, to, options);
 
         if (exits.Count == 0)
-            return Blocked(RouteStatus.NoCarrierNear, to);
+            return (Blocked(RouteStatus.NoCarrierNear, to), null);
 
         var best = new Dictionary<Port, double>();
         var came = new Dictionary<Port, Port>();
@@ -212,7 +237,7 @@ public static class Router
         }
 
         if (finish >= double.MaxValue)
-            return Blocked(RouteStatus.NoConnectivity, to);
+            return (Blocked(RouteStatus.NoConnectivity, to), null);
 
         var carriers = new List<CarrierId>();
 
@@ -258,12 +283,14 @@ public static class Router
         var seed = carriers.Count > 0 ? carriers[0] : finishAt;
         var approach = entries.TryGetValue(seed, out var seeded) ? seeded.Cost : 0;
 
-        return new RouteResult(default, RouteStatus.Found, network.Version)
+        var result = new RouteResult(default, RouteStatus.Found, network.Version)
         {
             Path = carriers,
             AlongCarriers = length,
             Approaches = approach + exits[finishAt].Cost,
         };
+
+        return (result, new Tap(to, finishAt, exits[finishAt].At, exits[finishAt].Cost));
     }
 
     /// <summary>The carriers a terminal can reach, where it meets each one, and what that costs.</summary>

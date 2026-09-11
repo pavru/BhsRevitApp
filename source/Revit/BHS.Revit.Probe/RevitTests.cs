@@ -34,6 +34,7 @@ internal static class RevitTests
     private static readonly IRevitTestSuite[] Declared =
     {
         new BHS.MEP.Cabling.Revit.Tests.CablingReadingTests(),
+        new BHS.MEP.Cabling.Revit.Tests.CircuitConnectionTests(),
     };
 
     /// <summary>How many suites were declared, whatever happens when they run.</summary>

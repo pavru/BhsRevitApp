@@ -50,10 +50,13 @@ public sealed class RouteCablingCommand : IFeatureCommand
         // Read here rather than inside the search: this is the API thread, and the model layer of
         // the settings lives in the document. Everything after this point runs on a background
         // thread and may not ask Revit anything.
-        var boxes = RecommendedBoxes.Read(services.ModelSettings.For(document));
+        var project = CablingProjectSettings.Read(services.ModelSettings.For(document));
+
+        if (project.Unreadable.Length > 0)
+            log.Warn("cabling: a project setting could not be read and its default is used - {0}", project.Unreadable);
 
         var model = new RoutingViewModel(
-            (progress, token) => ComputeAsync(document, options, boxes, progress, token, log),
+            (progress, token) => ComputeAsync(document, options, project, progress, token, log),
             CablingLength.Formatter(document));
 
         var window = new RoutingWindow(model);
@@ -89,7 +92,7 @@ public sealed class RouteCablingCommand : IFeatureCommand
     private static Task<RouteRun> ComputeAsync(
         Document document,
         RoutingOptions options,
-        RecommendedBoxes boxes,
+        CablingProjectSettings project,
         IProgress<RoutingProgress> progress,
         CancellationToken token,
         ILog log)
@@ -98,7 +101,8 @@ public sealed class RouteCablingCommand : IFeatureCommand
 
         var version = Interlocked.Increment(ref _version);
         var read = Stopwatch.StartNew();
-        var snapshot = CablingSnapshot.Build(document, options, new CarrierCatalogue(), version, boxes);
+        var snapshot = CablingSnapshot.Build(
+            document, options, new CarrierCatalogue(), version, project.Boxes, project.DefaultConnection);
         read.Stop();
 
         log.Info(
@@ -107,12 +111,13 @@ public sealed class RouteCablingCommand : IFeatureCommand
             snapshot.Circuits.Described.Count,
             read.Elapsed.TotalSeconds);
 
-        return Task.Run(() => Search(snapshot, options, progress, token), token);
+        return Task.Run(() => Search(snapshot, options, project.BoxRadius, progress, token), token);
     }
 
     private static RouteRun Search(
         CablingSnapshot snapshot,
         RoutingOptions options,
+        double boxRadius,
         IProgress<RoutingProgress> progress,
         CancellationToken token)
     {
@@ -149,6 +154,11 @@ public sealed class RouteCablingCommand : IFeatureCommand
             Shape = shape,
             Reading = CablingGaps.Describe(snapshot),
             Tolerances = failedToCross ? Tolerances(snapshot, options, token) : Array.Empty<ToleranceReading>(),
+
+            // No existing boxes yet: telling a real box from a tee needs the role on the fitting's type
+            // and whether it is joined to the network, and that reading comes with the next change.
+            // Until then every box a circuit needs is a recommendation, and the screen says so.
+            Boxes = BoxPlanner.Plan(results, Array.Empty<ExistingBox>(), boxRadius),
         };
     }
 

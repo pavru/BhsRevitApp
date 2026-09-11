@@ -269,6 +269,38 @@ public sealed class RoutingViewModel : INotifyPropertyChanged
 
     public bool HasApproachSummary => ApproachSummary.Length > 0;
 
+    /// <summary>What the circuits cut in boxes ask for, said only when there are any.</summary>
+    /// <remarks>
+    /// Counts, and nothing placed yet: this is the compute phase, which writes nothing into the
+    /// model. The number is what the designer weighs before letting the apply phase put indicators
+    /// into somebody's building, so it is on screen first.
+    /// </remarks>
+    public string BoxSummary
+    {
+        get
+        {
+            if (Run is not { } run)
+                return string.Empty;
+
+            var circuits = run.Results.Count(one =>
+                one.Status == RouteStatus.Found && one.Connection == CircuitConnection.AtJunctionBox);
+
+            if (circuits == 0)
+                return string.Empty;
+
+            var recommended = run.Boxes.Count(box => box.IsRecommendation);
+            var existing = run.Boxes.Count - recommended;
+            var line = $"{circuits} circuit(s) cut in junction boxes: {recommended} box(es) to recommend";
+
+            if (existing > 0)
+                line += $", {existing} existing box(es) used";
+
+            return line + $", {run.Boxes.Sum(box => box.Spurs)} device(s) served.";
+        }
+    }
+
+    public bool HasBoxSummary => BoxSummary.Length > 0;
+
     /// <summary>What the read of the model left behind, when it left anything.</summary>
     /// <remarks>
     /// Shown on every run that has any, not only a failed one. These are the counts written so that
@@ -402,6 +434,8 @@ public sealed class RoutingViewModel : INotifyPropertyChanged
                 Raise(nameof(HasStructureSummary));
                 Raise(nameof(ApproachSummary));
                 Raise(nameof(HasApproachSummary));
+                Raise(nameof(BoxSummary));
+                Raise(nameof(HasBoxSummary));
                 Raise(nameof(Reading));
                 Raise(nameof(HasReading));
                 Raise(nameof(Causes));
