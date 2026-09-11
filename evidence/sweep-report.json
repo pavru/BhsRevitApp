@@ -1,22 +1,23 @@
 {
   "Schema": 2,
   "Disclaimer": "Recorded on a developer machine. Revit cannot run on hosted CI, so CI verifies this record rather than reproducing it: no automated check here has ever started a Revit.",
-  "Commit": "7aa4d7000a630cfc21adb71e62a5501d9387a72a",
+  "Commit": "0b13aafa8a0a071b50580b83ccfa92c931810963",
   "CommitClean": true,
   "Content": {
-    "source/Revit": "0d80eedaf69dc9010d492dde493fbfef90a19a75",
+    "source/Revit": "1d9c4046b688ff979d44c37fa988cb0f10ff3798",
     "source/Shared": "74994abc25e47a4a9233275e831de55cc6dbaabb",
     "source/WinSide": "5b71abdce4cd8186abf36416137a3dfa7f437a28",
     "build/BHS.Revit.Sdk": "eb401a3b673fabf6b4ba9ee1286cf8a450e3ed1c"
   },
-  "RecordedUtc": "2026-09-10T22:40:37.4085854Z",
+  "RecordedUtc": "2026-09-11T11:09:52.9302424Z",
   "WithModel": true,
   "ShowTab": false,
+  "Linked": true,
   "Releases": [
     {
       "Release": 2024,
       "FileVersion": "0.1.0.0",
-      "BuiltUtc": "2026-09-10T22:36:35.2700896Z",
+      "BuiltUtc": "2026-09-11T11:05:49.9038030Z",
       "Signed": true,
       "Checks": [
         {
@@ -384,7 +385,23 @@
           "Ok": true
         },
         {
+          "Name": "Cabling: every carrier reports a class the catalogue names",
+          "Ok": true
+        },
+        {
+          "Name": "Cabling: every carrier has somewhere a cable can enter it",
+          "Ok": true
+        },
+        {
+          "Name": "Cabling: our own markers are excluded, and the count accounts for the difference",
+          "Ok": true
+        },
+        {
           "Name": "Cabling: a marker type this model does not have is reported unknown, not assumed absent",
+          "Ok": true
+        },
+        {
+          "Name": "Cabling: reading the same model twice reads the same network",
           "Ok": true
         },
         {
@@ -439,12 +456,16 @@
       "Abandoned": false,
       "Notes": [
         {
+          "Name": "linked set",
+          "Value": "3 model(s), host and links copied together"
+        },
+        {
           "Name": "launched",
-          "Value": "pid 71000"
+          "Value": "pid 48912"
         },
         {
           "Name": "registered after",
-          "Value": "15.6s"
+          "Value": "17.0s"
         },
         {
           "Name": "recovered by enumeration",
@@ -460,11 +481,11 @@
         },
         {
           "Name": "probe log",
-          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2024-71000-20260911-083648.log"
+          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2024-48912-20260911-210603.log"
         },
         {
           "Name": "threads",
-          "Value": "api 1, call 12"
+          "Value": "api 1, call 16"
         },
         {
           "Name": "appdomain",
@@ -488,7 +509,7 @@
         },
         {
           "Name": "log",
-          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2024-71000-20260911-083648.log"
+          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2024-48912-20260911-210603.log"
         },
         {
           "Name": "sinks",
@@ -496,11 +517,11 @@
         },
         {
           "Name": "document",
-          "Value": "bhs-sweep-2024-7a2e093a5e184b62934bc64790e32f5f"
+          "Value": "TestCabling-\u042D\u041E\u041C"
         },
         {
           "Name": "opened after registration",
-          "Value": "23.6s"
+          "Value": "17.6s"
         },
         {
           "Name": "availability and the press",
@@ -508,7 +529,7 @@
         },
         {
           "Name": "model settings",
-          "Value": "document bhs-sweep-2024-7a2e093a5e184b62934bc64790e32f5f, origin Model"
+          "Value": "document TestCabling-\u042D\u041E\u041C, origin Model"
         },
         {
           "Name": "fields as built",
@@ -519,16 +540,76 @@
           "Value": "InvalidOperationException: A different Schema with the same identity already exists."
         },
         {
+          "Name": "host:OST_CableTray",
+          "Value": "5"
+        },
+        {
+          "Name": "host:OST_CableTrayFitting",
+          "Value": "1"
+        },
+        {
+          "Name": "host:OST_Conduit",
+          "Value": "15"
+        },
+        {
+          "Name": "host:OST_ConduitFitting",
+          "Value": "6"
+        },
+        {
+          "Name": "host:circuits",
+          "Value": "13"
+        },
+        {
           "Name": "instance",
-          "Value": "90a04a9bea8340e982b1022443029f0e"
+          "Value": "8e4dce1cc16346c8953e489a4f91e135"
+        },
+        {
+          "Name": "link1:linked",
+          "Value": "True"
+        },
+        {
+          "Name": "link1:modifiable",
+          "Value": "False"
+        },
+        {
+          "Name": "link1:readOnly",
+          "Value": "False"
+        },
+        {
+          "Name": "link2:OST_CableTray",
+          "Value": "6"
+        },
+        {
+          "Name": "link2:OST_CableTrayFitting",
+          "Value": "2"
+        },
+        {
+          "Name": "link2:OST_Conduit",
+          "Value": "4"
+        },
+        {
+          "Name": "link2:OST_ConduitFitting",
+          "Value": "1"
+        },
+        {
+          "Name": "link2:linked",
+          "Value": "True"
+        },
+        {
+          "Name": "link2:modifiable",
+          "Value": "False"
+        },
+        {
+          "Name": "link2:readOnly",
+          "Value": "False"
         },
         {
           "Name": "log",
-          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2024-71000-20260911-083648.log"
+          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2024-48912-20260911-210603.log"
         },
         {
           "Name": "pid",
-          "Value": "71000"
+          "Value": "48912"
         },
         {
           "Name": "release",
@@ -539,8 +620,56 @@
           "Value": "3"
         },
         {
+          "Name": "sample:elements",
+          "Value": "1"
+        },
+        {
+          "Name": "sample:hasCustomPath",
+          "Value": "False"
+        },
+        {
+          "Name": "sample:hasPanel",
+          "Value": "True"
+        },
+        {
+          "Name": "sample:length",
+          "Value": "63.22"
+        },
+        {
+          "Name": "sample:pathMode",
+          "Value": "FarthestDevice"
+        },
+        {
+          "Name": "sample:pathPoints",
+          "Value": "5"
+        },
+        {
           "Name": "survey:links",
+          "Value": "2"
+        },
+        {
+          "Name": "box1:category",
+          "Value": "\u0421\u043E\u0435\u0434\u0438\u043D\u0438\u0442\u0435\u043B\u044C\u043D\u044B\u0435 \u0434\u0435\u0442\u0430\u043B\u0438 \u043A\u043E\u0440\u043E\u0431\u043E\u0432"
+        },
+        {
+          "Name": "box1:family",
+          "Value": "BHS_CBL_\u0420\u0435\u043A\u043E\u043C\u0435\u043D\u0434\u0443\u0435\u043C\u0430\u044F \u0440\u0430\u0441\u043F\u0440\u0435\u0434\u0435\u043B\u0438\u0442\u0435\u043B\u044C\u043D\u0430\u044F \u043A\u043E\u0440\u043E\u0431\u043A\u0430"
+        },
+        {
+          "Name": "box1:instances",
           "Value": "0"
+        },
+        {
+          "Name": "box1:isCarrierCategory",
+          "Value": "True"
+        },
+        {
+          "Name": "box1:placement",
+          "Value": "OneLevelBased"
+        },
+        {
+          "Name": "box1:type",
+          "Value": "\u0420\u0435\u043A\u043E\u043C\u0435\u043D\u0434\u0443\u0435\u043C\u0430\u044F \u043A\u043E\u0440\u043E\u0431\u043A\u0430"
         },
         {
           "Name": "box:documentSkipped",
@@ -548,23 +677,47 @@
         },
         {
           "Name": "box:ourSymbols",
-          "Value": "0"
+          "Value": "1"
         },
         {
           "Name": "instance",
-          "Value": "90a04a9bea8340e982b1022443029f0e"
+          "Value": "8e4dce1cc16346c8953e489a4f91e135"
         },
         {
           "Name": "log",
-          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2024-71000-20260911-083648.log"
+          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2024-48912-20260911-210603.log"
         },
         {
           "Name": "pid",
-          "Value": "71000"
+          "Value": "48912"
         },
         {
-          "Name": "place:symbol",
-          "Value": "(no BHS_ family in this model)"
+          "Name": "place:after",
+          "Value": "28"
+        },
+        {
+          "Name": "place:afterRollback",
+          "Value": "27"
+        },
+        {
+          "Name": "place:before",
+          "Value": "27"
+        },
+        {
+          "Name": "place:connected",
+          "Value": "0"
+        },
+        {
+          "Name": "place:connectors",
+          "Value": "4"
+        },
+        {
+          "Name": "place:placed",
+          "Value": "True"
+        },
+        {
+          "Name": "place:type",
+          "Value": "\u0420\u0435\u043A\u043E\u043C\u0435\u043D\u0434\u0443\u0435\u043C\u0430\u044F \u043A\u043E\u0440\u043E\u0431\u043A\u0430"
         },
         {
           "Name": "release",
@@ -620,11 +773,11 @@
         },
         {
           "Name": "instance",
-          "Value": "90a04a9bea8340e982b1022443029f0e"
+          "Value": "8e4dce1cc16346c8953e489a4f91e135"
         },
         {
           "Name": "log",
-          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2024-71000-20260911-083648.log"
+          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2024-48912-20260911-210603.log"
         },
         {
           "Name": "modal:apiCallWorked",
@@ -636,11 +789,11 @@
         },
         {
           "Name": "modal:apiRead",
-          "Value": "bhs-sweep-2024-7a2e093a5e184b62934bc64790e32f5f"
+          "Value": "TestCabling-\u042D\u041E\u041C"
         },
         {
           "Name": "modal:apiReadAfterAwait",
-          "Value": "bhs-sweep-2024-7a2e093a5e184b62934bc64790e32f5f"
+          "Value": "TestCabling-\u042D\u041E\u041C"
         },
         {
           "Name": "modal:apiThread",
@@ -652,7 +805,7 @@
         },
         {
           "Name": "modal:awaitResumedAfter",
-          "Value": "0.44s"
+          "Value": "0.42s"
         },
         {
           "Name": "modal:awaitResumedOnApiThread",
@@ -676,7 +829,7 @@
         },
         {
           "Name": "modal:shownFor",
-          "Value": "2.50s"
+          "Value": "2.48s"
         },
         {
           "Name": "modal:transactionCommit",
@@ -688,7 +841,7 @@
         },
         {
           "Name": "modal:transactionCreated",
-          "Value": "279354"
+          "Value": "626650"
         },
         {
           "Name": "modal:transactionRolledBack",
@@ -708,7 +861,7 @@
         },
         {
           "Name": "pid",
-          "Value": "71000"
+          "Value": "48912"
         },
         {
           "Name": "release",
@@ -720,11 +873,11 @@
         },
         {
           "Name": "instance",
-          "Value": "90a04a9bea8340e982b1022443029f0e"
+          "Value": "8e4dce1cc16346c8953e489a4f91e135"
         },
         {
           "Name": "log",
-          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2024-71000-20260911-083648.log"
+          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2024-48912-20260911-210603.log"
         },
         {
           "Name": "modal:measured",
@@ -736,7 +889,7 @@
         },
         {
           "Name": "modal:pumpRanAt",
-          "Value": "2.50s"
+          "Value": "2.48s"
         },
         {
           "Name": "modal:windowClosed",
@@ -744,7 +897,7 @@
         },
         {
           "Name": "pid",
-          "Value": "71000"
+          "Value": "48912"
         },
         {
           "Name": "release",
@@ -756,11 +909,11 @@
         },
         {
           "Name": "instance",
-          "Value": "90a04a9bea8340e982b1022443029f0e"
+          "Value": "8e4dce1cc16346c8953e489a4f91e135"
         },
         {
           "Name": "log",
-          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2024-71000-20260911-083648.log"
+          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2024-48912-20260911-210603.log"
         },
         {
           "Name": "parameters:bound",
@@ -836,7 +989,7 @@
         },
         {
           "Name": "pid",
-          "Value": "71000"
+          "Value": "48912"
         },
         {
           "Name": "release",
@@ -859,24 +1012,36 @@
           "Value": "4"
         },
         {
-          "Name": "skipped - Cabling: every carrier reports a class the catalogue names",
-          "Value": "the model this sweep opened holds no carriers, so there is nothing here to assert about"
+          "Name": "carriers",
+          "Value": "40"
         },
         {
-          "Name": "skipped - Cabling: every carrier has somewhere a cable can enter it",
-          "Value": "the model this sweep opened holds no carriers, so there is nothing here to assert about"
+          "Name": "classes in use",
+          "Value": "conduit, tray"
         },
         {
-          "Name": "skipped - Cabling: our own markers are excluded, and the count accounts for the difference",
-          "Value": "the model this sweep opened holds no carriers, so there is nothing here to assert about"
+          "Name": "carriers",
+          "Value": "40"
         },
         {
-          "Name": "skipped - Cabling: reading the same model twice reads the same network",
-          "Value": "the model this sweep opened holds no carriers, so there is nothing here to assert about"
+          "Name": "carriers without the filter",
+          "Value": "40"
+        },
+        {
+          "Name": "markers excluded",
+          "Value": "0"
+        },
+        {
+          "Name": "marker type present in this model",
+          "Value": "yes"
+        },
+        {
+          "Name": "total carrier length, internal feet",
+          "Value": "492.190"
         },
         {
           "Name": "cases skipped",
-          "Value": "4"
+          "Value": "0"
         },
         {
           "Name": "BHS.FullEdition 0.1.0.0",
@@ -984,7 +1149,7 @@
         },
         {
           "Name": "assemblies loaded",
-          "Value": "681"
+          "Value": "682"
         },
         {
           "Name": "Revit\u0027s copy won",
@@ -1004,7 +1169,7 @@
         },
         {
           "Name": "diagnostic events",
-          "Value": "302 received, 0 dropped by the publisher, longest quiet spell 17.6s during Starting"
+          "Value": "423 received, 0 dropped by the publisher, longest quiet spell 10.8s during Starting"
         },
         {
           "Name": "phases seen",
@@ -1024,7 +1189,7 @@
         },
         {
           "Name": "progress caption",
-          "Value": "\u0417\u0430\u0433\u0440\u0443\u0437\u043A\u0430 bhs-sweep-2024-7a2e093a5e184b62934bc64790e32f5f.rvt"
+          "Value": "\u0417\u0430\u0433\u0440\u0443\u0437\u043A\u0430 TestCabling-\u042D\u041E\u041C.rvt"
         },
         {
           "Name": "progress caption",
@@ -1040,11 +1205,27 @@
         },
         {
           "Name": "progress caption",
+          "Value": "\u0417\u0430\u0433\u0440\u0443\u0437\u043A\u0430 TestCabling-\u0410\u0420.rvt"
+        },
+        {
+          "Name": "progress caption",
+          "Value": "\u0417\u0430\u0433\u0440\u0443\u0437\u043A\u0430 TestCabling-\u0421\u041A\u0421.rvt"
+        },
+        {
+          "Name": "progress caption",
+          "Value": "\u0420\u0435\u0433\u0435\u043D\u0435\u0440\u0430\u0446\u0438\u044F"
+        },
+        {
+          "Name": "progress caption",
           "Value": "\u0424\u043E\u0440\u043C\u0438\u0440\u043E\u0432\u0430\u043D\u0438\u0435 \u0433\u0440\u0430\u0444\u0438\u043A\u0438 \u0434\u043B\u044F \u0414\u0438\u0441\u043F\u0435\u0442\u0447\u0435\u0440 \u043F\u0440\u043E\u0435\u043A\u0442\u0430"
         },
         {
           "Name": "progress caption",
-          "Value": "\u0424\u043E\u0440\u043C\u0438\u0440\u043E\u0432\u0430\u043D\u0438\u0435 \u0433\u0440\u0430\u0444\u0438\u043A\u0438 \u0434\u043B\u044F \u041F\u043B\u0430\u043D \u044D\u0442\u0430\u0436\u0430: \u0423\u0440\u043E\u0432\u0435\u043D\u044C 1"
+          "Value": "\u0424\u043E\u0440\u043C\u0438\u0440\u043E\u0432\u0430\u043D\u0438\u0435 \u0433\u0440\u0430\u0444\u0438\u043A\u0438 \u0434\u043B\u044F \u041F\u043B\u0430\u043D \u044D\u0442\u0430\u0436\u0430: 1 - \u0421\u0438\u043B\u043E\u0432\u044B\u0435 \u0446\u0435\u043F\u0438"
+        },
+        {
+          "Name": "progress caption",
+          "Value": "\u0424\u043E\u0440\u043C\u0438\u0440\u043E\u0432\u0430\u043D\u0438\u0435 \u0433\u0440\u0430\u0444\u0438\u043A\u0438 \u0434\u043B\u044F \u041F\u043B\u0430\u043D \u044D\u0442\u0430\u0436\u0430: Proxy of 1 - \u0421\u0438\u043B\u043E\u0432\u044B\u0435 \u0446\u0435\u043F\u0438"
         },
         {
           "Name": "progress caption",
@@ -1060,11 +1241,7 @@
         },
         {
           "Name": "progress caption",
-          "Value": "\u0427\u0435\u0440\u0442\u0435\u0436: bhs-sweep-2024-7a2e093a5e184b62934bc64790e32f5f.rvt - \u041F\u043B\u0430\u043D \u044D\u0442\u0430\u0436\u0430: \u0423\u0440\u043E\u0432\u0435\u043D\u044C 1"
-        },
-        {
-          "Name": "progress caption",
-          "Value": "\u0420\u0435\u0433\u0435\u043D\u0435\u0440\u0430\u0446\u0438\u044F"
+          "Value": "\u0427\u0435\u0440\u0442\u0435\u0436: TestCabling-\u042D\u041E\u041C.rvt - \u041F\u043B\u0430\u043D \u044D\u0442\u0430\u0436\u0430: 1 - \u0421\u0438\u043B\u043E\u0432\u044B\u0435 \u0446\u0435\u043F\u0438"
         },
         {
           "Name": "progress caption",
@@ -1072,14 +1249,14 @@
         },
         {
           "Name": "closed after",
-          "Value": "20.2s"
+          "Value": "14.4s"
         }
       ]
     },
     {
       "Release": 2025,
       "FileVersion": "0.1.0.0",
-      "BuiltUtc": "2026-09-10T22:36:36.6884294Z",
+      "BuiltUtc": "2026-09-11T11:05:49.9228821Z",
       "Signed": true,
       "Checks": [
         {
@@ -1447,7 +1624,23 @@
           "Ok": true
         },
         {
+          "Name": "Cabling: every carrier reports a class the catalogue names",
+          "Ok": true
+        },
+        {
+          "Name": "Cabling: every carrier has somewhere a cable can enter it",
+          "Ok": true
+        },
+        {
+          "Name": "Cabling: our own markers are excluded, and the count accounts for the difference",
+          "Ok": true
+        },
+        {
           "Name": "Cabling: a marker type this model does not have is reported unknown, not assumed absent",
+          "Ok": true
+        },
+        {
+          "Name": "Cabling: reading the same model twice reads the same network",
           "Ok": true
         },
         {
@@ -1502,12 +1695,16 @@
       "Abandoned": false,
       "Notes": [
         {
+          "Name": "linked set",
+          "Value": "3 model(s), host and links copied together"
+        },
+        {
           "Name": "launched",
-          "Value": "pid 77588"
+          "Value": "pid 41944"
         },
         {
           "Name": "registered after",
-          "Value": "15.0s"
+          "Value": "14.4s"
         },
         {
           "Name": "recovered by enumeration",
@@ -1523,11 +1720,11 @@
         },
         {
           "Name": "probe log",
-          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2025-77588-20260911-083801.log"
+          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2025-41944-20260911-210705.log"
         },
         {
           "Name": "threads",
-          "Value": "api 1, call 5"
+          "Value": "api 1, call 17"
         },
         {
           "Name": "appdomain",
@@ -1551,7 +1748,7 @@
         },
         {
           "Name": "log",
-          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2025-77588-20260911-083801.log"
+          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2025-41944-20260911-210705.log"
         },
         {
           "Name": "sinks",
@@ -1559,11 +1756,11 @@
         },
         {
           "Name": "document",
-          "Value": "bhs-sweep-2025-e7f25495cf4b41648dddfdeb7ed5cf37"
+          "Value": "TestCabling-\u042D\u041E\u041C"
         },
         {
           "Name": "opened after registration",
-          "Value": "9.2s"
+          "Value": "9.9s"
         },
         {
           "Name": "availability and the press",
@@ -1571,7 +1768,7 @@
         },
         {
           "Name": "model settings",
-          "Value": "document bhs-sweep-2025-e7f25495cf4b41648dddfdeb7ed5cf37, origin Model"
+          "Value": "document TestCabling-\u042D\u041E\u041C, origin Model"
         },
         {
           "Name": "fields as built",
@@ -1582,16 +1779,76 @@
           "Value": "InvalidOperationException: A different Schema with the same identity already exists."
         },
         {
+          "Name": "host:OST_CableTray",
+          "Value": "5"
+        },
+        {
+          "Name": "host:OST_CableTrayFitting",
+          "Value": "1"
+        },
+        {
+          "Name": "host:OST_Conduit",
+          "Value": "15"
+        },
+        {
+          "Name": "host:OST_ConduitFitting",
+          "Value": "6"
+        },
+        {
+          "Name": "host:circuits",
+          "Value": "13"
+        },
+        {
           "Name": "instance",
-          "Value": "97a077a88f6b443990d9d9fe8f74fc45"
+          "Value": "4752acc5600345ffa67322f585e7868a"
+        },
+        {
+          "Name": "link1:linked",
+          "Value": "True"
+        },
+        {
+          "Name": "link1:modifiable",
+          "Value": "False"
+        },
+        {
+          "Name": "link1:readOnly",
+          "Value": "False"
+        },
+        {
+          "Name": "link2:OST_CableTray",
+          "Value": "6"
+        },
+        {
+          "Name": "link2:OST_CableTrayFitting",
+          "Value": "2"
+        },
+        {
+          "Name": "link2:OST_Conduit",
+          "Value": "4"
+        },
+        {
+          "Name": "link2:OST_ConduitFitting",
+          "Value": "1"
+        },
+        {
+          "Name": "link2:linked",
+          "Value": "True"
+        },
+        {
+          "Name": "link2:modifiable",
+          "Value": "False"
+        },
+        {
+          "Name": "link2:readOnly",
+          "Value": "False"
         },
         {
           "Name": "log",
-          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2025-77588-20260911-083801.log"
+          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2025-41944-20260911-210705.log"
         },
         {
           "Name": "pid",
-          "Value": "77588"
+          "Value": "41944"
         },
         {
           "Name": "release",
@@ -1602,8 +1859,56 @@
           "Value": "3"
         },
         {
+          "Name": "sample:elements",
+          "Value": "1"
+        },
+        {
+          "Name": "sample:hasCustomPath",
+          "Value": "False"
+        },
+        {
+          "Name": "sample:hasPanel",
+          "Value": "True"
+        },
+        {
+          "Name": "sample:length",
+          "Value": "63.22"
+        },
+        {
+          "Name": "sample:pathMode",
+          "Value": "FarthestDevice"
+        },
+        {
+          "Name": "sample:pathPoints",
+          "Value": "5"
+        },
+        {
           "Name": "survey:links",
+          "Value": "2"
+        },
+        {
+          "Name": "box1:category",
+          "Value": "\u0421\u043E\u0435\u0434\u0438\u043D\u0438\u0442\u0435\u043B\u044C\u043D\u044B\u0435 \u0434\u0435\u0442\u0430\u043B\u0438 \u043A\u043E\u0440\u043E\u0431\u043E\u0432"
+        },
+        {
+          "Name": "box1:family",
+          "Value": "BHS_CBL_\u0420\u0435\u043A\u043E\u043C\u0435\u043D\u0434\u0443\u0435\u043C\u0430\u044F \u0440\u0430\u0441\u043F\u0440\u0435\u0434\u0435\u043B\u0438\u0442\u0435\u043B\u044C\u043D\u0430\u044F \u043A\u043E\u0440\u043E\u0431\u043A\u0430"
+        },
+        {
+          "Name": "box1:instances",
           "Value": "0"
+        },
+        {
+          "Name": "box1:isCarrierCategory",
+          "Value": "True"
+        },
+        {
+          "Name": "box1:placement",
+          "Value": "OneLevelBased"
+        },
+        {
+          "Name": "box1:type",
+          "Value": "\u0420\u0435\u043A\u043E\u043C\u0435\u043D\u0434\u0443\u0435\u043C\u0430\u044F \u043A\u043E\u0440\u043E\u0431\u043A\u0430"
         },
         {
           "Name": "box:documentSkipped",
@@ -1611,23 +1916,47 @@
         },
         {
           "Name": "box:ourSymbols",
-          "Value": "0"
+          "Value": "1"
         },
         {
           "Name": "instance",
-          "Value": "97a077a88f6b443990d9d9fe8f74fc45"
+          "Value": "4752acc5600345ffa67322f585e7868a"
         },
         {
           "Name": "log",
-          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2025-77588-20260911-083801.log"
+          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2025-41944-20260911-210705.log"
         },
         {
           "Name": "pid",
-          "Value": "77588"
+          "Value": "41944"
         },
         {
-          "Name": "place:symbol",
-          "Value": "(no BHS_ family in this model)"
+          "Name": "place:after",
+          "Value": "28"
+        },
+        {
+          "Name": "place:afterRollback",
+          "Value": "27"
+        },
+        {
+          "Name": "place:before",
+          "Value": "27"
+        },
+        {
+          "Name": "place:connected",
+          "Value": "0"
+        },
+        {
+          "Name": "place:connectors",
+          "Value": "4"
+        },
+        {
+          "Name": "place:placed",
+          "Value": "True"
+        },
+        {
+          "Name": "place:type",
+          "Value": "\u0420\u0435\u043A\u043E\u043C\u0435\u043D\u0434\u0443\u0435\u043C\u0430\u044F \u043A\u043E\u0440\u043E\u0431\u043A\u0430"
         },
         {
           "Name": "release",
@@ -1683,11 +2012,11 @@
         },
         {
           "Name": "instance",
-          "Value": "97a077a88f6b443990d9d9fe8f74fc45"
+          "Value": "4752acc5600345ffa67322f585e7868a"
         },
         {
           "Name": "log",
-          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2025-77588-20260911-083801.log"
+          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2025-41944-20260911-210705.log"
         },
         {
           "Name": "modal:apiCallWorked",
@@ -1699,11 +2028,11 @@
         },
         {
           "Name": "modal:apiRead",
-          "Value": "bhs-sweep-2025-e7f25495cf4b41648dddfdeb7ed5cf37"
+          "Value": "TestCabling-\u042D\u041E\u041C"
         },
         {
           "Name": "modal:apiReadAfterAwait",
-          "Value": "bhs-sweep-2025-e7f25495cf4b41648dddfdeb7ed5cf37"
+          "Value": "TestCabling-\u042D\u041E\u041C"
         },
         {
           "Name": "modal:apiThread",
@@ -1715,7 +2044,7 @@
         },
         {
           "Name": "modal:awaitResumedAfter",
-          "Value": "0.42s"
+          "Value": "0.38s"
         },
         {
           "Name": "modal:awaitResumedOnApiThread",
@@ -1739,7 +2068,7 @@
         },
         {
           "Name": "modal:shownFor",
-          "Value": "2.48s"
+          "Value": "2.46s"
         },
         {
           "Name": "modal:transactionCommit",
@@ -1751,7 +2080,7 @@
         },
         {
           "Name": "modal:transactionCreated",
-          "Value": "281933"
+          "Value": "626917"
         },
         {
           "Name": "modal:transactionRolledBack",
@@ -1771,7 +2100,7 @@
         },
         {
           "Name": "pid",
-          "Value": "77588"
+          "Value": "41944"
         },
         {
           "Name": "release",
@@ -1783,11 +2112,11 @@
         },
         {
           "Name": "instance",
-          "Value": "97a077a88f6b443990d9d9fe8f74fc45"
+          "Value": "4752acc5600345ffa67322f585e7868a"
         },
         {
           "Name": "log",
-          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2025-77588-20260911-083801.log"
+          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2025-41944-20260911-210705.log"
         },
         {
           "Name": "modal:measured",
@@ -1799,7 +2128,7 @@
         },
         {
           "Name": "modal:pumpRanAt",
-          "Value": "2.48s"
+          "Value": "2.46s"
         },
         {
           "Name": "modal:windowClosed",
@@ -1807,7 +2136,7 @@
         },
         {
           "Name": "pid",
-          "Value": "77588"
+          "Value": "41944"
         },
         {
           "Name": "release",
@@ -1819,11 +2148,11 @@
         },
         {
           "Name": "instance",
-          "Value": "97a077a88f6b443990d9d9fe8f74fc45"
+          "Value": "4752acc5600345ffa67322f585e7868a"
         },
         {
           "Name": "log",
-          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2025-77588-20260911-083801.log"
+          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2025-41944-20260911-210705.log"
         },
         {
           "Name": "parameters:bound",
@@ -1899,7 +2228,7 @@
         },
         {
           "Name": "pid",
-          "Value": "77588"
+          "Value": "41944"
         },
         {
           "Name": "release",
@@ -1922,24 +2251,36 @@
           "Value": "4"
         },
         {
-          "Name": "skipped - Cabling: every carrier reports a class the catalogue names",
-          "Value": "the model this sweep opened holds no carriers, so there is nothing here to assert about"
+          "Name": "carriers",
+          "Value": "40"
         },
         {
-          "Name": "skipped - Cabling: every carrier has somewhere a cable can enter it",
-          "Value": "the model this sweep opened holds no carriers, so there is nothing here to assert about"
+          "Name": "classes in use",
+          "Value": "conduit, tray"
         },
         {
-          "Name": "skipped - Cabling: our own markers are excluded, and the count accounts for the difference",
-          "Value": "the model this sweep opened holds no carriers, so there is nothing here to assert about"
+          "Name": "carriers",
+          "Value": "40"
         },
         {
-          "Name": "skipped - Cabling: reading the same model twice reads the same network",
-          "Value": "the model this sweep opened holds no carriers, so there is nothing here to assert about"
+          "Name": "carriers without the filter",
+          "Value": "40"
+        },
+        {
+          "Name": "markers excluded",
+          "Value": "0"
+        },
+        {
+          "Name": "marker type present in this model",
+          "Value": "yes"
+        },
+        {
+          "Name": "total carrier length, internal feet",
+          "Value": "492.190"
         },
         {
           "Name": "cases skipped",
-          "Value": "4"
+          "Value": "0"
         },
         {
           "Name": "BHS.FullEdition 0.1.0.0",
@@ -2087,7 +2428,7 @@
         },
         {
           "Name": "assemblies loaded",
-          "Value": "448"
+          "Value": "449"
         },
         {
           "Name": "Revit\u0027s copy won",
@@ -2099,7 +2440,7 @@
         },
         {
           "Name": "diagnostic events",
-          "Value": "222 received, 0 dropped by the publisher, longest quiet spell 3.9s during Working"
+          "Value": "349 received, 0 dropped by the publisher, longest quiet spell 3.5s during Working"
         },
         {
           "Name": "phases seen",
@@ -2127,7 +2468,7 @@
         },
         {
           "Name": "progress caption",
-          "Value": "\u0417\u0430\u0433\u0440\u0443\u0437\u043A\u0430 bhs-sweep-2025-e7f25495cf4b41648dddfdeb7ed5cf37.rvt"
+          "Value": "\u0417\u0430\u0433\u0440\u0443\u0437\u043A\u0430 TestCabling-\u042D\u041E\u041C.rvt"
         },
         {
           "Name": "progress caption",
@@ -2143,11 +2484,27 @@
         },
         {
           "Name": "progress caption",
+          "Value": "\u0417\u0430\u0433\u0440\u0443\u0437\u043A\u0430 TestCabling-\u0410\u0420.rvt"
+        },
+        {
+          "Name": "progress caption",
+          "Value": "\u0417\u0430\u0433\u0440\u0443\u0437\u043A\u0430 TestCabling-\u0421\u041A\u0421.rvt"
+        },
+        {
+          "Name": "progress caption",
+          "Value": "\u0420\u0435\u0433\u0435\u043D\u0435\u0440\u0430\u0446\u0438\u044F"
+        },
+        {
+          "Name": "progress caption",
           "Value": "\u0424\u043E\u0440\u043C\u0438\u0440\u043E\u0432\u0430\u043D\u0438\u0435 \u0433\u0440\u0430\u0444\u0438\u043A\u0438 \u0434\u043B\u044F \u0414\u0438\u0441\u043F\u0435\u0442\u0447\u0435\u0440 \u043F\u0440\u043E\u0435\u043A\u0442\u0430"
         },
         {
           "Name": "progress caption",
-          "Value": "\u0424\u043E\u0440\u043C\u0438\u0440\u043E\u0432\u0430\u043D\u0438\u0435 \u0433\u0440\u0430\u0444\u0438\u043A\u0438 \u0434\u043B\u044F \u041F\u043B\u0430\u043D \u044D\u0442\u0430\u0436\u0430: \u0423\u0440\u043E\u0432\u0435\u043D\u044C 1"
+          "Value": "\u0424\u043E\u0440\u043C\u0438\u0440\u043E\u0432\u0430\u043D\u0438\u0435 \u0433\u0440\u0430\u0444\u0438\u043A\u0438 \u0434\u043B\u044F 3D \u0432\u0438\u0434: {3D}"
+        },
+        {
+          "Name": "progress caption",
+          "Value": "\u0424\u043E\u0440\u043C\u0438\u0440\u043E\u0432\u0430\u043D\u0438\u0435 \u0433\u0440\u0430\u0444\u0438\u043A\u0438 \u0434\u043B\u044F 3D \u0432\u0438\u0434: Proxy of {3D}"
         },
         {
           "Name": "progress caption",
@@ -2155,22 +2512,18 @@
         },
         {
           "Name": "progress caption",
-          "Value": "\u0427\u0435\u0440\u0442\u0435\u0436: bhs-sweep-2025-e7f25495cf4b41648dddfdeb7ed5cf37.rvt - \u041F\u043B\u0430\u043D \u044D\u0442\u0430\u0436\u0430: \u0423\u0440\u043E\u0432\u0435\u043D\u044C 1"
-        },
-        {
-          "Name": "progress caption",
-          "Value": "\u0420\u0435\u0433\u0435\u043D\u0435\u0440\u0430\u0446\u0438\u044F"
+          "Value": "\u0427\u0435\u0440\u0442\u0435\u0436: TestCabling-\u042D\u041E\u041C.rvt - 3D \u0432\u0438\u0434: {3D}"
         },
         {
           "Name": "closed after",
-          "Value": "3.0s"
+          "Value": "3.2s"
         }
       ]
     },
     {
       "Release": 2026,
       "FileVersion": "0.1.0.0",
-      "BuiltUtc": "2026-09-10T22:36:36.1872010Z",
+      "BuiltUtc": "2026-09-11T11:05:51.4623664Z",
       "Signed": true,
       "Checks": [
         {
@@ -2538,7 +2891,23 @@
           "Ok": true
         },
         {
+          "Name": "Cabling: every carrier reports a class the catalogue names",
+          "Ok": true
+        },
+        {
+          "Name": "Cabling: every carrier has somewhere a cable can enter it",
+          "Ok": true
+        },
+        {
+          "Name": "Cabling: our own markers are excluded, and the count accounts for the difference",
+          "Ok": true
+        },
+        {
           "Name": "Cabling: a marker type this model does not have is reported unknown, not assumed absent",
+          "Ok": true
+        },
+        {
+          "Name": "Cabling: reading the same model twice reads the same network",
           "Ok": true
         },
         {
@@ -2593,12 +2962,16 @@
       "Abandoned": false,
       "Notes": [
         {
+          "Name": "linked set",
+          "Value": "3 model(s), host and links copied together"
+        },
+        {
           "Name": "launched",
-          "Value": "pid 79348"
+          "Value": "pid 56128"
         },
         {
           "Name": "registered after",
-          "Value": "24.6s"
+          "Value": "23.5s"
         },
         {
           "Name": "recovered by enumeration",
@@ -2614,11 +2987,11 @@
         },
         {
           "Name": "probe log",
-          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2026-79348-20260911-083833.log"
+          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2026-56128-20260911-210737.log"
         },
         {
           "Name": "threads",
-          "Value": "api 1, call 19"
+          "Value": "api 1, call 32"
         },
         {
           "Name": "appdomain",
@@ -2642,7 +3015,7 @@
         },
         {
           "Name": "log",
-          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2026-79348-20260911-083833.log"
+          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2026-56128-20260911-210737.log"
         },
         {
           "Name": "sinks",
@@ -2650,11 +3023,11 @@
         },
         {
           "Name": "document",
-          "Value": "bhs-sweep-2026-83a070bc1c2a4a269199c404dded0f27"
+          "Value": "TestCabling-\u042D\u041E\u041C"
         },
         {
           "Name": "opened after registration",
-          "Value": "32.1s"
+          "Value": "25.7s"
         },
         {
           "Name": "availability and the press",
@@ -2662,7 +3035,7 @@
         },
         {
           "Name": "model settings",
-          "Value": "document bhs-sweep-2026-83a070bc1c2a4a269199c404dded0f27, origin Model"
+          "Value": "document TestCabling-\u042D\u041E\u041C, origin Model"
         },
         {
           "Name": "fields as built",
@@ -2673,16 +3046,76 @@
           "Value": "InvalidOperationException: A different Schema with the same identity already exists."
         },
         {
+          "Name": "host:OST_CableTray",
+          "Value": "5"
+        },
+        {
+          "Name": "host:OST_CableTrayFitting",
+          "Value": "1"
+        },
+        {
+          "Name": "host:OST_Conduit",
+          "Value": "15"
+        },
+        {
+          "Name": "host:OST_ConduitFitting",
+          "Value": "6"
+        },
+        {
+          "Name": "host:circuits",
+          "Value": "13"
+        },
+        {
           "Name": "instance",
-          "Value": "84fc43388b0d4c8182bc1db05e02b8cf"
+          "Value": "af20b1e9cdaf4ee9943191598ca6676c"
+        },
+        {
+          "Name": "link1:linked",
+          "Value": "True"
+        },
+        {
+          "Name": "link1:modifiable",
+          "Value": "False"
+        },
+        {
+          "Name": "link1:readOnly",
+          "Value": "False"
+        },
+        {
+          "Name": "link2:OST_CableTray",
+          "Value": "6"
+        },
+        {
+          "Name": "link2:OST_CableTrayFitting",
+          "Value": "2"
+        },
+        {
+          "Name": "link2:OST_Conduit",
+          "Value": "4"
+        },
+        {
+          "Name": "link2:OST_ConduitFitting",
+          "Value": "1"
+        },
+        {
+          "Name": "link2:linked",
+          "Value": "True"
+        },
+        {
+          "Name": "link2:modifiable",
+          "Value": "False"
+        },
+        {
+          "Name": "link2:readOnly",
+          "Value": "False"
         },
         {
           "Name": "log",
-          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2026-79348-20260911-083833.log"
+          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2026-56128-20260911-210737.log"
         },
         {
           "Name": "pid",
-          "Value": "79348"
+          "Value": "56128"
         },
         {
           "Name": "release",
@@ -2693,8 +3126,56 @@
           "Value": "3"
         },
         {
+          "Name": "sample:elements",
+          "Value": "1"
+        },
+        {
+          "Name": "sample:hasCustomPath",
+          "Value": "False"
+        },
+        {
+          "Name": "sample:hasPanel",
+          "Value": "True"
+        },
+        {
+          "Name": "sample:length",
+          "Value": "63.22"
+        },
+        {
+          "Name": "sample:pathMode",
+          "Value": "FarthestDevice"
+        },
+        {
+          "Name": "sample:pathPoints",
+          "Value": "5"
+        },
+        {
           "Name": "survey:links",
+          "Value": "2"
+        },
+        {
+          "Name": "box1:category",
+          "Value": "\u0421\u043E\u0435\u0434\u0438\u043D\u0438\u0442\u0435\u043B\u044C\u043D\u044B\u0435 \u0434\u0435\u0442\u0430\u043B\u0438 \u043A\u043E\u0440\u043E\u0431\u043E\u0432"
+        },
+        {
+          "Name": "box1:family",
+          "Value": "BHS_CBL_\u0420\u0435\u043A\u043E\u043C\u0435\u043D\u0434\u0443\u0435\u043C\u0430\u044F \u0440\u0430\u0441\u043F\u0440\u0435\u0434\u0435\u043B\u0438\u0442\u0435\u043B\u044C\u043D\u0430\u044F \u043A\u043E\u0440\u043E\u0431\u043A\u0430"
+        },
+        {
+          "Name": "box1:instances",
           "Value": "0"
+        },
+        {
+          "Name": "box1:isCarrierCategory",
+          "Value": "True"
+        },
+        {
+          "Name": "box1:placement",
+          "Value": "OneLevelBased"
+        },
+        {
+          "Name": "box1:type",
+          "Value": "\u0420\u0435\u043A\u043E\u043C\u0435\u043D\u0434\u0443\u0435\u043C\u0430\u044F \u043A\u043E\u0440\u043E\u0431\u043A\u0430"
         },
         {
           "Name": "box:documentSkipped",
@@ -2702,23 +3183,47 @@
         },
         {
           "Name": "box:ourSymbols",
-          "Value": "0"
+          "Value": "1"
         },
         {
           "Name": "instance",
-          "Value": "84fc43388b0d4c8182bc1db05e02b8cf"
+          "Value": "af20b1e9cdaf4ee9943191598ca6676c"
         },
         {
           "Name": "log",
-          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2026-79348-20260911-083833.log"
+          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2026-56128-20260911-210737.log"
         },
         {
           "Name": "pid",
-          "Value": "79348"
+          "Value": "56128"
         },
         {
-          "Name": "place:symbol",
-          "Value": "(no BHS_ family in this model)"
+          "Name": "place:after",
+          "Value": "28"
+        },
+        {
+          "Name": "place:afterRollback",
+          "Value": "27"
+        },
+        {
+          "Name": "place:before",
+          "Value": "27"
+        },
+        {
+          "Name": "place:connected",
+          "Value": "0"
+        },
+        {
+          "Name": "place:connectors",
+          "Value": "4"
+        },
+        {
+          "Name": "place:placed",
+          "Value": "True"
+        },
+        {
+          "Name": "place:type",
+          "Value": "\u0420\u0435\u043A\u043E\u043C\u0435\u043D\u0434\u0443\u0435\u043C\u0430\u044F \u043A\u043E\u0440\u043E\u0431\u043A\u0430"
         },
         {
           "Name": "release",
@@ -2774,11 +3279,11 @@
         },
         {
           "Name": "instance",
-          "Value": "84fc43388b0d4c8182bc1db05e02b8cf"
+          "Value": "af20b1e9cdaf4ee9943191598ca6676c"
         },
         {
           "Name": "log",
-          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2026-79348-20260911-083833.log"
+          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2026-56128-20260911-210737.log"
         },
         {
           "Name": "modal:apiCallWorked",
@@ -2790,11 +3295,11 @@
         },
         {
           "Name": "modal:apiRead",
-          "Value": "bhs-sweep-2026-83a070bc1c2a4a269199c404dded0f27"
+          "Value": "TestCabling-\u042D\u041E\u041C"
         },
         {
           "Name": "modal:apiReadAfterAwait",
-          "Value": "bhs-sweep-2026-83a070bc1c2a4a269199c404dded0f27"
+          "Value": "TestCabling-\u042D\u041E\u041C"
         },
         {
           "Name": "modal:apiThread",
@@ -2806,7 +3311,7 @@
         },
         {
           "Name": "modal:awaitResumedAfter",
-          "Value": "0.25s"
+          "Value": "0.27s"
         },
         {
           "Name": "modal:awaitResumedOnApiThread",
@@ -2830,7 +3335,7 @@
         },
         {
           "Name": "modal:shownFor",
-          "Value": "2.31s"
+          "Value": "2.33s"
         },
         {
           "Name": "modal:transactionCommit",
@@ -2842,7 +3347,7 @@
         },
         {
           "Name": "modal:transactionCreated",
-          "Value": "286989"
+          "Value": "627038"
         },
         {
           "Name": "modal:transactionRolledBack",
@@ -2862,7 +3367,7 @@
         },
         {
           "Name": "pid",
-          "Value": "79348"
+          "Value": "56128"
         },
         {
           "Name": "release",
@@ -2874,11 +3379,11 @@
         },
         {
           "Name": "instance",
-          "Value": "84fc43388b0d4c8182bc1db05e02b8cf"
+          "Value": "af20b1e9cdaf4ee9943191598ca6676c"
         },
         {
           "Name": "log",
-          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2026-79348-20260911-083833.log"
+          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2026-56128-20260911-210737.log"
         },
         {
           "Name": "modal:measured",
@@ -2890,7 +3395,7 @@
         },
         {
           "Name": "modal:pumpRanAt",
-          "Value": "2.32s"
+          "Value": "2.33s"
         },
         {
           "Name": "modal:windowClosed",
@@ -2898,7 +3403,7 @@
         },
         {
           "Name": "pid",
-          "Value": "79348"
+          "Value": "56128"
         },
         {
           "Name": "release",
@@ -2910,11 +3415,11 @@
         },
         {
           "Name": "instance",
-          "Value": "84fc43388b0d4c8182bc1db05e02b8cf"
+          "Value": "af20b1e9cdaf4ee9943191598ca6676c"
         },
         {
           "Name": "log",
-          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2026-79348-20260911-083833.log"
+          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2026-56128-20260911-210737.log"
         },
         {
           "Name": "parameters:bound",
@@ -2990,7 +3495,7 @@
         },
         {
           "Name": "pid",
-          "Value": "79348"
+          "Value": "56128"
         },
         {
           "Name": "release",
@@ -3013,24 +3518,36 @@
           "Value": "4"
         },
         {
-          "Name": "skipped - Cabling: every carrier reports a class the catalogue names",
-          "Value": "the model this sweep opened holds no carriers, so there is nothing here to assert about"
+          "Name": "carriers",
+          "Value": "40"
         },
         {
-          "Name": "skipped - Cabling: every carrier has somewhere a cable can enter it",
-          "Value": "the model this sweep opened holds no carriers, so there is nothing here to assert about"
+          "Name": "classes in use",
+          "Value": "conduit, tray"
         },
         {
-          "Name": "skipped - Cabling: our own markers are excluded, and the count accounts for the difference",
-          "Value": "the model this sweep opened holds no carriers, so there is nothing here to assert about"
+          "Name": "carriers",
+          "Value": "40"
         },
         {
-          "Name": "skipped - Cabling: reading the same model twice reads the same network",
-          "Value": "the model this sweep opened holds no carriers, so there is nothing here to assert about"
+          "Name": "carriers without the filter",
+          "Value": "40"
+        },
+        {
+          "Name": "markers excluded",
+          "Value": "0"
+        },
+        {
+          "Name": "marker type present in this model",
+          "Value": "yes"
+        },
+        {
+          "Name": "total carrier length, internal feet",
+          "Value": "492.190"
         },
         {
           "Name": "cases skipped",
-          "Value": "4"
+          "Value": "0"
         },
         {
           "Name": "BHS.FullEdition 0.1.0.0",
@@ -3142,7 +3659,7 @@
         },
         {
           "Name": "assemblies loaded",
-          "Value": "861"
+          "Value": "862"
         },
         {
           "Name": "Revit\u0027s copy won",
@@ -3154,7 +3671,7 @@
         },
         {
           "Name": "diagnostic events",
-          "Value": "301 received, 0 dropped by the publisher, longest quiet spell 19.5s during Starting"
+          "Value": "427 received, 0 dropped by the publisher, longest quiet spell 10.5s during Idle"
         },
         {
           "Name": "phases seen",
@@ -3178,7 +3695,7 @@
         },
         {
           "Name": "progress caption",
-          "Value": "\u0417\u0430\u0433\u0440\u0443\u0437\u043A\u0430 bhs-sweep-2026-83a070bc1c2a4a269199c404dded0f27.rvt"
+          "Value": "\u0417\u0430\u0433\u0440\u0443\u0437\u043A\u0430 TestCabling-\u042D\u041E\u041C.rvt"
         },
         {
           "Name": "progress caption",
@@ -3194,23 +3711,11 @@
         },
         {
           "Name": "progress caption",
-          "Value": "\u0424\u043E\u0440\u043C\u0438\u0440\u043E\u0432\u0430\u043D\u0438\u0435 \u0433\u0440\u0430\u0444\u0438\u043A\u0438 \u0434\u043B\u044F \u0414\u0438\u0441\u043F\u0435\u0442\u0447\u0435\u0440 \u043F\u0440\u043E\u0435\u043A\u0442\u0430"
+          "Value": "\u0417\u0430\u0433\u0440\u0443\u0437\u043A\u0430 TestCabling-\u0410\u0420.rvt"
         },
         {
           "Name": "progress caption",
-          "Value": "\u0424\u043E\u0440\u043C\u0438\u0440\u043E\u0432\u0430\u043D\u0438\u0435 \u0433\u0440\u0430\u0444\u0438\u043A\u0438 \u0434\u043B\u044F \u041F\u043B\u0430\u043D \u044D\u0442\u0430\u0436\u0430: \u0423\u0440\u043E\u0432\u0435\u043D\u044C 1"
-        },
-        {
-          "Name": "progress caption",
-          "Value": "opened"
-        },
-        {
-          "Name": "progress caption",
-          "Value": "\u0427\u0435\u0440\u0442\u0435\u0436: bhs-sweep-2026-83a070bc1c2a4a269199c404dded0f27.rvt - \u041F\u043B\u0430\u043D \u044D\u0442\u0430\u0436\u0430: \u0423\u0440\u043E\u0432\u0435\u043D\u044C 1"
-        },
-        {
-          "Name": "progress caption",
-          "Value": "\u041E\u0431\u0440\u0430\u0431\u043E\u0442\u043A\u0430"
+          "Value": "\u0417\u0430\u0433\u0440\u0443\u0437\u043A\u0430 TestCabling-\u0421\u041A\u0421.rvt"
         },
         {
           "Name": "progress caption",
@@ -3218,18 +3723,42 @@
         },
         {
           "Name": "progress caption",
+          "Value": "\u0424\u043E\u0440\u043C\u0438\u0440\u043E\u0432\u0430\u043D\u0438\u0435 \u0433\u0440\u0430\u0444\u0438\u043A\u0438 \u0434\u043B\u044F \u0414\u0438\u0441\u043F\u0435\u0442\u0447\u0435\u0440 \u043F\u0440\u043E\u0435\u043A\u0442\u0430"
+        },
+        {
+          "Name": "progress caption",
+          "Value": "\u0424\u043E\u0440\u043C\u0438\u0440\u043E\u0432\u0430\u043D\u0438\u0435 \u0433\u0440\u0430\u0444\u0438\u043A\u0438 \u0434\u043B\u044F \u041F\u043B\u0430\u043D \u044D\u0442\u0430\u0436\u0430: 1 - \u0421\u0438\u043B\u043E\u0432\u044B\u0435 \u0446\u0435\u043F\u0438"
+        },
+        {
+          "Name": "progress caption",
+          "Value": "\u0424\u043E\u0440\u043C\u0438\u0440\u043E\u0432\u0430\u043D\u0438\u0435 \u0433\u0440\u0430\u0444\u0438\u043A\u0438 \u0434\u043B\u044F \u041F\u043B\u0430\u043D \u044D\u0442\u0430\u0436\u0430: Proxy of 1 - \u0421\u0438\u043B\u043E\u0432\u044B\u0435 \u0446\u0435\u043F\u0438"
+        },
+        {
+          "Name": "progress caption",
+          "Value": "opened"
+        },
+        {
+          "Name": "progress caption",
+          "Value": "\u0427\u0435\u0440\u0442\u0435\u0436: TestCabling-\u042D\u041E\u041C.rvt - \u041F\u043B\u0430\u043D \u044D\u0442\u0430\u0436\u0430: 1 - \u0421\u0438\u043B\u043E\u0432\u044B\u0435 \u0446\u0435\u043F\u0438"
+        },
+        {
+          "Name": "progress caption",
+          "Value": "\u041E\u0431\u0440\u0430\u0431\u043E\u0442\u043A\u0430"
+        },
+        {
+          "Name": "progress caption",
           "Value": "\u0410\u0432\u0442\u043E\u043C\u0430\u0442\u0438\u0447\u0435\u0441\u043A\u043E\u0435 \u0441\u043E\u0435\u0434\u0438\u043D\u0435\u043D\u0438\u0435 \u0438\u0437\u043C\u0435\u043D\u0435\u043D\u043D\u044B\u0445 \u044D\u043B\u0435\u043C\u0435\u043D\u0442\u043E\u0432"
         },
         {
           "Name": "closed after",
-          "Value": "14.7s"
+          "Value": "9.1s"
         }
       ]
     },
     {
       "Release": 2027,
       "FileVersion": "0.1.0.0",
-      "BuiltUtc": "2026-09-10T22:36:37.5004308Z",
+      "BuiltUtc": "2026-09-11T11:05:50.8733294Z",
       "Signed": true,
       "Checks": [
         {
@@ -3597,7 +4126,23 @@
           "Ok": true
         },
         {
+          "Name": "Cabling: every carrier reports a class the catalogue names",
+          "Ok": true
+        },
+        {
+          "Name": "Cabling: every carrier has somewhere a cable can enter it",
+          "Ok": true
+        },
+        {
+          "Name": "Cabling: our own markers are excluded, and the count accounts for the difference",
+          "Ok": true
+        },
+        {
           "Name": "Cabling: a marker type this model does not have is reported unknown, not assumed absent",
+          "Ok": true
+        },
+        {
+          "Name": "Cabling: reading the same model twice reads the same network",
           "Ok": true
         },
         {
@@ -3652,12 +4197,16 @@
       "Abandoned": false,
       "Notes": [
         {
+          "Name": "linked set",
+          "Value": "3 model(s), host and links copied together"
+        },
+        {
           "Name": "launched",
-          "Value": "pid 70144"
+          "Value": "pid 14940"
         },
         {
           "Name": "registered after",
-          "Value": "16.5s"
+          "Value": "16.4s"
         },
         {
           "Name": "recovered by enumeration",
@@ -3673,11 +4222,11 @@
         },
         {
           "Name": "probe log",
-          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2027-70144-20260911-083950.log"
+          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2027-14940-20260911-210842.log"
         },
         {
           "Name": "threads",
-          "Value": "api 2, call 7"
+          "Value": "api 2, call 19"
         },
         {
           "Name": "appdomain",
@@ -3701,7 +4250,7 @@
         },
         {
           "Name": "log",
-          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2027-70144-20260911-083950.log"
+          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2027-14940-20260911-210842.log"
         },
         {
           "Name": "sinks",
@@ -3709,11 +4258,11 @@
         },
         {
           "Name": "document",
-          "Value": "bhs-sweep-2027-fc648a1501254231adfe5d5eca847a22"
+          "Value": "TestCabling-\u042D\u041E\u041C"
         },
         {
           "Name": "opened after registration",
-          "Value": "24.4s"
+          "Value": "48.2s"
         },
         {
           "Name": "availability and the press",
@@ -3721,7 +4270,7 @@
         },
         {
           "Name": "model settings",
-          "Value": "document bhs-sweep-2027-fc648a1501254231adfe5d5eca847a22, origin Model"
+          "Value": "document TestCabling-\u042D\u041E\u041C, origin Model"
         },
         {
           "Name": "fields as built",
@@ -3732,16 +4281,76 @@
           "Value": "InvalidOperationException: A different Schema with the same identity already exists."
         },
         {
+          "Name": "host:OST_CableTray",
+          "Value": "5"
+        },
+        {
+          "Name": "host:OST_CableTrayFitting",
+          "Value": "1"
+        },
+        {
+          "Name": "host:OST_Conduit",
+          "Value": "15"
+        },
+        {
+          "Name": "host:OST_ConduitFitting",
+          "Value": "6"
+        },
+        {
+          "Name": "host:circuits",
+          "Value": "13"
+        },
+        {
           "Name": "instance",
-          "Value": "7cd0153012384ad790e6de085bd87a01"
+          "Value": "08f0dc485675430f89e92afe3a66da81"
+        },
+        {
+          "Name": "link1:linked",
+          "Value": "True"
+        },
+        {
+          "Name": "link1:modifiable",
+          "Value": "False"
+        },
+        {
+          "Name": "link1:readOnly",
+          "Value": "False"
+        },
+        {
+          "Name": "link2:OST_CableTray",
+          "Value": "6"
+        },
+        {
+          "Name": "link2:OST_CableTrayFitting",
+          "Value": "2"
+        },
+        {
+          "Name": "link2:OST_Conduit",
+          "Value": "4"
+        },
+        {
+          "Name": "link2:OST_ConduitFitting",
+          "Value": "1"
+        },
+        {
+          "Name": "link2:linked",
+          "Value": "True"
+        },
+        {
+          "Name": "link2:modifiable",
+          "Value": "False"
+        },
+        {
+          "Name": "link2:readOnly",
+          "Value": "False"
         },
         {
           "Name": "log",
-          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2027-70144-20260911-083950.log"
+          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2027-14940-20260911-210842.log"
         },
         {
           "Name": "pid",
-          "Value": "70144"
+          "Value": "14940"
         },
         {
           "Name": "release",
@@ -3752,8 +4361,56 @@
           "Value": "3"
         },
         {
+          "Name": "sample:elements",
+          "Value": "1"
+        },
+        {
+          "Name": "sample:hasCustomPath",
+          "Value": "False"
+        },
+        {
+          "Name": "sample:hasPanel",
+          "Value": "True"
+        },
+        {
+          "Name": "sample:length",
+          "Value": "63.22"
+        },
+        {
+          "Name": "sample:pathMode",
+          "Value": "FarthestDevice"
+        },
+        {
+          "Name": "sample:pathPoints",
+          "Value": "5"
+        },
+        {
           "Name": "survey:links",
+          "Value": "2"
+        },
+        {
+          "Name": "box1:category",
+          "Value": "\u0421\u043E\u0435\u0434\u0438\u043D\u0438\u0442\u0435\u043B\u044C\u043D\u044B\u0435 \u0434\u0435\u0442\u0430\u043B\u0438 \u043A\u043E\u0440\u043E\u0431\u043E\u0432"
+        },
+        {
+          "Name": "box1:family",
+          "Value": "BHS_CBL_\u0420\u0435\u043A\u043E\u043C\u0435\u043D\u0434\u0443\u0435\u043C\u0430\u044F \u0440\u0430\u0441\u043F\u0440\u0435\u0434\u0435\u043B\u0438\u0442\u0435\u043B\u044C\u043D\u0430\u044F \u043A\u043E\u0440\u043E\u0431\u043A\u0430"
+        },
+        {
+          "Name": "box1:instances",
           "Value": "0"
+        },
+        {
+          "Name": "box1:isCarrierCategory",
+          "Value": "True"
+        },
+        {
+          "Name": "box1:placement",
+          "Value": "OneLevelBased"
+        },
+        {
+          "Name": "box1:type",
+          "Value": "\u0420\u0435\u043A\u043E\u043C\u0435\u043D\u0434\u0443\u0435\u043C\u0430\u044F \u043A\u043E\u0440\u043E\u0431\u043A\u0430"
         },
         {
           "Name": "box:documentSkipped",
@@ -3761,23 +4418,47 @@
         },
         {
           "Name": "box:ourSymbols",
-          "Value": "0"
+          "Value": "1"
         },
         {
           "Name": "instance",
-          "Value": "7cd0153012384ad790e6de085bd87a01"
+          "Value": "08f0dc485675430f89e92afe3a66da81"
         },
         {
           "Name": "log",
-          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2027-70144-20260911-083950.log"
+          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2027-14940-20260911-210842.log"
         },
         {
           "Name": "pid",
-          "Value": "70144"
+          "Value": "14940"
         },
         {
-          "Name": "place:symbol",
-          "Value": "(no BHS_ family in this model)"
+          "Name": "place:after",
+          "Value": "28"
+        },
+        {
+          "Name": "place:afterRollback",
+          "Value": "27"
+        },
+        {
+          "Name": "place:before",
+          "Value": "27"
+        },
+        {
+          "Name": "place:connected",
+          "Value": "0"
+        },
+        {
+          "Name": "place:connectors",
+          "Value": "4"
+        },
+        {
+          "Name": "place:placed",
+          "Value": "True"
+        },
+        {
+          "Name": "place:type",
+          "Value": "\u0420\u0435\u043A\u043E\u043C\u0435\u043D\u0434\u0443\u0435\u043C\u0430\u044F \u043A\u043E\u0440\u043E\u0431\u043A\u0430"
         },
         {
           "Name": "release",
@@ -3833,11 +4514,11 @@
         },
         {
           "Name": "instance",
-          "Value": "7cd0153012384ad790e6de085bd87a01"
+          "Value": "08f0dc485675430f89e92afe3a66da81"
         },
         {
           "Name": "log",
-          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2027-70144-20260911-083950.log"
+          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2027-14940-20260911-210842.log"
         },
         {
           "Name": "modal:apiCallWorked",
@@ -3849,11 +4530,11 @@
         },
         {
           "Name": "modal:apiRead",
-          "Value": "bhs-sweep-2027-fc648a1501254231adfe5d5eca847a22"
+          "Value": "TestCabling-\u042D\u041E\u041C"
         },
         {
           "Name": "modal:apiReadAfterAwait",
-          "Value": "bhs-sweep-2027-fc648a1501254231adfe5d5eca847a22"
+          "Value": "TestCabling-\u042D\u041E\u041C"
         },
         {
           "Name": "modal:apiThread",
@@ -3865,7 +4546,7 @@
         },
         {
           "Name": "modal:awaitResumedAfter",
-          "Value": "0.27s"
+          "Value": "0.30s"
         },
         {
           "Name": "modal:awaitResumedOnApiThread",
@@ -3889,7 +4570,7 @@
         },
         {
           "Name": "modal:shownFor",
-          "Value": "2.33s"
+          "Value": "2.37s"
         },
         {
           "Name": "modal:transactionCommit",
@@ -3901,7 +4582,7 @@
         },
         {
           "Name": "modal:transactionCreated",
-          "Value": "291949"
+          "Value": "627057"
         },
         {
           "Name": "modal:transactionRolledBack",
@@ -3921,7 +4602,7 @@
         },
         {
           "Name": "pid",
-          "Value": "70144"
+          "Value": "14940"
         },
         {
           "Name": "release",
@@ -3933,11 +4614,11 @@
         },
         {
           "Name": "instance",
-          "Value": "7cd0153012384ad790e6de085bd87a01"
+          "Value": "08f0dc485675430f89e92afe3a66da81"
         },
         {
           "Name": "log",
-          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2027-70144-20260911-083950.log"
+          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2027-14940-20260911-210842.log"
         },
         {
           "Name": "modal:measured",
@@ -3949,7 +4630,7 @@
         },
         {
           "Name": "modal:pumpRanAt",
-          "Value": "2.33s"
+          "Value": "2.38s"
         },
         {
           "Name": "modal:windowClosed",
@@ -3957,7 +4638,7 @@
         },
         {
           "Name": "pid",
-          "Value": "70144"
+          "Value": "14940"
         },
         {
           "Name": "release",
@@ -3969,11 +4650,11 @@
         },
         {
           "Name": "instance",
-          "Value": "7cd0153012384ad790e6de085bd87a01"
+          "Value": "08f0dc485675430f89e92afe3a66da81"
         },
         {
           "Name": "log",
-          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2027-70144-20260911-083950.log"
+          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2027-14940-20260911-210842.log"
         },
         {
           "Name": "parameters:bound",
@@ -4049,7 +4730,7 @@
         },
         {
           "Name": "pid",
-          "Value": "70144"
+          "Value": "14940"
         },
         {
           "Name": "release",
@@ -4072,24 +4753,36 @@
           "Value": "4"
         },
         {
-          "Name": "skipped - Cabling: every carrier reports a class the catalogue names",
-          "Value": "the model this sweep opened holds no carriers, so there is nothing here to assert about"
+          "Name": "carriers",
+          "Value": "40"
         },
         {
-          "Name": "skipped - Cabling: every carrier has somewhere a cable can enter it",
-          "Value": "the model this sweep opened holds no carriers, so there is nothing here to assert about"
+          "Name": "classes in use",
+          "Value": "conduit, tray"
         },
         {
-          "Name": "skipped - Cabling: our own markers are excluded, and the count accounts for the difference",
-          "Value": "the model this sweep opened holds no carriers, so there is nothing here to assert about"
+          "Name": "carriers",
+          "Value": "40"
         },
         {
-          "Name": "skipped - Cabling: reading the same model twice reads the same network",
-          "Value": "the model this sweep opened holds no carriers, so there is nothing here to assert about"
+          "Name": "carriers without the filter",
+          "Value": "40"
+        },
+        {
+          "Name": "markers excluded",
+          "Value": "0"
+        },
+        {
+          "Name": "marker type present in this model",
+          "Value": "yes"
+        },
+        {
+          "Name": "total carrier length, internal feet",
+          "Value": "492.190"
         },
         {
           "Name": "cases skipped",
-          "Value": "4"
+          "Value": "0"
         },
         {
           "Name": "BHS.FullEdition 0.1.0.0",
@@ -4453,7 +5146,7 @@
         },
         {
           "Name": "assemblies loaded",
-          "Value": "774"
+          "Value": "776"
         },
         {
           "Name": "Revit\u0027s copy won",
@@ -4497,7 +5190,7 @@
         },
         {
           "Name": "diagnostic events",
-          "Value": "288 received, 0 dropped by the publisher, longest quiet spell 10.1s during Starting"
+          "Value": "423 received, 0 dropped by the publisher, longest quiet spell 34.5s during Starting"
         },
         {
           "Name": "phases seen",
@@ -4521,7 +5214,7 @@
         },
         {
           "Name": "progress caption",
-          "Value": "\u0417\u0430\u0433\u0440\u0443\u0437\u043A\u0430 bhs-sweep-2027-fc648a1501254231adfe5d5eca847a22.rvt"
+          "Value": "\u0417\u0430\u0433\u0440\u0443\u0437\u043A\u0430 TestCabling-\u042D\u041E\u041C.rvt"
         },
         {
           "Name": "progress caption",
@@ -4537,7 +5230,23 @@
         },
         {
           "Name": "progress caption",
-          "Value": "\u0424\u043E\u0440\u043C\u0438\u0440\u043E\u0432\u0430\u043D\u0438\u0435 \u0433\u0440\u0430\u0444\u0438\u043A\u0438 \u0434\u043B\u044F \u041F\u043B\u0430\u043D \u044D\u0442\u0430\u0436\u0430: \u0423\u0440\u043E\u0432\u0435\u043D\u044C 1"
+          "Value": "\u0417\u0430\u0433\u0440\u0443\u0437\u043A\u0430 TestCabling-\u0410\u0420.rvt"
+        },
+        {
+          "Name": "progress caption",
+          "Value": "\u0417\u0430\u0433\u0440\u0443\u0437\u043A\u0430 TestCabling-\u0421\u041A\u0421.rvt"
+        },
+        {
+          "Name": "progress caption",
+          "Value": "\u0420\u0435\u0433\u0435\u043D\u0435\u0440\u0430\u0446\u0438\u044F"
+        },
+        {
+          "Name": "progress caption",
+          "Value": "\u0424\u043E\u0440\u043C\u0438\u0440\u043E\u0432\u0430\u043D\u0438\u0435 \u0433\u0440\u0430\u0444\u0438\u043A\u0438 \u0434\u043B\u044F \u041F\u043B\u0430\u043D \u044D\u0442\u0430\u0436\u0430: 1 - \u0421\u0438\u043B\u043E\u0432\u044B\u0435 \u0446\u0435\u043F\u0438"
+        },
+        {
+          "Name": "progress caption",
+          "Value": "\u0424\u043E\u0440\u043C\u0438\u0440\u043E\u0432\u0430\u043D\u0438\u0435 \u0433\u0440\u0430\u0444\u0438\u043A\u0438 \u0434\u043B\u044F \u041F\u043B\u0430\u043D \u044D\u0442\u0430\u0436\u0430: Proxy of 1 - \u0421\u0438\u043B\u043E\u0432\u044B\u0435 \u0446\u0435\u043F\u0438"
         },
         {
           "Name": "progress caption",
@@ -4549,7 +5258,7 @@
         },
         {
           "Name": "progress caption",
-          "Value": "\u0427\u0435\u0440\u0442\u0435\u0436: bhs-sweep-2027-fc648a1501254231adfe5d5eca847a22.rvt - \u041F\u043B\u0430\u043D \u044D\u0442\u0430\u0436\u0430: \u0423\u0440\u043E\u0432\u0435\u043D\u044C 1"
+          "Value": "\u0427\u0435\u0440\u0442\u0435\u0436: TestCabling-\u042D\u041E\u041C.rvt - \u041F\u043B\u0430\u043D \u044D\u0442\u0430\u0436\u0430: 1 - \u0421\u0438\u043B\u043E\u0432\u044B\u0435 \u0446\u0435\u043F\u0438"
         },
         {
           "Name": "progress caption",
@@ -4557,19 +5266,15 @@
         },
         {
           "Name": "progress caption",
-          "Value": "\u0420\u0435\u0433\u0435\u043D\u0435\u0440\u0430\u0446\u0438\u044F"
-        },
-        {
-          "Name": "progress caption",
           "Value": "\u0410\u0432\u0442\u043E\u043C\u0430\u0442\u0438\u0447\u0435\u0441\u043A\u043E\u0435 \u0441\u043E\u0435\u0434\u0438\u043D\u0435\u043D\u0438\u0435 \u0438\u0437\u043C\u0435\u043D\u0435\u043D\u043D\u044B\u0445 \u044D\u043B\u0435\u043C\u0435\u043D\u0442\u043E\u0432"
         },
         {
           "Name": "closed after",
-          "Value": "12.5s"
+          "Value": "12.1s"
         }
       ]
     }
   ],
-  "Performed": 416,
+  "Performed": 432,
   "Failed": 0
 }
