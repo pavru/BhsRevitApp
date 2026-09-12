@@ -28,16 +28,15 @@ public sealed class CablingProjectSettings
     /// <summary>The box radius, in millimetres.</summary>
     public const string BoxRadiusKey = "Model:Cabling:BoxRadiusMm";
 
-    /// <summary>
-    /// Half a metre - <b>an assumption, named as one</b>, and the owner's to correct.
-    /// </summary>
+    /// <summary>A hundred and fifty millimetres - the owner's value, 2026-09-13.</summary>
     /// <remarks>
-    /// The owner decided that one distance governs both merging taps and preferring an existing box;
-    /// the value was not discussed. Half a metre keeps two sockets side by side in one box and keeps
-    /// two sockets in different bays apart, which is the guess, and it is a setting because a guess
-    /// about practice belongs where the project can overrule it.
+    /// <b>It replaces a guess of mine, and the difference is the point.</b> Half a metre was written
+    /// here as an assumption, flagged as one, because the owner had decided that one distance governs
+    /// both merging taps and preferring an existing box but had not named it. A hundred and fifty
+    /// millimetres is about the size of a box, so what shares one is what would physically fit in
+    /// one - which is a rule about the thing rather than about how near two sockets look on a plan.
     /// </remarks>
-    public const double DefaultBoxRadiusMm = 500;
+    public const double DefaultBoxRadiusMm = 150;
 
     private CablingProjectSettings(RecommendedBoxes boxes, CircuitConnection connection, double boxRadius, string unreadable)
     {
