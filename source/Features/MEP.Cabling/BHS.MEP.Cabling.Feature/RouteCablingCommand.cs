@@ -155,10 +155,10 @@ public sealed class RouteCablingCommand : IFeatureCommand
             Reading = CablingGaps.Describe(snapshot),
             Tolerances = failedToCross ? Tolerances(snapshot, options, token) : Array.Empty<ToleranceReading>(),
 
-            // No existing boxes yet: telling a real box from a tee needs the role on the fitting's type
-            // and whether it is joined to the network, and that reading comes with the next change.
-            // Until then every box a circuit needs is a recommendation, and the screen says so.
-            Boxes = BoxPlanner.Plan(results, Array.Empty<ExistingBox>(), boxRadius),
+            // The boxes the model already has, which the read found by the role on the fitting's type
+            // and by whether it is joined to the structure. A tap within the radius of one uses it and
+            // asks for nothing to be added.
+            Boxes = BoxPlanner.Plan(results, snapshot.Boxes, boxRadius),
         };
     }
 

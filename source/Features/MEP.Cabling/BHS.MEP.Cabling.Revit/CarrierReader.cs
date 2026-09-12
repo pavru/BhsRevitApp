@@ -27,6 +27,8 @@ public sealed class CarrierReader
 
     private readonly RecommendedBoxes? _boxes;
 
+    private readonly List<ExistingBox> _existing = new();
+
     public CarrierReader(CarrierCatalogue catalogue, RecommendedBoxes? boxes = null)
     {
         _catalogue = catalogue;
@@ -40,6 +42,17 @@ public sealed class CarrierReader
     /// family took the carrier count from 358 to 359, so an exclusion that quietly did nothing would
     /// look exactly like an exclusion that worked.
     /// </remarks>
+    /// <summary>The junction boxes already in the model, in host coordinates.</summary>
+    /// <remarks>
+    /// Collected by the walk that reads the carriers rather than by a second pass: the fittings are
+    /// the carriers, and a second collector over the same categories would cost the same read twice
+    /// and could disagree with the first about what it found.
+    /// </remarks>
+    public IReadOnlyList<ExistingBox> Boxes => _existing;
+
+    /// <summary>Elements whose type calls them boxes and which are joined to nothing.</summary>
+    public int BoxesUnconnected { get; private set; }
+
     public int Markers { get; private set; }
 
     /// <summary>Whether the document being read holds the configured marker type at all.</summary>
@@ -74,6 +87,10 @@ public sealed class CarrierReader
             ? RecommendedBoxMarkers.None
             : RecommendedBoxMarkers.For(document, _boxes);
 
+        // Per document, like the markers and for the same reason: the role lives on the type, and a
+        // link's types belong to the link.
+        var junctions = new JunctionBoxReader(document, _catalogue);
+
         MarkerTypeKnown |= markers.Known;
 
         foreach (var category in _catalogue.Categories)
@@ -98,12 +115,29 @@ public sealed class CarrierReader
                 var node = Read(element, source, transform, carrierClass);
 
                 if (node is null)
+                {
                     Skipped++;
-                else
-                    yield return node;
+                    continue;
+                }
+
+                // A real box stays a carrier: it is part of the structure and the route runs through
+                // it. What being a box adds is that a tap may use it instead of asking for one to be
+                // put there - see BoxPlanner.
+                if (junctions.IsRealBox(element))
+                    _existing.Add(JunctionBoxReader.Where(node));
+
+                yield return node;
             }
         }
+
+        // After the walk, not inside it: this is an iterator, and a caller that stops early has read
+        // only part of the document - a count taken mid-walk would describe that part and be read as
+        // describing the model.
+        CountUnconnected(junctions);
     }
+
+    /// <summary>Carries the count out of the per-document reader, which the walk creates and drops.</summary>
+    private void CountUnconnected(JunctionBoxReader junctions) => BoxesUnconnected += junctions.Unconnected;
 
     private static CarrierNode? Read(Element element, long source, Transform transform, string carrierClass)
     {

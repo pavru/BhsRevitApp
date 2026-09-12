@@ -35,8 +35,12 @@ public sealed class CablingSnapshot
         int nestedLinksIgnored,
         int carriersSkipped,
         int markersExcluded = 0,
-        bool markerTypeKnown = false)
+        bool markerTypeKnown = false,
+        IReadOnlyList<ExistingBox>? boxes = null,
+        int boxesUnconnected = 0)
     {
+        Boxes = boxes ?? Array.Empty<ExistingBox>();
+        BoxesUnconnected = boxesUnconnected;
         Network = network;
         Carriers = carriers;
         Circuits = circuits;
@@ -99,6 +103,12 @@ public sealed class CablingSnapshot
     /// </remarks>
     public bool MarkerTypeKnown { get; }
 
+    /// <summary>The junction boxes already in the model and joined to the structure.</summary>
+    public IReadOnlyList<ExistingBox> Boxes { get; }
+
+    /// <summary>How many elements call themselves boxes and are joined to nothing.</summary>
+    public int BoxesUnconnected { get; }
+
     /// <summary>Reads the host and its links, and builds the network and the circuits.</summary>
     public static CablingSnapshot Build(
         Document host,
@@ -146,6 +156,8 @@ public sealed class CablingSnapshot
             nested,
             reader.Skipped,
             reader.Markers,
-            reader.MarkerTypeKnown);
+            reader.MarkerTypeKnown,
+            reader.Boxes,
+            reader.BoxesUnconnected);
     }
 }

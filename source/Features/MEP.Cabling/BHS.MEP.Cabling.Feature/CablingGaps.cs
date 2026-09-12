@@ -35,6 +35,10 @@ internal static class CablingGaps
 
         // Named, not only counted: a typo in a connection value is fixed on one circuit or one panel,
         // and a count sends the designer looking through all of them.
+        // A box that is joined to nothing is a modelling fault, and from the routing side it looks
+        // like a box the calculation ignored for no reason. Said, therefore, rather than dropped.
+        Add(lines, snapshot.BoxesUnconnected, "junction boxes by their type, joined to no carrier");
+
         var unreadable = snapshot.Circuits.UnreadableConnection;
 
         if (unreadable.Count > 0)
