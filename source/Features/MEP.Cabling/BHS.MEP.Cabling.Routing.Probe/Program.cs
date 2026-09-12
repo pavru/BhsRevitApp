@@ -14,7 +14,7 @@ namespace BHS.MEP.Cabling.Routing.Probe;
 internal static class Program
 {
     private const double Tolerance = 0.1;
-    private const int Floor = 52;
+    private const int Floor = 75;
 
     private static int _run;
     private static int _failed;
@@ -34,6 +34,8 @@ internal static class Program
         AFittingJoinsOnEveryConnector();
         TheDropIsMeasuredToAnEndAndCouldBeMeasuredAlong();
         ACableLeavesATrayWhereItLikesAndPaysForWhatItWalks();
+        ACableCutInBoxesComesDownOnce();
+        BoxesAreWhereTheTapsAreAndCountWhatTheyTake();
 
         Console.WriteLine();
 
@@ -495,6 +497,133 @@ internal static class Program
 
         Check("while a pipe walked end to end costs all of it", Near(through.AlongCarriers, 20));
     }
+
+    /// <summary>
+    /// The two ways of connecting a device, on one tray and three sockets under it.
+    /// <code>
+    ///   +=========================+        tray, 0 to 30, at z = 0
+    ///   P        S1       S2       S3      all one foot below it
+    ///   0        10       20       30
+    /// </code>
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <b>Cut at each terminal</b>, every leg climbs up from where it starts and comes down where it
+    /// ends: the panel's one foot, then two feet at each socket but the last, then the last - six.
+    /// <b>Cut in boxes</b>, the trunk climbs once from the panel and stays up, and each socket gets
+    /// one spur - one plus three, four. The carriers walked are the same thirty feet either way.
+    /// </para>
+    /// <para>
+    /// This is the owner's difference, written as arithmetic. On the first real model the drops were
+    /// 38 % of the headline, and the terminal mode counts every intermediate one twice.
+    /// </para>
+    /// </remarks>
+    private static void ACableCutInBoxesComesDownOnce()
+    {
+        Section("a cable cut in boxes comes down once per device");
+
+        var network = NetworkBuilder.Build(1, new[] { Tray(0, 0, 30) }, Options());
+        var devices = new[] { Terminal(10, 0, -1, "S1"), Terminal(20, 0, -1, "S2"), Terminal(30, 0, -1, "S3") };
+
+        var atTerminals = Router.Route(
+            network,
+            new CircuitSnapshot(new CarrierId(1), "P-1", Terminal(0, 0, -1, "panel"), devices),
+            Options());
+
+        var inBoxes = Router.Route(
+            network,
+            new CircuitSnapshot(new CarrierId(1), "P-1", Terminal(0, 0, -1, "panel"), devices)
+            {
+                Connection = CircuitConnection.AtJunctionBox,
+            },
+            Options());
+
+        Check("cut at the terminals, each intermediate drop is walked down and back up", Near(atTerminals.Approaches, 6));
+        Check("cut in boxes, the trunk climbs once and each device gets one spur", Near(inBoxes.Approaches, 4));
+        Check("and the carriers walked are the same either way",
+            Near(inBoxes.AlongCarriers, 30) && Near(atTerminals.AlongCarriers, 30));
+        Check("the result says which way it was routed", inBoxes.Connection == CircuitConnection.AtJunctionBox);
+
+        Check("there is a tap for every device, in the order they are visited",
+            inBoxes.Taps.Count == 3
+            && inBoxes.Taps[0].Device.Label == "S1"
+            && inBoxes.Taps[2].Device.Label == "S3");
+
+        Check("each tap is on the tray, above its device",
+            Near(inBoxes.Taps[0].At.X, 10) && Near(inBoxes.Taps[1].At.X, 20)
+            && Near(inBoxes.Taps[2].At.X, 30) && Near(inBoxes.Taps[1].At.Z, 0));
+
+        Check("and each spur is the foot down to it", Near(inBoxes.Taps[1].Spur, 1));
+        Check("taps are recorded in the terminal mode as well - it is still where the cable comes down",
+            atTerminals.Taps.Count == 3);
+    }
+
+    /// <summary>
+    /// The planner, over results written by hand - it is arithmetic over taps, and producing them by
+    /// routing would test the search again and this not at all.
+    /// </summary>
+    /// <remarks>
+    /// Every rule checked here is an answer the owner gave on 2026-09-11: a box at every device, the
+    /// last one included; one box per place shared by every circuit; its count is every cable entry;
+    /// and one radius decides both merging and whether an existing box is used.
+    /// </remarks>
+    private static void BoxesAreWhereTheTapsAreAndCountWhatTheyTake()
+    {
+        Section("boxes from taps");
+
+        // One circuit, three devices far apart.
+        var chain = InBoxes(1, 10, 20, 30);
+        var three = BoxPlanner.Plan(new[] { chain }, Array.Empty<ExistingBox>(), radius: 1.5);
+
+        Check("a box at every device, the last one included", three.Count == 3);
+        Check("an intermediate box takes the trunk in and out and one spur - three",
+            three[0].Entries == 3 && three[1].Entries == 3);
+        Check("the last box takes the trunk in and one spur - two", three[2].Entries == 2);
+        Check("all of them are recommendations, nothing stands there yet", three.All(box => box.IsRecommendation));
+
+        // Two devices of one circuit closer than the radius share a box, and no trunk runs between them.
+        var close = BoxPlanner.Plan(new[] { InBoxes(1, 10, 11, 20) }, Array.Empty<ExistingBox>(), radius: 1.5);
+
+        Check("taps closer than the radius share one box", close.Count == 2 && close[0].Spurs == 2);
+        Check("which takes the trunk in, the trunk out and both spurs - four", close[0].Entries == 4);
+        Check("and it stands at the first tap, on the structure, not between them", Near(close[0].At.X, 10));
+
+        // Two circuits tapping at the same place share one box, and it counts both.
+        var shared = BoxPlanner.Plan(new[] { InBoxes(1, 10), InBoxes(2, 10) }, Array.Empty<ExistingBox>(), radius: 1.5);
+
+        Check("two circuits in one place share one box", shared.Count == 1);
+        Check("which names both circuits", shared[0].Circuits.Count == 2);
+        Check("and takes what both bring - two and two", shared[0].Entries == 4);
+
+        // An existing box within the radius is used; one nobody reaches is not part of the answer.
+        var existing = new[] { new ExistingBox(new CarrierId(500), P(20.5, 0, 0)), new ExistingBox(new CarrierId(501), P(100, 0, 0)) };
+        var withReal = BoxPlanner.Plan(new[] { chain }, existing, radius: 1.5);
+
+        Check("an existing box within the radius is used instead of recommending one",
+            withReal.Count(box => !box.IsRecommendation) == 1
+            && withReal.Single(box => !box.IsRecommendation).Existing!.Id == new CarrierId(500));
+        Check("and an existing box nobody reaches is left out", withReal.Count == 3);
+
+        // A circuit cut at its terminals asks for no boxes at all.
+        var terminals = BoxPlanner.Plan(new[] { InBoxes(3, 10, 20).With(CircuitConnection.AtTerminal) }, Array.Empty<ExistingBox>(), 1.5);
+
+        Check("a circuit cut at its terminals asks for no boxes", terminals.Count == 0);
+    }
+
+    /// <summary>A found route cut in boxes, with a tap on the tray above each x given.</summary>
+    private static RouteResult InBoxes(long circuit, params double[] taps) =>
+        new(new CarrierId(circuit), RouteStatus.Found, 7)
+        {
+            Connection = CircuitConnection.AtJunctionBox,
+            Taps = taps.Select(x => new Tap(Terminal(x, 0, -1, "S" + x), new CarrierId(0), P(x, 0, 0), 1)).ToArray(),
+        };
+
+    private static RouteResult With(this RouteResult route, CircuitConnection connection) =>
+        new(route.Circuit, route.Status, route.NetworkVersion)
+        {
+            Connection = connection,
+            Taps = route.Taps,
+        };
 
     private static void AFittingJoinsOnEveryConnector()
     {

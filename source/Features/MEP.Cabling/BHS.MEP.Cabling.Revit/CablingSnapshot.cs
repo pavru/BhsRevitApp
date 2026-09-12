@@ -105,7 +105,8 @@ public sealed class CablingSnapshot
         RoutingOptions options,
         CarrierCatalogue catalogue,
         long version,
-        RecommendedBoxes? boxes = null)
+        RecommendedBoxes? boxes = null,
+        CircuitConnection defaultConnection = CircuitConnection.AtTerminal)
     {
         var reader = new CarrierReader(catalogue, boxes);
         var carriers = new List<CarrierNode>(reader.Read(host, 0, Transform.Identity));
@@ -139,7 +140,7 @@ public sealed class CablingSnapshot
         return new CablingSnapshot(
             NetworkBuilder.Build(version, carriers, options),
             carriers,
-            new CircuitReader().Read(host),
+            new CircuitReader(defaultConnection).Read(host),
             read,
             notLoaded,
             nested,

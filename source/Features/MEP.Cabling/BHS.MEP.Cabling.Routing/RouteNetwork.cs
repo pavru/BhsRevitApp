@@ -200,6 +200,33 @@ public sealed class Terminal
     public string Label { get; }
 }
 
+/// <summary>How the devices of a circuit are connected to its cable.</summary>
+/// <remarks>
+/// <para>
+/// <b>Told by the owner, not measured, and the difference is a fifth of the headline length.</b> A
+/// device is either connected with the cable cut at its terminal - a doubled cable comes down to it
+/// and a new run leaves - or with a single trunk cut in a junction box, from which only a spur
+/// descends. On the first real model the drops were 38 % of the total, and the second way counts
+/// each of them once where the first counts it twice.
+/// </para>
+/// <para>
+/// A property of the circuit, inherited from its panel: a power panel does all of its circuits
+/// through boxes, an RS485 panel through terminals. Where it is read from is the Revit side's
+/// business; the search only needs the answer.
+/// </para>
+/// </remarks>
+public enum CircuitConnection
+{
+    /// <summary>The cable is cut at each device: every intermediate drop is walked down and back up.</summary>
+    AtTerminal,
+
+    /// <summary>
+    /// One trunk along the structure, a box at every device - the last one included, the owner's
+    /// answer of 2026-09-11 - and a single spur from each box down to its device.
+    /// </summary>
+    AtJunctionBox,
+}
+
 /// <summary>A circuit to route, with everything the search needs and nothing it has to ask for.</summary>
 /// <remarks>
 /// Circuits are not part of <see cref="RouteNetwork"/> on purpose: the network is the structure of
@@ -244,6 +271,14 @@ public sealed class CircuitSnapshot
 
     /// <summary>Cross-section of the cable, for the fill calculation. Zero when unknown.</summary>
     public double CableArea { get; init; }
+
+    /// <summary>How its devices are connected. Terminal unless somebody said otherwise.</summary>
+    /// <remarks>
+    /// Terminal is the default because it is what the search did before the question was asked, and
+    /// a default that changed the headline number of every existing model would be a change nobody
+    /// decided. The owner's settings and parameters say otherwise per project and per panel.
+    /// </remarks>
+    public CircuitConnection Connection { get; init; } = CircuitConnection.AtTerminal;
 }
 
 /// <summary>What the structure looks like as a graph, for when a search says it could not cross it.</summary>

@@ -33,6 +33,18 @@ internal static class CablingGaps
         Add(lines, snapshot.Circuits.WithoutDevices, "circuits with no reachable device");
         Add(lines, snapshot.Circuits.DevicesSkipped, "devices dropped from circuits that were described");
 
+        // Named, not only counted: a typo in a connection value is fixed on one circuit or one panel,
+        // and a count sends the designer looking through all of them.
+        var unreadable = snapshot.Circuits.UnreadableConnection;
+
+        if (unreadable.Count > 0)
+        {
+            lines.Add(unreadable.Count.ToString(CultureInfo.CurrentCulture)
+                      + " circuit(s) with a connection value that is neither Terminal nor JunctionBox,"
+                      + " routed with the project's default: " + string.Join("; ", unreadable.Take(5))
+                      + (unreadable.Count > 5 ? "; ..." : string.Empty));
+        }
+
         return lines;
     }
 

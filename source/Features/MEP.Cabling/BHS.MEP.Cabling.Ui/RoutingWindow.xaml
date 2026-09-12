@@ -64,11 +64,18 @@
 
         <!-- The comparison the result owes an explanation for. "Longer by 9 %" invites a bug
              report; naming the drops to devices does not. -->
-        <TextBlock Grid.Row="3"
-                   Margin="0,6,0,0"
-                   Text="{Binding LengthSummary}"
-                   TextWrapping="Wrap"
-                   Visibility="{Binding HasResult, Converter={StaticResource Shown}}" />
+        <StackPanel Grid.Row="3">
+            <TextBlock Margin="0,6,0,0"
+                       Text="{Binding LengthSummary}"
+                       TextWrapping="Wrap"
+                       Visibility="{Binding HasResult, Converter={StaticResource Shown}}" />
+            <!-- What the circuits cut in boxes ask for. Beside the length, because the boxes
+                 are what the single-spur length assumes. -->
+            <TextBlock Margin="0,6,0,0"
+                       Text="{Binding BoxSummary}"
+                       TextWrapping="Wrap"
+                       Visibility="{Binding HasBoxSummary, Converter={StaticResource Shown}}" />
+        </StackPanel>
 
         <!-- Only when a run failed to cross the structure. Then it is the answer; otherwise it is
              a true sentence that buries the ones that matter. -->

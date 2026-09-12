@@ -103,6 +103,14 @@ public sealed class RouteRun
     /// </remarks>
     public NetworkShape Shape { get; init; }
 
+    /// <summary>The boxes the circuits cut in boxes need: existing ones used, and places recommended.</summary>
+    /// <remarks>
+    /// Planned here, with the routes, and not in the apply phase: the screen owes the designer the
+    /// count before anything is written, and a count computed twice - once to show, once to place -
+    /// is two answers that will one day disagree.
+    /// </remarks>
+    public IReadOnlyList<PlannedBox> Boxes { get; init; } = Array.Empty<PlannedBox>();
+
     /// <summary>How long the search itself took, without the reading that preceded it.</summary>
     /// <remarks>
     /// Apart from the read on purpose. Reading a model is dominated by how big the model is and how

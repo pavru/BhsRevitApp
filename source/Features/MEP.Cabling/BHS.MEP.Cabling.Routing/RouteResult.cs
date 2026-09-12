@@ -30,6 +30,43 @@ public enum RouteStatus
     NothingToRoute,
 }
 
+/// <summary>Where the cable leaves the structure for one device.</summary>
+/// <remarks>
+/// <para>
+/// <b>The point the search already found and used to throw away.</b> Each leg ends where the cable
+/// leaves the last carrier for the device - the nearest point along an open tray, the end of a
+/// closed conduit - and that point is exactly where a junction box would stand. It was computed for
+/// the length and dropped before the result was returned, so the apply phase had nowhere to put an
+/// indicator.
+/// </para>
+/// <para>
+/// Recorded in both connection modes. In the terminal mode nobody puts a box there, but it is still
+/// where the cable comes down, and the screen and the route's geometry want it either way.
+/// </para>
+/// </remarks>
+public sealed class Tap
+{
+    public Tap(Terminal device, CarrierId carrier, Point3 at, double spur)
+    {
+        Device = device;
+        Carrier = carrier;
+        At = at;
+        Spur = spur;
+    }
+
+    /// <summary>The device this tap serves.</summary>
+    public Terminal Device { get; }
+
+    /// <summary>The carrier the cable leaves.</summary>
+    public CarrierId Carrier { get; }
+
+    /// <summary>Where on that carrier it leaves, in internal feet, host coordinates.</summary>
+    public Point3 At { get; }
+
+    /// <summary>How far it then travels to the device, in internal feet.</summary>
+    public double Spur { get; }
+}
+
 /// <summary>What the search found for one circuit.</summary>
 public sealed class RouteResult
 {
@@ -99,6 +136,13 @@ public sealed class RouteResult
     /// search. Travelling together, the pair cannot be taken from different sets.
     /// </remarks>
     public double BuiltInLength { get; init; }
+
+    /// <summary>How the circuit was routed - carried so that what is done with the taps can tell.</summary>
+    public CircuitConnection Connection { get; init; } = CircuitConnection.AtTerminal;
+
+    /// <summary>Where the cable leaves the structure, one per device, in the order the circuit visits them.</summary>
+    /// <remarks>Empty unless <see cref="Status"/> is Found.</remarks>
+    public IReadOnlyList<Tap> Taps { get; init; } = Array.Empty<Tap>();
 
     public double TotalLength => AlongCarriers + Approaches;
 }

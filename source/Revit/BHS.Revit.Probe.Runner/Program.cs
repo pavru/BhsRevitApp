@@ -470,10 +470,34 @@ internal static class Program
             return false;
         }
 
-        if (!options.WithEdition)
+        // Which editions to build beside the probe: every release when asked for, and otherwise the
+        // releases that already have one installed.
+        //
+        // The second half is a correction, and it was paid for with a whole sweep. Once the probe began
+        // carrying the feature's own assemblies for the declared tests, the edition and the probe
+        // started sharing the simple names BHS.MEP.Cabling.Revit and .Routing - and --deploy refreshed
+        // only the probe. On Revit 2027 the edition's copy won the name, it came from an older tree,
+        // and six test cases died on MissingMethodException and TypeLoadException for a type added an
+        // hour before. The prediction was already written down in CLAUDE.md; the command still left it
+        // to memory. Refreshing an edition that is already there is not installing a product into
+        // somebody's Revit - it is keeping two deployments of one tree in step, which is the only
+        // state in which the sweep's answer means anything.
+        var editions = options.WithEdition
+            ? installed
+            : installed.Where(one => Directory.Exists(EditionInstaller.EditionDirectory(one))).ToList();
+
+        if (editions.Count == 0)
             return true;
 
-        if (!EditionInstaller.Deploy(root, installed))
+        if (!options.WithEdition)
+        {
+            Console.WriteLine(
+                "the edition is installed beside the probe for "
+                + string.Join(", ", editions.Select(one => one.Release.Year))
+                + " and shares its assemblies' names, so it is rebuilt from this tree too");
+        }
+
+        if (!EditionInstaller.Deploy(root, editions))
         {
             // Loudly, and as a failure: the probe has just been refreshed, so a probe without the
             // edition it was meant to be installed beside is the drift this flag was asked for.
@@ -485,7 +509,7 @@ internal static class Program
         // Asked while both folders are still warm, because this is the one moment when the answer
         // is cheap to act on: the fix is to run the command again. The same question is asked from
         // inside Revit by FrameworkAssemblyCheck, but by then somebody is already debugging.
-        EditionInstaller.ReportSharedAssemblies(installed);
+        EditionInstaller.ReportSharedAssemblies(editions);
         return true;
     }
 
