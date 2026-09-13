@@ -802,10 +802,11 @@ internal static class SweepChecks
     /// <para>
     /// <b>Two assertions, because the design rests on both.</b> That Revit calls an availability class
     /// whose logic is <c>AvailabilityEntryPoint&lt;GateRule&gt;</c> in <c>BHS.Revit.Abstractions</c>:
-    /// RefCheck accepts the shape against metadata, and Revit has never been asked. And that asking it
-    /// leaves the feature assembly out of the AppDomain until a press - expected from how the CLR
-    /// resolves types, since the Entry assembly also holds a command entry point whose base names the
-    /// feature's command, and not observed. Red on either means the design is wrong, not the probe.
+    /// RefCheck accepts the shape against metadata, and only Revit can say whether it constructs it. And
+    /// that asking it leaves the feature assembly out of the AppDomain until a press, although the Entry
+    /// assembly also holds a command entry point whose base names the feature's command. Both were
+    /// written before the answer and first came back green on all four releases on 2026-09-14. Red on
+    /// either means the design is wrong, not the probe.
     /// </para>
     /// <para>
     /// <b>The loaded state is read after the counter moved, and read twice.</b> Once in the same answer
@@ -815,10 +816,11 @@ internal static class SweepChecks
     /// following closely on the first call is not missed by a read that came too early.
     /// </para>
     /// <para>
-    /// <b>The rest are notes</b>, because nobody knows the answers and either is compatible with the
-    /// design: what <c>ActiveAddInId</c> says while Revit asks availability, whether the rule is called
-    /// off the API thread, and whether the Entry assembly came in when the ribbon was built or only when
-    /// its class was first asked.
+    /// <b>The rest are notes</b>, because nobody knew the answers when they were written and either is
+    /// compatible with the design: what <c>ActiveAddInId</c> says while Revit asks availability, whether
+    /// the rule is called off the API thread, and whether the Entry assembly came in when the ribbon was
+    /// built or only when its class was first asked. First answered 2026-09-14, alike on four releases:
+    /// the probe's own id, never off the API thread, and only when first asked.
     /// </para>
     /// </remarks>
     private static async Task CheckEntryAvailabilityAsync(
@@ -940,9 +942,9 @@ internal static class SweepChecks
     /// arrives either.</description></item>
     /// </list>
     /// <para>
-    /// The raw <c>ActiveAddInId</c> is a note: no run has isolated it for any kind of button - Ping used
-    /// to record the host it was handed, not the id - and the entry point consults it only when more
-    /// than one host declares the feature, which this sweep does not arrange.
+    /// The raw <c>ActiveAddInId</c> is a note: first recorded 2026-09-14, when it named the probe on all
+    /// four releases - before that Ping recorded the host it was handed, not the id - and the entry point
+    /// consults it only when more than one host declares the feature, which this sweep does not arrange.
     /// </para>
     /// </remarks>
     private static async Task CheckEntryCommandAsync(
@@ -1123,7 +1125,7 @@ internal static class SweepChecks
     /// <remarks>
     /// Three answers in one press, and none of them reachable any other way. Whether the registry
     /// keyed by add-in id is found from inside a command Revit constructed from a string; what
-    /// <c>ActiveAddInId</c> actually returns there, which was documented and never measured; and
+    /// <c>ActiveAddInId</c> actually returns there, documented and first recorded raw on 2026-09-14; and
     /// whether the feature assembly stays unloaded until the button is used.
     /// </remarks>
     private static async Task CheckFeatureCommandAsync(

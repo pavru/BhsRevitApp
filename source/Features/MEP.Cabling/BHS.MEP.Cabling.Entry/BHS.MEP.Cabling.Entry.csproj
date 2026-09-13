@@ -28,11 +28,10 @@
 
       Referencing .Feature loads nothing by itself: the CLR resolves a base type when it first
       constructs the derived one, so the feature's assembly comes in when Revit constructs an entry
-      point on a press. Measured in the probe, on all four releases, for an entry point that sat in
-      the edition. What is new here and not measured: Revit now loads THIS assembly earlier, to
-      construct the availability class when the tab holding the buttons is shown, and whether
-      .Feature still stays out until a press with this assembly loaded is expected from the same lazy
-      resolution rather than observed.
+      point on a press. Measured in the probe on all four releases, first for an entry point that sat
+      in the edition, and on 2026-09-14 for this very shape (the probe's Gate experiment): Revit loads
+      the Entry assembly not when it adds the button but when it first asks the availability class,
+      milliseconds before the call, and .Feature still stays out until the press.
     -->
 
     <!-- No UseWPF, although .Feature has it: this project names no WPF type, and the base SDK's check

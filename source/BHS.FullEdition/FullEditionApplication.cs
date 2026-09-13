@@ -77,8 +77,9 @@ public sealed class FullEditionApplication : RevitAddInApplication
     /// what the application must know before anybody uses the feature - identifiers for the
     /// registrations Revit allows only while it starts, and the availability rule its buttons ask - and
     /// is forbidden by RVTDEC001 from referencing the assemblies that do the work. Those still load on
-    /// a press and not before; with the entry points now in the feature's Entry assembly, which Revit
-    /// loads earlier to ask availability, that is expected rather than measured.
+    /// a press and not before, with the entry points in the feature's Entry assembly that Revit loads
+    /// earlier to ask availability - measured on all four releases on 2026-09-14, in the probe's Gate
+    /// experiment, which is cut exactly like cabling.
     /// </para>
     /// </remarks>
     protected override IReadOnlyList<IFeatureModule> Modules { get; } = new IFeatureModule[]

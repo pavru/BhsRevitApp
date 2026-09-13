@@ -103,11 +103,11 @@ public abstract class CommandEntryPoint<TCommand> : IExternalCommand
     /// <remarks>
     /// <para>
     /// By add-in id first, because that is what Revit itself says is executing, and by the assembly
-    /// this type came from second. <b>The first is not isolated by any measurement</b>, whatever the
-    /// earlier record said: the probe wrote down the id of the host its command was handed, and with
-    /// the assembly fallback behind the id, a missing or wrong <c>ActiveAddInId</c> would have produced
-    /// the same line. The probe now records the raw value beside the host; until a run reads it, both
-    /// ways in stay.
+    /// this type came from second. <b>The first is measured as a raw value since 2026-09-14</b>: inside
+    /// the probe's Ping command, on all four releases, <c>ActiveAddInId</c> named the probe - the add-in
+    /// whose button was pressed - with the edition installed in the same process. The record before
+    /// that run claimed the same and did not show it: it wrote down the host the command was handed,
+    /// which the assembly fallback could have produced as well.
     /// </para>
     /// <para>
     /// The second also covers what an id cannot tell apart. One assembly can own two hosts - the probe
@@ -161,9 +161,10 @@ public abstract class CommandEntryPoint<TCommand> : IExternalCommand
 /// nothing else is consulted. <b>None</b> means the edition does not declare the feature, and the
 /// command says so rather than running against services nobody composed for it. <b>More than one</b>
 /// is a development state, two editions or the probe beside an edition, and only then is
-/// <c>ActiveAddInId</c> read to choose. What it returns inside a command has not been isolated by a
-/// measurement for any kind of button - the probe used to record the host it was handed, not the raw
-/// id - so it decides only what the feature alone cannot.
+/// <c>ActiveAddInId</c> read to choose. Measured raw inside a command built from an Entry manifest -
+/// the probe's Gate, on all four releases, 2026-09-14 - it named the add-in whose host built the
+/// button. The case it is read for, two hosts declaring one feature, has not been run; so it still
+/// decides only what the feature alone cannot.
 /// </para>
 /// <para>
 /// Naming <typeparamref name="TFeature"/> here loads nothing a press would not: a feature's module

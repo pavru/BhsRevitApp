@@ -117,10 +117,11 @@ public static class HostRegistry
     /// </summary>
     /// <remarks>
     /// <para>
-    /// The primary key comes from <c>commandData.Application.ActiveAddInId</c>, which no measurement
-    /// has isolated yet: the probe recorded the id of the host its command was handed, and this very
-    /// fallback could have handed the same one. The raw value is recorded now. Commands built from a
-    /// feature's Entry manifest do not come here - <see cref="FindByFeature"/> finds them.
+    /// The primary key comes from <c>commandData.Application.ActiveAddInId</c>. Measured raw on all
+    /// four releases on 2026-09-14: it named the add-in whose button was pressed. Before that run the
+    /// probe recorded only the host its command was handed, which this very fallback could have handed
+    /// too. Commands built from a feature's Entry manifest do not come here -
+    /// <see cref="FindByFeature"/> finds them.
     /// </para>
     /// <para>
     /// This remains the fallback of <c>CommandEntryPoint&lt;TCommand&gt;</c>, the entry point that sits

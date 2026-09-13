@@ -28,9 +28,10 @@ namespace BHS.MEP.Cabling.Declaration;
 /// <para>
 /// <b>Why a rule lives in the declaration at all.</b> Revit asks an availability class while the tab
 /// holding its buttons is shown, and not at all while the tab is hidden - measured, for a class
-/// declared in the add-in's own assembly. That this rule is asked the same way, through
+/// declared in the add-in's own assembly. That a rule is asked the same way, through
 /// <c>AvailabilityEntryPoint</c> in <c>BHS.Revit.Abstractions</c> behind a class in the feature's Entry
-/// assembly, is expected and not measured; the probe's Gate experiment is what measures it. Either way
+/// assembly, was measured on all four releases on 2026-09-14 by the probe's Gate rule, on the API
+/// thread every time; this rule's own buttons are checked by a person, not by the sweep. Either way
 /// the asking comes before anybody presses anything, so the rule cannot live in the implementation
 /// without loading it. The declaration is
 /// loaded at startup anyway and is forbidden to reference the implementation, and this reads nothing

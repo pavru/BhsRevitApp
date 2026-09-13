@@ -29,8 +29,9 @@ public sealed class LocalAvailability : IExternalCommandAvailability
 
     public bool IsCommandAvailable(UIApplication applicationData, CategorySet selectedCategories)
     {
-        // What Revit names as the executing add-in while it asks availability - which nobody knows,
-        // because nothing is executing. Recorded for the control because GateAvailability may not
+        // What Revit names as the executing add-in while it asks availability, although nothing is
+        // executing. First measured 2026-09-14: the probe, on all four releases, first and latest
+        // alike - kept as a note, not an assertion. Recorded for the control because GateAvailability may not
         // record anything: an Entry class carries no logic, and GateRule is never shown the
         // UIApplication. First and latest, since the answer may well change once a command has run.
         var active = DescribeActiveAddIn(applicationData);

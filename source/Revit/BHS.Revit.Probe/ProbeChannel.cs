@@ -275,9 +275,11 @@ internal sealed class ProbeChannel : RevitSideChannel.RevitSideChannelBase
     /// <para>
     /// <b>Reported, not judged.</b> The runner decides which of these are assertions - that the rule was
     /// asked, that the feature stayed out until a press, that the command reached this host - and which
-    /// are notes, because nobody knows the answer yet: <c>ActiveAddInId</c> inside availability and
-    /// inside a command built from a feature's manifest, and whether Revit loads a button's assembly when
-    /// it adds the button or when it first asks it.
+    /// are notes, because nobody knew the answer when they were written: <c>ActiveAddInId</c> inside
+    /// availability and inside a command built from a feature's manifest, and whether Revit loads a
+    /// button's assembly when it adds the button or when it first asks it. The first attended run,
+    /// 2026-09-14, answered all three the same way on four releases; they stay notes until a check
+    /// written for them has been shown red.
     /// </para>
     /// <para>
     /// Everything about the Entry and feature assemblies is read as text - environment variables,

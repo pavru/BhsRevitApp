@@ -39,9 +39,10 @@
 
           And it brings the feature itself, transitively, which this project names nowhere. That does
           not load it: the CLR resolves an entry point's base, and the feature with it, when Revit
-          first constructs the entry point on a press. Measured on all four releases in the probe, for
-          an entry point that sat in the edition's own assembly; for one in an Entry assembly that
-          Revit has already loaded to ask availability, expected and not measured.
+          first constructs the entry point on a press. Measured on all four releases in the probe,
+          first for an entry point in the edition's own assembly, and on 2026-09-14 for one in an Entry
+          assembly that Revit had already loaded to ask availability: the feature came in only with the
+          press, two seconds and more after the rule was asked.
         -->
         <ProjectReference Include="..\Features\MEP.Cabling\BHS.MEP.Cabling.Entry\BHS.MEP.Cabling.Entry.csproj" />
     </ItemGroup>

@@ -23,8 +23,9 @@ namespace BHS.MEP.Cabling.Entry;
 /// while the ribbon merely exists - which on Revit 2024 matters, because every add-in shares one
 /// AppDomain and a loaded assembly holds its simple name for the session. Measured in the probe on
 /// all four releases, for an entry point in the edition's own assembly. With the entry point here,
-/// this assembly is loaded earlier, when the availability class beside it is constructed; that the
-/// feature still stays out until a press is expected and not measured.
+/// this assembly is loaded earlier, when the availability class beside it is constructed - and the
+/// feature still stays out until a press, measured for this shape in the probe's Gate experiment on
+/// all four releases on 2026-09-14.
 /// </para>
 /// <para>
 /// <b>The host is found by <see cref="CablingFeature"/>, not by this assembly.</b> Every edition that
