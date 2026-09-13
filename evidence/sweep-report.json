@@ -1,15 +1,15 @@
 {
   "Schema": 2,
   "Disclaimer": "Recorded on a developer machine. Revit cannot run on hosted CI, so CI verifies this record rather than reproducing it: no automated check here has ever started a Revit.",
-  "Commit": "7b0e8c3dcbdac00d62634359c914995590e22387",
+  "Commit": "57dde109423a00ea14ce704af22475a0961e82a2",
   "CommitClean": true,
   "Content": {
-    "source/Revit": "1943b721e42e0cb0479817041becae5e1cd666fd",
+    "source/Revit": "83693fe5eba202b5285143758e9091abcba7ffa3",
     "source/Shared": "74994abc25e47a4a9233275e831de55cc6dbaabb",
     "source/WinSide": "5b71abdce4cd8186abf36416137a3dfa7f437a28",
     "build/BHS.Revit.Sdk": "eb401a3b673fabf6b4ba9ee1286cf8a450e3ed1c"
   },
-  "RecordedUtc": "2026-09-13T01:40:15.7876311Z",
+  "RecordedUtc": "2026-09-13T21:33:37.2961382Z",
   "WithModel": true,
   "ShowTab": false,
   "Linked": true,
@@ -17,7 +17,7 @@
     {
       "Release": 2024,
       "FileVersion": "0.1.0.0",
-      "BuiltUtc": "2026-09-13T01:35:55.2555577Z",
+      "BuiltUtc": "2026-09-13T21:23:12.4018741Z",
       "Signed": true,
       "Checks": [
         {
@@ -477,11 +477,11 @@
         },
         {
           "Name": "launched",
-          "Value": "pid 45276"
+          "Value": "pid 71876"
         },
         {
           "Name": "registered after",
-          "Value": "15.9s"
+          "Value": "18.9s"
         },
         {
           "Name": "recovered by enumeration",
@@ -497,11 +497,11 @@
         },
         {
           "Name": "probe log",
-          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2024-45276-20260913-113623.log"
+          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2024-71876-20260914-072345.log"
         },
         {
           "Name": "threads",
-          "Value": "api 1, call 17"
+          "Value": "api 1, call 12"
         },
         {
           "Name": "appdomain",
@@ -525,7 +525,7 @@
         },
         {
           "Name": "log",
-          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2024-45276-20260913-113623.log"
+          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2024-71876-20260914-072345.log"
         },
         {
           "Name": "sinks",
@@ -537,11 +537,15 @@
         },
         {
           "Name": "opened after registration",
-          "Value": "18.2s"
+          "Value": "19.7s"
         },
         {
           "Name": "availability and the press",
           "Value": "not asked - set BHS_PROBE_SHOW_TAB=1 for both"
+        },
+        {
+          "Name": "Entry assembly while the ribbon stands and its tab was never shown",
+          "Value": "loaded False, already when the ribbon was built False, its rule asked 0 time(s)"
         },
         {
           "Name": "model settings",
@@ -577,7 +581,7 @@
         },
         {
           "Name": "instance",
-          "Value": "975e9c4a2905484d9e326a9088df428c"
+          "Value": "282ebe4766c542ff8415ef1ec75f7b68"
         },
         {
           "Name": "link1:linked",
@@ -621,11 +625,11 @@
         },
         {
           "Name": "log",
-          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2024-45276-20260913-113623.log"
+          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2024-71876-20260914-072345.log"
         },
         {
           "Name": "pid",
-          "Value": "45276"
+          "Value": "71876"
         },
         {
           "Name": "release",
@@ -697,15 +701,15 @@
         },
         {
           "Name": "instance",
-          "Value": "975e9c4a2905484d9e326a9088df428c"
+          "Value": "282ebe4766c542ff8415ef1ec75f7b68"
         },
         {
           "Name": "log",
-          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2024-45276-20260913-113623.log"
+          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2024-71876-20260914-072345.log"
         },
         {
           "Name": "pid",
-          "Value": "45276"
+          "Value": "71876"
         },
         {
           "Name": "place:after",
@@ -789,11 +793,11 @@
         },
         {
           "Name": "instance",
-          "Value": "975e9c4a2905484d9e326a9088df428c"
+          "Value": "282ebe4766c542ff8415ef1ec75f7b68"
         },
         {
           "Name": "log",
-          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2024-45276-20260913-113623.log"
+          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2024-71876-20260914-072345.log"
         },
         {
           "Name": "modal:apiCallWorked",
@@ -821,7 +825,7 @@
         },
         {
           "Name": "modal:awaitResumedAfter",
-          "Value": "0.48s"
+          "Value": "0.52s"
         },
         {
           "Name": "modal:awaitResumedOnApiThread",
@@ -845,7 +849,7 @@
         },
         {
           "Name": "modal:shownFor",
-          "Value": "2.54s"
+          "Value": "2.58s"
         },
         {
           "Name": "modal:transactionCommit",
@@ -877,7 +881,7 @@
         },
         {
           "Name": "pid",
-          "Value": "45276"
+          "Value": "71876"
         },
         {
           "Name": "release",
@@ -889,11 +893,11 @@
         },
         {
           "Name": "instance",
-          "Value": "975e9c4a2905484d9e326a9088df428c"
+          "Value": "282ebe4766c542ff8415ef1ec75f7b68"
         },
         {
           "Name": "log",
-          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2024-45276-20260913-113623.log"
+          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2024-71876-20260914-072345.log"
         },
         {
           "Name": "modal:measured",
@@ -905,7 +909,7 @@
         },
         {
           "Name": "modal:pumpRanAt",
-          "Value": "2.54s"
+          "Value": "2.58s"
         },
         {
           "Name": "modal:windowClosed",
@@ -913,7 +917,7 @@
         },
         {
           "Name": "pid",
-          "Value": "45276"
+          "Value": "71876"
         },
         {
           "Name": "release",
@@ -925,11 +929,11 @@
         },
         {
           "Name": "instance",
-          "Value": "975e9c4a2905484d9e326a9088df428c"
+          "Value": "282ebe4766c542ff8415ef1ec75f7b68"
         },
         {
           "Name": "log",
-          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2024-45276-20260913-113623.log"
+          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2024-71876-20260914-072345.log"
         },
         {
           "Name": "parameters:bound",
@@ -1005,7 +1009,7 @@
         },
         {
           "Name": "pid",
-          "Value": "45276"
+          "Value": "71876"
         },
         {
           "Name": "release",
@@ -1132,6 +1136,10 @@
           "Value": "ours  C:\\Users\\alex\\AppData\\Roaming\\Autodesk\\Revit\\Addins\\2024\\BimHouseSoftware\\BHS.Revit.Probe\\Lib\\BHS.Revit.Probe.dll"
         },
         {
+          "Name": "BHS.Revit.Probe.Declaration 0.1.0.0",
+          "Value": "ours  C:\\Users\\alex\\AppData\\Roaming\\Autodesk\\Revit\\Addins\\2024\\BimHouseSoftware\\BHS.Revit.Probe\\Lib\\BHS.Revit.Probe.Declaration.dll"
+        },
+        {
           "Name": "BHS.Revit.Testing 0.1.0.0",
           "Value": "ours  C:\\Users\\alex\\AppData\\Roaming\\Autodesk\\Revit\\Addins\\2024\\BimHouseSoftware\\BHS.Revit.Probe\\Lib\\BHS.Revit.Testing.dll"
         },
@@ -1197,7 +1205,7 @@
         },
         {
           "Name": "assemblies loaded",
-          "Value": "681"
+          "Value": "682"
         },
         {
           "Name": "Revit\u0027s copy won",
@@ -1221,7 +1229,7 @@
         },
         {
           "Name": "diagnostic events",
-          "Value": "516 received, 0 dropped by the publisher, longest quiet spell 10.1s during Starting"
+          "Value": "509 received, 0 dropped by the publisher, longest quiet spell 11.8s during Starting"
         },
         {
           "Name": "phases seen",
@@ -1301,14 +1309,14 @@
         },
         {
           "Name": "closed after",
-          "Value": "21.2s"
+          "Value": "21.9s"
         }
       ]
     },
     {
       "Release": 2025,
       "FileVersion": "0.1.0.0",
-      "BuiltUtc": "2026-09-13T01:35:57.0710975Z",
+      "BuiltUtc": "2026-09-13T21:23:16.2788443Z",
       "Signed": true,
       "Checks": [
         {
@@ -1768,11 +1776,11 @@
         },
         {
           "Name": "launched",
-          "Value": "pid 60336"
+          "Value": "pid 69056"
         },
         {
           "Name": "registered after",
-          "Value": "12.2s"
+          "Value": "15.3s"
         },
         {
           "Name": "recovered by enumeration",
@@ -1788,11 +1796,11 @@
         },
         {
           "Name": "probe log",
-          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2025-60336-20260913-113734.log"
+          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2025-69056-20260914-072459.log"
         },
         {
           "Name": "threads",
-          "Value": "api 1, call 23"
+          "Value": "api 1, call 17"
         },
         {
           "Name": "appdomain",
@@ -1816,7 +1824,7 @@
         },
         {
           "Name": "log",
-          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2025-60336-20260913-113734.log"
+          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2025-69056-20260914-072459.log"
         },
         {
           "Name": "sinks",
@@ -1828,11 +1836,15 @@
         },
         {
           "Name": "opened after registration",
-          "Value": "9.4s"
+          "Value": "10.9s"
         },
         {
           "Name": "availability and the press",
           "Value": "not asked - set BHS_PROBE_SHOW_TAB=1 for both"
+        },
+        {
+          "Name": "Entry assembly while the ribbon stands and its tab was never shown",
+          "Value": "loaded False, already when the ribbon was built False, its rule asked 0 time(s)"
         },
         {
           "Name": "model settings",
@@ -1868,7 +1880,7 @@
         },
         {
           "Name": "instance",
-          "Value": "ec4b7266980749269913ea9764edd592"
+          "Value": "ab865fab65cf4df7b00d0ae0ab9e6e99"
         },
         {
           "Name": "link1:linked",
@@ -1912,11 +1924,11 @@
         },
         {
           "Name": "log",
-          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2025-60336-20260913-113734.log"
+          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2025-69056-20260914-072459.log"
         },
         {
           "Name": "pid",
-          "Value": "60336"
+          "Value": "69056"
         },
         {
           "Name": "release",
@@ -1988,15 +2000,15 @@
         },
         {
           "Name": "instance",
-          "Value": "ec4b7266980749269913ea9764edd592"
+          "Value": "ab865fab65cf4df7b00d0ae0ab9e6e99"
         },
         {
           "Name": "log",
-          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2025-60336-20260913-113734.log"
+          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2025-69056-20260914-072459.log"
         },
         {
           "Name": "pid",
-          "Value": "60336"
+          "Value": "69056"
         },
         {
           "Name": "place:after",
@@ -2080,11 +2092,11 @@
         },
         {
           "Name": "instance",
-          "Value": "ec4b7266980749269913ea9764edd592"
+          "Value": "ab865fab65cf4df7b00d0ae0ab9e6e99"
         },
         {
           "Name": "log",
-          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2025-60336-20260913-113734.log"
+          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2025-69056-20260914-072459.log"
         },
         {
           "Name": "modal:apiCallWorked",
@@ -2112,7 +2124,7 @@
         },
         {
           "Name": "modal:awaitResumedAfter",
-          "Value": "0.42s"
+          "Value": "0.44s"
         },
         {
           "Name": "modal:awaitResumedOnApiThread",
@@ -2136,7 +2148,7 @@
         },
         {
           "Name": "modal:shownFor",
-          "Value": "2.49s"
+          "Value": "2.53s"
         },
         {
           "Name": "modal:transactionCommit",
@@ -2168,7 +2180,7 @@
         },
         {
           "Name": "pid",
-          "Value": "60336"
+          "Value": "69056"
         },
         {
           "Name": "release",
@@ -2180,11 +2192,11 @@
         },
         {
           "Name": "instance",
-          "Value": "ec4b7266980749269913ea9764edd592"
+          "Value": "ab865fab65cf4df7b00d0ae0ab9e6e99"
         },
         {
           "Name": "log",
-          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2025-60336-20260913-113734.log"
+          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2025-69056-20260914-072459.log"
         },
         {
           "Name": "modal:measured",
@@ -2196,7 +2208,7 @@
         },
         {
           "Name": "modal:pumpRanAt",
-          "Value": "2.49s"
+          "Value": "2.53s"
         },
         {
           "Name": "modal:windowClosed",
@@ -2204,7 +2216,7 @@
         },
         {
           "Name": "pid",
-          "Value": "60336"
+          "Value": "69056"
         },
         {
           "Name": "release",
@@ -2216,11 +2228,11 @@
         },
         {
           "Name": "instance",
-          "Value": "ec4b7266980749269913ea9764edd592"
+          "Value": "ab865fab65cf4df7b00d0ae0ab9e6e99"
         },
         {
           "Name": "log",
-          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2025-60336-20260913-113734.log"
+          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2025-69056-20260914-072459.log"
         },
         {
           "Name": "parameters:bound",
@@ -2296,7 +2308,7 @@
         },
         {
           "Name": "pid",
-          "Value": "60336"
+          "Value": "69056"
         },
         {
           "Name": "release",
@@ -2423,6 +2435,10 @@
           "Value": "ours  C:\\Users\\alex\\AppData\\Roaming\\Autodesk\\Revit\\Addins\\2025\\BimHouseSoftware\\BHS.Revit.Probe\\Lib\\BHS.Revit.Probe.dll"
         },
         {
+          "Name": "BHS.Revit.Probe.Declaration 0.1.0.0",
+          "Value": "ours  C:\\Users\\alex\\AppData\\Roaming\\Autodesk\\Revit\\Addins\\2025\\BimHouseSoftware\\BHS.Revit.Probe\\Lib\\BHS.Revit.Probe.Declaration.dll"
+        },
+        {
           "Name": "BHS.Revit.Testing 0.1.0.0",
           "Value": "ours  C:\\Users\\alex\\AppData\\Roaming\\Autodesk\\Revit\\Addins\\2025\\BimHouseSoftware\\BHS.Revit.Probe\\Lib\\BHS.Revit.Testing.dll"
         },
@@ -2528,7 +2544,7 @@
         },
         {
           "Name": "assemblies loaded",
-          "Value": "450"
+          "Value": "451"
         },
         {
           "Name": "Revit\u0027s copy won",
@@ -2544,7 +2560,7 @@
         },
         {
           "Name": "diagnostic events",
-          "Value": "467 received, 0 dropped by the publisher, longest quiet spell 3.8s during Working"
+          "Value": "433 received, 0 dropped by the publisher, longest quiet spell 3.7s during Working"
         },
         {
           "Name": "phases seen",
@@ -2620,14 +2636,14 @@
         },
         {
           "Name": "closed after",
-          "Value": "3.7s"
+          "Value": "4.2s"
         }
       ]
     },
     {
       "Release": 2026,
       "FileVersion": "0.1.0.0",
-      "BuiltUtc": "2026-09-13T01:35:55.7031867Z",
+      "BuiltUtc": "2026-09-13T21:23:16.7631040Z",
       "Signed": true,
       "Checks": [
         {
@@ -3087,11 +3103,11 @@
         },
         {
           "Name": "launched",
-          "Value": "pid 65352"
+          "Value": "pid 37444"
         },
         {
           "Name": "registered after",
-          "Value": "25.6s"
+          "Value": "31.2s"
         },
         {
           "Name": "recovered by enumeration",
@@ -3107,11 +3123,11 @@
         },
         {
           "Name": "probe log",
-          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2026-65352-20260913-113808.log"
+          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2026-37444-20260914-072539.log"
         },
         {
           "Name": "threads",
-          "Value": "api 1, call 20"
+          "Value": "api 1, call 15"
         },
         {
           "Name": "appdomain",
@@ -3135,7 +3151,7 @@
         },
         {
           "Name": "log",
-          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2026-65352-20260913-113808.log"
+          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2026-37444-20260914-072539.log"
         },
         {
           "Name": "sinks",
@@ -3147,11 +3163,15 @@
         },
         {
           "Name": "opened after registration",
-          "Value": "26.0s"
+          "Value": "70.5s"
         },
         {
           "Name": "availability and the press",
           "Value": "not asked - set BHS_PROBE_SHOW_TAB=1 for both"
+        },
+        {
+          "Name": "Entry assembly while the ribbon stands and its tab was never shown",
+          "Value": "loaded False, already when the ribbon was built False, its rule asked 0 time(s)"
         },
         {
           "Name": "model settings",
@@ -3187,7 +3207,7 @@
         },
         {
           "Name": "instance",
-          "Value": "259247423fd547f5bdb1ae1277500bdb"
+          "Value": "a38b5db4047e4d52b5c5586885fc9bec"
         },
         {
           "Name": "link1:linked",
@@ -3231,11 +3251,11 @@
         },
         {
           "Name": "log",
-          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2026-65352-20260913-113808.log"
+          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2026-37444-20260914-072539.log"
         },
         {
           "Name": "pid",
-          "Value": "65352"
+          "Value": "37444"
         },
         {
           "Name": "release",
@@ -3307,15 +3327,15 @@
         },
         {
           "Name": "instance",
-          "Value": "259247423fd547f5bdb1ae1277500bdb"
+          "Value": "a38b5db4047e4d52b5c5586885fc9bec"
         },
         {
           "Name": "log",
-          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2026-65352-20260913-113808.log"
+          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2026-37444-20260914-072539.log"
         },
         {
           "Name": "pid",
-          "Value": "65352"
+          "Value": "37444"
         },
         {
           "Name": "place:after",
@@ -3399,11 +3419,11 @@
         },
         {
           "Name": "instance",
-          "Value": "259247423fd547f5bdb1ae1277500bdb"
+          "Value": "a38b5db4047e4d52b5c5586885fc9bec"
         },
         {
           "Name": "log",
-          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2026-65352-20260913-113808.log"
+          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2026-37444-20260914-072539.log"
         },
         {
           "Name": "modal:apiCallWorked",
@@ -3431,7 +3451,7 @@
         },
         {
           "Name": "modal:awaitResumedAfter",
-          "Value": "0.25s"
+          "Value": "0.28s"
         },
         {
           "Name": "modal:awaitResumedOnApiThread",
@@ -3455,7 +3475,7 @@
         },
         {
           "Name": "modal:shownFor",
-          "Value": "2.31s"
+          "Value": "2.35s"
         },
         {
           "Name": "modal:transactionCommit",
@@ -3487,7 +3507,7 @@
         },
         {
           "Name": "pid",
-          "Value": "65352"
+          "Value": "37444"
         },
         {
           "Name": "release",
@@ -3499,11 +3519,11 @@
         },
         {
           "Name": "instance",
-          "Value": "259247423fd547f5bdb1ae1277500bdb"
+          "Value": "a38b5db4047e4d52b5c5586885fc9bec"
         },
         {
           "Name": "log",
-          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2026-65352-20260913-113808.log"
+          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2026-37444-20260914-072539.log"
         },
         {
           "Name": "modal:measured",
@@ -3515,7 +3535,7 @@
         },
         {
           "Name": "modal:pumpRanAt",
-          "Value": "2.31s"
+          "Value": "2.35s"
         },
         {
           "Name": "modal:windowClosed",
@@ -3523,7 +3543,7 @@
         },
         {
           "Name": "pid",
-          "Value": "65352"
+          "Value": "37444"
         },
         {
           "Name": "release",
@@ -3535,11 +3555,11 @@
         },
         {
           "Name": "instance",
-          "Value": "259247423fd547f5bdb1ae1277500bdb"
+          "Value": "a38b5db4047e4d52b5c5586885fc9bec"
         },
         {
           "Name": "log",
-          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2026-65352-20260913-113808.log"
+          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2026-37444-20260914-072539.log"
         },
         {
           "Name": "parameters:bound",
@@ -3615,7 +3635,7 @@
         },
         {
           "Name": "pid",
-          "Value": "65352"
+          "Value": "37444"
         },
         {
           "Name": "release",
@@ -3742,6 +3762,10 @@
           "Value": "ours  C:\\Users\\alex\\AppData\\Roaming\\Autodesk\\Revit\\Addins\\2026\\BimHouseSoftware\\BHS.Revit.Probe\\Lib\\BHS.Revit.Probe.dll"
         },
         {
+          "Name": "BHS.Revit.Probe.Declaration 0.1.0.0",
+          "Value": "ours  C:\\Users\\alex\\AppData\\Roaming\\Autodesk\\Revit\\Addins\\2026\\BimHouseSoftware\\BHS.Revit.Probe\\Lib\\BHS.Revit.Probe.Declaration.dll"
+        },
+        {
           "Name": "BHS.Revit.Testing 0.1.0.0",
           "Value": "ours  C:\\Users\\alex\\AppData\\Roaming\\Autodesk\\Revit\\Addins\\2026\\BimHouseSoftware\\BHS.Revit.Probe\\Lib\\BHS.Revit.Testing.dll"
         },
@@ -3811,7 +3835,7 @@
         },
         {
           "Name": "assemblies loaded",
-          "Value": "863"
+          "Value": "864"
         },
         {
           "Name": "Revit\u0027s copy won",
@@ -3827,7 +3851,7 @@
         },
         {
           "Name": "diagnostic events",
-          "Value": "511 received, 0 dropped by the publisher, longest quiet spell 10.1s during Starting"
+          "Value": "509 received, 0 dropped by the publisher, longest quiet spell 54.2s during Starting"
         },
         {
           "Name": "phases seen",
@@ -3907,14 +3931,14 @@
         },
         {
           "Name": "closed after",
-          "Value": "16.5s"
+          "Value": "16.9s"
         }
       ]
     },
     {
       "Release": 2027,
       "FileVersion": "0.1.0.0",
-      "BuiltUtc": "2026-09-13T01:35:57.1112634Z",
+      "BuiltUtc": "2026-09-13T21:23:15.2592876Z",
       "Signed": true,
       "Checks": [
         {
@@ -4374,11 +4398,11 @@
         },
         {
           "Name": "launched",
-          "Value": "pid 62744"
+          "Value": "pid 49852"
         },
         {
           "Name": "registered after",
-          "Value": "21.0s"
+          "Value": "18.7s"
         },
         {
           "Name": "recovered by enumeration",
@@ -4394,11 +4418,11 @@
         },
         {
           "Name": "probe log",
-          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2027-62744-20260913-113926.log"
+          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2027-49852-20260914-072743.log"
         },
         {
           "Name": "threads",
-          "Value": "api 2, call 17"
+          "Value": "api 2, call 22"
         },
         {
           "Name": "appdomain",
@@ -4422,7 +4446,7 @@
         },
         {
           "Name": "log",
-          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2027-62744-20260913-113926.log"
+          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2027-49852-20260914-072743.log"
         },
         {
           "Name": "sinks",
@@ -4434,11 +4458,15 @@
         },
         {
           "Name": "opened after registration",
-          "Value": "25.5s"
+          "Value": "329.5s"
         },
         {
           "Name": "availability and the press",
           "Value": "not asked - set BHS_PROBE_SHOW_TAB=1 for both"
+        },
+        {
+          "Name": "Entry assembly while the ribbon stands and its tab was never shown",
+          "Value": "loaded False, already when the ribbon was built False, its rule asked 0 time(s)"
         },
         {
           "Name": "model settings",
@@ -4474,7 +4502,7 @@
         },
         {
           "Name": "instance",
-          "Value": "05b83e5eb4694efdbf29048ff8462ae0"
+          "Value": "06aa1e7596b147f59566429d2d311983"
         },
         {
           "Name": "link1:linked",
@@ -4518,11 +4546,11 @@
         },
         {
           "Name": "log",
-          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2027-62744-20260913-113926.log"
+          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2027-49852-20260914-072743.log"
         },
         {
           "Name": "pid",
-          "Value": "62744"
+          "Value": "49852"
         },
         {
           "Name": "release",
@@ -4594,15 +4622,15 @@
         },
         {
           "Name": "instance",
-          "Value": "05b83e5eb4694efdbf29048ff8462ae0"
+          "Value": "06aa1e7596b147f59566429d2d311983"
         },
         {
           "Name": "log",
-          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2027-62744-20260913-113926.log"
+          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2027-49852-20260914-072743.log"
         },
         {
           "Name": "pid",
-          "Value": "62744"
+          "Value": "49852"
         },
         {
           "Name": "place:after",
@@ -4686,11 +4714,11 @@
         },
         {
           "Name": "instance",
-          "Value": "05b83e5eb4694efdbf29048ff8462ae0"
+          "Value": "06aa1e7596b147f59566429d2d311983"
         },
         {
           "Name": "log",
-          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2027-62744-20260913-113926.log"
+          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2027-49852-20260914-072743.log"
         },
         {
           "Name": "modal:apiCallWorked",
@@ -4774,7 +4802,7 @@
         },
         {
           "Name": "pid",
-          "Value": "62744"
+          "Value": "49852"
         },
         {
           "Name": "release",
@@ -4786,11 +4814,11 @@
         },
         {
           "Name": "instance",
-          "Value": "05b83e5eb4694efdbf29048ff8462ae0"
+          "Value": "06aa1e7596b147f59566429d2d311983"
         },
         {
           "Name": "log",
-          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2027-62744-20260913-113926.log"
+          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2027-49852-20260914-072743.log"
         },
         {
           "Name": "modal:measured",
@@ -4810,7 +4838,7 @@
         },
         {
           "Name": "pid",
-          "Value": "62744"
+          "Value": "49852"
         },
         {
           "Name": "release",
@@ -4822,11 +4850,11 @@
         },
         {
           "Name": "instance",
-          "Value": "05b83e5eb4694efdbf29048ff8462ae0"
+          "Value": "06aa1e7596b147f59566429d2d311983"
         },
         {
           "Name": "log",
-          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2027-62744-20260913-113926.log"
+          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2027-49852-20260914-072743.log"
         },
         {
           "Name": "parameters:bound",
@@ -4902,7 +4930,7 @@
         },
         {
           "Name": "pid",
-          "Value": "62744"
+          "Value": "49852"
         },
         {
           "Name": "release",
@@ -5027,6 +5055,10 @@
         {
           "Name": "BHS.Revit.Probe 0.1.0.0",
           "Value": "ours  C:\\Users\\alex\\AppData\\Roaming\\Autodesk\\Revit\\Addins\\2027\\BimHouseSoftware\\BHS.Revit.Probe\\Lib\\BHS.Revit.Probe.dll"
+        },
+        {
+          "Name": "BHS.Revit.Probe.Declaration 0.1.0.0",
+          "Value": "ours  C:\\Users\\alex\\AppData\\Roaming\\Autodesk\\Revit\\Addins\\2027\\BimHouseSoftware\\BHS.Revit.Probe\\Lib\\BHS.Revit.Probe.Declaration.dll"
         },
         {
           "Name": "BHS.Revit.Testing 0.1.0.0",
@@ -5350,7 +5382,7 @@
         },
         {
           "Name": "assemblies loaded",
-          "Value": "777"
+          "Value": "778"
         },
         {
           "Name": "Revit\u0027s copy won",
@@ -5398,11 +5430,11 @@
         },
         {
           "Name": "diagnostic events",
-          "Value": "531 received, 0 dropped by the publisher, longest quiet spell 10.6s during Idle"
+          "Value": "516 received, 0 dropped by the publisher, longest quiet spell 265.2s during Blocked"
         },
         {
           "Name": "phases seen",
-          "Value": "Starting, Idle, OpeningDocument, Working, DocumentReady"
+          "Value": "Starting, Idle, OpeningDocument, Working, DocumentReady, Blocked"
         },
         {
           "Name": "progress caption",
@@ -5423,6 +5455,10 @@
         {
           "Name": "progress caption",
           "Value": "\u0417\u0430\u0433\u0440\u0443\u0437\u043A\u0430 TestCabling-\u042D\u041E\u041C.rvt"
+        },
+        {
+          "Name": "progress caption",
+          "Value": "dialog"
         },
         {
           "Name": "progress caption",
@@ -5450,15 +5486,15 @@
         },
         {
           "Name": "progress caption",
+          "Value": "\u0424\u043E\u0440\u043C\u0438\u0440\u043E\u0432\u0430\u043D\u0438\u0435 \u0433\u0440\u0430\u0444\u0438\u043A\u0438 \u0434\u043B\u044F \u0414\u0438\u0441\u043F\u0435\u0442\u0447\u0435\u0440 \u043F\u0440\u043E\u0435\u043A\u0442\u0430"
+        },
+        {
+          "Name": "progress caption",
           "Value": "\u0424\u043E\u0440\u043C\u0438\u0440\u043E\u0432\u0430\u043D\u0438\u0435 \u0433\u0440\u0430\u0444\u0438\u043A\u0438 \u0434\u043B\u044F \u041F\u043B\u0430\u043D \u044D\u0442\u0430\u0436\u0430: 1 - \u0421\u0438\u043B\u043E\u0432\u044B\u0435 \u0446\u0435\u043F\u0438"
         },
         {
           "Name": "progress caption",
           "Value": "\u0424\u043E\u0440\u043C\u0438\u0440\u043E\u0432\u0430\u043D\u0438\u0435 \u0433\u0440\u0430\u0444\u0438\u043A\u0438 \u0434\u043B\u044F \u041F\u043B\u0430\u043D \u044D\u0442\u0430\u0436\u0430: Proxy of 1 - \u0421\u0438\u043B\u043E\u0432\u044B\u0435 \u0446\u0435\u043F\u0438"
-        },
-        {
-          "Name": "progress caption",
-          "Value": "\u0424\u043E\u0440\u043C\u0438\u0440\u043E\u0432\u0430\u043D\u0438\u0435 \u0433\u0440\u0430\u0444\u0438\u043A\u0438 \u0434\u043B\u044F \u0414\u0438\u0441\u043F\u0435\u0442\u0447\u0435\u0440 \u043F\u0440\u043E\u0435\u043A\u0442\u0430"
         },
         {
           "Name": "progress caption",
@@ -5477,8 +5513,12 @@
           "Value": "\u0410\u0432\u0442\u043E\u043C\u0430\u0442\u0438\u0447\u0435\u0441\u043A\u043E\u0435 \u0441\u043E\u0435\u0434\u0438\u043D\u0435\u043D\u0438\u0435 \u0438\u0437\u043C\u0435\u043D\u0435\u043D\u043D\u044B\u0445 \u044D\u043B\u0435\u043C\u0435\u043D\u0442\u043E\u0432"
         },
         {
+          "Name": "modal dialog",
+          "Value": "TaskDialog_Stop_Operation"
+        },
+        {
           "Name": "closed after",
-          "Value": "12.2s"
+          "Value": "13.0s"
         }
       ]
     }
