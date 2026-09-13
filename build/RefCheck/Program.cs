@@ -47,8 +47,14 @@ internal static class Cli
                   referenced through the Revit API packages, which repackage these same files.
 
               RefCheck check --baseline <file> --input <file-or-directory> [--input ...]
+                             [--watchlist <file>] [--application <assembly file name> ...]
 
-                  Verifies every managed assembly under <input> against the baseline.
+                  Verifies every managed assembly under <input> against the baseline, and the
+                  ribbon manifests, declaration and Entry assemblies in each input directory.
+                  --application names an assembly an Application add-in entry points at; it
+                  has to be in one of the input directories, and it adds the checks that an
+                  add-in has buttons to build and has declared the feature of each Entry
+                  manifest beside it.
                   Exit code 0 when clean, 1 when findings, 2 on usage or I/O errors.
             """);
         return 2;
@@ -189,6 +195,7 @@ internal static class Cli
         // but the same folder, the same pass and the same metadata reader, and the alternative was
         // putting a metadata reader inside MSBuild.
         var ribbon = new List<RibbonFinding>();
+        var ribbonTally = default(RibbonTally);
 
         // And the declaration assemblies beside them. A third question again - whether a feature's
         // declaration has reached into its own implementation - but the same folder, the same pass
@@ -196,15 +203,76 @@ internal static class Cli
         var declarations = new List<DeclarationFinding>();
         var declarationsChecked = 0;
 
+        // And a feature's Entry assemblies, for the same reason once more: whether what Revit resolves
+        // by name holds names and nothing else.
+        var entries = new List<EntryFinding>();
+        var entriesChecked = 0;
+        var entryPoints = 0;
+
         foreach (var directory in inputs.Where(Directory.Exists))
         {
-            ribbon.AddRange(RibbonCheck.Check(directory));
+            ribbon.AddRange(RibbonCheck.Check(directory, out var tally));
+            ribbonTally = new RibbonTally(
+                ribbonTally.Manifests + tally.Manifests,
+                ribbonTally.Buttons + tally.Buttons,
+                ribbonTally.EntryManifests + tally.EntryManifests);
+
             declarations.AddRange(DeclarationCheck.Check(directory, out var seen));
             declarationsChecked += seen;
+
+            entries.AddRange(EntryCheck.Check(directory, out var entrySeen, out var classes));
+            entriesChecked += entrySeen;
+            entryPoints += classes;
         }
 
-        Report(baseline, findings, unwatched, denied, twoCopies, ribbon, declarations, declarationsChecked, checkedFiles);
-        return findings.Count == 0 && denied.Count == 0 && ribbon.Count == 0 && declarations.Count == 0 ? 0 : 1;
+        // Counted before the application findings join the same list: the pass line for the Entry
+        // assemblies is about the assemblies, and an edition that forgot a module says nothing about
+        // whether they are empty. The first red run of RVTENT004 hid that line, and it should not have.
+        var entryAssemblyFindings = entries.Count;
+
+        // The add-ins the build says are Applications. Passed by the build rather than guessed from the
+        // folder, because a folder holds every assembly a project references and nothing in one says
+        // which of them Revit starts.
+        var applications = new List<ApplicationResult>();
+
+        foreach (var name in options.Values("application").Select(Path.GetFileName).Distinct(StringComparer.OrdinalIgnoreCase))
+        {
+            var found = false;
+
+            foreach (var directory in inputs.Where(Directory.Exists))
+            {
+                var path = Path.Combine(directory, name!);
+
+                if (!File.Exists(path))
+                    continue;
+
+                found = true;
+
+                var ribbonFindings = RibbonCheck.CheckApplication(directory, path);
+                var entryFindings = EntryCheck.CheckApplication(directory, path, out var entryManifests);
+
+                ribbon.AddRange(ribbonFindings);
+                entries.AddRange(entryFindings);
+
+                applications.Add(new ApplicationResult(
+                    name!,
+                    RibbonCheck.Manifests(directory).Count,
+                    entryManifests,
+                    ribbonFindings.Count + entryFindings.Count));
+            }
+
+            // A usage error, not a pass: an application check that found nothing to check is the shape
+            // of a check that stopped running.
+            if (!found)
+                throw new ArgumentException($"--application '{name}' is in none of the --input directories.");
+        }
+
+        Report(baseline, findings, unwatched, denied, twoCopies, ribbon, ribbonTally, declarations, declarationsChecked,
+            entries, entriesChecked, entryPoints, entryAssemblyFindings, applications, checkedFiles);
+
+        return findings.Count == 0 && denied.Count == 0 && ribbon.Count == 0 && declarations.Count == 0 && entries.Count == 0
+            ? 0
+            : 1;
     }
 
     private static void Report(
@@ -214,8 +282,14 @@ internal static class Cli
         List<string> denied,
         SortedSet<(string Name, string Ours, string Revits)> twoCopies,
         List<RibbonFinding> ribbon,
+        RibbonTally ribbonTally,
         List<DeclarationFinding> declarations,
         int declarationsChecked,
+        List<EntryFinding> entries,
+        int entriesChecked,
+        int entryPoints,
+        int entryAssemblyFindings,
+        List<ApplicationResult> applications,
         int checkedFiles)
     {
         // First, because a ribbon that cannot work is a dialog in front of a person, and because
@@ -223,12 +297,48 @@ internal static class Cli
         foreach (var finding in ribbon)
             Console.Error.WriteLine($"{finding.Manifest} : error {finding.Code}: {finding.Message}");
 
+        foreach (var finding in entries)
+            Console.Error.WriteLine($"{finding.File} : error {finding.Code}: {finding.Message}");
+
         foreach (var finding in declarations)
             Console.Error.WriteLine($"{finding.File} : error {finding.Code}: {finding.Message}");
 
-        // Said even when it passes, and only where there was something to say. What this check
-        // guards is an absence - an assembly that stays unloaded - so a silent pass and a check
-        // that quietly stopped running look exactly alike from the outside.
+        // Every pass below is said out loud, and only where there was something to check. Each of
+        // these guards something that shows no symptom when it goes wrong - an assembly that stays
+        // unloaded, a button that is simply missing - so a silent pass and a check that quietly
+        // stopped running look exactly alike from the outside. RefCheck itself once spent months not
+        // running while CLAUDE.md described it as failing builds.
+        if (ribbonTally.Manifests > 0 && ribbon.Count == 0)
+        {
+            var entryTabs = ribbonTally.EntryManifests > 0
+                ? $", no tab in {ribbonTally.EntryManifests} Entry manifest(s)"
+                : string.Empty;
+
+            Console.WriteLine(
+                $"RefCheck: {ribbonTally.Manifests} manifest(s), {ribbonTally.Buttons} button(s) checked - " +
+                $"every class in the assembly its button names, no button name used twice{entryTabs}.");
+        }
+
+        if (entriesChecked > 0 && entryAssemblyFindings == 0)
+        {
+            Console.WriteLine(
+                $"RefCheck: {entriesChecked} Entry assembly(ies) checked, {entryPoints} entry point(s), each empty " +
+                "and naming a feature or a rule from its own feature's declaration.");
+        }
+
+        foreach (var application in applications.Where(application => application.Findings == 0))
+        {
+            // A pass also means every Entry assembly beside it brought its manifest: RVTRIB007 asks that
+            // per assembly, so "no Entry manifest" here now means no Entry assembly either.
+            var declared = application.EntryManifests > 0
+                ? $"names a module from the declaration of each of its {application.EntryManifests} Entry manifest(s)"
+                : "has no Entry assembly or manifest to match against Modules";
+
+            Console.WriteLine(
+                $"RefCheck: Application add-in {application.Name} has {application.Manifests} ribbon manifest(s) " +
+                $"beside it and {declared}.");
+        }
+
         if (declarationsChecked > 0 && declarations.Count == 0)
         {
             Console.WriteLine(
@@ -279,7 +389,7 @@ internal static class Cli
                 "and re-collect the baselines.");
         }
 
-        if (findings.Count == 0 && denied.Count == 0 && ribbon.Count == 0 && declarations.Count == 0)
+        if (findings.Count == 0 && denied.Count == 0 && ribbon.Count == 0 && declarations.Count == 0 && entries.Count == 0)
         {
             Console.WriteLine(
                 $"RefCheck: {checkedFiles} assemblies checked against Revit {baseline.RevitVersion}, no conflicts.");
@@ -398,6 +508,9 @@ internal static class Cli
             }
         }
     }
+
+    /// <summary>What the application checks saw for one add-in assembly, so that a pass can say so.</summary>
+    private sealed record ApplicationResult(string Name, int Manifests, int EntryManifests, int Findings);
 
     private sealed record Finding(
         string Code,

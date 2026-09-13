@@ -44,6 +44,33 @@
       <_RefCheckBaseline>$(RefCheckBaselineDirectory)revit-$(RevitVersion).json</_RefCheckBaseline>
     </PropertyGroup>
 
+    <!--
+      The assemblies an Application add-in entry names - and only Application: a DBApplication has
+      no ribbon, so asking whether it has buttons to build (RVTRIB007) or has declared the feature of
+      an Entry manifest beside it (RVTENT004) would be asking the wrong add-in. The probe declares
+      both kinds in one assembly, and the Application entry alone puts it on this list.
+
+      An empty AddInType is Application, as it is to GenerateRevitAddIn. Assembly may still be empty
+      here: the SDK fills its default in a target that also runs after Build, in an order nobody
+      should depend on, so the default is spelled out again - it is $(TargetFileName) in both places.
+      A project with no Application entry passes nothing, and the tool runs no application check.
+
+      The condition on the group is not decoration. Batching over an item type with no items still
+      runs each element once, with every metadata reference empty - so without it the second element
+      below matched an Entry project, which declares no add-in at all, and handed its own assembly
+      to the tool as an Application. Seen on the first build of this target.
+    -->
+    <ItemGroup Condition="'@(RevitAddIn)' != ''">
+      <_RefCheckApplication Include="%(RevitAddIn.Assembly)"
+                            Condition="('%(RevitAddIn.AddInType)' == '' or '%(RevitAddIn.AddInType)' == 'Application') and '%(RevitAddIn.Assembly)' != ''" />
+      <_RefCheckApplication Include="$(TargetFileName)"
+                            Condition="('%(RevitAddIn.AddInType)' == '' or '%(RevitAddIn.AddInType)' == 'Application') and '%(RevitAddIn.Assembly)' == ''" />
+    </ItemGroup>
+
+    <PropertyGroup>
+      <_RefCheckApplicationArguments>@(_RefCheckApplication->Distinct()->'--application &quot;%(Filename)%(Extension)&quot;', ' ')</_RefCheckApplicationArguments>
+    </PropertyGroup>
+
     <Warning Condition="!Exists('$(_RefCheckBaseline)')"
              Code="RVTREF000"
              Text="No RefCheck baseline for Revit $(RevitVersion). Nothing was verified against the assemblies that version ships. Collect one into $(_RefCheckBaseline) - see build/RefCheck/readme.md." />
@@ -60,7 +87,7 @@
       One line per project is what it costs to see that it happened.
     -->
     <Exec Condition="Exists('$(_RefCheckBaseline)')"
-          Command="dotnet &quot;$(RefCheckToolAssembly)&quot; check --baseline &quot;$(_RefCheckBaseline)&quot; --watchlist &quot;$(RefCheckBaselineDirectory)watchlist.json&quot; --input &quot;$(TargetDir.TrimEnd('\'))&quot;"
+          Command="dotnet &quot;$(RefCheckToolAssembly)&quot; check --baseline &quot;$(_RefCheckBaseline)&quot; --watchlist &quot;$(RefCheckBaselineDirectory)watchlist.json&quot; --input &quot;$(TargetDir.TrimEnd('\'))&quot; $(_RefCheckApplicationArguments)"
           StandardOutputImportance="high"
           IgnoreExitCode="true">
       <Output TaskParameter="ExitCode" PropertyName="_RefCheckExitCode" />
@@ -68,7 +95,7 @@
 
     <Error Condition="'$(_RefCheckExitCode)' == '1'"
            Code="RVTREF999"
-           Text="$(MSBuildProjectName) failed a Revit-side check. See the RVTREF, RVTRIB and RVTDEC errors above and build/RefCheck/readme.md. RVTREF is about assemblies that conflict with the copies Revit $(RevitVersion) loads; RVTRIB is about a ribbon manifest naming something the assembly does not have; RVTDEC is about a feature declaration reaching into its own implementation." />
+           Text="$(MSBuildProjectName) failed a Revit-side check. See the RVTREF, RVTRIB, RVTDEC and RVTENT errors above and build/RefCheck/readme.md. RVTREF is about assemblies that conflict with the copies Revit $(RevitVersion) loads; RVTRIB is about ribbon manifests - a button naming something its assembly does not have, a name used twice in one folder, an Application add-in missing an Entry assembly's manifest or every manifest; RVTDEC is about a feature declaration reaching into its own implementation; RVTENT is about a feature's Entry assembly holding more than empty entry points, naming a rule or a feature from outside its own feature's declaration, a tab in its manifest, or an edition shipping it without declaring the feature." />
 
     <Error Condition="'$(_RefCheckExitCode)' != '' and '$(_RefCheckExitCode)' != '0' and '$(_RefCheckExitCode)' != '1'"
            Code="RVTREF998"

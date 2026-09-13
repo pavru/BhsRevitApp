@@ -25,7 +25,13 @@ public sealed class FeatureButton
 {
     public string Name { get; set; } = string.Empty;
 
-    /// <summary>Empty means Revit's own Add-Ins tab, which is where a button goes unless asked.</summary>
+    /// <summary>The tab the button goes on - in an edition's own manifest, and only there.</summary>
+    /// <remarks>
+    /// In an edition's own manifest - and the probe's - empty means Revit's own Add-Ins tab, which is
+    /// where a button goes unless asked. In a feature's Entry manifest the value is ignored: the edition
+    /// chooses the tab, through <c>RevitAddInApplication.RibbonTab</c>, and a tab written there fails
+    /// the build with <c>RVTENT003</c> and is logged and overruled if it arrives anyway.
+    /// </remarks>
     public string Tab { get; set; } = string.Empty;
 
     public string Panel { get; set; } = string.Empty;
@@ -66,11 +72,29 @@ public sealed class FeatureManifest
 {
     public const string Extension = ".features.json";
 
+    /// <summary>
+    /// How a feature's Entry manifest ends: <c>&lt;P&gt;.Entry.features.json</c>, beside
+    /// <c>&lt;P&gt;.Entry.dll</c>.
+    /// </summary>
+    /// <remarks>
+    /// The name is the contract, because the file is all a host can look at without loading anything.
+    /// It arrives in an edition's folder as a related file of the Entry assembly the edition
+    /// references, so it is named after that assembly by the same SDK task that names every manifest.
+    /// </remarks>
+    public const string EntryExtension = ".Entry" + Extension;
+
+    /// <summary>
+    /// The assembly an edition has to have declared a module from before an Entry manifest counts:
+    /// <c>&lt;P&gt;.Declaration</c>.
+    /// </summary>
+    public const string DeclarationSuffix = ".Declaration";
+
     private FeatureManifest(string path, string assembly, IReadOnlyList<FeatureButton> buttons)
     {
         Path = path;
         Assembly = assembly;
         Buttons = buttons;
+        EntryFeature = EntryFeatureOf(path);
     }
 
     public string Path { get; }
@@ -79,6 +103,26 @@ public sealed class FeatureManifest
     public string Assembly { get; }
 
     public IReadOnlyList<FeatureButton> Buttons { get; }
+
+    /// <summary>
+    /// The <c>P</c> of <c>&lt;P&gt;.Entry.features.json</c>, or empty when this is not a feature's
+    /// Entry manifest - an edition's own, or the probe's.
+    /// </summary>
+    public string EntryFeature { get; }
+
+    /// <summary>Whether this is a feature's Entry manifest rather than an edition's own.</summary>
+    public bool IsEntry => EntryFeature.Length > 0;
+
+    /// <summary>The <c>P</c> of a path named <c>&lt;P&gt;.Entry.features.json</c>, or empty.</summary>
+    public static string EntryFeatureOf(string path)
+    {
+        var name = System.IO.Path.GetFileName(path ?? string.Empty);
+
+        if (!name.EndsWith(EntryExtension, StringComparison.OrdinalIgnoreCase))
+            return string.Empty;
+
+        return name.Substring(0, name.Length - EntryExtension.Length);
+    }
 
     /// <summary>Every manifest in a directory, in a stable order.</summary>
     /// <remarks>

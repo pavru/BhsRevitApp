@@ -48,6 +48,14 @@ internal static class DeclarationCheck
         "BHS.Logging",
     };
 
+    /// <summary>Whether a declaration may name this assembly of ours.</summary>
+    /// <remarks>
+    /// Asked by <c>EntryCheck</c> too, about the types nested in an entry point's arguments: what a
+    /// declaration may name is loaded at startup already, so naming it there loads nothing new. One list,
+    /// so the two checks cannot drift into disagreeing about it.
+    /// </remarks>
+    public static bool MayName(string assembly) => Allowed.Contains(assembly);
+
     /// <summary>Checks every declaration assembly in a directory. Never throws.</summary>
     /// <param name="directory">The folder to look in; usually a project's output.</param>
     /// <param name="checkedFiles">How many declaration assemblies were found and read.</param>
