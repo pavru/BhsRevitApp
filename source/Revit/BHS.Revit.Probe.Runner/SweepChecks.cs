@@ -145,7 +145,7 @@ internal static class SweepChecks
         // holding the button is shown, and the probe brings that tab forward when a document opens.
         // Asked earlier the counter reads zero and says nothing - which is how the first two runs of
         // this measurement spent twenty minutes of Revit apiece proving nothing.
-        await CheckRibbonAsync(client, options, report);
+        await CheckRibbonAsync(client, options, watcher, report);
 
         if (options.WithModel)
         {
@@ -601,15 +601,19 @@ internal static class SweepChecks
     private static async Task CheckRibbonAsync(
         RevitSideChannel.RevitSideChannelClient client,
         Options options,
+        DiagnosticsWatcher watcher,
         Report report)
     {
         var answer = await client.AskAsync(new AskRequest { Question = "ribbon" });
         report.Check("the ribbon panel and button were built", answer.Values.ContainsKey("ribbon:availabilityCalls"));
 
-        // From the file the SDK wrote beside the assembly, not from a list in code. Both buttons, or
-        // the count is wrong and something silently skipped one.
+        // From the files the SDK wrote beside the assemblies, not from a list in code: the probe's own
+        // two buttons and the one that arrived beside BHS.Revit.Probe.Entry. All three, or the count is
+        // wrong and something silently skipped one - and the likeliest to go missing is the third,
+        // which the host builds only because the probe's Modules list declares its feature, and which
+        // reaches the folder only as a related file of an assembly nothing in the probe names.
         report.Check("and they came from the generated manifest, not from code",
-            answer.Values.GetValueOrDefault("ribbon:fromManifest") == "2");
+            answer.Values.GetValueOrDefault("ribbon:fromManifest") == "3");
 
 
         // Only when the tab has been brought forward on purpose. Revit asks an availability class
@@ -626,6 +630,18 @@ internal static class SweepChecks
         if (!options.WithModel || Environment.GetEnvironmentVariable("BHS_PROBE_SHOW_TAB") != "1")
         {
             report.Note("availability and the press", "not asked - set BHS_PROBE_SHOW_TAB=1 for both");
+
+            // The one Entry question an unattended sweep can answer, because it needs the tab NOT to be
+            // shown: does Revit load a button's assembly when the button is added, or only once it asks
+            // the button's availability class? Nothing of ours names a type from the Entry assembly, so
+            // loaded here is Revit's doing. A note, because either answer is compatible with the design
+            // - it decides only when the Entry and declaration assemblies arrive, not whether the
+            // feature does - and a check written before its answer agrees with whoever wrote it.
+            report.Note("Entry assembly while the ribbon stands and its tab was never shown",
+                "loaded " + (answer.Values.GetValueOrDefault("ribbon:entryLoaded") ?? "(missing)")
+                + ", already when the ribbon was built " + (answer.Values.GetValueOrDefault("ribbon:entryLoadedAtRibbonBuild") ?? "(missing)")
+                + ", its rule asked " + (answer.Values.GetValueOrDefault("ribbon:gateCalls") ?? "(missing)") + " time(s)");
+
             return;
         }
 
@@ -643,6 +659,20 @@ internal static class SweepChecks
 
         report.Check("Revit asks the availability class once its tab is shown", asked);
         report.Note("availability calls", calls);
+
+        // Where the Entry button landed, asserted before its counters are read - and that order is the
+        // point. The control above is shared: LocalAvailability sits behind Ping on the edition's tab and
+        // behind Probe.Command on Add-Ins, so its count says a tab was shown and not which one. Without
+        // this, a zero from the Entry rule could mean Revit refused the Entry class or that Gate was never
+        // on the tab that was shown, and nothing would tell the two apart. Recorded by the code that
+        // brought the tab forward, on the UI thread, so it is waited for rather than read once.
+        await CheckEntryPlacementAsync(client, report);
+
+        // Straight after the placement and before anything is pressed. With Gate seen on the shown tab
+        // beside Ping, a count for the control and none for the Entry rule says Revit refused the Entry
+        // class rather than never asked. And no press may come first - Ping's loads the feature assembly,
+        // and then "still not loaded" could not be asked of anything.
+        await CheckEntryAvailabilityAsync(client, report);
 
         // Here rather than beside the manifest check, because the answer is recorded by the code that
         // brings the tab forward - the only place in the probe already on the UI thread. One button
@@ -705,7 +735,387 @@ internal static class SweepChecks
         }
 
         await CheckFeatureCommandAsync(client, report);
+
+        // After Ping, so that Ping stays the control it was: its press is what proves the feature
+        // assembly loads on a press, and a Gate press first would have loaded it on Ping's behalf.
+        await CheckEntryCommandAsync(client, watcher, report);
     }
+
+    /// <summary>
+    /// Whether the Entry button landed on the edition's tab, on Ping's panel - the placement every other
+    /// Entry check assumes.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <b>The edition chooses the tab, and this is the only check that looks.</b> Everything else about the
+    /// tab reached the sweep indirectly: through the press spelling, which fails far later and reads as
+    /// Revit refusing the Entry command; and through the tab the probe brought forward, which was the first
+    /// one holding a panel of Ping's title - a panel two manifests now make. So the probe picks the tab by
+    /// name and records what was on it, and this asserts three things at once: the tab shown is the
+    /// edition's, Gate and Ping both stand on its panel, and no other tab holds a panel of that title.
+    /// </para>
+    /// <para>
+    /// A button is recognised by its AdWindows id containing the manifest name, or by its text. The id
+    /// format is not measured, and the text is unique on this panel; both raw lists go into the notes so a
+    /// red here can be read for which half did not match.
+    /// </para>
+    /// </remarks>
+    /// <summary>What the probe records for a placement fact it looked for and found nothing - its <c>NoneRecorded</c>.</summary>
+    private const string NoneRecorded = "(none)";
+
+    private static async Task CheckEntryPlacementAsync(
+        RevitSideChannel.RevitSideChannelClient client,
+        Report report)
+    {
+        var values = new Dictionary<string, string>(StringComparer.Ordinal);
+
+        await WorkWatch.WaitForAsync(() =>
+        {
+            values = new Dictionary<string, string>(
+                client.Ask(new AskRequest { Question = "ribbon" }).Values, StringComparer.Ordinal);
+
+            return values.GetValueOrDefault("ribbon:activatedTab") is { Length: > 0 };
+        }, 30_000);
+
+        var activated = values.GetValueOrDefault("ribbon:activatedTab") ?? string.Empty;
+        var ids = values.GetValueOrDefault("ribbon:ownPanelButtonIds") ?? string.Empty;
+        var texts = (values.GetValueOrDefault("ribbon:ownPanelButtonTexts") ?? string.Empty)
+                    .Split(new[] { " | " }, StringSplitOptions.None);
+        var others = values.GetValueOrDefault("ribbon:otherTabsWithOwnPanel") ?? string.Empty;
+
+        var gate = ids.Contains("BHS.Probe.Gate", StringComparison.Ordinal) || texts.Contains("Gate");
+        var ping = ids.Contains("BHS.Probe.Ping", StringComparison.Ordinal) || texts.Contains("Ping");
+
+        report.Check("the Entry button landed on the edition's tab, beside Ping, and on no other tab",
+            activated == ProbeDeployment.EditionTab && gate && ping && others == NoneRecorded);
+
+        report.Note("Entry button placement",
+            $"tab shown {(activated.Length > 0 ? activated : "(not recorded)")}, button ids [{ids}], " +
+            $"texts [{string.Join(" | ", texts)}], other tabs with that panel {(others.Length > 0 ? others : "(not recorded)")}");
+    }
+
+    /// <summary>
+    /// An availability class from a feature's Entry assembly: whether Revit asks it, and what asking
+    /// it loads.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <b>Two assertions, because the design rests on both.</b> That Revit calls an availability class
+    /// whose logic is <c>AvailabilityEntryPoint&lt;GateRule&gt;</c> in <c>BHS.Revit.Abstractions</c>:
+    /// RefCheck accepts the shape against metadata, and Revit has never been asked. And that asking it
+    /// leaves the feature assembly out of the AppDomain until a press - expected from how the CLR
+    /// resolves types, since the Entry assembly also holds a command entry point whose base names the
+    /// feature's command, and not observed. Red on either means the design is wrong, not the probe.
+    /// </para>
+    /// <para>
+    /// <b>The loaded state is read after the counter moved, and read twice.</b> Once in the same answer
+    /// that first shows the rule was asked - the probe reads the counter before the assembly list, so
+    /// within one answer the order is guaranteed - and once more a moment later, still before any
+    /// press. No wait can prove that something does not happen; the second read is there so that a load
+    /// following closely on the first call is not missed by a read that came too early.
+    /// </para>
+    /// <para>
+    /// <b>The rest are notes</b>, because nobody knows the answers and either is compatible with the
+    /// design: what <c>ActiveAddInId</c> says while Revit asks availability, whether the rule is called
+    /// off the API thread, and whether the Entry assembly came in when the ribbon was built or only when
+    /// its class was first asked.
+    /// </para>
+    /// </remarks>
+    private static async Task CheckEntryAvailabilityAsync(
+        RevitSideChannel.RevitSideChannelClient client,
+        Report report)
+    {
+        var values = new Dictionary<string, string>(StringComparer.Ordinal);
+        var loadedWhenAsked = "(not read)";
+
+        var asked = await WorkWatch.WaitForAsync(() =>
+        {
+            values = new Dictionary<string, string>(
+                client.Ask(new AskRequest { Question = "ribbon" }).Values, StringComparer.Ordinal);
+
+            if (values.GetValueOrDefault("ribbon:gateCalls") is null or "0")
+                return false;
+
+            loadedWhenAsked = values.GetValueOrDefault("ribbon:featureLoaded") ?? "(missing)";
+            return true;
+        }, 60_000);
+
+        report.Check("Revit asks an Entry availability class, whose generic base is in another assembly", asked);
+
+        var loadedAfter = "(not read)";
+
+        if (asked)
+        {
+            // A pause rather than a wait, and on purpose: this is the one read in the sweep that hopes
+            // nothing happens, so there is no condition to wait for - only a second look taken late
+            // enough to be different from the first.
+            await Task.Delay(2000);
+
+            values = new Dictionary<string, string>(
+                client.Ask(new AskRequest { Question = "ribbon" }).Values, StringComparer.Ordinal);
+
+            loadedAfter = values.GetValueOrDefault("ribbon:featureLoaded") ?? "(missing)";
+        }
+        else
+        {
+            // Said, because the check below is about to fail for a reason that is not its own.
+            report.Note("the feature assembly after the Entry rule was asked", "not evaluated - the rule was never asked");
+
+            foreach (var line in LogLines(values.GetValueOrDefault("log"), "BHS.Revit.Probe.Entry"))
+                report.Note("what the probe log says about the Entry assembly", line);
+        }
+
+        report.Check("and the feature assembly is still not loaded once it has been asked",
+            asked && loadedWhenAsked == "False" && loadedAfter == "False");
+
+        report.Note("Entry rule calls",
+            (values.GetValueOrDefault("ribbon:gateCalls") ?? "(missing)")
+            + ", off the API thread " + (values.GetValueOrDefault("ribbon:gateCallsOffApiThread") ?? "(missing)")
+            + " (API thread " + (values.GetValueOrDefault("ribbon:apiThread") ?? "?")
+            + ", first call on thread " + (values.GetValueOrDefault("ribbon:gateFirstCallThread") ?? "?") + ")");
+
+        report.Note("feature assembly when the Entry rule was first seen asked, and again 2 s later",
+            loadedWhenAsked + ", " + loadedAfter);
+
+        report.Note("ActiveAddInId inside availability, raw, from the control",
+            "first " + (values.GetValueOrDefault("ribbon:availabilityActiveAddInFirst") ?? "(missing)")
+            + ", latest " + (values.GetValueOrDefault("ribbon:availabilityActiveAddInLatest") ?? "(missing)"));
+
+        report.Note("Entry assembly loaded", DescribeEntryLoad(values));
+    }
+
+    /// <summary>When the Entry assembly came in, in the terms the question has.</summary>
+    private static string DescribeEntryLoad(IReadOnlyDictionary<string, string> values)
+    {
+        if (values.GetValueOrDefault("ribbon:entryLoadedAtRibbonBuild") == "True")
+            return "already when the ribbon was built - Revit loaded the button's assembly as it added the button";
+
+        var loaded = Moment(values, "ribbon:entryLoadedUtc");
+        var firstCall = Moment(values, "ribbon:gateFirstCallUtc");
+
+        if (loaded is null)
+        {
+            return values.GetValueOrDefault("ribbon:entryLoaded") == "True"
+                ? "after the ribbon was built, at a moment nobody recorded"
+                : "not loaded";
+        }
+
+        if (firstCall is null)
+            return "after the ribbon was built, and its rule has not been asked";
+
+        // Signed, and said as a difference rather than as "before": the load is expected to lead the
+        // first call by milliseconds, and a negative number is a finding rather than a typo.
+        return "after the ribbon was built; the first call to its rule came "
+               + (firstCall.Value - loaded.Value).TotalSeconds.ToString("F3", CultureInfo.InvariantCulture)
+               + "s after the load";
+    }
+
+    /// <summary>
+    /// A command from a feature's Entry assembly, pressed: whether it runs, and which host it reached.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <b>Two assertions.</b> That the press runs <c>GateCommand</c> through
+    /// <c>CommandEntryPoint&lt;ProbeGateFeature, GateCommand&gt;</c>, and that the host it was handed is
+    /// the probe's own interface host - found by the feature its <c>Modules</c> list declares. The
+    /// Entry assembly belongs to no edition, so the assembly half of the lookup Ping uses would find
+    /// nothing here, and the two-argument base does not try it.
+    /// </para>
+    /// <para>
+    /// <b>Pressed like Ping, and stopped sooner.</b> A posted command is dropped silently when Revit is
+    /// not ready, so it is posted again. But a press can also be refused, and a refusal is a dialog.
+    /// Pressing again would stack dialogs on the person answering them - each dismissal releases the next
+    /// pending press into the same dialog - so the pressing stops on any of three signs:
+    /// </para>
+    /// <list type="bullet">
+    /// <item><description>our own refusal in the probe log - no host, or several - which names the command
+    /// or the feature; read before each repeat, since it reads the whole log;</description></item>
+    /// <item><description>a press that found no command id on the edition's tab, which the probe records
+    /// and which no repeat can change; looked at on every poll;</description></item>
+    /// <item><description>Revit blocking, or raising a dialog, after the first press. A refusal Revit makes
+    /// itself - failing to construct the entry point, a missing <c>[Transaction]</c>, a type that will not
+    /// load - comes before our code runs and leaves nothing in the probe log. Whether Revit's dialog for a
+    /// failed external command raises <c>DialogBoxShowing</c> is not measured, so the press outcome is
+    /// noted as well: "posted and never ran" and "never posted" must not read alike when no dialog event
+    /// arrives either.</description></item>
+    /// </list>
+    /// <para>
+    /// The raw <c>ActiveAddInId</c> is a note: no run has isolated it for any kind of button - Ping used
+    /// to record the host it was handed, not the id - and the entry point consults it only when more
+    /// than one host declares the feature, which this sweep does not arrange.
+    /// </para>
+    /// </remarks>
+    private static async Task CheckEntryCommandAsync(
+        RevitSideChannel.RevitSideChannelClient client,
+        DiagnosticsWatcher watcher,
+        Report report)
+    {
+        const int timeout = 90_000;
+
+        var values = new Dictionary<string, string>(StringComparer.Ordinal);
+        var refusals = new List<string>();
+        var runs = "0";
+        var attempts = 0;
+        var presses = 0;
+        var stoppedBecause = string.Empty;
+
+        // Taken before the first press, so that what came after it is what counts: a dialog answered
+        // earlier in the sweep leaves both the dialog list and the current phase where it left them.
+        var dialogsBefore = watcher.Dialogs.Count;
+        var blockedBefore = watcher.BlockedEvents;
+        var blockedAtStart = watcher.CurrentPhase == RevitPhase.Blocked;
+
+        // Its own deadline, set no later than the wait's: WaitForAsync evaluates the condition once more
+        // after its own deadline has passed, and a press raised then would land in the checks that follow.
+        var pressUntil = DateTime.UtcNow.AddMilliseconds(timeout);
+
+        await WorkWatch.WaitForAsync(() =>
+        {
+            if (attempts % 20 == 0 && DateTime.UtcNow < pressUntil)
+            {
+                client.Ask(new AskRequest { Question = "pressgate" });
+                presses++;
+            }
+
+            attempts++;
+
+            values = new Dictionary<string, string>(
+                client.Ask(new AskRequest { Question = "ribbon" }).Values, StringComparer.Ordinal);
+
+            runs = values.GetValueOrDefault("ribbon:gateRuns") ?? "0";
+
+            // A run first: whatever else happened, a command that ran is the answer.
+            if (runs != "0")
+                return true;
+
+            // Every poll, because both are a field or two already in hand.
+            if (values.GetValueOrDefault("ribbon:gatePress") == PressUnmatched)
+            {
+                stoppedBecause = "no command id matched on the edition's tab, so it was not pressed again";
+                return true;
+            }
+
+            if (watcher.BlockedEvents > blockedBefore
+                || watcher.Dialogs.Count > dialogsBefore
+                || (!blockedAtStart && watcher.CurrentPhase == RevitPhase.Blocked))
+            {
+                var dialogs = watcher.Dialogs.Skip(dialogsBefore).ToList();
+
+                if (watcher.BlockedBy.Length > 0 && !dialogs.Contains(watcher.BlockedBy))
+                    dialogs.Add(watcher.BlockedBy);
+
+                stoppedBecause = "Revit blocked after the press, so it was not pressed again - dialog(s) "
+                                 + (dialogs.Count > 0 ? string.Join(", ", dialogs) : "without an identifier")
+                                 + ", last press " + Or(values.GetValueOrDefault("ribbon:gatePress"), "(not recorded)");
+
+                // Once more, because our own refusal is a dialog too: Failed with a message is shown by
+                // Revit, and the Blocked phase can arrive before the next scheduled read of the log.
+                refusals = Refusals(values.GetValueOrDefault("log"));
+                return true;
+            }
+
+            // Only just before a repeat press, as before: it reads the whole probe log. The lines it finds
+            // are noted one by one below, so no second reason is recorded for them.
+            if (attempts % 20 == 0)
+            {
+                refusals = Refusals(values.GetValueOrDefault("log"));
+
+                if (refusals.Count > 0)
+                    return true;
+            }
+
+            return false;
+        }, timeout);
+
+        report.Check("a command in a feature's Entry assembly runs when its button is pressed", runs != "0");
+
+        var host = values.GetValueOrDefault("ribbon:gateAddInId") ?? "(none)";
+
+        report.Check("and it was handed the probe's interface host, found by its feature",
+            string.Equals(host, ProbeDeployment.AddInId, StringComparison.OrdinalIgnoreCase));
+
+        report.Note("Entry command",
+            $"runs {runs}, host {host}, hosts declaring its feature {values.GetValueOrDefault("ribbon:gateHosts") ?? "(missing)"}");
+
+        report.Note("ActiveAddInId inside the Entry command, raw",
+            values.GetValueOrDefault("ribbon:gateActiveAddInId") ?? "(none)");
+
+        foreach (var refusal in refusals)
+            report.Note("the Entry command was refused, so it was not pressed again", refusal);
+
+        // What the last press came to, whatever ended the wait: "posted" beside zero runs is a press
+        // Revit took and did nothing with, or refused before our code ran; empty is a press that never
+        // left the external event queue.
+        report.Note("Entry press",
+            $"pressed {presses} time(s), last press {Or(values.GetValueOrDefault("ribbon:gatePress"), "(never executed)")}");
+
+        if (stoppedBecause.Length > 0)
+            report.Note("Entry pressing stopped", stoppedBecause);
+
+        // Where the feature assembly came in, against the first call to the Entry rule. Ping's press
+        // loaded it, and that is the expected answer; the number says how long it stayed out after the
+        // Entry assembly was already in and being asked.
+        var featureLoaded = Moment(values, "ribbon:featureLoadedUtc");
+        var firstCall = Moment(values, "ribbon:gateFirstCallUtc");
+
+        report.Note("feature assembly loaded after the first call to the Entry rule",
+            featureLoaded is null || firstCall is null
+                ? "not both recorded (loaded when the ribbon was built: "
+                  + (values.GetValueOrDefault("ribbon:featureLoadedAtRibbonBuild") ?? "(missing)") + ")"
+                : (featureLoaded.Value - firstCall.Value).TotalSeconds.ToString("F1", CultureInfo.InvariantCulture) + "s");
+    }
+
+    /// <summary>What the probe's press handler records for a press no spelling found - its <c>Unmatched</c>.</summary>
+    private const string PressUnmatched = "unmatched";
+
+    private static string Or(string? value, string fallback) => string.IsNullOrEmpty(value) ? fallback : value;
+
+    /// <summary>
+    /// The lines of the probe log that say a press of the Entry button was refused.
+    /// </summary>
+    /// <remarks>
+    /// Matched on what the framework writes at <c>ERR</c>: every refusal names the command's full type
+    /// name - "cannot run", "has nowhere to run", "command ... failed" - except the one for several hosts,
+    /// which names the feature instead. Brittle against a reworded message, and acceptable for that: it
+    /// decides only whether to stop pressing and what to note, never whether a check passes.
+    /// </remarks>
+    private static List<string> Refusals(string? logPath)
+    {
+        var found = new List<string>();
+
+        foreach (var line in ReadLog(logPath ?? string.Empty).Split('\n'))
+        {
+            if (line.IndexOf("  ERR  ", StringComparison.Ordinal) < 0)
+                continue;
+
+            if (line.Contains("BHS.Revit.Probe.Feature.GateCommand", StringComparison.Ordinal)
+                || line.Contains("BHS.Revit.Probe.Declaration.ProbeGateFeature is declared by more than one host", StringComparison.Ordinal))
+            {
+                found.Add(line.TrimEnd('\r'));
+            }
+        }
+
+        return found;
+    }
+
+    /// <summary>Warnings and errors in the probe log that mention something, a few at most.</summary>
+    private static IEnumerable<string> LogLines(string? logPath, string about)
+    {
+        return ReadLog(logPath ?? string.Empty)
+               .Split('\n')
+               .Where(line => line.Contains(about, StringComparison.Ordinal)
+                              && (line.Contains("  ERR  ", StringComparison.Ordinal)
+                                  || line.Contains("  WRN  ", StringComparison.Ordinal)))
+               .Select(line => line.TrimEnd('\r'))
+               .Take(5);
+    }
+
+    /// <summary>A moment the probe wrote as round-trip text, or null when it wrote none.</summary>
+    private static DateTime? Moment(IReadOnlyDictionary<string, string> values, string key) =>
+        values.TryGetValue(key, out var text)
+        && DateTime.TryParse(text, CultureInfo.InvariantCulture, DateTimeStyles.RoundtripKind, out var moment)
+            ? moment.ToUniversalTime()
+            : null;
 
     /// <summary>
     /// A command Revit built itself, finding its host and loading its feature to do it.
@@ -722,6 +1132,7 @@ internal static class SweepChecks
     {
         var runs = "0";
         var addInId = "(none)";
+        var active = "(none)";
         var loaded = "False";
         var attempts = 0;
 
@@ -739,6 +1150,7 @@ internal static class SweepChecks
             var values = client.Ask(new AskRequest { Question = "ribbon" }).Values;
             runs = values.GetValueOrDefault("ribbon:pingRuns") ?? "0";
             addInId = values.GetValueOrDefault("ribbon:pingAddInId") ?? "(none)";
+            active = values.GetValueOrDefault("ribbon:pingActiveAddInId") ?? "(none)";
             loaded = values.GetValueOrDefault("ribbon:featureLoaded") ?? "False";
             return runs != "0";
         }, 90_000);
@@ -751,6 +1163,11 @@ internal static class SweepChecks
         report.Check("and the feature assembly loaded only once it was needed", loaded == "True");
 
         report.Note("feature command", $"runs {runs}, host {addInId}");
+
+        // The control for the Entry command's raw answer: the same question, asked of a button the
+        // probe's own manifest built, whose entry point looks its host up by this very id first and by
+        // assembly second - never by feature.
+        report.Note("ActiveAddInId inside the Ping command, raw", active);
     }
 
     /// <summary>

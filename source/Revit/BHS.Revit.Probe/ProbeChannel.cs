@@ -23,6 +23,7 @@ internal sealed class ProbeChannel : RevitSideChannel.RevitSideChannelBase
     private readonly BHS.Revit.Abstractions.IUiFeatureServices _services;
     private readonly ExternalEvent _exit;
     private readonly ExternalEvent _press;
+    private readonly ExternalEvent _pressGate;
     private int _publishCount;
 
     public ProbeChannel(
@@ -30,9 +31,11 @@ internal sealed class ProbeChannel : RevitSideChannel.RevitSideChannelBase
         BHS.Settings.LayeredSettings? layers,
         BHS.Revit.Abstractions.IUiFeatureServices services,
         ExternalEvent exit,
-        ExternalEvent press)
+        ExternalEvent press,
+        ExternalEvent pressGate)
     {
         _press = press;
+        _pressGate = pressGate;
         _settings = new ProbeSettings(layers, services);
         _services = services;
         _facts = facts;
@@ -108,11 +111,25 @@ internal sealed class ProbeChannel : RevitSideChannel.RevitSideChannelBase
                     break;
 
                 case "ribbon":
+                    // The Entry experiment first, and before the feature's loaded state below, on
+                    // purpose: the sweep asserts that the feature is still unloaded once the Entry
+                    // rule has been asked, so within one answer the counter has to be read before
+                    // the assembly list rather than after it.
+                    DescribeEntry(response);
+
                     response.Values.Add("ribbon:availabilityCalls", LocalAvailability.Calls.ToString());
                     response.Values.Add("ribbon:commandRuns", ProbeCommand.Runs.ToString());
                     response.Values.Add("ribbon:featureLoaded", ProbeApplication.IsFeatureLoaded() ? "True" : "False");
                     response.Values.Add("ribbon:fromManifest", ProbeApplication.ButtonsFromManifest.ToString());
                     response.Values.Add("ribbon:ownTab", ProbeApplication.OwnTabSeen ? "True" : "False");
+
+                    // Where the Entry button landed, recorded on the UI thread by the code that brought
+                    // the tab forward. Empty until it ran - which the runner waits out, not reads once.
+                    response.Values.Add("ribbon:activatedTab", ProbeApplication.ActivatedTab);
+                    response.Values.Add("ribbon:ownPanelButtonIds", ProbeApplication.OwnPanelButtonIds);
+                    response.Values.Add("ribbon:ownPanelButtonTexts", ProbeApplication.OwnPanelButtonTexts);
+                    response.Values.Add("ribbon:otherTabsWithOwnPanel", ProbeApplication.OtherTabsWithOwnPanel);
+                    response.Values.Add("ribbon:gatePress", ProbeApplication.GatePressHandler?.LastOutcome ?? "(no handler)");
                     response.Values.Add("ribbon:icons", ProbeApplication.IconsSeen ? "True" : "False");
 
                     foreach (var fact in ProbeApplication.IconFacts)
@@ -121,6 +138,8 @@ internal sealed class ProbeChannel : RevitSideChannel.RevitSideChannelBase
                         Environment.GetEnvironmentVariable("BHS_PROBE_PING_RAN") ?? "0");
                     response.Values.Add("ribbon:pingAddInId",
                         Environment.GetEnvironmentVariable("BHS_PROBE_PING_SERVICES") ?? "(none)");
+                    response.Values.Add("ribbon:pingActiveAddInId",
+                        Environment.GetEnvironmentVariable("BHS_PROBE_PING_ACTIVE_ADDIN") ?? "(none)");
                     break;
 
                 case "model":
@@ -171,6 +190,12 @@ internal sealed class ProbeChannel : RevitSideChannel.RevitSideChannelBase
 
                 case "press":
                     _press.Raise();
+                    break;
+
+                // The Entry button, on an event of its own: the handler is fixed when the event is
+                // created, and events are created only during startup.
+                case "pressgate":
+                    _pressGate.Raise();
                     break;
 
                 // The other half of the add-in, which has no channel of its own on purpose: two
@@ -241,6 +266,67 @@ internal sealed class ProbeChannel : RevitSideChannel.RevitSideChannelBase
 
         return Task.FromResult(response);
     }
+
+    /// <summary>
+    /// What the Entry experiment has seen so far: the rule's counters, when the two assemblies loaded,
+    /// and what the Entry command and the control recorded.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <b>Reported, not judged.</b> The runner decides which of these are assertions - that the rule was
+    /// asked, that the feature stayed out until a press, that the command reached this host - and which
+    /// are notes, because nobody knows the answer yet: <c>ActiveAddInId</c> inside availability and
+    /// inside a command built from a feature's manifest, and whether Revit loads a button's assembly when
+    /// it adds the button or when it first asks it.
+    /// </para>
+    /// <para>
+    /// Everything about the Entry and feature assemblies is read as text - environment variables,
+    /// simple names, statics in the declaration. A type from either named here would load it from our
+    /// side, and the measurement would be of the probe rather than of Revit.
+    /// </para>
+    /// </remarks>
+    private static void DescribeEntry(AskResponse response)
+    {
+        var culture = CultureInfo.InvariantCulture;
+
+        // The counter before anything about assemblies; see where this is called.
+        var calls = BHS.Revit.Probe.Declaration.GateRule.Calls;
+        var firstCall = BHS.Revit.Probe.Declaration.GateRule.FirstCallUtc;
+
+        response.Values.Add("ribbon:gateCalls", calls.ToString(culture));
+        response.Values.Add("ribbon:gateCallsOffApiThread",
+            BHS.Revit.Probe.Declaration.GateRule.CallsOffApiThread.ToString(culture));
+        response.Values.Add("ribbon:gateFirstCallThread",
+            BHS.Revit.Probe.Declaration.GateRule.FirstCallThreadId.ToString(culture));
+        response.Values.Add("ribbon:apiThread", LogRouter.PrimaryThreadId.ToString(culture));
+        response.Values.Add("ribbon:gateFirstCallUtc", Stamp(firstCall));
+
+        response.Values.Add("ribbon:entryLoaded", ProbeApplication.IsLoaded(ProbeApplication.EntryAssemblyName) ? "True" : "False");
+        response.Values.Add("ribbon:entryLoadedAtRibbonBuild", ProbeApplication.EntryLoadedAtRibbonBuild ? "True" : "False");
+        response.Values.Add("ribbon:entryLoadedUtc", Stamp(ProbeApplication.EntryLoadedUtc));
+        response.Values.Add("ribbon:featureLoadedAtRibbonBuild", ProbeApplication.FeatureLoadedAtRibbonBuild ? "True" : "False");
+        response.Values.Add("ribbon:featureLoadedUtc", Stamp(ProbeApplication.FeatureLoadedUtc));
+
+        response.Values.Add("ribbon:availabilityActiveAddInFirst", LocalAvailability.FirstActiveAddInId);
+        response.Values.Add("ribbon:availabilityActiveAddInLatest", LocalAvailability.LatestActiveAddInId);
+
+        // How many hosts with a user interface declare the gate feature. One is the only answer in
+        // which the Entry command runs without consulting ActiveAddInId at all; said here so that a
+        // command that never ran can be told apart from one that had nowhere to run.
+        var hosts = BHS.Revit.Abstractions.HostRegistry.FindByFeature(typeof(BHS.Revit.Probe.Declaration.ProbeGateFeature));
+        response.Values.Add("ribbon:gateHosts", hosts.Count.ToString(culture));
+
+        response.Values.Add("ribbon:gateRuns",
+            Environment.GetEnvironmentVariable("BHS_PROBE_GATE_RAN") ?? "0");
+        response.Values.Add("ribbon:gateAddInId",
+            Environment.GetEnvironmentVariable("BHS_PROBE_GATE_SERVICES") ?? "(none)");
+        response.Values.Add("ribbon:gateActiveAddInId",
+            Environment.GetEnvironmentVariable("BHS_PROBE_GATE_ACTIVE_ADDIN") ?? "(none)");
+    }
+
+    /// <summary>A moment as round-trip text, or empty when it has not happened.</summary>
+    private static string Stamp(DateTime? utc) =>
+        utc is { } value ? value.ToString("O", CultureInfo.InvariantCulture) : string.Empty;
 
     /// <summary>
     /// What the logging layer came to inside this Revit.

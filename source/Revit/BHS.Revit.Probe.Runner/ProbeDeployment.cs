@@ -25,6 +25,12 @@ internal static class ProbeDeployment
     /// </remarks>
     public const string DbAddInId = "79613878-acf3-4f56-83fc-11412bb53c24";
 
+    /// <summary>
+    /// The tab the probe names as the edition, through <c>RibbonTab</c> - and the tab its own manifest
+    /// gives Ping, so the Entry button lands on Ping's panel.
+    /// </summary>
+    public const string EditionTab = "BHS";
+
     /// <summary>Every add-in this one manifest declares.</summary>
     public static readonly string[] AddInIds = { AddInId, DbAddInId };
 

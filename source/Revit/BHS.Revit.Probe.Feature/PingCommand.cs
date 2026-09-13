@@ -23,9 +23,15 @@ public sealed class PingCommand : IFeatureCommand
 {
     public const string RanVariable = "BHS_PROBE_PING_RAN";
     public const string ServicesVariable = "BHS_PROBE_PING_SERVICES";
+    public const string ActiveAddInVariable = "BHS_PROBE_PING_ACTIVE_ADDIN";
 
     public Result Execute(IUiFeatureServices services, ExternalCommandData data, ElementSet elements, ref string message)
     {
+        // What Revit itself names as executing, beside the host the registry resolved below. Ping is
+        // the control for GateCommand, and the control's raw answer is what the Entry button's raw
+        // answer is read against. First, so that it is never behind the run count it belongs to.
+        Environment.SetEnvironmentVariable(ActiveAddInVariable, ActiveAddIn.Describe(data));
+
         var count = int.TryParse(Environment.GetEnvironmentVariable(RanVariable), out var previous) ? previous : 0;
         Environment.SetEnvironmentVariable(RanVariable, (count + 1).ToString());
 

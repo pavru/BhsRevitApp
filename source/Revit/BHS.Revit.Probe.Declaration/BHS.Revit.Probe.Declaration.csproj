@@ -1,0 +1,34 @@
+<Project Sdk="BHS.Revit.Sdk/1.5.8">
+
+    <!--
+      The probe's stand-in for a feature's declaration assembly: a module the probe lists, and the
+      availability rule its Entry button asks.
+
+      It exists so that the Entry arrangement is measured before a feature depends on it. A feature's
+      buttons now live in <P>.Entry, the rule in <P>.Declaration and the command in <P>.Feature, and
+      three things about that arrangement cannot be read from metadata: whether Revit accepts an
+      availability class whose logic sits in a generic base in another assembly, whether the feature
+      assembly stays out of the AppDomain while that class is being asked, and whether a command found
+      by its feature reaches the host that declared it. The probe answers them in a sweep with the tab
+      shown - BHS_PROBE_SHOW_TAB=1, with a person at the screen.
+
+      The same rules as a real declaration, and RefCheck holds it to them by name: this assembly ends
+      in .Declaration, so RVTDEC001 refuses any reference to .Feature or .Entry, and RVTDEC002 any to
+      RevitAPIUI. BHS.Logging is reached through BHS.Revit.Abstractions, which already references it;
+      it is on the allowed list either way.
+
+      Unlike a real rule, GateRule keeps counters. They are what the probe reads, and a probe rule is
+      the one place the owner allowed them - never an Entry class.
+    -->
+
+    <PropertyGroup>
+        <TargetFrameworks>net48-revit2024;net8.0-revit2025;net8.0-revit2026;net10.0-revit2027</TargetFrameworks>
+        <RootNamespace>BHS.Revit.Probe.Declaration</RootNamespace>
+        <IsPackable>false</IsPackable>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="..\BHS.Revit.Abstractions\BHS.Revit.Abstractions.csproj"/>
+    </ItemGroup>
+
+</Project>
