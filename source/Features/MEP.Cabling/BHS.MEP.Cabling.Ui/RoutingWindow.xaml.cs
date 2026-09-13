@@ -66,6 +66,19 @@ public partial class RoutingWindow : Window
 
     private void OnCancel(object sender, RoutedEventArgs e) => _model.Cancel();
 
+    /// <summary>
+    /// Writes the run into the model, without closing the window first.
+    /// </summary>
+    /// <remarks>
+    /// <b>In the same continuation as the run, and that is measured rather than chosen.</b> The pump
+    /// does not execute while a modal dialog is open, so handing the write to it would mean the
+    /// window describing the work disappears before the work is done. Measured on all four releases:
+    /// a transaction started after an await inside this window starts, commits a real modification,
+    /// and a group around it returns the document as it was.
+    /// </remarks>
+    private async void OnApply(object sender, RoutedEventArgs e) =>
+        await _model.ApplyAsync().ConfigureAwait(true);
+
     private void OnClose(object sender, RoutedEventArgs e) => Close();
 
     /// <summary>

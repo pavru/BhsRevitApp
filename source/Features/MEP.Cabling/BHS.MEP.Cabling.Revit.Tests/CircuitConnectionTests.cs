@@ -64,8 +64,13 @@ public sealed class CircuitConnectionTests : IRevitTestSuite
         scheme.Export(application);
         scheme.Install(document, application);
 
+        // The connection parameter by id, and nothing wider. This asked "is anything missing" until the
+        // apply phase declared two parameters whose category is known only at run time - which Install
+        // without runtime categories rightly skips - and then failed on all four releases with a
+        // sentence about a parameter that was in fact bound. An assertion should claim what its message
+        // names.
         Expect.That(
-            scheme.Missing(document).Count == 0,
+            scheme.Missing(document).All(one => one.Id != CablingParameters.CircuitConnection),
             "binding through the production path left the connection parameter missing");
 
         var panel = fed![0].BaseEquipment;

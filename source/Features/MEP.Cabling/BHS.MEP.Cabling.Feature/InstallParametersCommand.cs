@@ -64,7 +64,17 @@ public sealed class InstallParametersCommand : IFeatureCommand
 
         log.Info("parameters: this Revit speaks {0}, so it reads {1}", application.Language, active);
 
-        var missing = scheme.Missing(document);
+        // Only the parameters this command can bind. Two of ours declare no category at compile time -
+        // the indicator's family is the project's to choose - so they are bound by the apply phase,
+        // which knows that category, and not here. Counted in without that distinction, every press
+        // of this button would log them as "could not be bound", which is a failure that is not one:
+        // measured by the in-Revit case that asked the same wide question and went red on all four
+        // releases.
+        var deferred = scheme.Missing(document).Where(one => one.Categories.Count == 0).ToList();
+        var missing = scheme.Missing(document).Where(one => one.Categories.Count > 0).ToList();
+
+        foreach (var one in deferred)
+            log.Info("parameters: {0} is bound when a run is applied, where its category is known", one.In(language).Name);
 
         if (missing.Count == 0)
         {
@@ -73,7 +83,7 @@ public sealed class InstallParametersCommand : IFeatureCommand
             return Result.Succeeded;
         }
 
-        var bound = scheme.Install(document, application);
+        var bound = scheme.Install(document, application).Where(one => one.Categories.Count > 0).ToList();
 
         foreach (var one in bound)
             log.Info("parameters: bound {0} to {1} category(ies)", one.In(language).Name, one.Categories.Count);

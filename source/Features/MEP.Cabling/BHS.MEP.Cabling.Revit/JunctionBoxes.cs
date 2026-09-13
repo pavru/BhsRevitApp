@@ -52,7 +52,9 @@ internal sealed class JunctionBoxReader
     /// fault of exactly the kind this tool exists to surface - and one that looks, from the routing
     /// side, like a box the calculation ignored for no reason.
     /// </remarks>
-    public int Unconnected { get; private set; }
+    public IReadOnlyList<long> Unconnected => _unconnected;
+
+    private readonly List<long> _unconnected = new();
 
     /// <summary>Whether this element is a real junction box, counting the ones that are not joined.</summary>
     public bool IsRealBox(Element element)
@@ -63,7 +65,9 @@ internal sealed class JunctionBoxReader
         if (JoinsACarrier(element))
             return true;
 
-        Unconnected++;
+        // The id and not only a tally: this ends up in Revit's own warning list, which addresses
+        // an element. A count can be shown on a screen and cannot be pointed at.
+        _unconnected.Add(element.Id.Value);
         return false;
     }
 
