@@ -1,4 +1,5 @@
 ﻿using System.Diagnostics;
+using Autodesk.Revit.ApplicationServices;
 using Autodesk.Revit.DB;
 using Autodesk.Revit.UI;
 using BHS.Logging;
@@ -24,9 +25,12 @@ namespace BHS.MEP.Cabling.Feature;
 /// require.
 /// </para>
 /// <para>
-/// <b>Nothing here writes.</b> Applying a route is a transaction, and this repository has not yet
-/// measured what a transaction started after an <c>await</c> inside a modal window does. That
-/// measurement travels with the phase that needs it.
+/// <b>It writes now, and only when asked.</b> The note here used to say that nothing did, because
+/// what a transaction started after an <c>await</c> inside a modal window would do had not been
+/// measured. It has been, on all four releases: the transaction starts, commits a real modification,
+/// and a group around it returns the document as it was. So applying happens in the same
+/// continuation, without closing the window - which is the arrangement the measurement was for, the
+/// pump being unable to run while a modal dialog is open.
 /// </para>
 /// </remarks>
 public sealed class RouteCablingCommand : IFeatureCommand
@@ -37,8 +41,9 @@ public sealed class RouteCablingCommand : IFeatureCommand
     public Result Execute(IUiFeatureServices services, ExternalCommandData data, ElementSet elements, ref string message)
     {
         var document = data?.Application?.ActiveUIDocument?.Document;
+        var application = data?.Application?.Application;
 
-        if (document is null)
+        if (document is null || application is null)
         {
             message = "Open a model: this command needs a document.";
             return Result.Failed;
@@ -55,9 +60,17 @@ public sealed class RouteCablingCommand : IFeatureCommand
         if (project.Unreadable.Length > 0)
             log.Warn("cabling: a project setting could not be read and its default is used - {0}", project.Unreadable);
 
+        // What the read produced, kept so that the write can use it. The apply phase reports
+        // conditions the search never sees - a connection value nobody can read, a box joined to
+        // nothing - and those are findings of the read. Recomputing them at write time would be a
+        // second reading of the same model, and two readings disagree the day somebody edits
+        // between them.
+        var read = new Reading();
+
         var model = new RoutingViewModel(
-            (progress, token) => ComputeAsync(document, options, project, progress, token, log),
-            CablingLength.Formatter(document));
+            (progress, token) => ComputeAsync(document, options, project, read, progress, token, log),
+            CablingLength.Formatter(document),
+            _ => Task.FromResult(ApplyNow(document, application, project, read, log)));
 
         var window = new RoutingWindow(model);
 
@@ -89,10 +102,11 @@ public sealed class RouteCablingCommand : IFeatureCommand
     /// does nothing for the half of the wait that is longest on a big model.
     /// </para>
     /// </remarks>
-    private static Task<RouteRun> ComputeAsync(
+    private static async Task<RouteRun> ComputeAsync(
         Document document,
         RoutingOptions options,
         CablingProjectSettings project,
+        Reading reading,
         IProgress<RoutingProgress> progress,
         CancellationToken token,
         ILog log)
@@ -100,18 +114,112 @@ public sealed class RouteCablingCommand : IFeatureCommand
         progress.Report(new RoutingProgress("Reading the model", 0, 0));
 
         var version = Interlocked.Increment(ref _version);
-        var read = Stopwatch.StartNew();
+        var clock = Stopwatch.StartNew();
         var snapshot = CablingSnapshot.Build(
             document, options, new CarrierCatalogue(), version, project.Boxes, project.DefaultConnection);
-        read.Stop();
+        clock.Stop();
 
         log.Info(
             "cabling: read {0} carrier(s) and {1} circuit(s) in {2:F1} s",
             snapshot.Network.Count,
             snapshot.Circuits.Described.Count,
-            read.Elapsed.TotalSeconds);
+            clock.Elapsed.TotalSeconds);
 
-        return Task.Run(() => Search(snapshot, options, project.BoxRadius, progress, token), token);
+        reading.Snapshot = snapshot;
+
+        // Awaited rather than returned, so that the run is recorded before the window can offer to
+        // write it. Returning the task would leave a window in which Apply is enabled and has
+        // nothing to apply.
+        var run = await Task.Run(() => Search(snapshot, options, project.BoxRadius, progress, token), token)
+            .ConfigureAwait(true);
+
+        reading.Run = run;
+        return run;
+    }
+
+    /// <summary>What the read and the search produced, held between the two phases.</summary>
+    /// <remarks>
+    /// A small mutable holder rather than fields on the command: Revit constructs a command object
+    /// per press, but the entry point is reached through a generic base and nothing here should
+    /// depend on how long that object lives. One object, captured by both delegates, has a lifetime
+    /// that is visible in the code.
+    /// </remarks>
+    private sealed class Reading
+    {
+        public CablingSnapshot? Snapshot { get; set; }
+
+        public RouteRun? Run { get; set; }
+    }
+
+    /// <summary>
+    /// Writes the finished run into the model, and says what came of it in one line.
+    /// </summary>
+    /// <remarks>
+    /// <b>The mapping onto <see cref="ApplyReport"/> happens here because this is the last place
+    /// that may name a Revit type.</b> The view model is on the plain axis; handing it
+    /// <c>ApplyOutcome</c> would mean the screen assembly references the one with a
+    /// <c>Document</c> in it, and every later screen could then reach for the API by accident.
+    /// </remarks>
+    private static ApplyReport ApplyNow(
+        Document document,
+        Application application,
+        CablingProjectSettings project,
+        Reading reading,
+        ILog log)
+    {
+        if (reading.Run is not { } run || reading.Snapshot is not { } snapshot)
+            return new ApplyReport("There is nothing to write yet.", refused: true);
+
+        var outcome = CablingApply.Apply(document, application, run, snapshot, project, new CarrierCatalogue());
+
+        if (outcome.Refused)
+        {
+            foreach (var refusal in outcome.Refusals)
+                log.Warn("cabling: nothing was written - {0}", refusal);
+
+            return new ApplyReport(string.Join(" ", outcome.Refusals), refused: true);
+        }
+
+        // One argument, and the sentence is the one the screen shows. ILog carries overloads for
+        // nought to three arguments rather than a params array - so that a disabled level costs no
+        // allocation - and six is not among them. Composing it once and logging it whole also stops
+        // the log and the screen from drifting into two accounts of the same write.
+        var said = Describe(outcome);
+
+        log.Info("cabling: {0}", said);
+
+        return new ApplyReport(said, refused: false);
+    }
+
+    /// <summary>What was written, in one sentence, with the unusual parts said only when they happen.</summary>
+    private static string Describe(ApplyOutcome outcome)
+    {
+        var said = new List<string>
+        {
+            outcome.Placed + " indicator(s) placed",
+            outcome.Updated + " updated",
+            outcome.Removed + " removed",
+        };
+
+        if (outcome.ExistingUsed > 0)
+            said.Add(outcome.ExistingUsed + " existing box(es) used");
+
+        said.Add(outcome.CarriersMarked + " carrier(s) marked with their circuits");
+
+        // Only when it happened, and then prominently: an indicator somebody has joined to the
+        // structure is theirs now, and this is the line that says why it was left where it is.
+        if (outcome.Adopted > 0)
+            said.Add(outcome.Adopted + " indicator(s) left alone because they are now joined to the structure");
+
+        // The difference between "nothing to write" and "nowhere to write it", which is the whole
+        // of what somebody needs to know when their trays live in a link.
+        if (outcome.InLinks > 0)
+            said.Add(outcome.InLinks + " reference(s) had nowhere to go: those carriers are in a link");
+
+        if (outcome.Warnings > 0)
+            said.Add(outcome.Warnings + " warning(s) posted into the model");
+
+        return string.Join(", ", said) + ".";
     }
 
     private static RouteRun Search(

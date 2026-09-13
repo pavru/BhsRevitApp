@@ -37,10 +37,12 @@ public sealed class CablingSnapshot
         int markersExcluded = 0,
         bool markerTypeKnown = false,
         IReadOnlyList<ExistingBox>? boxes = null,
-        int boxesUnconnected = 0)
+        int boxesUnconnected = 0,
+        IReadOnlyList<long>? boxesUnconnectedIds = null)
     {
         Boxes = boxes ?? Array.Empty<ExistingBox>();
         BoxesUnconnected = boxesUnconnected;
+        BoxesUnconnectedIds = boxesUnconnectedIds ?? Array.Empty<long>();
         Network = network;
         Carriers = carriers;
         Circuits = circuits;
@@ -109,6 +111,11 @@ public sealed class CablingSnapshot
     /// <summary>How many elements call themselves boxes and are joined to nothing.</summary>
     public int BoxesUnconnected { get; }
 
+    /// <summary>Which of them are in the host, so a warning can be posted against them.</summary>
+    /// <remarks>Fewer than <see cref="BoxesUnconnected"/> when links hold some: a warning in the
+    /// host cannot address an element of a link.</remarks>
+    public IReadOnlyList<long> BoxesUnconnectedIds { get; }
+
     /// <summary>Reads the host and its links, and builds the network and the circuits.</summary>
     public static CablingSnapshot Build(
         Document host,
@@ -158,6 +165,7 @@ public sealed class CablingSnapshot
             reader.Markers,
             reader.MarkerTypeKnown,
             reader.Boxes,
-            reader.BoxesUnconnected);
+            reader.BoxesUnconnected,
+            reader.BoxesUnconnectedIds);
     }
 }

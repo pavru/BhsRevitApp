@@ -40,9 +40,14 @@ namespace BHS.MEP.Cabling.Declaration;
 /// run served. A warning stays in the model's warning list, which is where a reviewer looks.
 /// </para>
 /// <para>
-/// <b>The registered string is only a default.</b> <c>FailureMessage.SetMessageString</c> exists on
-/// all four releases, so each posting can name the circuit it is about rather than saying "some
-/// circuits". What is registered here is what Revit shows when nobody says anything better.
+/// <b>The registered string is the whole of what Revit will show, so each one has to stand alone.</b>
+/// This said the opposite first - that the text could be set per occurrence, on the strength of
+/// <c>FailureMessage.SetMessageString</c> appearing in the reference XML of all four releases. The
+/// compiler refused that member on all four alike; its XML article has no summary, only exceptions;
+/// and Autodesk's own calls, six of them across two SDKs, post a message without setting any text.
+/// What a warning can still say about itself is <i>which</i> element it is about, through
+/// <c>SetFailingElement</c> - so these sentences are written to be true of every case they will ever
+/// cover, and the particulars live on the result screen and in the log.
 /// </para>
 /// <para>
 /// <b>Known debt:</b> the strings below are English literals in the neutral position - the one that

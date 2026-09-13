@@ -20,9 +20,11 @@ public sealed class CircuitHarvest
         int withoutDevices,
         int devicesSkipped,
         int spareOrSpace,
-        IReadOnlyList<string>? unreadableConnection = null)
+        IReadOnlyList<string>? unreadableConnection = null,
+        IReadOnlyList<long>? unreadableConnectionIds = null)
     {
         UnreadableConnection = unreadableConnection ?? Array.Empty<string>();
+        UnreadableConnectionIds = unreadableConnectionIds ?? Array.Empty<long>();
         Described = circuits;
         WithoutPanel = withoutPanel;
         WithoutDevices = withoutDevices;
@@ -74,6 +76,14 @@ public sealed class CircuitHarvest
     /// headline length on a guess nobody knows was made.
     /// </remarks>
     public IReadOnlyList<string> UnreadableConnection { get; }
+
+    /// <summary>The same circuits as element ids, in the same order, for a posted warning.</summary>
+    /// <remarks>
+    /// Beside the prose rather than instead of it. The screen wants the number and the value it
+    /// found - that is what somebody fixes - and Revit's warning list wants an element to select.
+    /// Two audiences, one finding; deriving either from the other would mean parsing a sentence.
+    /// </remarks>
+    public IReadOnlyList<long> UnreadableConnectionIds { get; }
 }
 
 /// <summary>
@@ -103,6 +113,7 @@ public sealed class CircuitReader
     public CircuitHarvest Read(Document host)
     {
         var unreadable = new List<string>();
+        var unreadableIds = new List<long>();
         var circuits = new List<CircuitSnapshot>();
         var withoutPanel = 0;
         var withoutDevices = 0;
@@ -143,7 +154,7 @@ public sealed class CircuitReader
             {
                 BuiltInLength = system.Length,
                 HasCustomPath = system.HasCustomCircuitPath,
-                Connection = Connection(system, unreadable),
+                Connection = Connection(system, unreadable, unreadableIds),
 
                 // OurRouteId stays empty until the parameter scheme exists. It is what tells our own
                 // custom path from somebody else's, and reading it before we can write it would be a
@@ -151,7 +162,8 @@ public sealed class CircuitReader
             });
         }
 
-        return new CircuitHarvest(circuits, withoutPanel, withoutDevices, devicesSkipped, spareOrSpace, unreadable);
+        return new CircuitHarvest(
+            circuits, withoutPanel, withoutDevices, devicesSkipped, spareOrSpace, unreadable, unreadableIds);
     }
 
     /// <summary>
@@ -174,7 +186,7 @@ public sealed class CircuitReader
     /// not be silently overruled by its panel either, because then nobody learns about it.
     /// </para>
     /// </remarks>
-    private CircuitConnection Connection(ElectricalSystem system, List<string> unreadable)
+    private CircuitConnection Connection(ElectricalSystem system, List<string> unreadable, List<long> unreadableIds)
     {
         foreach (var owner in new Element?[] { system, system.BaseEquipment })
         {
@@ -187,6 +199,7 @@ public sealed class CircuitReader
                 return connection;
 
             unreadable.Add(Number(system) + ": '" + text + "'");
+            unreadableIds.Add(system.Id.Value);
             return _default;
         }
 

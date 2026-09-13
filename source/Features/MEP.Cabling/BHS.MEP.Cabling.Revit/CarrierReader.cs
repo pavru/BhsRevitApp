@@ -51,7 +51,21 @@ public sealed class CarrierReader
     public IReadOnlyList<ExistingBox> Boxes => _existing;
 
     /// <summary>Elements whose type calls them boxes and which are joined to nothing.</summary>
-    public int BoxesUnconnected { get; private set; }
+    public int BoxesUnconnected => _unconnected.Count;
+
+    /// <summary>Which ones, in the host model only.</summary>
+    /// <remarks>
+    /// <b>The host only, and that is not tidiness.</b> These ids exist so that the apply phase can
+    /// post a warning against the element, and a warning in the host cannot address an element that
+    /// lives in a link. A linked box joined to nothing is still counted - the number is about the
+    /// model somebody is looking at - but there is nothing here to point at, and inventing an id
+    /// would point at whatever the host happens to hold under that number.
+    /// </remarks>
+    public IReadOnlyList<long> BoxesUnconnectedIds => _unconnectedInHost;
+
+    private readonly List<long> _unconnected = new();
+
+    private readonly List<long> _unconnectedInHost = new();
 
     public int Markers { get; private set; }
 
@@ -133,11 +147,17 @@ public sealed class CarrierReader
         // After the walk, not inside it: this is an iterator, and a caller that stops early has read
         // only part of the document - a count taken mid-walk would describe that part and be read as
         // describing the model.
-        CountUnconnected(junctions);
+        CountUnconnected(junctions, source);
     }
 
     /// <summary>Carries the count out of the per-document reader, which the walk creates and drops.</summary>
-    private void CountUnconnected(JunctionBoxReader junctions) => BoxesUnconnected += junctions.Unconnected;
+    private void CountUnconnected(JunctionBoxReader junctions, long source)
+    {
+        _unconnected.AddRange(junctions.Unconnected);
+
+        if (source == 0)
+            _unconnectedInHost.AddRange(junctions.Unconnected);
+    }
 
     private static CarrierNode? Read(Element element, long source, Transform transform, string carrierClass)
     {

@@ -23,6 +23,13 @@
              discipline, one place that touches SharedParametersFilename - and the declaration is
              ours, so the split falls where it usually does: how in Common, what here. -->
         <ProjectReference Include="..\..\..\Revit\BHS.Revit.Common\BHS.Revit.Common.csproj" />
+        <!--
+          The feature's declaration, for the failure identifiers the apply phase posts against. This
+          is the arrow that is allowed: implementation names declaration, never the other way round.
+          Reversed, the assembly loaded during OnStartup would drag this one in with it and undo the
+          laziness the ribbon manifest exists to protect - which RVTDEC001 refuses at build time.
+        -->
+        <ProjectReference Include="..\BHS.MEP.Cabling.Declaration\BHS.MEP.Cabling.Declaration.csproj" />
     </ItemGroup>
 
 </Project>

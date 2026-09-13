@@ -42,9 +42,10 @@ public enum RoutingPhase
 /// is ours.
 /// </para>
 /// <para>
-/// There is no apply here. Writing to the model arrives with the phase that does it, together with
-/// the command that calls it: a delegate nobody invokes yet is a mechanism with no consumer, and
-/// this repository has already named what those turn into.
+/// <b>Applying is a delegate too, and for the same reason as computing.</b> The window knows when
+/// it may be offered, what to show while it runs and what to say afterwards; it does not know what
+/// a transaction is. What comes back is <see cref="ApplyReport"/> - counts and sentences, no Revit
+/// type - so this assembly still cannot name one.
 /// </para>
 /// </remarks>
 public sealed class RoutingViewModel : INotifyPropertyChanged
@@ -59,15 +60,25 @@ public sealed class RoutingViewModel : INotifyPropertyChanged
     private double _total;
     private RouteRun? _run;
     private string _failure = string.Empty;
+    private readonly Func<CancellationToken, Task<ApplyReport>>? _apply;
+    private ApplyReport? _applied;
+    private bool _applying;
 
     /// <param name="compute">Reads the model and searches it, reporting progress as it goes.</param>
     /// <param name="length">Turns internal feet into what this document would show for the same value.</param>
+    /// <param name="apply">
+    /// Writes the finished run into the model. Absent means this window only reports - which is what
+    /// a preview, a playground or a host with nothing to write to gets, and the button then never
+    /// appears rather than appearing and refusing.
+    /// </param>
     public RoutingViewModel(
         Func<IProgress<RoutingProgress>, CancellationToken, Task<RouteRun>> compute,
-        Func<double, string> length)
+        Func<double, string> length,
+        Func<CancellationToken, Task<ApplyReport>>? apply = null)
     {
         _compute = compute;
         _length = length;
+        _apply = apply;
     }
 
     public event PropertyChangedEventHandler? PropertyChanged;
@@ -131,6 +142,36 @@ public sealed class RoutingViewModel : INotifyPropertyChanged
     }
 
     public bool HasFailure => Failure.Length > 0;
+
+    /// <summary>Whether writing into the model can be offered at all.</summary>
+    /// <remarks>
+    /// <b>Once, and only after a run that found something.</b> Applying twice in a row would be
+    /// harmless - the write is idempotent by construction, since indicators are matched by place -
+    /// but a button that stays lit after it has been pressed invites the question of whether the
+    /// first press worked, and this window has no way to answer it twice.
+    /// </remarks>
+    public bool CanApply =>
+        _apply is not null && !_applying && _applied is null
+        && Phase == RoutingPhase.Ready && Run is { Found: > 0 };
+
+    /// <summary>True while the write is running.</summary>
+    public bool IsApplying
+    {
+        get => _applying;
+        private set => Set(ref _applying, value);
+    }
+
+    /// <summary>What writing into the model came to, once it has been done.</summary>
+    public ApplyReport? Applied
+    {
+        get => _applied;
+        private set => Set(ref _applied, value);
+    }
+
+    /// <summary>What the write did, or why it declined to.</summary>
+    public string ApplySummary => Applied?.Text ?? string.Empty;
+
+    public bool HasApplySummary => ApplySummary.Length > 0;
 
     /// <summary>How the run went, in one line.</summary>
     public string Summary =>
@@ -391,6 +432,43 @@ public sealed class RoutingViewModel : INotifyPropertyChanged
         }
     }
 
+    /// <summary>
+    /// Writes the finished run into the model, and says what came of it.
+    /// </summary>
+    /// <remarks>
+    /// <b>Not cancellable, and the token is passed for the other reason.</b> The write is one
+    /// transaction: stopping half way would leave indicators standing for a plan whose references
+    /// were never written, which is the one state nobody can reason about. The token travels so that
+    /// the window closing can tear the work down, not so that a person can interrupt it.
+    /// </remarks>
+    public async Task ApplyAsync()
+    {
+        if (_apply is null || !CanApply)
+            return;
+
+        IsApplying = true;
+        Raise(nameof(CanApply));
+        What = "Writing into the model";
+
+        try
+        {
+            Applied = await _apply(_cancellation.Token).ConfigureAwait(true);
+            What = Applied.Refused ? "Nothing was written" : "Written";
+        }
+        catch (Exception error)
+        {
+            // Same shape as a failed run: the type as well as the message, because the message alone
+            // reads as prose and gets guessed at.
+            Failure = error.GetType().Name + ": " + error.Message;
+            What = "The write did not finish";
+        }
+        finally
+        {
+            IsApplying = false;
+            Raise(nameof(CanApply));
+        }
+    }
+
     public void Cancel() => _cancellation.Cancel();
 
     /// <summary>How many circuits are named under one cause before the rest are counted.</summary>
@@ -420,6 +498,13 @@ public sealed class RoutingViewModel : INotifyPropertyChanged
                 Raise(nameof(IsBusy));
                 Raise(nameof(CanCancel));
                 Raise(nameof(IsIndeterminate));
+                Raise(nameof(CanApply));
+                break;
+
+            case nameof(Applied):
+                Raise(nameof(ApplySummary));
+                Raise(nameof(HasApplySummary));
+                Raise(nameof(CanApply));
                 break;
 
             case nameof(Total):
@@ -440,6 +525,7 @@ public sealed class RoutingViewModel : INotifyPropertyChanged
                 Raise(nameof(HasReading));
                 Raise(nameof(Causes));
                 Raise(nameof(HasCauses));
+                Raise(nameof(CanApply));
                 break;
 
             case nameof(Failure):
@@ -449,6 +535,31 @@ public sealed class RoutingViewModel : INotifyPropertyChanged
     }
 
     private void Raise(string? name) => PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(name));
+}
+
+/// <summary>
+/// What writing a run into the model came to, in terms this assembly can hold.
+/// </summary>
+/// <remarks>
+/// <b>A separate type from the one the Revit side produces, and the duplication is the point.</b>
+/// This assembly may not name a Revit type - that is what lets it be driven from a playground and
+/// what keeps a <c>Document</c> off a background thread - so the side that has a document maps its
+/// own outcome onto this. The cost is one record; the alternative is a reference that would make
+/// every later screen able to reach for the API by accident.
+/// </remarks>
+public sealed class ApplyReport
+{
+    public ApplyReport(string text, bool refused)
+    {
+        Text = text;
+        Refused = refused;
+    }
+
+    /// <summary>What happened, or why nothing did, as a person reads it.</summary>
+    public string Text { get; }
+
+    /// <summary>Whether the model was left untouched.</summary>
+    public bool Refused { get; }
 }
 
 /// <summary>One step of a run, as the search reports it.</summary>
