@@ -1,0 +1,95 @@
+<Project Sdk="BHS.Revit.Sdk/1.5.8">
+
+    <!--
+      Where Revit enters the cabling feature: the classes its buttons name, and the buttons.
+
+      WHY AN ASSEMBLY OF ITS OWN. Revit resolves a button's ClassName and its AvailabilityClassName
+      inside the one assembly the button names, and nowhere else - read from the IL of all four
+      releases, and measured as a TypeLoadException dialog for an availability class that lived next
+      door. So both kinds of class have to sit together, in an assembly the buttons can name. While
+      they sat in BHS.FullEdition, every edition offering cabling would have had to write them again;
+      here they are written once and every edition that references this project gets them, with the
+      manifest the SDK writes beside this assembly arriving in the edition's folder as a related file.
+
+      WHAT IT MAY CONTAIN, AND NOTHING ELSE:
+        - empty sealed command entry points, [Transaction] on each, deriving from
+          CommandEntryPoint<CablingFeature, TCommand>;
+        - empty sealed availability entry points deriving from AvailabilityEntryPoint<TRule>;
+        - the RevitRibbonButton items below.
+      No logic, no fields, no methods, no static constructors. The classes are names Revit can
+      resolve; the work is in the feature, the rule is in the declaration, and the host is found by
+      the base. RefCheck holds the line against the built assembly rather than this comment:
+      RVTENT001 for anything but empty entry points, RVTENT002 for a rule or a feature from outside a
+      declaration, RVTENT003 for a Tab on a button below. See build/RefCheck/readme.md.
+
+      NO TAB ON ANY BUTTON. The feature chooses the panel, the edition chooses the tab: the same
+      buttons go on whatever tab the edition that offers them names, and the host builds them only
+      when that edition's Modules list declares CablingFeature.
+
+      Referencing .Feature loads nothing by itself: the CLR resolves a base type when it first
+      constructs the derived one, so the feature's assembly comes in when Revit constructs an entry
+      point on a press. Measured in the probe, on all four releases, for an entry point that sat in
+      the edition. What is new here and not measured: Revit now loads THIS assembly earlier, to
+      construct the availability class when the tab holding the buttons is shown, and whether
+      .Feature still stays out until a press with this assembly loaded is expected from the same lazy
+      resolution rather than observed.
+    -->
+
+    <!-- No UseWPF, although .Feature has it: this project names no WPF type, and the base SDK's check
+         for a project that merely references a WPF one is silenced by our SDK for the revit platform.
+         Built on net8.0-revit2026 without it. -->
+    <PropertyGroup>
+        <TargetFrameworks>net48-revit2024;net8.0-revit2025;net8.0-revit2026;net10.0-revit2027</TargetFrameworks>
+        <RootNamespace>BHS.MEP.Cabling.Entry</RootNamespace>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="..\..\..\Revit\BHS.Revit.Abstractions\BHS.Revit.Abstractions.csproj" />
+        <!-- For CablingFeature, the type argument every command entry point finds its host by, and
+             for NeedsProjectDocument, the rule the availability class wraps. Both are already loaded
+             by the time Revit asks: the edition's Modules list names CablingFeature at startup. -->
+        <ProjectReference Include="..\BHS.MEP.Cabling.Declaration\BHS.MEP.Cabling.Declaration.csproj" />
+        <!-- For the commands named in type arguments. See the note above on what that loads. -->
+        <ProjectReference Include="..\BHS.MEP.Cabling.Feature\BHS.MEP.Cabling.Feature.csproj" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <!--
+          Moved from BHS.FullEdition with their names and panel unchanged, and no Tab. The id Revit
+          gives an add-in button encodes its tab, its panel and its name - the probe's ping button
+          changed id when it changed tab, see PressButtonHandler there - so with the edition still
+          naming the tab these sat on, the ids of these commands stay what they were.
+
+          Text and ToolTip are English literals in the neutral position - the one that becomes a
+          resource key when declaration strings move into .resx. A Russian literal here could not
+          become a key, and would have to be translated back first.
+        -->
+        <RevitRibbonButton Include="BHS.Cabling.Collect">
+            <Panel>Cabling</Panel>
+            <Text>Read structure</Text>
+            <ClassName>BHS.MEP.Cabling.Entry.CollectCablingEntryPoint</ClassName>
+            <AvailabilityClassName>BHS.MEP.Cabling.Entry.CablingNeedsProjectDocument</AvailabilityClassName>
+            <ToolTip>Reads the cable trays, conduits and circuits of this model and its links, and reports what was found.</ToolTip>
+            <Order>1</Order>
+        </RevitRibbonButton>
+
+        <RevitRibbonButton Include="BHS.Cabling.Route">
+            <Panel>Cabling</Panel>
+            <Text>Route cables</Text>
+            <ClassName>BHS.MEP.Cabling.Entry.RouteCablingEntryPoint</ClassName>
+            <AvailabilityClassName>BHS.MEP.Cabling.Entry.CablingNeedsProjectDocument</AvailabilityClassName>
+            <ToolTip>Routes every circuit through the trays and conduits of this model, and compares the computed length with the one Revit reports.</ToolTip>
+            <Order>2</Order>
+        </RevitRibbonButton>
+
+        <RevitRibbonButton Include="BHS.Cabling.Parameters">
+            <Panel>Cabling</Panel>
+            <Text>Shared parameters</Text>
+            <ClassName>BHS.MEP.Cabling.Entry.InstallParametersEntryPoint</ClassName>
+            <AvailabilityClassName>BHS.MEP.Cabling.Entry.CablingNeedsProjectDocument</AvailabilityClassName>
+            <ToolTip>Writes the shared parameter file for family authors and binds the parameters this model is missing.</ToolTip>
+            <Order>3</Order>
+        </RevitRibbonButton>
+    </ItemGroup>
+
+</Project>

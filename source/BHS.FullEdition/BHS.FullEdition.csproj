@@ -1,11 +1,13 @@
-﻿<Project Sdk="BHS.Revit.Sdk/1.5.8">
+<Project Sdk="BHS.Revit.Sdk/1.5.8">
 
     <!--
       An edition: the add-in Revit actually loads, and the thinnest thing this framework allows.
 
-      It writes one class for the host, one empty entry point per command and one availability
-      class, and declares its ribbon in this file. Nothing else - the composition is the host's, and
-      the work is the feature's.
+      It writes one class for the host - who it is, which features it offers, which tab they go on -
+      and references each feature's Entry project. Nothing else: the composition is the host's, the
+      work is the feature's, and the buttons, the entry points Revit constructs and the availability
+      classes come with the feature's Entry assembly, so that the next edition offering the same
+      feature writes none of them again.
 
       UseWPF because BHS.Revit.Host has it, for the placeholder icons. It costs nothing in the
       output: PresentationCore lives in the GAC on net48 and in the shared framework on the .NET
@@ -23,56 +25,25 @@
     <ItemGroup>
         <ProjectReference Include="..\Revit\BHS.Revit.Host\BHS.Revit.Host.csproj" />
         <!--
-          The feature is referenced so that the entry point below can name its command in a type
-          argument. That reference does not load it: the CLR resolves a base type when it first
-          constructs the derived one, which is when somebody presses the button. Measured on all
-          four releases, in the probe, with an assembly that exists for exactly this question.
-        -->
-        <ProjectReference Include="..\Features\MEP.Cabling\BHS.MEP.Cabling.Feature\BHS.MEP.Cabling.Feature.csproj" />
-        <!--
-          The feature's declaration, which is the opposite kind of reference: this one IS loaded at
-          startup, on purpose, because it carries what the application has to know before anybody
-          uses cabling. It is allowed to be, because it is forbidden to reference anything that does
-          work - RVTDEC001 checks the built assembly rather than trusting the rule.
-        -->
-        <ProjectReference Include="..\Features\MEP.Cabling\BHS.MEP.Cabling.Declaration\BHS.MEP.Cabling.Declaration.csproj" />
-    </ItemGroup>
+          The cabling feature, through its Entry project, and the one reference does three jobs.
 
-    <ItemGroup>
-        <!--
-          Text and ToolTip are English literals in the neutral position - the one that becomes a
-          resource key when declaration strings move into .resx. A Russian literal here could not
-          become a key, and would have to be translated back first.
+          It brings BHS.MEP.Cabling.Entry.dll into this folder with its manifest beside it - the
+          manifest travels as a related file of the referenced assembly, see Directory.Build.targets -
+          and the host builds those buttons only because Modules in FullEditionApplication lists
+          CablingFeature.
+
+          It brings the declaration, transitively, so that Modules can name CablingFeature. That
+          assembly IS loaded at startup, on purpose, because it carries what the application has to
+          know before anybody uses cabling; it is allowed to be, because it is forbidden to reference
+          anything that does work - RVTDEC001 checks the built assembly rather than trusting the rule.
+
+          And it brings the feature itself, transitively, which this project names nowhere. That does
+          not load it: the CLR resolves an entry point's base, and the feature with it, when Revit
+          first constructs the entry point on a press. Measured on all four releases in the probe, for
+          an entry point that sat in the edition's own assembly; for one in an Entry assembly that
+          Revit has already loaded to ask availability, expected and not measured.
         -->
-        <RevitRibbonButton Include="BHS.Cabling.Collect">
-            <Tab>BHS</Tab>
-            <Panel>Cabling</Panel>
-            <Text>Read structure</Text>
-            <ClassName>BHS.FullEdition.CollectCablingEntryPoint</ClassName>
-            <AvailabilityClassName>BHS.FullEdition.NeedsDocument</AvailabilityClassName>
-            <ToolTip>Reads the cable trays, conduits and circuits of this model and its links, and reports what was found.</ToolTip>
-            <Order>1</Order>
-        </RevitRibbonButton>
-
-        <RevitRibbonButton Include="BHS.Cabling.Route">
-            <Tab>BHS</Tab>
-            <Panel>Cabling</Panel>
-            <Text>Route cables</Text>
-            <ClassName>BHS.FullEdition.RouteCablingEntryPoint</ClassName>
-            <AvailabilityClassName>BHS.FullEdition.NeedsDocument</AvailabilityClassName>
-            <ToolTip>Routes every circuit through the trays and conduits of this model, and compares the computed length with the one Revit reports.</ToolTip>
-            <Order>2</Order>
-        </RevitRibbonButton>
-
-        <RevitRibbonButton Include="BHS.Cabling.Parameters">
-            <Tab>BHS</Tab>
-            <Panel>Cabling</Panel>
-            <Text>Shared parameters</Text>
-            <ClassName>BHS.FullEdition.InstallParametersEntryPoint</ClassName>
-            <AvailabilityClassName>BHS.FullEdition.NeedsDocument</AvailabilityClassName>
-            <ToolTip>Writes the shared parameter file for family authors and binds the parameters this model is missing.</ToolTip>
-            <Order>3</Order>
-        </RevitRibbonButton>
+        <ProjectReference Include="..\Features\MEP.Cabling\BHS.MEP.Cabling.Entry\BHS.MEP.Cabling.Entry.csproj" />
     </ItemGroup>
 
     <ItemGroup>

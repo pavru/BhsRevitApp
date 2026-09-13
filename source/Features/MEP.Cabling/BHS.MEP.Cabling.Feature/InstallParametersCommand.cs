@@ -44,6 +44,16 @@ public sealed class InstallParametersCommand : IFeatureCommand
             return Result.Failed;
         }
 
+        // Refused rather than trusted to the greyed button, for the reason on CollectCablingCommand.
+        // Before the files are written, and that has a cost worth naming: the user this command's
+        // remarks call waiting - a family author - cannot get the files from inside the family editor,
+        // only from a project. The owner's decision is that cabling commands do not run there at all.
+        if (document.IsFamilyDocument)
+        {
+            message = "Open a project: this command does not work in the family editor.";
+            return Result.Failed;
+        }
+
         var scheme = new CablingParameters();
         var log = services.Log;
         var language = ParameterLanguages.For(application.Language);
