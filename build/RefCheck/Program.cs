@@ -190,11 +190,21 @@ internal static class Cli
         // putting a metadata reader inside MSBuild.
         var ribbon = new List<RibbonFinding>();
 
-        foreach (var directory in inputs.Where(Directory.Exists))
-            ribbon.AddRange(RibbonCheck.Check(directory));
+        // And the declaration assemblies beside them. A third question again - whether a feature's
+        // declaration has reached into its own implementation - but the same folder, the same pass
+        // and the same metadata reader, so it lives here for the same reason the ribbon checks do.
+        var declarations = new List<DeclarationFinding>();
+        var declarationsChecked = 0;
 
-        Report(baseline, findings, unwatched, denied, twoCopies, ribbon, checkedFiles);
-        return findings.Count == 0 && denied.Count == 0 && ribbon.Count == 0 ? 0 : 1;
+        foreach (var directory in inputs.Where(Directory.Exists))
+        {
+            ribbon.AddRange(RibbonCheck.Check(directory));
+            declarations.AddRange(DeclarationCheck.Check(directory, out var seen));
+            declarationsChecked += seen;
+        }
+
+        Report(baseline, findings, unwatched, denied, twoCopies, ribbon, declarations, declarationsChecked, checkedFiles);
+        return findings.Count == 0 && denied.Count == 0 && ribbon.Count == 0 && declarations.Count == 0 ? 0 : 1;
     }
 
     private static void Report(
@@ -204,12 +214,27 @@ internal static class Cli
         List<string> denied,
         SortedSet<(string Name, string Ours, string Revits)> twoCopies,
         List<RibbonFinding> ribbon,
+        List<DeclarationFinding> declarations,
+        int declarationsChecked,
         int checkedFiles)
     {
         // First, because a ribbon that cannot work is a dialog in front of a person, and because
         // each of these is a specific dialog this project hit before it was a build error.
         foreach (var finding in ribbon)
             Console.Error.WriteLine($"{finding.Manifest} : error {finding.Code}: {finding.Message}");
+
+        foreach (var finding in declarations)
+            Console.Error.WriteLine($"{finding.File} : error {finding.Code}: {finding.Message}");
+
+        // Said even when it passes, and only where there was something to say. What this check
+        // guards is an absence - an assembly that stays unloaded - so a silent pass and a check
+        // that quietly stopped running look exactly alike from the outside.
+        if (declarationsChecked > 0 && declarations.Count == 0)
+        {
+            Console.WriteLine(
+                $"RefCheck: {declarationsChecked} declaration assembly(ies) checked, " +
+                "none reaches into an implementation.");
+        }
 
         // Stated, not warned about.
         //
@@ -254,7 +279,7 @@ internal static class Cli
                 "and re-collect the baselines.");
         }
 
-        if (findings.Count == 0 && denied.Count == 0 && ribbon.Count == 0)
+        if (findings.Count == 0 && denied.Count == 0 && ribbon.Count == 0 && declarations.Count == 0)
         {
             Console.WriteLine(
                 $"RefCheck: {checkedFiles} assemblies checked against Revit {baseline.RevitVersion}, no conflicts.");

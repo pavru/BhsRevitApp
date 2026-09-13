@@ -1,3 +1,4 @@
+using BHS.MEP.Cabling.Declaration;
 using BHS.Revit.Abstractions;
 using BHS.Revit.Host;
 
@@ -31,4 +32,26 @@ public sealed class FullEditionApplication : RevitAddInApplication
     protected override Guid AddInId => Id;
 
     protected override string Name => "BHS.FullEdition";
+
+    /// <summary>The features this edition declares, and the only feature code loaded before a press.</summary>
+    /// <remarks>
+    /// <para>
+    /// <b>A list rather than a scan, and the usual reason is not the real one here.</b> Scanning a
+    /// folder means loading every assembly in it to ask whether it declares anything - true, and
+    /// beside the point, because these would be loaded anyway. The real reason is that an edition is
+    /// defined by what it declares and not by what happens to be in its folder: a reduced edition is
+    /// this same tree with a shorter list, and under a scan it would differ from the full one only
+    /// by the contents of a directory, which makes a bad deployment indistinguishable from a product.
+    /// </para>
+    /// <para>
+    /// <b>Nothing of the feature's own work is behind this.</b> A declaration assembly holds only
+    /// what the application must know before anybody uses the feature - identifiers for the
+    /// registrations Revit allows only while it starts - and is forbidden by RVTDEC001 from
+    /// referencing the assemblies that do the work. Those still load on a press and not before.
+    /// </para>
+    /// </remarks>
+    protected override IReadOnlyList<IFeatureModule> Modules { get; } = new IFeatureModule[]
+    {
+        new CablingFeature(),
+    };
 }

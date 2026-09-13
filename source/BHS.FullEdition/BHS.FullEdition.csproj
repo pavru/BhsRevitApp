@@ -29,6 +29,13 @@
           four releases, in the probe, with an assembly that exists for exactly this question.
         -->
         <ProjectReference Include="..\Features\MEP.Cabling\BHS.MEP.Cabling.Feature\BHS.MEP.Cabling.Feature.csproj" />
+        <!--
+          The feature's declaration, which is the opposite kind of reference: this one IS loaded at
+          startup, on purpose, because it carries what the application has to know before anybody
+          uses cabling. It is allowed to be, because it is forbidden to reference anything that does
+          work - RVTDEC001 checks the built assembly rather than trusting the rule.
+        -->
+        <ProjectReference Include="..\Features\MEP.Cabling\BHS.MEP.Cabling.Declaration\BHS.MEP.Cabling.Declaration.csproj" />
     </ItemGroup>
 
     <ItemGroup>

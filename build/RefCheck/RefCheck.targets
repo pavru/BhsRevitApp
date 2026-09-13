@@ -68,7 +68,7 @@
 
     <Error Condition="'$(_RefCheckExitCode)' == '1'"
            Code="RVTREF999"
-           Text="$(MSBuildProjectName) ships assemblies that conflict with the copies Revit $(RevitVersion) loads. See the RVTREF errors above and build/RefCheck/readme.md." />
+           Text="$(MSBuildProjectName) failed a Revit-side check. See the RVTREF, RVTRIB and RVTDEC errors above and build/RefCheck/readme.md. RVTREF is about assemblies that conflict with the copies Revit $(RevitVersion) loads; RVTRIB is about a ribbon manifest naming something the assembly does not have; RVTDEC is about a feature declaration reaching into its own implementation." />
 
     <Error Condition="'$(_RefCheckExitCode)' != '' and '$(_RefCheckExitCode)' != '0' and '$(_RefCheckExitCode)' != '1'"
            Code="RVTREF998"

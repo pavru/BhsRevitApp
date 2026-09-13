@@ -1,0 +1,34 @@
+﻿<Project Sdk="BHS.Revit.Sdk/1.5.8">
+
+    <!--
+      What the application has to know about cabling before anybody presses anything.
+
+      A class of Revit registration can only be made while Revit is starting - FailureDefinition
+      says so in its own documentation - and is wanted later, in a command Revit constructs from a
+      string. Until this project existed there was nowhere to put the identifiers those two halves
+      have to agree on: the feature assemblies load on a press, which is too late, and the framework
+      is not allowed to know what a cable is.
+
+      THE ONE RULE, AND IT IS ENFORCED RATHER THAN REMEMBERED: this assembly may not reference the
+      implementation - not .Feature, not .Revit, not .Ui, not .Routing. It is loaded during
+      OnStartup for every user of every edition, whether or not the feature is ever used, so a
+      reference here would undo the laziness the ribbon manifest exists to protect. Without the
+      reference, the mistake cannot be typed: a `typeof` naming a command does not compile.
+      RVTDEC001 in RefCheck checks the built assembly, because a rule held by memory is a rule this
+      repository has already watched lapse.
+
+      No RevitAPIUI either, and that is the second half of being a declaration: FailureDefinition
+      lives in RevitAPI, so nothing here needs an interface type, and a DBApplication edition can
+      register exactly the same things. RVTDEC002.
+    -->
+
+    <PropertyGroup>
+        <TargetFrameworks>net48-revit2024;net8.0-revit2025;net8.0-revit2026;net10.0-revit2027</TargetFrameworks>
+        <RootNamespace>BHS.MEP.Cabling.Declaration</RootNamespace>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="..\..\..\Revit\BHS.Revit.Abstractions\BHS.Revit.Abstractions.csproj" />
+    </ItemGroup>
+
+</Project>

@@ -131,6 +131,15 @@
                        Margin="0,0,12,0"
                        Visibility="{Binding HasFailure, Converter={StaticResource Shown}}" />
 
+            <!-- Offered only after a run that found something, and only while there is a document
+                 to write to. A button that appears and then refuses teaches people not to press it. -->
+            <Button Content="Apply"
+                    MinWidth="96"
+                    Margin="0,0,8,0"
+                    Click="OnApply"
+                    IsEnabled="{Binding CanApply}"
+                    Visibility="{Binding HasResult, Converter={StaticResource Shown}}" />
+
             <Button Content="Stop"
                     MinWidth="96"
                     Margin="0,0,8,0"

@@ -71,6 +71,10 @@
     <!-- What an edition loads on a press. Separate from the edition so that it can stay
          unloaded until then, which on Revit 2024 is the difference that matters. -->
     <Project Path="source/Features/MEP.Cabling/BHS.MEP.Cabling.Feature/BHS.MEP.Cabling.Feature.csproj" Type="C#" />
+    <!-- The other half of that arrangement: what the application must know about cabling before
+         anybody presses anything. Loaded at startup, and therefore forbidden to reference the
+         assemblies above - RVTDEC001 checks that rather than trusting it. -->
+    <Project Path="source/Features/MEP.Cabling/BHS.MEP.Cabling.Declaration/BHS.MEP.Cabling.Declaration.csproj" Type="C#" />
     <!-- What the reading half asserts about itself, inside a live Revit. A separate assembly, so it
          sees the public surface an edition sees and nothing shipped carries a line of it. Listed by
          hand in BHS.Revit.Probe; nothing runs it on its own. -->

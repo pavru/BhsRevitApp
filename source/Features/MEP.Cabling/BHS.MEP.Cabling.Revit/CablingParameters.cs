@@ -47,6 +47,35 @@ public sealed class CablingParameters : SharedParameterScheme
     /// </remarks>
     public static readonly Guid CircuitConnection = new("3aae5787-e914-41e5-b488-2921b1c33407");
 
+    /// <summary>What one of our own elements recommends, and the sign that we placed it.</summary>
+    /// <remarks>
+    /// <b>It is what makes an indicator ours, and it is not the same question as
+    /// <see cref="ElementRole"/>.</b> The role says what an element <i>is</i> - a designer sets it on
+    /// a family type, and a real junction box carries it. This says that a calculation of ours put
+    /// this instance here and what it is proposing, which nobody sets by hand. Keeping them apart is
+    /// what lets a marker become a real box by being connected, without the two ever contradicting
+    /// each other.
+    /// </remarks>
+    public static readonly Guid Recommendation = new("d43fe69a-326b-47a0-95d4-2bb20719a6d4");
+
+    /// <summary>The circuits whose cable passes through this element.</summary>
+    /// <remarks>
+    /// <b>Written to carriers and to the boxes actually used, and to a real box it is the only thing
+    /// written</b> - the owner's decision. A box somebody drew is theirs; what we may add to it is
+    /// the fact that these circuits run through it, which is a reading of the model rather than a
+    /// proposal about it.
+    /// </remarks>
+    public static readonly Guid CircuitRefs = new("1b83d465-af5e-4d55-8e7a-b1ba0ee017cf");
+
+    /// <summary>How many cables enter: the trunk in, the trunk out, and every spur.</summary>
+    /// <remarks>
+    /// The owner's definition of 2026-09-11 - what the box has to take, not what one device needs.
+    /// An intermediate box serving one device is three; the last box of a circuit is two; a box two
+    /// circuits share takes the sum. It is what a designer picks a real box by, which is why it
+    /// counts entries rather than devices.
+    /// </remarks>
+    public static readonly Guid TapCount = new("39098f30-b004-4d27-a294-9aa978603b7a");
+
     /// <summary>The value of <see cref="ElementRole"/> that means "this is a junction box".</summary>
     /// <remarks>
     /// <b>Values are not translated, and that is deliberate rather than unfinished.</b> The name is
@@ -72,6 +101,33 @@ public sealed class CablingParameters : SharedParameterScheme
         BuiltInCategory.OST_CableTrayFitting,
         BuiltInCategory.OST_ConduitFitting,
     };
+
+    /// <summary>Every category a carrier may be, as <c>CarrierCatalogue</c> ships it.</summary>
+    /// <remarks>
+    /// The shipped defaults, not the whole answer: the catalogue is the user's to configure, so a
+    /// project that calls something else a carrier adds that category at run time. Declaring the
+    /// four here means the ordinary project needs no runtime list at all, and the unusual one adds
+    /// to a set rather than replacing it.
+    /// </remarks>
+    private static readonly BuiltInCategory[] Carriers =
+    {
+        BuiltInCategory.OST_CableTray,
+        BuiltInCategory.OST_CableTrayFitting,
+        BuiltInCategory.OST_Conduit,
+        BuiltInCategory.OST_ConduitFitting,
+    };
+
+    /// <summary>Nothing at compile time - the indicator's family is the project's to choose.</summary>
+    /// <remarks>
+    /// <b>Empty is the honest declaration, and it carries a danger that has to be met elsewhere.</b>
+    /// Which category an indicator belongs to is settled when somebody picks the family, so guessing
+    /// a list here would be a registry that drifts from reality - and the day a project picks a
+    /// category nobody listed, the parameter would not arrive and the failure would read as "the
+    /// tool cannot see my box". The cost is that a caller who forgets to pass the runtime category
+    /// binds nothing at all, silently; the apply path therefore refuses out loud rather than
+    /// proceeding, because there is no state in which binding none of them is what anybody wanted.
+    /// </remarks>
+    private static readonly BuiltInCategory[] WhicheverTheIndicatorIs = Array.Empty<BuiltInCategory>();
 
     private static readonly BuiltInCategory[] CircuitAndPanel =
     {
@@ -115,5 +171,46 @@ public sealed class CablingParameters : SharedParameterScheme
                 "BHS_Cbl_ПодключениеЦепи",
                 "Как подключены устройства этой цепи: Terminal или JunctionBox. "
                 + "Если у цепи пусто, берётся значение щита.")),
+
+        new SharedParameter(
+            Recommendation,
+            SpecTypeId.String.Text,
+            GroupTypeId.Data,
+            instance: true,
+            WhicheverTheIndicatorIs,
+            english: new ParameterText(
+                "BHS_Cbl_Recommendation",
+                "What a BHS calculation recommends here - for example JunctionBox. "
+                + "Written by the tool; not set by hand."),
+            russian: new ParameterText(
+                "BHS_Cbl_Рекомендация",
+                "Что расчёт BHS рекомендует в этом месте - например JunctionBox. "
+                + "Пишется инструментом, вручную не задаётся.")),
+
+        new SharedParameter(
+            CircuitRefs,
+            SpecTypeId.String.Text,
+            GroupTypeId.ElectricalCircuiting,
+            instance: true,
+            Carriers,
+            english: new ParameterText(
+                "BHS_Cbl_CircuitRefs",
+                "The circuits whose cable passes through this element, as they are numbered."),
+            russian: new ParameterText(
+                "BHS_Cbl_СсылкиНаЦепи",
+                "Цепи, кабель которых проходит через этот элемент, с их номерами.")),
+
+        new SharedParameter(
+            TapCount,
+            SpecTypeId.Int.Integer,
+            GroupTypeId.ElectricalCircuiting,
+            instance: true,
+            WhicheverTheIndicatorIs,
+            english: new ParameterText(
+                "BHS_Cbl_TapCount",
+                "How many cables enter this box: the trunk in, the trunk out, and every spur."),
+            russian: new ParameterText(
+                "BHS_Cbl_ЧислоВводов",
+                "Сколько кабелей входит в эту коробку: магистраль на вход, на выход и каждый отвод.")),
     };
 }
