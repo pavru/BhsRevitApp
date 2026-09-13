@@ -19,9 +19,22 @@ namespace BHS.MEP.Cabling.Declaration;
 /// is too late, and the framework is not allowed to know what a cable is.
 /// </para>
 /// <para>
-/// <b>Why the identifiers are here and not in the manifest.</b> The ribbon is declared in the
-/// manifest because Revit reads it as strings and nothing of ours needs to agree with it. These are
-/// the other case: <b>two of our own sides have to name the same thing</b> - whoever registers at
+/// <b>This assembly is not identifiers alone.</b> <see cref="NeedsProjectDocument"/> sits beside this
+/// class: the availability rule the cabling buttons ask, a decision that executes before anybody
+/// presses anything, because Revit asks it whenever the tab holding the buttons is shown. It is here
+/// for the reason the identifiers are - loaded at startup anyway, and forbidden to reach the
+/// implementation - and it keeps to that by reading only the context Revit passes.
+/// </para>
+/// <para>
+/// <b>This type is also how the buttons find their edition.</b> An edition offers cabling by listing
+/// this module; the host builds the buttons of <c>BHS.MEP.Cabling.Entry</c> only for an edition that
+/// does, and each command entry point there names this type to find the host that declared it.
+/// </para>
+/// <para>
+/// <b>Why the identifiers are here and not in the manifest.</b> The ribbon is declared in a manifest -
+/// the one <c>BHS.MEP.Cabling.Entry</c> carries - because Revit reads it as strings and nothing of ours
+/// needs to agree with it as a literal. These are the other case: <b>two of our own sides have to
+/// name the same thing</b> - whoever registers at
 /// startup and whoever posts the message on a press. In a manifest the GUID would be a literal in a
 /// .csproj and a second literal in code, with nothing to make them match.
 /// </para>

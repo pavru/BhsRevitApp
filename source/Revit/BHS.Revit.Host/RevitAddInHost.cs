@@ -180,7 +180,12 @@ public abstract class RevitAddInHost
         // Before the modules: a module may reach a command in Start, and a command looks itself up
         // here. Additive and keyed, so a second edition in this AppDomain neither sees this nor is
         // displaced by it.
-        HostRegistry.Register(AddInId, GetType().Assembly, _services);
+        //
+        // With the module types the edition declared, because a command whose entry point lives in
+        // a feature's Entry assembly is found by its feature rather than by an assembly. Listed, not
+        // started: this runs before any Start, so a module that throws there still owns its commands,
+        // and they say what went wrong instead of claiming the feature was never declared.
+        HostRegistry.Register(AddInId, GetType().Assembly, _services, DeclaredModuleTypes());
 
         // While the document still exists: DocumentClosedEventArgs carries only an int id - checked
         // against the metadata - so there would be nothing left to drop by then.
@@ -281,6 +286,31 @@ public abstract class RevitAddInHost
 
     private protected void ReportFailedStop(Exception error) =>
         _log.Error(error, "{0} did not shut down cleanly", Name);
+
+    /// <summary>The types of the modules this edition declared, in the order it listed them.</summary>
+    /// <remarks>
+    /// <para>
+    /// Asked of the instances the edition already built, so this loads nothing: whatever assembly a
+    /// module type lives in - for a feature, its declaration assembly - listing the module loaded it.
+    /// </para>
+    /// <para>
+    /// A hole in the list is skipped rather than thrown on. It is a mistake in the edition, and
+    /// whatever else it breaks, it must not also cost the registration every other module's commands
+    /// are found through.
+    /// </para>
+    /// </remarks>
+    private protected IReadOnlyList<Type> DeclaredModuleTypes()
+    {
+        var types = new List<Type>();
+
+        foreach (var module in Modules)
+        {
+            if (module is not null)
+                types.Add(module.GetType());
+        }
+
+        return types;
+    }
 
     private void StartModules()
     {

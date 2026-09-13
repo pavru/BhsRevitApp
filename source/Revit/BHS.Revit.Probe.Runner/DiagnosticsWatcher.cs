@@ -43,6 +43,7 @@ internal sealed class DiagnosticsWatcher : IDisposable
     private int _dropped;
     private int _offApiThread;
     private int _gaps;
+    private int _blockedEvents;
     private long _lastSequence;
     private long _lastAtUnixMs;
     private DateTime _lastHeardUtc = DateTime.UtcNow;
@@ -92,6 +93,16 @@ internal sealed class DiagnosticsWatcher : IDisposable
 
     /// <summary>The phase of the last event.</summary>
     public RevitPhase CurrentPhase { get { lock (_gate) return _phase; } }
+
+    /// <summary>How many events arrived in the Blocked phase, over the whole run.</summary>
+    /// <remarks>
+    /// For a caller that needs "did Revit block after I did something", which neither neighbour answers
+    /// alone: <see cref="CurrentPhase"/> stays Blocked after a dialog answered long ago if nothing came
+    /// since, and <see cref="Dialogs"/> keeps each identifier once, so the same dialog raised twice - or a
+    /// dialog with no identifier at all - does not move its count. A counter taken before and compared
+    /// after does.
+    /// </remarks>
+    public int BlockedEvents { get { lock (_gate) return _blockedEvents; } }
 
     /// <summary>
     /// How long since anything was heard, by this machine's clock.
@@ -195,7 +206,10 @@ internal sealed class DiagnosticsWatcher : IDisposable
                 _dialogs.Add(evt.DialogId);
 
             if (evt.Phase == RevitPhase.Blocked)
+            {
                 _blockedBy = evt.DialogId;
+                _blockedEvents++;
+            }
             else if (evt.Phase is RevitPhase.Working or RevitPhase.DocumentReady or RevitPhase.Idle
                      or RevitPhase.OpeningDocument or RevitPhase.Closing)
                 _blockedBy = string.Empty;

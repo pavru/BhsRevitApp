@@ -63,6 +63,19 @@
              the feature at compile time - and still must not load it until the button is pressed. -->
         <ProjectReference Include="..\BHS.Revit.Probe.Feature\BHS.Revit.Probe.Feature.csproj"/>
         <!--
+          The Entry experiment. The declaration because ProbeApplication lists ProbeGateFeature in its
+          Modules - which is what makes the host honour the Entry manifest at all - and the channel reads
+          GateRule's counters; both load at startup whatever this says.
+
+          The Entry project for its manifest and nothing else. No type from it is named anywhere in the
+          probe, and none may be: naming GateCommandEntryPoint or GateAvailability would load the
+          assembly the sweep asks about, from our side, and answer the question before Revit could. The
+          reference is what copies BHS.Revit.Probe.Entry.dll into the output and, as a related file,
+          BHS.Revit.Probe.Entry.features.json beside it.
+        -->
+        <ProjectReference Include="..\BHS.Revit.Probe.Declaration\BHS.Revit.Probe.Declaration.csproj"/>
+        <ProjectReference Include="..\BHS.Revit.Probe.Entry\BHS.Revit.Probe.Entry.csproj"/>
+        <!--
           The declared test suites, and the assemblies they are about. Listed here rather than found
           by scanning, for the reason in RevitTests.cs; referenced at compile time because the list
           is code, and a list of assembly names in a file would be a list nothing verifies.

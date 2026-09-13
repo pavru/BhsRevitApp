@@ -17,6 +17,41 @@
             Condition="'$(RevitVersion)' != '' And Exists('$(MSBuildThisFileDirectory)build\RefCheck\RefCheck.targets')"/>
 
     <!--
+      A feature's ribbon manifest travels with its Entry assembly, as a related file.
+
+      The SDK writes <P>.Entry.features.json beside <P>.Entry.dll. An edition references the Entry
+      project, and the edition's host builds the ribbon from the manifests in its own folder - so the
+      file has to arrive there with the assembly it describes. Reference resolution already copies the
+      files that share a referenced assembly's base name for the extensions listed here - .pdb and .xml
+      are how everyone meets this - and a two-part extension is nothing new to it: .dll.config is on
+      the default list.
+
+      Measured on a throwaway pair of projects outside the tree, built with this file imported: the
+      manifest arrived beside the Entry assembly in the referencing project's output and in its
+      published Lib, on all four Revit target frameworks, with the referencing project naming no type
+      from the Entry assembly at all. With .features.json left off the list it did not arrive.
+
+      Seen again in the tree, with the two Entry projects it now holds: after a solution build,
+      BHS.MEP.Cabling.Entry.features.json sits beside BHS.MEP.Cabling.Entry.dll in BHS.FullEdition's
+      output and published Lib, and BHS.Revit.Probe.Entry.features.json beside its assembly in the
+      probe's, on all four Revit target frameworks and byte for byte the file the Entry project wrote;
+      `dotnet clean` on the edition removes the copy with the assembly, and the next build brings it
+      back. Clean leaves the SDK's publish folder alone, as it always has; the next build replaces it.
+      What a running host does with the manifest has not been measured: nothing here has run in Revit.
+
+      Appended rather than set, and here rather than in Directory.Build.props: this file is imported
+      after Microsoft.Common.CurrentVersion.targets has written the defaults, so appending keeps them.
+      Set in props, the property would be non-empty when the defaults are considered and every .pdb
+      and .xml would silently stop being copied.
+
+      Revit-side only, like RefCheck above: a manifest means nothing to a project Revit never loads.
+      No SDK change, and so no SDK version bump.
+    -->
+    <PropertyGroup Condition="'$(RevitVersion)' != ''">
+        <AllowedReferenceRelatedFileExtensions>$(AllowedReferenceRelatedFileExtensions);.features.json</AllowedReferenceRelatedFileExtensions>
+    </PropertyGroup>
+
+    <!--
       Assembly versions, derived here rather than in Directory.Build.props because $(Version) does
       not exist yet at that point - the SDK computes it from VersionPrefix later. Reading
       VersionPrefix directly would make `-p:Version=1.2.3` produce a package that says 1.2.3 and

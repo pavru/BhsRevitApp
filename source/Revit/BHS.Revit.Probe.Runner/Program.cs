@@ -57,7 +57,12 @@ internal static class Program
         foreach (var installation in selected)
             deployed[installation.Release.Year] = ProbeInstaller.Describe(installation);
 
-        var report = new Report();
+        // Both conditions, for the reason given where the record's ShowTab is written below: the ribbon
+        // is exercised only when both hold. Said once here, so the floor and the record cannot disagree
+        // about which mode this sweep was.
+        var tabShown = options.WithModel && Environment.GetEnvironmentVariable("BHS_PROBE_SHOW_TAB") == "1";
+
+        var report = new Report(tabShown);
 
         using var registry = new RevitInstanceRegistry();
         var channel = new RunnerChannel(registry);
@@ -116,8 +121,7 @@ internal static class Program
             // claim "ribbon exercised" for a run that skipped it, and worse: the verifier compares
             // check lists only between reports of the same mode, so a false flag would declare two
             // identical lists incomparable and switch the disappearing-check guard off.
-            report.Sweep.ShowTab =
-                options.WithModel && Environment.GetEnvironmentVariable("BHS_PROBE_SHOW_TAB") == "1";
+            report.Sweep.ShowTab = tabShown;
             report.Sweep.Write(reportPath);
         }
 

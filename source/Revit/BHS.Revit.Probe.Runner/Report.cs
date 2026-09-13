@@ -12,6 +12,19 @@ internal sealed class Report
     private readonly List<string> _failed = new();
     private ReleaseRecord? _release;
 
+    /// <param name="tabShown">
+    /// Whether this sweep brings the ribbon tab forward and presses buttons - <c>--with-model</c> and
+    /// <c>BHS_PROBE_SHOW_TAB=1</c> together, the condition the ribbon checks themselves test. The floor
+    /// rises by what only that mode asks.
+    /// </param>
+    public Report(bool tabShown)
+    {
+        Minimum = MinimumPerRelease + (tabShown ? EntryChecksWithTabShown : 0);
+    }
+
+    /// <summary>The fewest checks a release is expected to contribute in the mode this sweep runs in.</summary>
+    public int Minimum { get; }
+
     /// <summary>
     /// The same sweep, in a form something other than a person can read.
     /// </summary>
@@ -123,6 +136,25 @@ internal sealed class Report
     /// </remarks>
     public const int MinimumPerRelease = 45;
 
+    /// <summary>
+    /// The checks the Entry experiment adds when the tab is shown and its button pressed.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// Five: the Entry button landed on the edition's tab beside Ping; Revit asks the Entry availability
+    /// class; the feature assembly is still out once it has; the Entry command runs on a press; and it
+    /// reaches the probe's interface host by its feature. Each is something the Entry design rests on, so
+    /// each has to be missed if it stops running. The first was added after the other four, when it
+    /// turned out every one of them assumed a placement nothing checked.
+    /// </para>
+    /// <para>
+    /// <b>Per mode, and only for them.</b> They run in no other mode, so a floor raised for every sweep
+    /// would demand checks an unattended one never asks - the floor failing a run that lost nothing. The
+    /// base above is left where it stands: it was set for the cheapest mode and still describes it.
+    /// </para>
+    /// </remarks>
+    public const int EntryChecksWithTabShown = 5;
+
     public void Summarise(int releases)
     {
         Console.WriteLine();
@@ -134,7 +166,7 @@ internal sealed class Report
         // registration and still clear it. The guard exists for exactly that disappearance.
         foreach (var record in Sweep.Releases)
         {
-            if (record.Abandoned || record.Checks.Count >= MinimumPerRelease)
+            if (record.Abandoned || record.Checks.Count >= Minimum)
                 continue;
 
             // A symptom, not a diagnosis. The count also drops when a release aborts early - Revit
@@ -143,9 +175,9 @@ internal sealed class Report
             // the next person from looking for a deleted check that was never deleted.
             Console.WriteLine(
                 $"  [FAIL] Revit {record.Release} reported only {record.Checks.Count} checks, fewer " +
-                $"than the {MinimumPerRelease} expected. Either a check stopped running, or that " +
+                $"than the {Minimum} expected. Either a check stopped running, or that " +
                 "release did not get far enough to ask its questions - the failures above say which.");
-            _failed.Add($"Revit {record.Release} ran {record.Checks.Count} checks, fewer than the {MinimumPerRelease} expected");
+            _failed.Add($"Revit {record.Release} ran {record.Checks.Count} checks, fewer than the {Minimum} expected");
         }
 
         // A release selected and never begun leaves no record at all, so the loop above cannot see

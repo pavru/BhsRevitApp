@@ -46,11 +46,41 @@ public sealed class ProbeApplication : RevitAddInApplication
     private ProbeChannel? _channel;
     private ExternalEvent? _exit;
     private ExternalEvent? _press;
+    private ExternalEvent? _pressGate;
     private NamedPipeServer? _server;
 
     protected override Guid AddInId => Id;
 
     protected override string Name => "BHS.Revit.Probe";
+
+    /// <summary>
+    /// The one feature the probe declares, which is what lets its Entry manifest be built.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <b>Declared, and not for anything it does.</b> The host builds <c>BHS.Revit.Probe.Entry.features.json</c>
+    /// only when this list names a module from <c>BHS.Revit.Probe.Declaration</c>, and the Entry
+    /// command finds its host by the same list. Naming the module type loads the declaration here, at
+    /// construction - which is exactly what a real edition's list costs, and nothing more: the Entry and
+    /// feature assemblies are not named anywhere in the probe.
+    /// </para>
+    /// <para>
+    /// The DB half lists no such module, so a lookup by this feature finds one host with a user
+    /// interface and not two - and the sweep compares the host the command was handed with this add-in.
+    /// </para>
+    /// </remarks>
+    protected override IReadOnlyList<IFeatureModule> Modules { get; } =
+        new IFeatureModule[] { new BHS.Revit.Probe.Declaration.ProbeGateFeature() };
+
+    /// <summary>The tab the probe's own manifest gives Ping, now also the edition's tab.</summary>
+    /// <remarks>
+    /// The edition chooses the tab and the feature the panel, so the Entry button - which names only
+    /// Ping's panel - lands beside Ping on a tab of ours only if the host applies this. That is the
+    /// point of setting it to the same name rather than to another one: one shared panel is what the
+    /// probe brings forward, and the sweep asserts that the Entry button stands on it - and on no other
+    /// tab - before it reads anything the button was asked.
+    /// </remarks>
+    protected override string? RibbonTab => OwnTabName;
 
     /// <summary>
     /// Everything the probe adds on top of what the host already brought up.
@@ -62,11 +92,21 @@ public sealed class ProbeApplication : RevitAddInApplication
     /// </remarks>
     protected override void OnStarted(IUiFeatureServices services, UIControlledApplication application)
     {
-        // Built by the host before this runs, from BHS.Revit.Probe.features.json beside the
-        // assembly. Nothing here names a button; the project file does, and the SDK wrote it down.
+        // First, before anything below can load anything: the ribbon was built a moment ago, inside
+        // the base, and this is the earliest the probe can ask whether building it loaded the Entry
+        // assembly. Loaded already means Revit loads a button's assembly when the button is added;
+        // not loaded means it waits to be asked, and the handler below timestamps when it was.
+        EntryLoadedAtRibbonBuild = IsLoaded(EntryAssemblyName);
+        FeatureLoadedAtRibbonBuild = IsLoaded(FeatureAssemblyName);
+        AppDomain.CurrentDomain.AssemblyLoad += OnAssemblyLoad;
+
+        // Built by the host before this runs, from the manifests beside the assembly - the probe's own
+        // and, since the probe declares its gate feature, BHS.Revit.Probe.Entry.features.json. Nothing
+        // here names a button; the project files do, and the SDK wrote them down.
         ButtonsFromManifest = RibbonButtons;
 
         ProbeLog.Write("startup: begin");
+        ProbeLog.Write($"startup: Entry assembly loaded by the time the ribbon was built: {EntryLoadedAtRibbonBuild}");
 
         var facts = new ProbeFacts(services.Revit.Controlled);
         _facts = facts;
@@ -80,8 +120,12 @@ public sealed class ProbeApplication : RevitAddInApplication
         // Created here because an external event can only be created from an API context, and
         // OnStarted is still inside the one OnStartup was given.
         _exit = ExternalEvent.Create(new ExitRevitHandler());
-        _press = ExternalEvent.Create(new PressButtonHandler());
-        _channel = new ProbeChannel(facts, Layers, services, _exit, _press);
+        _press = ExternalEvent.Create(new PressButtonHandler("BHS.Probe.Ping", PressButtonHandler.Ping));
+
+        // Kept, so the channel can say what the last press of it came to.
+        GatePressHandler = new PressButtonHandler("BHS.Probe.Gate", PressButtonHandler.Gate);
+        _pressGate = ExternalEvent.Create(GatePressHandler);
+        _channel = new ProbeChannel(facts, Layers, services, _exit, _press, _pressGate);
 
         var server = PipeTransport.CreateServer(facts.PipeName);
         server.Error += (_, error) => ProbeLog.Write("server error", error.Error);
@@ -125,6 +169,8 @@ public sealed class ProbeApplication : RevitAddInApplication
     {
         try
         {
+            AppDomain.CurrentDomain.AssemblyLoad -= OnAssemblyLoad;
+
             if (_facts is not null && Services is not null)
                 Services.Revit.Controlled.DocumentOpened -= OnDocumentOpened;
         }
@@ -334,6 +380,17 @@ public sealed class ProbeApplication : RevitAddInApplication
     /// needs Revit not to be in the middle of something - which is why it is posted to the pump
     /// rather than run from <c>DocumentOpened</c>, where it once provoked a cancel-the-operation
     /// dialog on a loaded machine.
+    /// <para>
+    /// <b>The tab named <see cref="OwnTabName"/>, not the first tab holding a panel of that title - and
+    /// that is a correction.</b> Two manifests now make a <c>Probe feature</c> panel: the probe's own,
+    /// on <c>BHS</c>, and the Entry manifest, on whatever tab the host gives it. A host that ignored the
+    /// edition's tab would put the Gate button on Add-Ins, in a panel of the same title; whether Add-Ins
+    /// or <c>BHS</c> comes first in <c>ribbon.Tabs</c> is not measured, and if Add-Ins did, the first
+    /// version activated it and every tab check passed on the wrong tab. So the tab is chosen by name,
+    /// and what was activated, which buttons stand on its panel and which other tabs hold a panel of
+    /// that title are all recorded here, on the UI thread, for the sweep to assert before it reads the
+    /// Entry counters.
+    /// </para>
     /// </remarks>
     private static void ShowOurTab()
     {
@@ -347,51 +404,97 @@ public sealed class ProbeApplication : RevitAddInApplication
                 return;
             }
 
-            // The panel holding the ping button, not merely one of ours. Availability is asked while
-            // a tab is shown, and the press is what the button is for - both want this tab, and the
-            // two buttons deliberately sit on different ones now.
-            foreach (var wanted in new[] { OwnPanelTitle, "BHS Probe" })
+            // Id or title: the log has shown the Id of a tab CreateRibbonTab made to be its name, and
+            // the title is the other spelling a tab could carry. Both are compared with the same name.
+            var own = ribbon.Tabs.FirstOrDefault(tab =>
+                (tab.Id == OwnTabName || tab.Title == OwnTabName) && HoldsPanel(tab, OwnPanelTitle));
+
+            var others = ribbon.Tabs
+                               .Where(tab => !ReferenceEquals(tab, own) && HoldsPanel(tab, OwnPanelTitle))
+                               .Select(tab => string.IsNullOrEmpty(tab.Id) ? tab.Title ?? "?" : tab.Id)
+                               .ToList();
+
+            OtherTabsWithOwnPanel = others.Count == 0 ? NoneRecorded : string.Join(" | ", others);
+
+            if (own is null)
             {
-                foreach (var tab in ribbon.Tabs)
+                // The control's placement, so that availability can still be asked of something and the
+                // sweep has a count to set the missing tab against. Recorded under its own name: the
+                // assertion on the Entry button's placement is about which tab this was.
+                var fallback = ribbon.Tabs.FirstOrDefault(tab => HoldsPanel(tab, "BHS Probe"));
+
+                if (fallback is null)
                 {
-                    if (!tab.Panels.Any(panel => panel.Source?.Title == wanted))
-                        continue;
-
-                    ribbon.ActiveTab = tab;
-
-                    // While we are on the thread that may ask: whether the builder's tab branch
-                    // really produced a tab, seen on the live ribbon rather than counted by us -
-                    // and whether the buttons on it came out wearing the placeholder icons.
-                    if (wanted == OwnPanelTitle)
-                    {
-                        OwnTabSeen = true;
-
-                        var items = tab.Panels
-                                       .Where(panel => panel.Source?.Title == wanted)
-                                       .SelectMany(panel => panel.Source!.Items)
-                                       .OfType<Autodesk.Windows.RibbonButton>()
-                                       .ToList();
-
-                        IconsSeen = items.Count > 0
-                                    && items.TrueForAll(item => item.Image is not null && item.LargeImage is not null);
-
-                        ProbeLog.Write($"ribbon: {items.Count} button(s) on '{wanted}', all with icons: {IconsSeen}");
-
-                        MeasureIcons(ribbon, items);
-                    }
-
-                    ProbeLog.Write($"ribbon: activated tab '{tab.Id}' holding '{wanted}'");
+                    ActivatedTab = NoneRecorded;
+                    ProbeLog.Write("ribbon: could not find the tab holding our panel");
                     return;
                 }
+
+                ribbon.ActiveTab = fallback;
+                ActivatedTab = string.IsNullOrEmpty(fallback.Id) ? fallback.Title ?? "?" : fallback.Id;
+                ProbeLog.Write($"ribbon: no tab '{OwnTabName}' holds '{OwnPanelTitle}'; activated '{ActivatedTab}' holding 'BHS Probe'");
+                return;
             }
 
-            ProbeLog.Write("ribbon: could not find the tab holding our panel");
+            // Recorded before the tab is brought forward: activating it is what makes Revit ask the
+            // availability classes, and the sweep reads the placement before it reads what that asking
+            // counted.
+            var items = own.Panels
+                           .Where(panel => panel.Source?.Title == OwnPanelTitle)
+                           .SelectMany(panel => panel.Source!.Items)
+                           .OfType<Autodesk.Windows.RibbonButton>()
+                           .ToList();
+
+            OwnPanelButtonIds = string.Join(" | ", items.Select(item => item.Id ?? string.Empty));
+            OwnPanelButtonTexts = string.Join(" | ", items.Select(item => item.Text ?? string.Empty));
+
+            // The spelling that matched, so the sweep compares like with like.
+            ActivatedTab = own.Id == OwnTabName ? own.Id : own.Title ?? "?";
+
+            ribbon.ActiveTab = own;
+
+            // While we are on the thread that may ask: whether the builder's tab branch really produced
+            // a tab, seen on the live ribbon rather than counted by us - and whether the buttons on it
+            // came out wearing the placeholder icons.
+            OwnTabSeen = true;
+
+            IconsSeen = items.Count > 0
+                        && items.TrueForAll(item => item.Image is not null && item.LargeImage is not null);
+
+            ProbeLog.Write($"ribbon: {items.Count} button(s) on '{OwnPanelTitle}', all with icons: {IconsSeen}");
+            ProbeLog.Write($"ribbon: button ids there: {OwnPanelButtonIds}; other tabs with that panel: {OtherTabsWithOwnPanel}");
+
+            MeasureIcons(ribbon, items);
+
+            ProbeLog.Write($"ribbon: activated tab '{own.Id}' holding '{OwnPanelTitle}'");
         }
         catch (Exception error)
         {
             ProbeLog.Write("ribbon: could not activate the tab", error);
         }
     }
+
+    private static bool HoldsPanel(Autodesk.Windows.RibbonTab tab, string title) =>
+        tab.Panels.Any(panel => panel.Source?.Title == title);
+
+    /// <summary>What a placement fact reads when it was looked for and nothing was there.</summary>
+    internal const string NoneRecorded = "(none)";
+
+    /// <summary>The press handler for the Entry button, kept so the channel can report its last outcome.</summary>
+    internal static PressButtonHandler? GatePressHandler;
+
+    /// <summary>The tab <see cref="ShowOurTab"/> brought forward, by Id; empty until it ran.</summary>
+    internal static volatile string ActivatedTab = string.Empty;
+
+    /// <summary>The ids of the buttons on <see cref="OwnPanelTitle"/> on that tab, joined; empty until it ran.</summary>
+    /// <remarks>The AdWindows id format for an add-in button is not measured, so the texts go beside it.</remarks>
+    internal static volatile string OwnPanelButtonIds = string.Empty;
+
+    /// <summary>The texts of the same buttons, joined, in the same order.</summary>
+    internal static volatile string OwnPanelButtonTexts = string.Empty;
+
+    /// <summary>Every other tab holding a panel titled <see cref="OwnPanelTitle"/>; empty until it ran.</summary>
+    internal static volatile string OtherTabsWithOwnPanel = string.Empty;
 
     /// <summary>How many buttons the host built from the manifest. Read by the channel.</summary>
     internal static int ButtonsFromManifest;
@@ -570,15 +673,89 @@ public sealed class ProbeApplication : RevitAddInApplication
     }
 
     /// <summary>Whether the stand-in feature has been loaded, asked without loading it.</summary>
-    internal static bool IsFeatureLoaded()
+    internal static bool IsFeatureLoaded() => IsLoaded(FeatureAssemblyName);
+
+    /// <summary>Whether an assembly of this simple name is loaded, asked without loading it.</summary>
+    internal static bool IsLoaded(string simpleName)
     {
         foreach (var assembly in AppDomain.CurrentDomain.GetAssemblies())
         {
-            if (assembly.GetName().Name == "BHS.Revit.Probe.Feature")
+            if (assembly.GetName().Name == simpleName)
                 return true;
         }
 
         return false;
+    }
+
+    /// <summary>The tab the probe's own manifest names for Ping, and the one it gives the edition.</summary>
+    internal const string OwnTabName = "BHS";
+
+    /// <summary>The stand-in feature. Named as text: naming a type from it would load it.</summary>
+    internal const string FeatureAssemblyName = "BHS.Revit.Probe.Feature";
+
+    /// <summary>The Entry assembly. Named as text, for the same reason and more strictly still.</summary>
+    internal const string EntryAssemblyName = "BHS.Revit.Probe.Entry";
+
+    /// <summary>Whether the Entry assembly was already loaded when the probe first looked.</summary>
+    /// <remarks>
+    /// The first line of <c>OnStarted</c>, which runs straight after the host built the ribbon - so
+    /// true here means building the ribbon loaded it: nothing of ours names a type from that assembly,
+    /// and the builder hands Revit strings. What that says about Revit is that it loads a button's
+    /// assembly when the button is added, rather than when its availability is first asked.
+    /// </remarks>
+    internal static bool EntryLoadedAtRibbonBuild;
+
+    /// <summary>The same question about the feature assembly, which must be false.</summary>
+    internal static bool FeatureLoadedAtRibbonBuild;
+
+    private static long _entryLoadedTicks;
+    private static long _featureLoadedTicks;
+
+    /// <summary>When the Entry assembly loaded after the ribbon was built, or null.</summary>
+    internal static DateTime? EntryLoadedUtc => Ticks(ref _entryLoadedTicks);
+
+    /// <summary>When the feature assembly loaded after the ribbon was built, or null.</summary>
+    internal static DateTime? FeatureLoadedUtc => Ticks(ref _featureLoadedTicks);
+
+    private static DateTime? Ticks(ref long field)
+    {
+        var ticks = Interlocked.Read(ref field);
+        return ticks == 0 ? null : new DateTime(ticks, DateTimeKind.Utc);
+    }
+
+    /// <summary>
+    /// Timestamps the two assemblies the Entry experiment is about, as they load. Watches, never
+    /// answers.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <c>AssemblyLoad</c> and not <c>AssemblyResolve</c>, for the reason written down for the
+    /// framework's own watcher: the first only looks, the second would be answering other vendors'
+    /// resolution in an AppDomain Revit 2024 shares with them.
+    /// </para>
+    /// <para>
+    /// A time rather than a flag, because the question is an order: whether the Entry assembly came in
+    /// when Revit first asked its availability class, and whether the feature came in only on the press.
+    /// The sweep puts these beside <c>GateRule.FirstCallUtc</c>. It runs for every assembly Revit loads
+    /// after startup, so it compares one name and writes nothing to the log; and it never throws, since
+    /// a throw here would land in whoever was loading.
+    /// </para>
+    /// </remarks>
+    private static void OnAssemblyLoad(object? sender, AssemblyLoadEventArgs args)
+    {
+        try
+        {
+            var name = args.LoadedAssembly.GetName().Name;
+
+            if (name == EntryAssemblyName)
+                Interlocked.CompareExchange(ref _entryLoadedTicks, DateTime.UtcNow.Ticks, 0);
+            else if (name == FeatureAssemblyName)
+                Interlocked.CompareExchange(ref _featureLoadedTicks, DateTime.UtcNow.Ticks, 0);
+        }
+        catch (Exception)
+        {
+            // Looking must never become a failure inside somebody else's load.
+        }
     }
 
     private static void LogLoadedAssemblies()

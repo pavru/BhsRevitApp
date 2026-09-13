@@ -165,6 +165,24 @@ public abstract class RevitAddInApplication : RevitAddInHost, IExternalApplicati
     /// <summary>How many buttons the manifests contributed. Zero is normal for an edition with none.</summary>
     protected int RibbonButtons { get; private set; }
 
+    /// <summary>
+    /// The tab this edition puts its features' buttons on. Null or empty means Revit's own Add-Ins
+    /// tab.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <b>The edition chooses the tab, the feature chooses the panel.</b> A feature's Entry manifest
+    /// names panels only, because the same feature is offered by more than one edition and a tab is a
+    /// claim on the ribbon that belongs to whoever is installed. Buttons in the edition's own manifest
+    /// keep the tab they name, exactly as before; this applies to Entry manifests alone.
+    /// </para>
+    /// <para>
+    /// Empty means what an empty <c>Tab</c> means in a manifest - the Add-Ins tab - so an edition that
+    /// says nothing claims nothing.
+    /// </para>
+    /// </remarks>
+    protected virtual string? RibbonTab => null;
+
     /// <summary>Sealed: builds the ribbon, then hands over to the edition.</summary>
     /// <remarks>
     /// Before the edition's own hook, so that an edition adding something by hand adds it to a ribbon
@@ -180,10 +198,17 @@ public abstract class RevitAddInApplication : RevitAddInHost, IExternalApplicati
     /// Builds whatever the manifests beside this assembly declare.
     /// </summary>
     /// <remarks>
+    /// <para>
     /// The directory is this assembly's own, found the only way that works inside Revit: from the
     /// assembly itself. The obvious alternatives - the entry assembly and
     /// <c>AppContext.BaseDirectory</c> - both name Revit's installation folder, because the entry
     /// assembly here is <c>Revit.exe</c>. Measured, for the settings layer, and true again here.
+    /// </para>
+    /// <para>
+    /// The assemblies the edition's modules come from are named from the module instances the edition
+    /// already built, so nothing is loaded to name them: a feature's Entry manifest counts only when
+    /// its <c>&lt;P&gt;.Declaration</c> is among them.
+    /// </para>
     /// </remarks>
     private void BuildRibbon(IFeatureServices services)
     {
@@ -197,7 +222,15 @@ public abstract class RevitAddInApplication : RevitAddInHost, IExternalApplicati
                 return;
             }
 
-            RibbonButtons = RibbonBuilder.Build(_application!, directory!, services.Log);
+            var declared = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+
+            foreach (var type in DeclaredModuleTypes())
+            {
+                if (type.Assembly.GetName().Name is { Length: > 0 } name)
+                    declared.Add(name);
+            }
+
+            RibbonButtons = RibbonBuilder.Build(_application!, directory!, RibbonTab, declared, services.Log);
         }
         catch (Exception error)
         {

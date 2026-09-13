@@ -7,9 +7,15 @@ namespace BHS.Revit.Abstractions;
 /// <para>
 /// Smaller than it first was, and the shrinking is the point. An earlier version had the module
 /// describe its ribbon in code, which meant loading every feature assembly during
-/// <c>OnStartup</c> to ask. The ribbon is built from manifests beside the assemblies instead, so a
-/// module that only contributes buttons implements nothing at all and is never loaded until one is
-/// pressed.
+/// <c>OnStartup</c> to ask. The ribbon is built from manifests beside the assemblies instead, so the
+/// feature's implementation assembly is never loaded until a button is pressed.
+/// </para>
+/// <para>
+/// <b>A feature that only contributes buttons still declares one module</b>, small, in its declaration
+/// assembly, and its <c>Start</c> may do nothing. Listing it in an edition's <c>Modules</c> is what
+/// makes the host build that feature's <c>&lt;P&gt;.Entry.features.json</c>, and it is the type
+/// <c>CommandEntryPoint&lt;TFeature, TCommand&gt;</c> finds its host by. The module is constructed at
+/// startup, so the declaration loads then; the implementation still waits for a press.
 /// </para>
 /// <para>
 /// The cost of getting that wrong would not have been milliseconds of startup. On Revit 2024 every

@@ -9,6 +9,14 @@
       have to agree on: the feature assemblies load on a press, which is too late, and the framework
       is not allowed to know what a cable is.
 
+      NOT ONLY IDENTIFIERS. NeedsProjectDocument lives here too: the availability rule the cabling
+      buttons ask, which is a decision that executes, and executes before anybody presses anything -
+      Revit asks it whenever the tab holding the buttons is shown. It belongs here for the same reason
+      the identifiers do, and it stays inside the rule below by reading nothing but the context Revit
+      passes: no collector, no settings, no services. The class Revit constructs for it is an empty
+      name in BHS.MEP.Cabling.Entry, because Revit resolves an availability class only inside the
+      assembly its button names.
+
       THE ONE RULE, AND IT IS ENFORCED RATHER THAN REMEMBERED: this assembly may not reference the
       implementation - not .Feature, not .Revit, not .Ui, not .Routing. It is loaded during
       OnStartup for every user of every edition, whether or not the feature is ever used, so a
@@ -18,8 +26,10 @@
       repository has already watched lapse.
 
       No RevitAPIUI either, and that is the second half of being a declaration: FailureDefinition
-      lives in RevitAPI, so nothing here needs an interface type, and a DBApplication edition can
-      register exactly the same things. RVTDEC002.
+      lives in RevitAPI, and so do the Document and CategorySet an availability rule is shown, so
+      nothing here needs an interface type, and a DBApplication edition can register exactly the same
+      things. RVTDEC002. The interface half of availability - IExternalCommandAvailability and
+      UIApplication - is the framework's AvailabilityEntryPoint, which this assembly never names.
     -->
 
     <PropertyGroup>

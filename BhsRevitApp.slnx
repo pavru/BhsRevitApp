@@ -75,6 +75,11 @@
          anybody presses anything. Loaded at startup, and therefore forbidden to reference the
          assemblies above - RVTDEC001 checks that rather than trusting it. -->
     <Project Path="source/Features/MEP.Cabling/BHS.MEP.Cabling.Declaration/BHS.MEP.Cabling.Declaration.csproj" Type="C#" />
+    <!-- Where Revit enters the feature: the empty classes its buttons name, and the buttons. Revit
+         resolves a button's command and availability class inside the one assembly the button names,
+         so both sit here, written once for every edition that offers cabling. The feature picks the
+         panel; the edition that references this project picks the tab. -->
+    <Project Path="source/Features/MEP.Cabling/BHS.MEP.Cabling.Entry/BHS.MEP.Cabling.Entry.csproj" Type="C#" />
     <!-- What the reading half asserts about itself, inside a live Revit. A separate assembly, so it
          sees the public surface an edition sees and nothing shipped carries a line of it. Listed by
          hand in BHS.Revit.Probe; nothing runs it on its own. -->
@@ -100,12 +105,18 @@
     <!-- A stand-in feature: one command, referencing the contracts and never the host. It exists so
          that "the feature loads only when its button is pressed" is measured rather than assumed. -->
     <Project Path="source/Revit/BHS.Revit.Probe.Feature/BHS.Revit.Probe.Feature.csproj" Type="C#" />
+    <!-- The same stand-in, cut the way a real feature is cut: a declaration the probe lists in its
+         Modules, and an Entry assembly whose button the probe offers on its own tab. They exist so
+         that the arrangement a feature's buttons rest on is measured before a feature depends on it. -->
+    <Project Path="source/Revit/BHS.Revit.Probe.Declaration/BHS.Revit.Probe.Declaration.csproj" Type="C#" />
+    <Project Path="source/Revit/BHS.Revit.Probe.Entry/BHS.Revit.Probe.Entry.csproj" Type="C#" />
     <Project Path="source/Revit/BHS.Revit.Probe.Runner/BHS.Revit.Probe.Runner.csproj" Type="C#" />
   </Folder>
 
-  <!-- Editions: the add-ins Revit actually loads. Each is a host class, an entry point per command
-       and a ribbon declaration - the composition belongs to the framework and the work to the
-       features, so an edition that grows large is a sign something is in the wrong place. -->
+  <!-- Editions: the add-ins Revit actually loads. Each is a host class naming its tab and its Modules,
+       and a reference to each feature's Entry project - the composition belongs to the framework, the
+       buttons and the work to the features, so an edition that grows large is a sign something is in
+       the wrong place. -->
   <Folder Name="/Editions/">
     <Project Path="source/BHS.FullEdition/BHS.FullEdition.csproj" Type="C#" />
   </Folder>

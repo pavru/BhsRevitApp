@@ -49,6 +49,13 @@ public sealed class RouteCablingCommand : IFeatureCommand
             return Result.Failed;
         }
 
+        // Refused rather than trusted to the greyed button, for the reason on CollectCablingCommand.
+        if (document.IsFamilyDocument)
+        {
+            message = "Open a project: this command does not work in the family editor.";
+            return Result.Failed;
+        }
+
         var options = CablingOptions.Read(services.Settings);
         var log = services.Log;
 

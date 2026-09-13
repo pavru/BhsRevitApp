@@ -16,14 +16,44 @@ namespace BHS.Revit.Probe;
 public sealed class LocalAvailability : IExternalCommandAvailability
 {
     private static int _calls;
+    private static string? _firstActiveAddInId;
+    private static string _latestActiveAddInId = "(never asked)";
 
     public static int Calls => System.Threading.Volatile.Read(ref _calls);
 
+    /// <summary>What <c>ActiveAddInId</c> said on the first call, raw.</summary>
+    public static string FirstActiveAddInId => System.Threading.Volatile.Read(ref _firstActiveAddInId) ?? "(never asked)";
+
+    /// <summary>What <c>ActiveAddInId</c> said on the latest call, raw.</summary>
+    public static string LatestActiveAddInId => System.Threading.Volatile.Read(ref _latestActiveAddInId);
+
     public bool IsCommandAvailable(UIApplication applicationData, CategorySet selectedCategories)
     {
+        // What Revit names as the executing add-in while it asks availability, although nothing is
+        // executing. First measured 2026-09-14: the probe, on all four releases, first and latest
+        // alike - kept as a note, not an assertion. Recorded for the control because GateAvailability may not
+        // record anything: an Entry class carries no logic, and GateRule is never shown the
+        // UIApplication. First and latest, since the answer may well change once a command has run.
+        var active = DescribeActiveAddIn(applicationData);
+        System.Threading.Interlocked.CompareExchange(ref _firstActiveAddInId, active, null);
+        System.Threading.Volatile.Write(ref _latestActiveAddInId, active);
+
         if (System.Threading.Interlocked.Increment(ref _calls) == 1)
             Log.For<LocalAvailability>().Info("availability was called from the command's own assembly");
 
         return true;
+    }
+
+    private static string DescribeActiveAddIn(UIApplication? application)
+    {
+        try
+        {
+            var id = application?.ActiveAddInId;
+            return id is null ? "(null)" : id.GetGUID().ToString();
+        }
+        catch (Exception error)
+        {
+            return "(threw " + error.GetType().Name + ")";
+        }
     }
 }

@@ -8,6 +8,10 @@
       command in a one-line entry point; what that costs is measured rather than assumed, because on
       Revit 2024 an assembly that loads holds its simple name in the AppDomain shared with every
       other vendor for the rest of the session.
+
+      It holds two commands now. PingCommand is reached through an entry point in the probe's own
+      assembly; GateCommand through BHS.Revit.Probe.Entry, the shape a feature's buttons take. Both
+      keep this assembly unloaded until a press, and the sweep asks that of each.
     -->
 
     <PropertyGroup>

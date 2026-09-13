@@ -1,0 +1,67 @@
+<Project Sdk="BHS.Revit.Sdk/1.5.8">
+
+    <!--
+      The probe's Entry assembly: the shape a feature's buttons take, measured before a feature
+      depends on it.
+
+      A feature's buttons live in <P>.Entry because Revit resolves a button's ClassName and its
+      AvailabilityClassName inside the one assembly the button names. The probe copies that shape
+      exactly - one empty command entry point, one empty availability entry point, one button with a
+      panel and no tab - so that the sweep with the tab shown answers what the arrangement rests on and
+      nobody has seen yet:
+        - Revit calls an availability class whose logic is a generic base in another assembly;
+        - asking it loads this assembly and the declaration, and the feature assembly still stays out
+          until a press;
+        - the command finds the host that declared its feature, not the one its assembly belongs to.
+
+      WHAT IT MAY CONTAIN, AND NOTHING ELSE: empty sealed entry points and the button below. No logic,
+      no fields, no methods, no static constructors - the counters the sweep reads live in GateRule and
+      in the probe, and RVTENT001 checks the built assembly for it.
+
+      NO TAB. The probe plays the edition, and names the tab through RibbonTab - the same "BHS" its own
+      manifest gives Ping - so this button lands on Ping's panel. If the host ignored the edition's tab,
+      the button would go to Revit's Add-Ins tab, in a panel of the same title. The probe brings forward
+      the tab named BHS, not the first tab holding that panel, and records which buttons stand on its
+      panel and which other tabs hold one; the sweep asserts the placement before it reads the Entry
+      counters, so a misplaced button is its own red check rather than a zero count or a press that
+      finds no command id, either of which reads as Revit refusing the Entry classes.
+
+      The probe references this project and names no type from it. The manifest arrives in the probe's
+      output as a related file of this assembly - Directory.Build.targets says how - and nothing else
+      would make it arrive.
+    -->
+
+    <PropertyGroup>
+        <TargetFrameworks>net48-revit2024;net8.0-revit2025;net8.0-revit2026;net10.0-revit2027</TargetFrameworks>
+        <RootNamespace>BHS.Revit.Probe.Entry</RootNamespace>
+        <UseRevitApi>true</UseRevitApi>
+        <!-- The bases implement IExternalCommand and IExternalCommandAvailability, so deriving from
+             them needs RevitAPIUI to compile. Reference-only: nothing extra ships. -->
+        <UseRevitApiUi>true</UseRevitApiUi>
+        <IsPackable>false</IsPackable>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="..\BHS.Revit.Abstractions\BHS.Revit.Abstractions.csproj"/>
+        <!-- For ProbeGateFeature, the type argument the command finds its host by, and GateRule, the
+             rule the availability class wraps. Loaded at startup already: the probe lists the module. -->
+        <ProjectReference Include="..\BHS.Revit.Probe.Declaration\BHS.Revit.Probe.Declaration.csproj"/>
+        <!-- For GateCommand, named in a type argument. Whether that stays unloaded until the press is
+             the measurement. -->
+        <ProjectReference Include="..\BHS.Revit.Probe.Feature\BHS.Revit.Probe.Feature.csproj"/>
+    </ItemGroup>
+
+    <ItemGroup>
+        <!-- Order 3, after Ping's 2, so Ping stays the first button on the panel: the icon measurement
+             reads the first one, and the control should not move because an experiment arrived. -->
+        <RevitRibbonButton Include="BHS.Probe.Gate">
+            <Panel>Probe feature</Panel>
+            <Text>Gate</Text>
+            <ClassName>BHS.Revit.Probe.Entry.GateCommandEntryPoint</ClassName>
+            <AvailabilityClassName>BHS.Revit.Probe.Entry.GateAvailability</AvailabilityClassName>
+            <ToolTip>Runs a feature command through an Entry assembly, whose host is found by the feature it declares.</ToolTip>
+            <Order>3</Order>
+        </RevitRibbonButton>
+    </ItemGroup>
+
+</Project>

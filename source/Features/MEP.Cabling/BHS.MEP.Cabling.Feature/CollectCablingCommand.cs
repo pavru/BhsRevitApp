@@ -51,6 +51,16 @@ public sealed class CollectCablingCommand : IFeatureCommand
             return Result.Failed;
         }
 
+        // The family editor is refused here as well as greyed on the ribbon - owner decision, cabling
+        // does not work there. Availability is advice rather than a gate: whether Revit asks it for a
+        // command reached through the quick access toolbar or a keyboard shortcut has not been
+        // measured, so the command is the place that holds. The same check stands in the other two.
+        if (document.IsFamilyDocument)
+        {
+            message = "Open a project: this command does not work in the family editor.";
+            return Result.Failed;
+        }
+
         var options = CablingOptions.Read(services.Settings);
         var version = Interlocked.Increment(ref _version);
 

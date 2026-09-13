@@ -1,4 +1,4 @@
-﻿using Autodesk.Revit.DB;
+using Autodesk.Revit.DB;
 using Autodesk.Revit.UI;
 using BHS.Logging;
 
@@ -69,6 +69,11 @@ public interface IFeatureCommand
 /// manifest and has no default - a command whose mode nobody stated is a button that fails when it
 /// is pressed.
 /// </para>
+/// <para>
+/// <b>Kept beside <see cref="CommandEntryPoint{TFeature, TCommand}"/>, which is what a feature's
+/// Entry assembly uses.</b> This one finds its host by the assembly the entry point sits in, which
+/// works while an edition declares its own buttons; the probe's Ping stays on it as the control.
+/// </para>
 /// </remarks>
 public abstract class CommandEntryPoint<TCommand> : IExternalCommand
     where TCommand : IFeatureCommand, new()
@@ -81,7 +86,7 @@ public abstract class CommandEntryPoint<TCommand> : IExternalCommand
         {
             // Not a crash and not a dialog: a command whose host is missing is a deployment
             // problem, and the person in front of Revit can neither diagnose nor fix it.
-            Log.For("BHS.Revit.Host").Error(
+            Log.For(EntryPoints.LogCategory).Error(
                 "no host is registered for {0}; the add-in did not finish starting",
                 typeof(TCommand).FullName);
 
@@ -89,31 +94,26 @@ public abstract class CommandEntryPoint<TCommand> : IExternalCommand
             return Result.Failed;
         }
 
-        try
-        {
-            return new TCommand().Execute(services, commandData, elements, ref message);
-        }
-        catch (Autodesk.Revit.Exceptions.OperationCanceledException)
-        {
-            // The user pressed Escape. Not a failure, and not worth a line in the log.
-            return Result.Cancelled;
-        }
-        catch (Exception error)
-        {
-            services.Log.Error(error, "command {0} failed", typeof(TCommand).FullName);
-            message = error.Message;
-            return Result.Failed;
-        }
+        return EntryPoints.Run<TCommand>(services, commandData, elements, ref message);
     }
 
     /// <summary>
     /// Finds the host this command belongs to.
     /// </summary>
     /// <remarks>
+    /// <para>
     /// By add-in id first, because that is what Revit itself says is executing, and by the assembly
-    /// this type came from second. The second exists because the first is documented rather than
-    /// measured from inside a command, and this repository has learned what documented-but-unmeasured
-    /// is worth.
+    /// this type came from second. <b>The first is measured as a raw value since 2026-09-14</b>: inside
+    /// the probe's Ping command, on all four releases, <c>ActiveAddInId</c> named the probe - the add-in
+    /// whose button was pressed - with the edition installed in the same process. The record before
+    /// that run claimed the same and did not show it: it wrote down the host the command was handed,
+    /// which the assembly fallback could have produced as well.
+    /// </para>
+    /// <para>
+    /// The second also covers what an id cannot tell apart. One assembly can own two hosts - the probe
+    /// carries an <c>Application</c> and a <c>DBApplication</c> - and an id that answers nothing, or
+    /// answers a host without a user interface, still has the assembly to fall back on.
+    /// </para>
     /// </remarks>
     private IUiFeatureServices? Locate(ExternalCommandData commandData)
     {
@@ -132,7 +132,163 @@ public abstract class CommandEntryPoint<TCommand> : IExternalCommand
         // Narrowed rather than cast: a host found here that has no user interface is a
         // DBApplication add-in whose assembly also carries a command, which is a deployment
         // mistake. It reads as "no host" and gets the message below, which says what to do.
+        // FindByAssembly prefers a host with a user interface, so an assembly owning both forms -
+        // the probe does - does not hand back its DB half by accident of dictionary order.
         return HostRegistry.FindByAssembly(typeof(TCommand).Assembly) as IUiFeatureServices
                ?? HostRegistry.FindByAssembly(GetType().Assembly) as IUiFeatureServices;
+    }
+}
+
+/// <summary>
+/// The bridge for a command whose entry point lives in a feature's Entry assembly rather than in an
+/// edition.
+/// </summary>
+/// <remarks>
+/// <para>
+/// <b>Found by the feature, not by the assembly.</b> An Entry assembly belongs to a feature and is
+/// referenced by every edition that offers it, so the assembly the entry point sits in says nothing
+/// about which edition is running it. What does is the edition's own <c>Modules</c> list: an edition
+/// offers a feature by declaring its module, the host records the module types it declared when it
+/// registers, and this asks the registry for the host with a user interface that declared
+/// <typeparamref name="TFeature"/>.
+/// </para>
+/// <code>
+/// [Transaction(TransactionMode.Manual)]
+/// public sealed class RouteCablingEntryPoint : CommandEntryPoint&lt;CablingFeature, RouteCablingCommand&gt; { }
+/// </code>
+/// <para>
+/// <b>One host is the production case</b> - one edition installed, which is the owner's rule - and
+/// nothing else is consulted. <b>None</b> means the edition does not declare the feature, and the
+/// command says so rather than running against services nobody composed for it. <b>More than one</b>
+/// is a development state, two editions or the probe beside an edition, and only then is
+/// <c>ActiveAddInId</c> read to choose. Measured raw inside a command built from an Entry manifest -
+/// the probe's Gate, on all four releases, 2026-09-14 - it named the add-in whose host built the
+/// button. The case it is read for, two hosts declaring one feature, has not been run; so it still
+/// decides only what the feature alone cannot.
+/// </para>
+/// <para>
+/// Naming <typeparamref name="TFeature"/> here loads nothing a press would not: a feature's module
+/// type lives in its declaration assembly, which the edition loaded at startup to list it.
+/// </para>
+/// <para>
+/// <c>[Transaction]</c> goes on the derived class, for the reasons on
+/// <see cref="CommandEntryPoint{TCommand}"/>.
+/// </para>
+/// </remarks>
+public abstract class CommandEntryPoint<TFeature, TCommand> : IExternalCommand
+    where TFeature : IFeatureModule
+    where TCommand : IFeatureCommand, new()
+{
+    public Result Execute(ExternalCommandData commandData, ref string message, ElementSet elements)
+    {
+        var services = Locate(commandData, out var refusal);
+
+        if (services is null)
+        {
+            message = refusal;
+            return Result.Failed;
+        }
+
+        return EntryPoints.Run<TCommand>(services, commandData, elements, ref message);
+    }
+
+    /// <summary>The one host that declared the feature, or null with the sentence that says why not.</summary>
+    private static IUiFeatureServices? Locate(ExternalCommandData commandData, out string refusal)
+    {
+        var feature = typeof(TFeature);
+        var hosts = HostRegistry.FindByFeature(feature);
+
+        if (hosts.Count == 1)
+        {
+            refusal = string.Empty;
+            return hosts.Values.First();
+        }
+
+        var log = Log.For(EntryPoints.LogCategory);
+
+        if (hosts.Count == 0)
+        {
+            // Nothing registered at all says something certain: the add-in whose button was pressed
+            // never got as far as the registry. Anything registered makes "not declared" the likely
+            // answer - and in a development state with several add-ins, a host that did not finish
+            // starting reads the same, which the log line says rather than hides.
+            if (HostRegistry.Count == 0)
+            {
+                log.Error("no host is registered, so {0} cannot run {1}; the add-in did not finish starting",
+                    feature.FullName, typeof(TCommand).FullName);
+
+                refusal = "This command is not available: its add-in did not finish starting. See the log.";
+                return null;
+            }
+
+            log.Error(
+                "no host with a user interface declares {0} in its Modules list, so {1} has nowhere to run; {2} host(s) are registered, and one that did not finish starting would read the same",
+                feature.FullName, typeof(TCommand).FullName, HostRegistry.Count);
+
+            refusal = "This command is not available: this edition does not declare the feature " +
+                      feature.FullName + " in its Modules list. See the log.";
+            return null;
+        }
+
+        // Several: the one Revit says is executing, and only now.
+        var ids = string.Join(", ", hosts.Keys.OrderBy(id => id).Select(id => id.ToString()));
+        Guid? active = null;
+
+        try
+        {
+            active = commandData?.Application?.ActiveAddInId?.GetGUID();
+        }
+        catch (Exception)
+        {
+            // Asking must never be worse than not knowing; not knowing is reported below.
+        }
+
+        if (active is { } executing && hosts.TryGetValue(executing, out var chosen))
+        {
+            refusal = string.Empty;
+            return chosen;
+        }
+
+        log.Error(
+            "{0} is declared by more than one host with a user interface ({1}), and the add-in Revit names as executing, {2}, is none of them",
+            feature.FullName, ids, active?.ToString() ?? "(unknown)");
+
+        refusal = "This command is not available: more than one add-in declares its feature (" + ids +
+                  "), and Revit did not name one of them as running this command. See the log.";
+        return null;
+    }
+}
+
+/// <summary>What both command entry points and the availability entry point share.</summary>
+internal static class EntryPoints
+{
+    /// <summary>The category a missing host or a failing rule is reported under.</summary>
+    public const string LogCategory = "BHS.Revit.Host";
+
+    /// <summary>
+    /// Runs a feature command once its host has been found. Written once, for both entry points.
+    /// </summary>
+    public static Result Run<TCommand>(
+        IUiFeatureServices services,
+        ExternalCommandData commandData,
+        ElementSet elements,
+        ref string message)
+        where TCommand : IFeatureCommand, new()
+    {
+        try
+        {
+            return new TCommand().Execute(services, commandData, elements, ref message);
+        }
+        catch (Autodesk.Revit.Exceptions.OperationCanceledException)
+        {
+            // The user pressed Escape. Not a failure, and not worth a line in the log.
+            return Result.Cancelled;
+        }
+        catch (Exception error)
+        {
+            services.Log.Error(error, "command {0} failed", typeof(TCommand).FullName);
+            message = error.Message;
+            return Result.Failed;
+        }
     }
 }
