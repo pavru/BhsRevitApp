@@ -1,4 +1,5 @@
 using System.Globalization;
+using System.Reflection;
 using Autodesk.Revit.DB;
 using Autodesk.Revit.DB.Electrical;
 using Autodesk.Revit.DB.Structure;
@@ -57,21 +58,35 @@ namespace BHS.MEP.Cabling.Revit.Tests;
 /// with nothing to undo.
 /// </para>
 /// <para>
+/// <b>What the owner decided on 2026-09-14, and these cases now pin.</b> Three questions this suite
+/// used to leave open, and each is asserted rather than noted from here on.
+/// </para>
+/// <list type="bullet">
+/// <item><c>BHS_Cbl_CircuitRefs</c> is one format on an indicator, a carrier and a box alike: circuit
+/// element ids, each once, separated by "; ". The cases read the value back into ids and compare them
+/// with the circuits the plan puts through the element, in the order the plan met them - on all three
+/// writers alike. The separator is repeated here rather than taken from the apply, so the two do not
+/// agree by sharing one constant.</item>
+/// <item>An indicator of ours that somebody joined is left untouched, never rewritten and never
+/// removed, and a warning is posted against it - also where it stands on a box this run recommends,
+/// which it then stands for, with no second indicator placed beside it.</item>
+/// <item>A transaction Revit does not keep means nothing was applied: a refusal naming what Revit
+/// returned, and no work counted. Put by the watch rolling the apply's own transaction back.</item>
+/// </list>
+/// <para>
+/// Whether a warning outlives its dismissal is no longer asked: the owner accepts Revit's reference for
+/// <c>Document.PostFailure</c>, "warnings posted via this method will not be stored in the document
+/// after they are resolved", and these cases dismiss every one they see.
+/// </para>
+/// <para>
 /// <b>What these cases do not settle, named so it is not read as settled.</b>
 /// </para>
 /// <list type="bullet">
-/// <item>Whether the four warnings stay in the model's warning list, which the apply's remarks rely
-/// on. Revit's reference for <c>Document.PostFailure</c> says the opposite - "warnings posted via this
-/// method will not be stored in the document after they are resolved" - and every case here dismisses
-/// them, so none can observe it. Not measured; a question for the owner before those remarks are
-/// relied on.</item>
-/// <item>The format of <c>BHS_Cbl_CircuitRefs</c>: circuit ids on an indicator, circuit numbers on a
-/// carrier. Only "names something" is asserted until the owner says which is meant.</item>
-/// <item>Whether an indicator of ours that somebody joined, standing within the radius of a box this
-/// run recommends, should be rewritten or left alone. The code rewrites it; the outcome's remarks say
-/// it stopped being ours. Not pinned either way.</item>
 /// <item>Whether Revit keeps the point an indicator was placed at, height included. Not measured;
 /// the placement case notes the distance before it asserts anything, so a failure there says which.</item>
+/// <item>That a rollback asked for from a <c>FailuresProcessing</c> handler comes back from
+/// <c>Commit</c> as <c>RolledBack</c>, silently. Not measured; the rollback case notes the status
+/// before it asserts anything, and asserts only that it is not <c>Committed</c>.</item>
 /// <item>That nothing appears on screen while these run. The first sweep that carries them is to be
 /// run with somebody at the machine.</item>
 /// </list>
@@ -92,6 +107,11 @@ public sealed class CablingApplyTests : IRevitTestSuite
             "an indicator family this model does not have is refused by name, not passed over",
             RefusesAMissingFamily,
             needsDocument: true,
+            writes: true),
+
+        new RevitTestCase(
+            "an apply whose transaction Revit rolls back is refused with the status Revit returned, counts no work and leaves no indicator of ours",
+            RefusesWhatRevitRolledBack,
             writes: true),
 
         new RevitTestCase(
@@ -125,6 +145,11 @@ public sealed class CablingApplyTests : IRevitTestSuite
             writes: true),
 
         new RevitTestCase(
+            "an indicator of ours joined into the network where a box is recommended is left untouched, gets no second indicator beside it, and is named in a warning",
+            LeavesAJoinedIndicatorWhereABoxIsRecommended,
+            writes: true),
+
+        new RevitTestCase(
             "an element of another type carrying our recommendation is never removed",
             LeavesAnotherTypeAlone,
             writes: true),
@@ -152,6 +177,21 @@ public sealed class CablingApplyTests : IRevitTestSuite
 
     /// <summary>The value this suite writes wherever it wants a circuit's connection to fail to read.</summary>
     private const string Mistyped = "Junkbox";
+
+    /// <summary>What separates two circuit ids in <c>BHS_Cbl_CircuitRefs</c>, the owner's one format.</summary>
+    /// <remarks>
+    /// Written again here rather than read from the apply, which keeps its helper private and should:
+    /// a case that took the separator from the code under test would pass whatever that code wrote.
+    /// </remarks>
+    private const string RefsSeparator = "; ";
+
+    /// <summary>The name the apply gives the transaction it writes the run in.</summary>
+    /// <remarks>
+    /// Repeated from <c>CablingApply</c>, which does not publish it, and the rollback case is the only
+    /// reader. If the two drift, the watch never sees a transaction of this name, and that case fails
+    /// saying so and naming the transactions it did see - not as a rollback that did nothing.
+    /// </remarks>
+    private const string ApplyTransaction = "BHS: apply cabling";
 
     /// <summary>The categories the junction box role is declared on, as the parameter scheme ships them.</summary>
     /// <remarks>
@@ -185,7 +225,7 @@ public sealed class CablingApplyTests : IRevitTestSuite
         // parameters being bound before anything is written to them.
         var run = new RouteRun(Array.Empty<RouteResult>(), snapshot.Network.Version, TimeSpan.Zero);
 
-        NeedsDefinitionsFor(run, snapshot);
+        NeedsDefinitionsFor(document, symbol, run, snapshot);
         ApplyWatched(context, watch, "binding", run, snapshot, project, catalogue);
 
         // Asked of the document afterwards rather than taken from what Install reported, because the
@@ -251,12 +291,191 @@ public sealed class CablingApplyTests : IRevitTestSuite
     });
 
     /// <summary>
+    /// A write Revit declined to keep is reported as what it is: nothing applied.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <b>The owner's decision of 2026-09-14, put to the apply the only way a case can make Revit
+    /// decline a commit.</b> The watch rolls the apply's own transaction back by name - see
+    /// <see cref="PostedWarnings"/>. Whether its handler hears of a transaction with nothing to process
+    /// is not measured, so that transaction is given something: a circuit holding a mistyped connection,
+    /// which the apply posts a warning about inside it. That warning needs the failure definitions only
+    /// an edition registers, and without them the case stands down by name.
+    /// </para>
+    /// <para>
+    /// <b>The project says JunctionBox, and every circuit says it on itself</b> - except the mistyped
+    /// one, which the read routes with the project's answer. So the circuit carrying the warning is
+    /// planned in boxes like the rest, and the plan places something. The skip makes sure of that: an
+    /// apply that would have placed nothing proves nothing by leaving nothing behind.
+    /// </para>
+    /// <para>
+    /// <b>The order of the assertions is the order of the argument.</b> First that the watch was the
+    /// reason: it saw the transaction and answered, and nothing worse than a warning was raised - an
+    /// error rolls back without being asked, and the case would then pass for a reason that is not its
+    /// own. Then that the rollback took: an apply that was not refused while new indicators stand means
+    /// Revit kept the transaction despite the answer, and the apply reporting its work was then right -
+    /// so that is named as this case's mechanism failing, before the refusal is asked for and a red
+    /// would blame the production status check. Whether Revit honours <c>ProceedWithRollBack</c> for a
+    /// processing that holds only warnings is not measured. Then the outcome: refused, a status that is
+    /// not <c>Committed</c> named in the sentence, and every count zero. Then the model: no instance of
+    /// the indicator type that was not there before, no indicator of ours, and every carrier on a found
+    /// route holding the references it held before.
+    /// </para>
+    /// </remarks>
+    private static void RefusesWhatRevitRolledBack(RevitTestContext context) => Watched(context, watch =>
+    {
+        // Before anything that can skip, so a sweep that stands the case down still runs it: see CountsOf.
+        Expect.Same(
+            typeof(ApplyOutcome).GetProperties(BindingFlags.Public | BindingFlags.Instance).Count(one => one.PropertyType == typeof(int)),
+            CountsOf(null).Length,
+            "int counts on ApplyOutcome, against the counts the rollback case checks - a count added to the outcome has to be added to CountsOf");
+
+        var document = context.Document!;
+        var application = context.Application.Application;
+        var catalogue = new CarrierCatalogue();
+        var project = CablingProjectSettings.Read(new Fixed
+        {
+            [CablingProjectSettings.ConnectionKey] = CablingParameters.ConnectionAtJunctionBox,
+        });
+
+        var symbol = NeedsIndicatorFamily(document, project);
+
+        NeedsNoIndicatorsOfOurs(context, document, symbol, "rolled back");
+        CutEveryCircuitInBoxes(watch, document, application);
+
+        var described = new CircuitReader().Read(document).Described;
+
+        Skip.When(
+            described.Count == 0,
+            "the model this sweep opened describes no circuit, so none can give the apply a warning of its own to roll back on");
+
+        var circuit = described[0].Id.Value;
+        var mark = watch.Mark;
+        TransactionStatus status;
+
+        using (var transaction = new Transaction(document, "BHS test: a mistyped connection to roll back on"))
+        {
+            transaction.Start();
+            SetText(document.GetElement(new ElementId(circuit)), CablingParameters.CircuitConnection, Mistyped, "connection");
+            status = transaction.Commit();
+        }
+
+        Committed(watch, mark, status, "writing a mistyped connection value");
+
+        // With the runtime categories, so the apply finds nothing left to bind and the first
+        // transaction it opens is the one the watch is waiting for.
+        Bind(watch, document, application, RuntimeFor(symbol, catalogue));
+
+        var plan = PlanFound(document, project, catalogue);
+        var wanted = plan.Run.Boxes.Count(box => box.IsRecommendation);
+
+        Note(context, "rolled back: routes found", plan.Run.Found);
+        Note(context, "rolled back: boxes recommended", wanted);
+
+        Skip.When(
+            !plan.Snapshot.Circuits.UnreadableConnectionIds.Contains(circuit),
+            "circuit " + circuit + " holds '" + Mistyped + "' on itself and the read did not name it unreadable, so the apply would post nothing for the watch to roll back on - the unreadable connection case says why");
+
+        Skip.When(
+            wanted == 0,
+            "with every circuit cut in boxes, " + WhyNothingIsRecommended(plan) + ", so an apply rolled back would have placed nothing whose absence could be asserted");
+
+        NeedsDefinitionsFor(document, symbol, plan.Run, plan.Snapshot);
+
+        // Read before the apply, compared after it. Not printed on a difference: a value that stood
+        // here before is the model's, and on a model applied before the format was settled it holds
+        // circuit numbers, which can carry a panel's name.
+        var hostPath = HostPath(plan.Run);
+        var refsBefore = hostPath.ToDictionary(id => id, id => Value(document.GetElement(new ElementId(id)), CablingParameters.CircuitRefs));
+        var before = Ids(IndicatorsOf(document, symbol));
+
+        mark = watch.Mark;
+        ApplyOutcome outcome;
+        int answered;
+
+        using (var request = watch.RollingBack(ApplyTransaction))
+        {
+            outcome = CablingApply.Apply(document, application, plan.Run, plan.Snapshot, project, catalogue);
+            answered = request.Answered;
+        }
+
+        var processed = watch.Since(mark);
+
+        context.Note("rolled back: what Revit returned", outcome.NotCommitted?.ToString() ?? "nothing");
+        Note(context, "rolled back: rollbacks the watch answered", answered);
+        Note(context, "rolled back: failures processed while applying", processed.Count);
+
+        Expect.That(
+            watch.Fault is null,
+            "the test's own failure handler threw, so whether it rolled the apply back is unknown: " + Describe(watch.Fault));
+
+        Expect.That(
+            answered > 0,
+            "the watch was asked to roll back '" + ApplyTransaction + "' and never saw a transaction of that name; transactions that processed failures while applying: "
+            + TransactionsIn(processed));
+
+        var worse = processed.Where(one => one.Severity != FailureSeverity.Warning).ToList();
+
+        Expect.Same(
+            0,
+            worse.Count,
+            "failures worse than a warning while applying, which roll a transaction back without being asked: " + string.Join("; ", worse));
+
+        // Read before the outcome is judged, so that a rollback which did not take is named as this
+        // case's own mechanism failing and not as the apply ignoring a status: see the remarks.
+        var after = IndicatorsOf(document, symbol);
+        var added = after.Where(one => !before.Contains(one.Id.Value)).Select(one => one.Id.Value).ToList();
+
+        Expect.That(
+            outcome.Refused || added.Count == 0,
+            "the watch answered '" + ApplyTransaction + "' with a rollback " + answered + " time(s), yet Revit kept the transaction: "
+            + added.Count + " new indicator(s) stand and the apply reports " + Claimed(outcome) + " - the test's rollback did not take");
+
+        Expect.That(
+            outcome.Refused,
+            "an apply whose transaction Revit rolled back was not refused, and reports " + Claimed(outcome));
+
+        Expect.That(
+            outcome.NotCommitted is { } returned && returned != TransactionStatus.Committed,
+            "an apply whose transaction Revit rolled back reports no status other than Committed: "
+            + (outcome.NotCommitted?.ToString() ?? "nothing"));
+
+        var named = outcome.NotCommitted!.Value.ToString();
+
+        Expect.That(
+            // IndexOf rather than Contains with a comparison, for net48: see the case above.
+            outcome.Refusals.Any(one => one.IndexOf(named, StringComparison.Ordinal) >= 0),
+            "the refusal does not name what Revit returned, " + named + ": " + string.Join(" ", outcome.Refusals));
+
+        foreach (var (what, count) in CountsOf(outcome))
+            Expect.Same(0, count, what + " reported by an apply whose transaction Revit rolled back");
+
+        Expect.That(
+            added.Count == 0,
+            "instances of the indicator type standing after an apply Revit rolled back, that were not there before it: "
+            + string.Join(", ", added));
+
+        Expect.Same(
+            0,
+            after.Count(RecognisedAsOurs),
+            "indicators of ours standing after an apply Revit rolled back, on a model that held none before it");
+
+        var changed = hostPath
+            .Where(id => !string.Equals(Value(document.GetElement(new ElementId(id)), CablingParameters.CircuitRefs), refsBefore[id], StringComparison.Ordinal))
+            .ToList();
+
+        Expect.That(
+            changed.Count == 0,
+            "carriers on a found route whose circuit references changed across an apply Revit rolled back: " + string.Join(", ", changed));
+    });
+
+    /// <summary>
     /// The plan's recommendations become indicators of ours, one each, where the plan put them.
     /// </summary>
     /// <remarks>
     /// <para>
     /// <b>What keeps this from passing about nothing</b> is not the count of indicators the apply
-    /// reports - it increments one of two counters per recommended box whatever happens, so that sum
+    /// reports - it increments one of three counters per recommended box whatever happens, so that sum
     /// cannot disagree with the plan. It is the model: a new instance of the indicator type for every
     /// placement reported, and exactly one of ours within the radius of every recommended box, read
     /// back from the document. The skip guarantees there is at least one box to look for.
@@ -269,10 +488,21 @@ public sealed class CablingApplyTests : IRevitTestSuite
     /// <para>
     /// <b>The same apply also tells the carriers their circuits, and that is asserted here too</b>,
     /// after the indicators so a placement defect is named first: every host carrier a found route
-    /// walks, which named nothing before, names something after; and a reference falls in a link
-    /// exactly when a route or a used box passes through one. The case stands down before applying
-    /// when there is no such host carrier - a model whose every carrier is linked, or already
-    /// referenced - rather than pass that half about nothing.
+    /// walks names, in the one format, exactly the circuits the plan puts through it - the id of every
+    /// found route that walks it, and of every circuit a used box standing on it serves; and a reference
+    /// falls in a link exactly when a route or a used box passes through one. The case stands down
+    /// before applying when every such host carrier already named something, or there is none because
+    /// every carrier is linked - on such a model nothing separates a reference the apply wrote from one
+    /// that stood there with the same ids.
+    /// </para>
+    /// <para>
+    /// <b>The order is pinned on all three writers</b>, because the owner's rule of 2026-09-14 is one
+    /// format with one separator and one ordering everywhere. An indicator names its box's circuits in
+    /// the order the plan lists them, which is the order it met them. A carrier and a box already in the
+    /// model name theirs first seen over the found routes' paths, then over the used boxes' circuits -
+    /// the order <see cref="ThroughEachElement"/> builds from the plan itself. On an indicator the order
+    /// says something only for a box serving two or more circuits, and the note of how many such boxes
+    /// the plan has is what shows whether a sweep exercised it at all.
     /// </para>
     /// </remarks>
     private static void PlacesWhatThePlanRecommends(RevitTestContext context) => Watched(context, watch =>
@@ -293,6 +523,7 @@ public sealed class CablingApplyTests : IRevitTestSuite
         Note(context, "placement: routes found", plan.Run.Found);
         Note(context, "placement: routes not found, left out of the run", plan.Results.Count - plan.Run.Found);
         Note(context, "placement: boxes recommended", wanted.Count);
+        Note(context, "placement: recommended boxes serving more than one circuit", wanted.Count(box => box.Circuits.Count > 1));
         Note(context, "placement: boxes already in the model used", plan.Run.Boxes.Count - wanted.Count);
 
         Skip.When(
@@ -302,12 +533,7 @@ public sealed class CablingApplyTests : IRevitTestSuite
         // The carriers the found routes walk in the host, and what they named before the apply. Read
         // first, because a reference already standing on a carrier would otherwise answer for one
         // the apply never wrote.
-        var hostPath = plan.Run.Results
-            .SelectMany(route => route.Path)
-            .Where(carrier => !carrier.IsLinked)
-            .Select(carrier => carrier.Value)
-            .Distinct()
-            .ToList();
+        var hostPath = HostPath(plan.Run);
 
         var fresh = hostPath.Where(id => Value(document.GetElement(new ElementId(id)), CablingParameters.CircuitRefs).Length == 0).ToList();
 
@@ -320,7 +546,7 @@ public sealed class CablingApplyTests : IRevitTestSuite
                 ? "every carrier the found routes walk lives in a link, so the apply has no carrier in the host to tell its circuits"
                 : "every carrier the found routes walk in the host already names a circuit before the apply, so a reference it writes cannot be told from one that stood there");
 
-        NeedsDefinitionsFor(plan.Run, plan.Snapshot);
+        NeedsDefinitionsFor(document, symbol, plan.Run, plan.Snapshot);
 
         var before = Ids(IndicatorsOf(document, symbol));
         var outcome = ApplyWatched(context, watch, "placement", plan.Run, plan.Snapshot, project, catalogue);
@@ -336,10 +562,12 @@ public sealed class CablingApplyTests : IRevitTestSuite
             Farthest(wanted, after));
 
         // What the screen reports to the person who pressed Apply, and nothing more: see the remarks.
+        // A joined indicator of ours standing on a box stands for it; on this model there is none, and
+        // the sum still has to close with it in.
         Expect.Same(
             wanted.Count,
-            outcome.Placed + outcome.Updated,
-            "boxes the plan recommends, against indicators the apply reports placing or finding in place");
+            outcome.Placed + outcome.Updated + outcome.JoinedInPlace,
+            "boxes the plan recommends, against indicators the apply reports placing, finding in place, or finding joined in place");
 
         Expect.Same(
             outcome.Placed,
@@ -379,11 +607,12 @@ public sealed class CablingApplyTests : IRevitTestSuite
                 entries!.AsInteger(),
                 "cable entries written on indicator " + id + ", against the plan's count for its box");
 
-            // That it names something, and not how: the two formats this parameter is written in are
-            // an open question for the owner, and a case that pinned one would decide it.
-            Expect.That(
-                !string.IsNullOrEmpty(indicator.get_Parameter(CablingParameters.CircuitRefs)?.AsString()),
-                "indicator " + id + " names no circuit");
+            // The owner's one format, and on an indicator the plan's own order as well: see the remarks.
+            ExpectCircuitRefs(
+                indicator,
+                "indicator " + id,
+                box.Circuits.Select(one => one.Value).ToList(),
+                inOrder: true);
         }
 
         foreach (var instance in added)
@@ -397,19 +626,21 @@ public sealed class CablingApplyTests : IRevitTestSuite
                 "indicator " + instance.Id.Value + " stands where the plan recommends no box");
         }
 
-        // The second of the apply's three writes: the carriers are told their circuits. That it names
-        // something, and not how - the format is the owner's open question. A carrier Revit keeps
-        // read-only, which an element in a group may be, is not excused: the apply skips such a write
-        // without a word, and a red here is the only place that would say so. Not measured whether
-        // the models a sweep opens hold one.
-        foreach (var id in fresh)
-        {
-            var refs = document.GetElement(new ElementId(id))?.get_Parameter(CablingParameters.CircuitRefs);
+        // The second of the apply's three writes: the carriers are told their circuits. Every host
+        // carrier on a found route, not only the fresh ones - the apply overwrites what stood, so one
+        // that named something before has to name exactly this after as well, and a value left in an
+        // earlier format is a red here. A carrier Revit keeps read-only, which an element in a group
+        // may be, is not excused: the apply skips such a write without a word, and a red here is the
+        // only place that would say so. Not measured whether the models a sweep opens hold one.
+        var through = ThroughEachElement(plan.Run);
 
-            Expect.That(
-                !string.IsNullOrEmpty(refs?.AsString()),
-                "carrier " + id + " on a found route names no circuit after the apply"
-                + (refs is { IsReadOnly: true } ? ", and Revit keeps its circuit references read-only" : string.Empty));
+        foreach (var id in hostPath)
+        {
+            ExpectCircuitRefs(
+                document.GetElement(new ElementId(id)),
+                "carrier " + id + " on a found route",
+                through[id],
+                inOrder: true);
         }
 
         // Presence only, not the count: what InLinks counts is an open question for the owner. A
@@ -452,7 +683,7 @@ public sealed class CablingApplyTests : IRevitTestSuite
             wanted == 0,
             "with every circuit cut in boxes, " + WhyNothingIsRecommended(plan) + ", so there is nothing for a second apply to find in place");
 
-        NeedsDefinitionsFor(plan.Run, plan.Snapshot);
+        NeedsDefinitionsFor(document, symbol, plan.Run, plan.Snapshot);
 
         var first = ApplyWatched(context, watch, "second apply, first press", plan.Run, plan.Snapshot, project, catalogue);
         var standingFirst = Ids(IndicatorsOf(document, symbol).Where(CarriesOurRecommendation));
@@ -467,11 +698,11 @@ public sealed class CablingApplyTests : IRevitTestSuite
         Expect.Same(0, second.Removed, "indicators removed by a second apply of the same run");
 
         Expect.Same(
-            first.Placed + first.Updated,
-            second.Updated,
+            first.Placed + first.Updated + first.JoinedInPlace,
+            second.Updated + second.JoinedInPlace,
             "indicators the first apply left standing, against the ones the second apply found in place");
 
-        Expect.Same(first.Adopted, second.Adopted, "indicators left as joined by the first apply, against the second");
+        Expect.Same(first.Joined, second.Joined, "indicators left as joined by the first apply, against the second");
 
         foreach (var id in standingFirst)
         {
@@ -513,7 +744,7 @@ public sealed class CablingApplyTests : IRevitTestSuite
             !plan.Run.Boxes.Any(box => box.IsRecommendation),
             "with every circuit cut in boxes, " + WhyNothingIsRecommended(plan) + ", so the apply places nothing that could be read back");
 
-        NeedsDefinitionsFor(plan.Run, plan.Snapshot);
+        NeedsDefinitionsFor(document, symbol, plan.Run, plan.Snapshot);
 
         var before = Ids(IndicatorsOf(document, symbol));
 
@@ -628,13 +859,13 @@ public sealed class CablingApplyTests : IRevitTestSuite
             used.Count == 0,
             "with every circuit cut in boxes and every joined fitting type marked a box, no tap of the model this sweep opened comes within the box radius of one, so no box already in the model is used");
 
-        NeedsDefinitionsFor(plan.Run, plan.Snapshot);
+        NeedsDefinitionsFor(document, symbol, plan.Run, plan.Snapshot);
 
         var inHost = used.Where(box => !box.Existing!.Id.IsLinked).Select(box => box.Existing!.Id.Value).Distinct().ToList();
         var valuesBefore = inHost.ToDictionary(id => id, id => ValuesOf(document.GetElement(new ElementId(id))));
 
-        // Apart from the values that must not change, because this one must: a reference that stood
-        // on a box before the apply would otherwise answer for one the apply never wrote.
+        // Apart from the values that must not change, because this one must - noted, so a box that
+        // named something before is visible as one whose reference the apply overwrote.
         var refsBefore = inHost.ToDictionary(id => id, id => Value(document.GetElement(new ElementId(id)), CablingParameters.CircuitRefs));
 
         Note(context, "existing box: used boxes in a link", used.Count - used.Count(box => !box.Existing!.Id.IsLinked));
@@ -661,16 +892,21 @@ public sealed class CablingApplyTests : IRevitTestSuite
                 "indicators of ours within the box radius of box " + box.Existing!.Id + ", which is already in the model and served a tap");
         }
 
+        // Exactly the circuits the plan puts through the box, in the owner's one format: the ones it
+        // serves, and the ones whose route walks it as a carrier - a box is a fitting, and the same
+        // element is both. Every used box, not only those that named nothing before: the apply
+        // overwrites, so a value in an earlier format left standing is a red.
+        var through = ThroughEachElement(plan.Run);
+
         foreach (var id in inHost)
         {
             var element = document.GetElement(new ElementId(id));
 
-            if (refsBefore[id].Length == 0)
-            {
-                Expect.That(
-                    !string.IsNullOrEmpty(element?.get_Parameter(CablingParameters.CircuitRefs)?.AsString()),
-                    "box " + id + ", already in the model and used by the plan, names no circuit after the apply");
-            }
+            ExpectCircuitRefs(
+                element,
+                "box " + id + ", already in the model and used by the plan,",
+                through[id],
+                inOrder: true);
 
             Expect.That(
                 ValuesOf(element) == valuesBefore[id],
@@ -710,12 +946,12 @@ public sealed class CablingApplyTests : IRevitTestSuite
 
         var run = new RouteRun(Array.Empty<RouteResult>(), snapshot.Network.Version, TimeSpan.Zero);
 
-        NeedsDefinitionsFor(run, snapshot);
+        NeedsDefinitionsFor(document, symbol, run, snapshot);
 
         var outcome = ApplyWatched(context, watch, "removal", run, snapshot, project, catalogue);
 
         Note(context, "removal: indicators removed", outcome.Removed);
-        Note(context, "removal: indicators left as joined", outcome.Adopted);
+        Note(context, "removal: indicators left as joined", outcome.Joined);
 
         Expect.That(
             document.GetElement(new ElementId(stale)) is null,
@@ -731,32 +967,250 @@ public sealed class CablingApplyTests : IRevitTestSuite
     });
 
     /// <summary>
-    /// The guard that makes removal safe at all: an indicator somebody joined into the wiring stays.
+    /// The guard that makes removal safe at all: an indicator somebody joined into the wiring stays -
+    /// untouched, and warned about.
     /// </summary>
     /// <remarks>
     /// <para>
-    /// <b>The joint is built with a conduit drawn out of the indicator's own connector</b>, and very
-    /// little of that is measured: the connectors' domain, whether a conduit of the model's first type
-    /// accepts the connector's size, whether <c>ConnectTo</c> takes it, and whether the joint survives
-    /// the commit. Each is a loud skip of its own, and a sweep that skips here has not covered this
-    /// rule - which the record then says by name.
+    /// <b>The joint is built with a conduit drawn out of the indicator's own connector</b> - see
+    /// <see cref="PlaceJoined"/> for how little of that is measured. Each step is a loud skip of its
+    /// own, and a sweep that skips here has not covered this rule - which the record then says by name.
     /// </para>
     /// <para>
-    /// The diameter is set from the connector before joining, when the connector is round. Not
-    /// measured either; it removes the refusal that seemed likeliest.
+    /// <b>Untouched is asserted as well as standing</b>, the owner's decision of 2026-09-14. The case
+    /// writes a cable entry count of its own on the indicator before joining it, so "unchanged" compares
+    /// a value and not two empty ones. With a plan that names no box the apply has nothing to rewrite it
+    /// with, which is why the rule is put again, by the case after this one, where a box is recommended.
+    /// </para>
+    /// <para>
+    /// <b>The warnings are counted against this suite's own reading of the model</b>: every indicator of
+    /// ours that is, or cannot say it is not, joined to something. On a model that already holds such
+    /// indicators the apply warns about each of those too, and "exactly one" would fail on correct code.
+    /// Exactly one is asserted only against the indicator the case joined.
     /// </para>
     /// </remarks>
     private static void LeavesAJoinedIndicator(RevitTestContext context) => Watched(context, watch =>
     {
+        // Any count will do, so long as it is one the case wrote: see the remarks.
+        const int Entries = 1;
+
         var document = context.Document!;
         var application = context.Application.Application;
         var catalogue = new CarrierCatalogue();
         var project = CablingProjectSettings.Read(new Fixed());
         var symbol = NeedsIndicatorFamily(document, project);
         var snapshot = Prepare(watch, document, application, symbol, project, catalogue);
-        var level = LowestLevel(document);
-        var clear = Clearing(snapshot);
 
+        var joined = PlaceJoined(
+            context, watch, document, symbol, Clearing(snapshot), LowestLevel(document), "joined", "placed outside the model", Entries);
+
+        var run = new RouteRun(Array.Empty<RouteResult>(), snapshot.Network.Version, TimeSpan.Zero);
+
+        NeedsDefinitionsFor(document, symbol, run, snapshot);
+
+        var ours = JoinedIndicatorsOfOurs(document, symbol);
+        var written = WrittenOn(document.GetElement(new ElementId(joined)));
+
+        var outcome = ApplyWatched(context, watch, "joined", run, snapshot, project, catalogue, out var processed);
+        var mine = processed.Where(one => one.Is(CablingFeature.IndicatorJoinedIntoNetwork)).ToList();
+        var element = document.GetElement(new ElementId(joined));
+
+        Note(context, "joined: indicators left as joined", outcome.Joined);
+        Note(context, "joined: indicators of ours this case reads as joined", ours.Count);
+        Note(context, "joined: cabling warnings posted", outcome.Warnings);
+
+        Expect.That(
+            element is not null,
+            "indicator " + joined + ", ours and joined to a conduit, was removed by an apply whose plan names no box");
+
+        Expect.That(
+            outcome.Joined >= 1,
+            "the apply counted no indicator as left for being joined, though indicator " + joined + " is joined to a conduit");
+
+        Expect.That(
+            WrittenOn(element) == written,
+            "indicator " + joined + ", ours and joined to a conduit, had what the apply writes changed: before "
+            + written + ", after " + WrittenOn(element));
+
+        SawWhatWasPosted(outcome, processed.Where(one => one.IsCabling).ToList());
+
+        Expect.Same(
+            1,
+            mine.Count(one => one.Elements.Count == 1 && one.Elements[0] == joined),
+            "IndicatorJoinedIntoNetwork warnings Revit processed against indicator " + joined + ", ours and joined to a conduit");
+
+        Expect.Same(
+            ours.Count,
+            mine.Count,
+            "IndicatorJoinedIntoNetwork warnings Revit processed, against indicators of ours this case reads as joined");
+
+        EachAgainstOneOf(mine, ours, "IndicatorJoinedIntoNetwork", "one indicator of ours this case reads as joined");
+    });
+
+    /// <summary>
+    /// Where a box is recommended and an indicator of ours already stands there joined into the network,
+    /// that indicator stands for the box: nothing is placed beside it, nothing on it is rewritten, and a
+    /// warning names it.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <b>The owner's decision of 2026-09-14, and the reading of it that was put back to the owner.</b>
+    /// The decision: a joined indicator of ours is never rewritten and never removed, and is warned about.
+    /// The reading: within the radius of a recommended box it still takes that box's place. This case pins
+    /// the reading as well, so that if the owner answers otherwise the change arrives as a red here and
+    /// not as a quiet difference on somebody's model.
+    /// </para>
+    /// <para>
+    /// <b>The plan is computed first, and the joined indicator stood on one of its boxes afterwards.</b>
+    /// The other order would make the conduit the case draws a carrier of the plan, and a plan that moved
+    /// with the construction could leave no box where the indicator stands. The order changes nothing the
+    /// apply is asked: it reads what stands from the model when it runs, and the plan only for where the
+    /// boxes go.
+    /// </para>
+    /// <para>
+    /// <b>Placed on the level the apply would choose</b>, the nearest at or below the point, so whatever
+    /// Revit does with the height of an instance placed on a level below it, it does here as it does to
+    /// the apply's own. Whether it keeps the point is not measured: the distance is noted, and an
+    /// indicator Revit moved out of the radius is a skip that says so.
+    /// </para>
+    /// <para>
+    /// <b>Its values are chosen to differ from what the apply would write</b>: a cable entry count one
+    /// more than the box's, and no circuit references. A rewrite changes both.
+    /// </para>
+    /// </remarks>
+    private static void LeavesAJoinedIndicatorWhereABoxIsRecommended(RevitTestContext context) => Watched(context, watch =>
+    {
+        var document = context.Document!;
+        var application = context.Application.Application;
+        var catalogue = new CarrierCatalogue();
+        var project = CablingProjectSettings.Read(new Fixed());
+        var symbol = NeedsIndicatorFamily(document, project);
+
+        NeedsNoIndicatorsOfOurs(context, document, symbol, "joined at a box");
+
+        CutEveryCircuitInBoxes(watch, document, application);
+
+        // With the runtime categories, so the cable entry count the case writes has somewhere to go.
+        Bind(watch, document, application, RuntimeFor(symbol, catalogue));
+
+        var plan = PlanFound(document, project, catalogue);
+        var wanted = plan.Run.Boxes.Where(box => box.IsRecommendation).ToList();
+
+        Note(context, "joined at a box: boxes recommended", wanted.Count);
+
+        Skip.When(
+            wanted.Count == 0,
+            "with every circuit cut in boxes, " + WhyNothingIsRecommended(plan) + ", so there is no recommended box for a joined indicator of ours to stand on");
+
+        var box = wanted[0];
+        var at = Planned(box);
+
+        var joined = PlaceJoined(
+            context, watch, document, symbol, at, LevelAtOrBelow(document, at.Z), "joined at a box", "placed where a box is recommended", box.Entries + 1);
+
+        var indicator = (FamilyInstance)document.GetElement(new ElementId(joined));
+
+        context.Note(
+            "joined at a box: distance of the joined indicator from its box, internal feet",
+            PlaceOf(indicator) is { } point ? point.DistanceTo(at).ToString("F4", CultureInfo.InvariantCulture) : "no point");
+
+        Skip.When(
+            !Within(indicator, at, project.BoxRadius),
+            "Revit did not keep indicator " + joined + " within the box radius of the recommended box it was placed at, so it cannot stand for that box");
+
+        NeedsDefinitionsFor(document, symbol, plan.Run, plan.Snapshot);
+
+        var written = WrittenOn(indicator);
+
+        // What stood before the apply, so "only the joined one stands at the box" is asked of what the
+        // apply could have put there. An instance of the indicator type without our recommendation - a
+        // hand-placed one - is the model's, and the apply rightly leaves it alone wherever it stands.
+        var standingBefore = Ids(IndicatorsOf(document, symbol));
+
+        var outcome = ApplyWatched(context, watch, "joined at a box", plan.Run, plan.Snapshot, project, catalogue, out var processed);
+        var mine = processed.Where(one => one.Is(CablingFeature.IndicatorJoinedIntoNetwork)).ToList();
+        var element = document.GetElement(new ElementId(joined));
+
+        var near = IndicatorsOf(document, symbol)
+            .Where(one => Within(one, at, project.BoxRadius)
+                          && (!standingBefore.Contains(one.Id.Value) || one.Id.Value == joined))
+            .Select(one => one.Id.Value)
+            .ToList();
+
+        Note(context, "joined at a box: indicators placed", outcome.Placed);
+        Note(context, "joined at a box: joined indicators standing for a box", outcome.JoinedInPlace);
+        Note(context, "joined at a box: cabling warnings posted", outcome.Warnings);
+
+        Expect.That(
+            element is not null,
+            "indicator " + joined + ", ours and joined into the network where a box is recommended, was removed");
+
+        Expect.Same(
+            1,
+            outcome.JoinedInPlace,
+            "joined indicators of ours the apply reports standing for a recommended box, on a model whose only indicator of ours is joined and stands on one");
+
+        Expect.Same(
+            wanted.Count,
+            outcome.Placed + outcome.Updated + outcome.JoinedInPlace,
+            "boxes the plan recommends, against indicators the apply reports placing, finding in place, or finding joined in place");
+
+        Expect.That(
+            near.Count == 1 && near[0] == joined,
+            "instances of the indicator type within the box radius of the box indicator " + joined + " stands on, new or that one, are ["
+            + string.Join(", ", near) + "], where only that indicator should stand");
+
+        Expect.That(
+            WrittenOn(element) == written,
+            "indicator " + joined + ", ours and joined where a box is recommended, was rewritten: before "
+            + written + ", after " + WrittenOn(element));
+
+        SawWhatWasPosted(outcome, processed.Where(one => one.IsCabling).ToList());
+
+        Expect.Same(
+            1,
+            mine.Count(one => one.Elements.Count == 1 && one.Elements[0] == joined),
+            "IndicatorJoinedIntoNetwork warnings Revit processed against indicator " + joined + ", ours and joined where a box is recommended");
+
+        Expect.Same(
+            1,
+            mine.Count,
+            "IndicatorJoinedIntoNetwork warnings Revit processed, on a model whose only indicator of ours is the joined one");
+
+        EachAgainstOneOf(mine, new[] { joined }, "IndicatorJoinedIntoNetwork", "indicator " + joined);
+    });
+
+    /// <summary>
+    /// Places an indicator of ours carrying a cable entry count of the case's own, joins a conduit
+    /// drawn out of its own connector, and stands the case down unless the joint is there after the
+    /// commit.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// Very little of this is measured: the connectors' domain, whether a conduit of the model's first
+    /// type accepts the connector's size, whether <c>ConnectTo</c> takes it, and whether the joint
+    /// survives the commit. Each is a loud skip of its own.
+    /// </para>
+    /// <para>
+    /// The diameter is set from the connector before joining, when the connector is round. Not
+    /// measured either; it removes the refusal that seemed likeliest.
+    /// </para>
+    /// </remarks>
+    /// <param name="label">What the note this writes is prefixed with.</param>
+    /// <param name="where">Where the indicator stands, as the skip reasons say it.</param>
+    /// <param name="entries">The cable entry count written on the indicator before it is joined.</param>
+    /// <returns>The indicator's id.</returns>
+    private static long PlaceJoined(
+        RevitTestContext context,
+        PostedWarnings watch,
+        Document document,
+        FamilySymbol symbol,
+        XYZ at,
+        Level level,
+        string label,
+        string where,
+        int entries)
+    {
         var conduitType = new FilteredElementCollector(document).OfClass(typeof(ConduitType)).FirstElementId();
 
         Skip.When(
@@ -775,14 +1229,15 @@ public sealed class CablingApplyTests : IRevitTestSuite
             if (!symbol.IsActive)
                 symbol.Activate();
 
-            var indicator = Place(document, symbol, clear, level, "an indicator to join to a conduit");
+            var indicator = Place(document, symbol, at, level, "an indicator to join to a conduit");
             RecommendJunctionBox(indicator);
+            SetInteger(indicator, CablingParameters.TapCount, entries, "cable entry count");
             document.Regenerate();
 
             var connectors = ConnectorsOf(indicator);
 
             context.Note(
-                "joined: indicator connectors",
+                label + ": indicator connectors",
                 connectors.Count.ToString(CultureInfo.InvariantCulture) + ": "
                 + string.Join(", ", connectors.Select(one => one.Domain.ToString()).Distinct()));
 
@@ -833,38 +1288,26 @@ public sealed class CablingApplyTests : IRevitTestSuite
             status = transaction.Commit();
         }
 
-        Expect.That(watch.Fault is null, "the test's own failure handler threw while joining a conduit to an indicator: " + Describe(watch.Fault));
+        Expect.That(
+            watch.Fault is null,
+            "the test's own failure handler threw while joining a conduit to an indicator " + where + ": " + Describe(watch.Fault));
 
         var worse = watch.Since(mark).Count(one => one.Severity != FailureSeverity.Warning);
 
         Skip.When(
             worse > 0,
-            "joining a conduit to an indicator placed outside the model raised " + worse + " failure(s) worse than a warning");
+            "joining a conduit to an indicator " + where + " raised " + worse + " failure(s) worse than a warning");
 
         Skip.When(
             status != TransactionStatus.Committed,
-            "joining a conduit to an indicator placed outside the model did not commit (" + status + ")");
+            "joining a conduit to an indicator " + where + " did not commit (" + status + ")");
 
         Skip.When(
             !JoinedTo(document.GetElement(new ElementId(joined)) as FamilyInstance, conduitId),
-            "Revit did not keep the conduit joined to the indicator after the commit, so the joined case cannot be put");
+            "Revit did not keep the conduit joined to the indicator " + where + " after the commit, so the joined case cannot be put");
 
-        var run = new RouteRun(Array.Empty<RouteResult>(), snapshot.Network.Version, TimeSpan.Zero);
-
-        NeedsDefinitionsFor(run, snapshot);
-
-        var outcome = ApplyWatched(context, watch, "joined", run, snapshot, project, catalogue);
-
-        Note(context, "joined: indicators left as joined", outcome.Adopted);
-
-        Expect.That(
-            document.GetElement(new ElementId(joined)) is not null,
-            "indicator " + joined + ", ours and joined to a conduit, was removed by an apply whose plan names no box");
-
-        Expect.That(
-            outcome.Adopted >= 1,
-            "the apply counted no indicator as left for being joined, though indicator " + joined + " is joined to a conduit");
-    });
+        return joined;
+    }
 
     /// <summary>
     /// The first of removal's three conditions: only the configured type is ever ours to take away.
@@ -901,7 +1344,7 @@ public sealed class CablingApplyTests : IRevitTestSuite
 
         var run = new RouteRun(Array.Empty<RouteResult>(), snapshot.Network.Version, TimeSpan.Zero);
 
-        NeedsDefinitionsFor(run, snapshot);
+        NeedsDefinitionsFor(document, symbol, run, snapshot);
         ApplyWatched(context, watch, "another type", run, snapshot, project, catalogue);
 
         Expect.That(
@@ -915,8 +1358,7 @@ public sealed class CablingApplyTests : IRevitTestSuite
         var application = context.Application.Application;
         var catalogue = new CarrierCatalogue();
         var project = CablingProjectSettings.Read(new Fixed());
-
-        NeedsIndicatorFamily(document, project);
+        var symbol = NeedsIndicatorFamily(document, project);
 
         var described = new CircuitReader().Read(document).Described;
 
@@ -952,7 +1394,7 @@ public sealed class CablingApplyTests : IRevitTestSuite
         // The condition comes from the read, not from a route, so an empty run exercises it exactly.
         var run = new RouteRun(Array.Empty<RouteResult>(), snapshot.Network.Version, TimeSpan.Zero);
 
-        NeedsDefinitionsFor(run, snapshot);
+        NeedsDefinitionsFor(document, symbol, run, snapshot);
 
         var outcome = ApplyWatched(context, watch, "unreadable", run, snapshot, project, catalogue, out var processed);
         var cabling = processed.Where(one => one.IsCabling).ToList();
@@ -977,7 +1419,7 @@ public sealed class CablingApplyTests : IRevitTestSuite
     });
 
     /// <summary>
-    /// A circuit the router could not bring near any carrier is named in the model's warnings.
+    /// A circuit the router could not bring near any carrier is posted as a warning against it.
     /// </summary>
     /// <remarks>
     /// <para>
@@ -988,9 +1430,11 @@ public sealed class CablingApplyTests : IRevitTestSuite
     /// question the sweep asks without a deadline.
     /// </para>
     /// <para>
-    /// <b>The name says nothing about which element the warning is set on</b>, and on purpose. Today
-    /// it is the circuit, while the registered text says "this device" - a question for the owner. If
-    /// the warning moves, the body of this case changes and its name, which the record keys on, stays.
+    /// <b>The name says nothing about which element the warning is set on</b>, and on purpose. It is
+    /// the circuit, and since the owner's decision of 2026-09-14 the registered text says so too: an
+    /// end of this circuit, its panel or one of its devices, has nothing within reach - where it used to
+    /// say "this device" about an element that was never a device. If the warning moves, the body of
+    /// this case changes and its name, which the record keys on, stays.
     /// </para>
     /// </remarks>
     private static void WarnsOfNoCarrierNear(RevitTestContext context) => Watched(context, watch =>
@@ -998,8 +1442,7 @@ public sealed class CablingApplyTests : IRevitTestSuite
         var document = context.Document!;
         var catalogue = new CarrierCatalogue();
         var project = CablingProjectSettings.Read(new Fixed());
-
-        NeedsIndicatorFamily(document, project);
+        var symbol = NeedsIndicatorFamily(document, project);
 
         // Written here, as every other case that binds writes it: the apply binds from our shared
         // parameter file and never writes it, and a file some earlier case left behind is the one
@@ -1030,7 +1473,7 @@ public sealed class CablingApplyTests : IRevitTestSuite
             blocked.Count == 0,
             "routed over a network with no carriers, no circuit came back NoCarrierNear, so there is nothing to warn about");
 
-        NeedsDefinitionsFor(run, snapshot);
+        NeedsDefinitionsFor(document, symbol, run, snapshot);
 
         var outcome = ApplyWatched(context, watch, "no carrier", run, snapshot, project, catalogue, out var processed);
         var mine = processed.Where(one => one.Is(CablingFeature.NoCarrierNear)).ToList();
@@ -1042,7 +1485,7 @@ public sealed class CablingApplyTests : IRevitTestSuite
     });
 
     /// <summary>
-    /// A circuit whose ends are near carriers that do not join is named in the model's warnings.
+    /// A circuit whose ends are near carriers that do not join is posted as a warning against it.
     /// </summary>
     /// <remarks>
     /// <para>
@@ -1063,8 +1506,7 @@ public sealed class CablingApplyTests : IRevitTestSuite
         var document = context.Document!;
         var catalogue = new CarrierCatalogue();
         var project = CablingProjectSettings.Read(new Fixed());
-
-        NeedsIndicatorFamily(document, project);
+        var symbol = NeedsIndicatorFamily(document, project);
 
         // See the case above: the file the apply binds from is written by the case, not inherited.
         new CablingParameters().Export(context.Application.Application);
@@ -1097,7 +1539,7 @@ public sealed class CablingApplyTests : IRevitTestSuite
             blocked.Count == 0,
             "with every joint between carriers taken away, no circuit of the model this sweep opened came back NoConnectivity, so there is nothing to warn about");
 
-        NeedsDefinitionsFor(run, snapshot);
+        NeedsDefinitionsFor(document, symbol, run, snapshot);
 
         var outcome = ApplyWatched(context, watch, "no joints", run, snapshot, project, catalogue, out var processed);
         var mine = processed.Where(one => one.Is(CablingFeature.NoConnectivity)).ToList();
@@ -1109,8 +1551,8 @@ public sealed class CablingApplyTests : IRevitTestSuite
     });
 
     /// <summary>
-    /// An element whose type calls it a box, standing beside the structure rather than in it, is named
-    /// in the model's warnings.
+    /// An element whose type calls it a box, standing beside the structure rather than in it, is posted
+    /// as a warning against it.
     /// </summary>
     /// <remarks>
     /// The box is another type of the indicator's own category, placed where nothing is and given the
@@ -1159,7 +1601,7 @@ public sealed class CablingApplyTests : IRevitTestSuite
 
         var run = new RouteRun(Array.Empty<RouteResult>(), snapshot.Network.Version, TimeSpan.Zero);
 
-        NeedsDefinitionsFor(run, snapshot);
+        NeedsDefinitionsFor(document, symbol, run, snapshot);
 
         var outcome = ApplyWatched(context, watch, "box joined to nothing", run, snapshot, project, catalogue, out var processed);
         var mine = processed.Where(one => one.Is(CablingFeature.JunctionBoxJoinedToNothing)).ToList();
@@ -1224,7 +1666,7 @@ public sealed class CablingApplyTests : IRevitTestSuite
     /// needs to be true of it before asserting anything of its own.
     /// </summary>
     /// <remarks>
-    /// <b>Failures that are not the apply's own four are noted, by definition id, on every case.</b>
+    /// <b>Failures that are not the apply's own five are noted, by definition id, on every case.</b>
     /// Each was dismissed by the watch, and each is something the person pressing Apply would have
     /// seen in a window - placing an indicator where Revit objects, deleting one it minds. A test that
     /// hides them is quieter than the product. Noted rather than asserted until a canonical sweep has
@@ -1328,17 +1770,56 @@ public sealed class CablingApplyTests : IRevitTestSuite
             + string.Join("; ", wrong));
     }
 
+    /// <summary>The transactions that processed failures, by name, for a message about one that did not.</summary>
+    private static string TransactionsIn(IReadOnlyList<ProcessedFailure> processed)
+    {
+        var names = processed.Select(one => "'" + one.Transaction + "'").Distinct().ToList();
+
+        return names.Count == 0 ? "none" : string.Join(", ", names);
+    }
+
+    /// <summary>Every count an outcome reports, by what it counts.</summary>
+    /// <remarks>
+    /// All nine the outcome has today, including the ones no case here makes non-zero. The list is
+    /// guarded: the rollback case first compares its length with the public <c>int</c> properties of
+    /// <see cref="ApplyOutcome"/>, before anything that can stand the case down - so a tenth count added
+    /// to the outcome and not here goes red on any sweep, rather than letting a refusal claim that work
+    /// unnoticed. Given no outcome, every count reads zero, which is all that comparison needs.
+    /// </remarks>
+    private static (string What, int Count)[] CountsOf(ApplyOutcome? outcome) => new[]
+    {
+        ("indicators placed", outcome?.Placed ?? 0),
+        ("indicators found in place", outcome?.Updated ?? 0),
+        ("indicators removed", outcome?.Removed ?? 0),
+        ("joined indicators left untouched", outcome?.Joined ?? 0),
+        ("joined indicators standing for a recommended box", outcome?.JoinedInPlace ?? 0),
+        ("boxes already in the model used", outcome?.ExistingUsed ?? 0),
+        ("carriers and boxes told their circuits", outcome?.CarriersMarked ?? 0),
+        ("references that fell in a link", outcome?.InLinks ?? 0),
+        ("warnings posted", outcome?.Warnings ?? 0),
+    };
+
+    private static string Claimed(ApplyOutcome outcome) =>
+        string.Join(", ", CountsOf(outcome).Select(one => one.What + " " + one.Count.ToString(CultureInfo.InvariantCulture)));
+
     /// <summary>
     /// Stands a case down when the apply would post a warning this session has no definition for.
     /// </summary>
     /// <remarks>
+    /// <para>
     /// <c>new FailureMessage(id)</c> throws for an id nobody registered, inside the apply's own
     /// transaction, and the case would report "threw before it could assert". The definitions are
     /// created only by an edition that lists the cabling module, at startup - the probe that hosts
     /// these cases lists no such module - so a sweep without an edition installed beside the probe
     /// cannot put this question, and says so. The registry is static, measured by the compiler.
+    /// </para>
+    /// <para>
+    /// <b>The joined indicator warning is asked of the model, not of the case.</b> The apply posts it for
+    /// every joined indicator of ours it meets, and a model can hold those before any case builds one -
+    /// so every case that applies has to ask, not only the ones that join an indicator themselves.
+    /// </para>
     /// </remarks>
-    private static void NeedsDefinitionsFor(RouteRun run, CablingSnapshot snapshot)
+    private static void NeedsDefinitionsFor(Document document, FamilySymbol symbol, RouteRun run, CablingSnapshot snapshot)
     {
         var posting = new List<(FailureDefinitionId Id, string Name)>();
 
@@ -1353,6 +1834,9 @@ public sealed class CablingApplyTests : IRevitTestSuite
 
         if (snapshot.BoxesUnconnectedIds.Count > 0)
             posting.Add((CablingFeature.JunctionBoxJoinedToNothing, nameof(CablingFeature.JunctionBoxJoinedToNothing)));
+
+        if (JoinedIndicatorsOfOurs(document, symbol).Count > 0)
+            posting.Add((CablingFeature.IndicatorJoinedIntoNetwork, nameof(CablingFeature.IndicatorJoinedIntoNetwork)));
 
         var registry = RevitApplication.GetFailureDefinitionRegistry();
         var missing = posting.Where(one => registry.FindFailureDefinition(one.Id) is null).Select(one => one.Name).ToList();
@@ -1386,10 +1870,7 @@ public sealed class CablingApplyTests : IRevitTestSuite
     /// </remarks>
     private static void NeedsNoIndicatorsOfOurs(RevitTestContext context, Document document, FamilySymbol symbol, string label)
     {
-        var standing = IndicatorsOf(document, symbol).Count(one => string.Equals(
-            one.get_Parameter(CablingParameters.Recommendation)?.AsString()?.Trim(),
-            CablingApply.RecommendsJunctionBox,
-            StringComparison.OrdinalIgnoreCase));
+        var standing = IndicatorsOf(document, symbol).Count(RecognisedAsOurs);
 
         Note(context, label + ": indicators of ours already in the model", standing);
 
@@ -1446,11 +1927,12 @@ public sealed class CablingApplyTests : IRevitTestSuite
     /// down when that binding was rolled back.
     /// </summary>
     /// <remarks>
-    /// <b>Asked of the watch, because the binding path does not say.</b> <c>Install</c> opens and
-    /// commits a transaction of its own and returns what it bound, not what the commit came to - and
-    /// inside a watch, a commit that raised something worse than a warning is rolled back without a
-    /// word on screen. The case would then carry on against a document with nothing bound and fail at
-    /// its first write, with a message blaming the binding path for an error the watch swallowed.
+    /// <b>Asked of the watch first, and of the status after.</b> <c>Install</c> now reports what its
+    /// transaction came to, and a binding that did not commit is a skip here rather than a case carrying
+    /// on against a document with nothing bound, to fail at its first write with a message blaming the
+    /// binding path. The watch is still asked before the status: inside a watch, a commit that raised
+    /// something worse than a warning is rolled back without a word on screen, and naming that error is
+    /// naming the cause - where "did not commit (RolledBack)" would name only what it led to.
     /// </remarks>
     private static void Bind(PostedWarnings watch, Document document, RevitApplication application, RuntimeCategories? runtime)
     {
@@ -1460,8 +1942,12 @@ public sealed class CablingApplyTests : IRevitTestSuite
 
         var mark = watch.Mark;
 
-        scheme.Install(document, application, runtime);
+        scheme.Install(document, application, runtime, out var status);
         NothingWorse(watch, mark, "binding the shared parameters");
+
+        Skip.When(
+            status is { } returned && returned != TransactionStatus.Committed,
+            "binding the shared parameters did not commit (" + status + ")");
     }
 
     /// <summary>
@@ -1542,6 +2028,138 @@ public sealed class CablingApplyTests : IRevitTestSuite
 
         return "the model this sweep opened gives no found route with a tap";
     }
+
+    /// <summary>The host carriers the found routes of a run walk, each once.</summary>
+    private static List<long> HostPath(RouteRun run) =>
+        run.Results
+            .Where(route => route.Status == RouteStatus.Found)
+            .SelectMany(route => route.Path)
+            .Where(carrier => !carrier.IsLinked)
+            .Select(carrier => carrier.Value)
+            .Distinct()
+            .ToList();
+
+    /// <summary>
+    /// Every host element the plan puts a circuit through, with the ids of those circuits: the found
+    /// routes that walk it, and the circuits a used box standing on it serves.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// What <c>BHS_Cbl_CircuitRefs</c> means, read from the plan - its route paths and its boxes - and
+    /// not from the way the apply collects it. An element in a link is left out: nothing is written
+    /// there, and the placement case asserts that separately.
+    /// </para>
+    /// <para>
+    /// <b>Each list is in the owner's order, and the cases compare it in order</b>: first seen over the
+    /// found routes' paths, in the order the run lists its routes, then over the used boxes' circuits,
+    /// in the order the run lists its boxes - each circuit once. The same rule the indicators keep, so
+    /// all three writers are held to one.
+    /// </para>
+    /// </remarks>
+    private static Dictionary<long, List<long>> ThroughEachElement(RouteRun run)
+    {
+        var through = new Dictionary<long, List<long>>();
+
+        void Add(CarrierId element, CarrierId circuit)
+        {
+            if (element.IsLinked)
+                return;
+
+            if (!through.TryGetValue(element.Value, out var circuits))
+                through[element.Value] = circuits = new List<long>();
+
+            if (!circuits.Contains(circuit.Value))
+                circuits.Add(circuit.Value);
+        }
+
+        foreach (var route in run.Results.Where(one => one.Status == RouteStatus.Found))
+        {
+            foreach (var carrier in route.Path)
+                Add(carrier, route.Circuit);
+        }
+
+        foreach (var box in run.Boxes)
+        {
+            if (box.Existing is not { } existing)
+                continue;
+
+            foreach (var circuit in box.Circuits)
+                Add(existing.Id, circuit);
+        }
+
+        return through;
+    }
+
+    /// <summary>
+    /// Fails unless an element's <c>BHS_Cbl_CircuitRefs</c> is in the owner's one format and names
+    /// exactly the circuits given.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <b>Read back into ids rather than compared as text</b>: circuit element ids in invariant digits,
+    /// separated by exactly <see cref="RefsSeparator"/>, each once. A value in any other format fails as
+    /// that, before circuits are compared, and the set before the order - so a wrong circuit is not
+    /// reported as a wrong order.
+    /// </para>
+    /// <para>
+    /// <b>The value itself is never printed.</b> A reference written before the format was settled holds
+    /// circuit numbers, and a circuit number can carry a panel's name - which the public record must not.
+    /// Which part is not an id, and the ids compared, say enough to act on.
+    /// </para>
+    /// </remarks>
+    /// <param name="subject">The element as the message names it, by id.</param>
+    /// <param name="expected">The circuit ids it has to name, in the order they are expected when that matters.</param>
+    /// <param name="inOrder">Whether the order is part of what is asserted.</param>
+    private static void ExpectCircuitRefs(Element? element, string subject, IReadOnlyList<long> expected, bool inOrder)
+    {
+        var parameter = element?.get_Parameter(CablingParameters.CircuitRefs);
+        var value = parameter is { HasValue: true } ? parameter.AsString() ?? string.Empty : string.Empty;
+
+        Expect.That(
+            value.Length > 0,
+            subject + " names no circuit after the apply"
+            + (parameter is { IsReadOnly: true } ? ", and Revit keeps its circuit references read-only" : string.Empty));
+
+        var parts = value.Split(new[] { RefsSeparator }, StringSplitOptions.None);
+        var named = new List<long>();
+
+        for (var index = 0; index < parts.Length; index++)
+        {
+            var part = parts[index];
+            var isId = long.TryParse(part, NumberStyles.None, CultureInfo.InvariantCulture, out var id)
+                       && id > 0
+                       && string.Equals(part, id.ToString(CultureInfo.InvariantCulture), StringComparison.Ordinal);
+
+            Expect.That(
+                isId,
+                subject + " holds circuit references that are not circuit element ids separated by '" + RefsSeparator
+                + "': part " + (index + 1) + " of " + parts.Length + " is not an id");
+
+            named.Add(id);
+        }
+
+        var repeated = named.GroupBy(one => one).Where(group => group.Count() > 1).Select(group => group.Key).ToList();
+
+        Expect.That(repeated.Count == 0, subject + " names circuit(s) more than once: " + Listed(repeated));
+
+        var missing = expected.Where(one => !named.Contains(one)).ToList();
+        var foreign = named.Where(one => !expected.Contains(one)).ToList();
+
+        Expect.That(
+            missing.Count == 0 && foreign.Count == 0,
+            subject + " names circuits " + Listed(named) + " where the plan puts " + Listed(expected) + " through it: missing "
+            + Listed(missing) + ", not through it " + Listed(foreign));
+
+        if (inOrder)
+        {
+            Expect.That(
+                named.SequenceEqual(expected),
+                subject + " names its circuits in the order " + Listed(named) + ", not in the order the plan met them, " + Listed(expected));
+        }
+    }
+
+    private static string Listed(IEnumerable<long> ids) =>
+        "[" + string.Join(", ", ids.Select(one => one.ToString(CultureInfo.InvariantCulture))) + "]";
 
     /// <summary>The parameters and categories the apply binds: the indicator's own for all three, every carrier's for the references.</summary>
     private static RuntimeCategories RuntimeFor(FamilySymbol symbol, CarrierCatalogue catalogue)
@@ -1669,6 +2287,19 @@ public sealed class CablingApplyTests : IRevitTestSuite
             "element " + element!.Id.Value + " refused the " + what + " value written to it");
     }
 
+    private static void SetInteger(Element? element, Guid parameter, int value, string what)
+    {
+        var found = element?.get_Parameter(parameter);
+
+        Expect.That(
+            found is { IsReadOnly: false },
+            "element " + element?.Id.Value + " has no writable " + what + " parameter after binding through the production path");
+
+        Expect.That(
+            found!.Set(value),
+            "element " + element!.Id.Value + " refused the " + what + " value written to it");
+    }
+
     /// <summary>Every instance of the indicator type in the host, ours or not.</summary>
     /// <remarks>
     /// The type is filtered by Revit rather than tested in LINQ, so the host's other family instances
@@ -1690,6 +2321,37 @@ public sealed class CablingApplyTests : IRevitTestSuite
             element?.get_Parameter(CablingParameters.Recommendation)?.AsString(),
             CablingApply.RecommendsJunctionBox,
             StringComparison.Ordinal);
+
+    /// <summary>
+    /// Whether the apply would take the element for its own: as broadly as it recognises one, trimmed
+    /// and in any case.
+    /// </summary>
+    /// <remarks>
+    /// For the questions where being too narrow is the mistake - whether a model already holds
+    /// indicators of ours, and which of them the apply will warn about - as opposed to
+    /// <see cref="CarriesOurRecommendation"/>, which asks what the apply wrote.
+    /// </remarks>
+    private static bool RecognisedAsOurs(Element? element) =>
+        string.Equals(
+            element?.get_Parameter(CablingParameters.Recommendation)?.AsString()?.Trim(),
+            CablingApply.RecommendsJunctionBox,
+            StringComparison.OrdinalIgnoreCase);
+
+    /// <summary>
+    /// Indicators of ours in the host that are joined to something, or cannot say they are not - read
+    /// with this suite's own code, not the apply's.
+    /// </summary>
+    /// <remarks>
+    /// Each one is owed the warning the apply posts about a joined indicator. "Cannot say" counts, for the
+    /// reason <see cref="Joint"/> gives: the apply asks the same connector and would throw with it, and a
+    /// definition asked for too eagerly costs a skip rather than a wrong answer.
+    /// </remarks>
+    private static List<long> JoinedIndicatorsOfOurs(Document document, FamilySymbol symbol) =>
+        IndicatorsOf(document, symbol)
+            .Where(RecognisedAsOurs)
+            .Where(one => Joint(one) is not null)
+            .Select(one => one.Id.Value)
+            .ToList();
 
     /// <summary>
     /// Host fittings of the two categories a role can be set on, other than the indicator type.
@@ -1853,6 +2515,33 @@ public sealed class CablingApplyTests : IRevitTestSuite
         return level!;
     }
 
+    /// <summary>The level the apply would place an indicator on at a height: the nearest at or below it, else the lowest.</summary>
+    /// <remarks>
+    /// The apply's rule, repeated for construction only: an instance a case stands on a recommended box
+    /// then sits on the level the apply's own indicators would, so that whatever Revit does with the
+    /// height, it does the same to both. No assertion reads the level.
+    /// </remarks>
+    private static Level LevelAtOrBelow(Document document, double z)
+    {
+        var levels = new FilteredElementCollector(document)
+            .OfClass(typeof(Level))
+            .Cast<Level>()
+            .OrderBy(one => one.Elevation)
+            .ToList();
+
+        Skip.When(levels.Count == 0, "the model this sweep opened has no level to place an indicator on");
+
+        var chosen = levels[0];
+
+        foreach (var level in levels)
+        {
+            if (level.Elevation <= z)
+                chosen = level;
+        }
+
+        return chosen;
+    }
+
     /// <summary>The farthest any recommended box is from its nearest instance of the indicator type.</summary>
     /// <remarks>
     /// Over every instance of the type, with our recommendation or without: this is the number that
@@ -1875,6 +2564,14 @@ public sealed class CablingApplyTests : IRevitTestSuite
     private static string ValuesOf(Element? element) =>
         "recommendation '" + Value(element, CablingParameters.Recommendation)
         + "', entries '" + Value(element, CablingParameters.TapCount) + "'";
+
+    /// <summary>Everything the apply writes on an indicator, as one comparable value.</summary>
+    /// <remarks>
+    /// Printed on a difference, which is safe only because the cases that use it wrote every one of
+    /// these values themselves or left it empty, and what the apply writes is our token, a count and ids.
+    /// </remarks>
+    private static string WrittenOn(Element? element) =>
+        ValuesOf(element) + ", circuits '" + Value(element, CablingParameters.CircuitRefs) + "'";
 
     private static string Value(Element? element, Guid parameter)
     {
