@@ -10,43 +10,98 @@ namespace BHS.MEP.Cabling.Revit;
 
 /// <summary>What writing a run into the model came to.</summary>
 /// <remarks>
+/// <para>
 /// <b>Refusals are a first-class outcome, not an exception.</b> Every way this can decline to write
 /// is a condition about the model or the project - a family that is not loaded, a parameter that
 /// could not be bound - and none of them is a fault in the caller. A thrown exception would reach a
 /// modal window as a type name; a refusal reaches it as the sentence somebody acts on.
+/// </para>
+/// <para>
+/// <b>A transaction Revit did not keep is a refusal too, and its counts are all zero.</b> The owner's
+/// decision of 2026-09-14: anything but <c>Committed</c> means nothing was applied. The counts are
+/// gathered while the transaction is open, and a commit that comes back <c>RolledBack</c> undoes every
+/// placement and every write they describe - so an outcome that kept them would report "placed four"
+/// about a model with nothing in it. The outcome that comes back instead carries no counts at all,
+/// and <see cref="NotCommitted"/> names what Revit returned.
+/// </para>
 /// </remarks>
 public sealed class ApplyOutcome
 {
-    internal ApplyOutcome(IReadOnlyList<string> refusals) => Refusals = refusals;
+    internal ApplyOutcome(IReadOnlyList<string> refusals, TransactionStatus? notCommitted = null)
+    {
+        Refusals = refusals;
+        NotCommitted = notCommitted;
+    }
 
     /// <summary>Why nothing was written. Empty when something was.</summary>
     public IReadOnlyList<string> Refusals { get; }
 
     public bool Refused => Refusals.Count > 0;
 
+    /// <summary>
+    /// What Revit returned for a transaction of the apply that did not end as it should, or nothing.
+    /// </summary>
+    /// <remarks>
+    /// Set only on a refusal, and only when the refusal is Revit's rather than ours: the transaction
+    /// that binds the parameters, or the one that writes the run, came back as something other than
+    /// <c>Started</c> on start or <c>Committed</c> on commit. A caller tells the two kinds of refusal
+    /// apart by this - a family that is not loaded is a condition of the project, a commit Revit did
+    /// not keep is a failure somebody has to look into, and the command logs it as an error.
+    /// </remarks>
+    public TransactionStatus? NotCommitted { get; }
+
     /// <summary>Indicators newly placed.</summary>
     public int Placed { get; internal set; }
 
     /// <summary>Indicators from a previous run that were found and rewritten in place.</summary>
+    /// <remarks>
+    /// Never a joined one: an indicator somebody connected into the network is found in place and
+    /// left exactly as it is, and is counted in <see cref="JoinedInPlace"/> instead.
+    /// </remarks>
     public int Updated { get; internal set; }
 
     /// <summary>Indicators of ours that this run no longer recommends, and took away.</summary>
     public int Removed { get; internal set; }
 
-    /// <summary>Indicators of ours left alone because somebody has since joined them to the structure.</summary>
+    /// <summary>
+    /// Indicators of ours that somebody connected into the network: left untouched, and warned about.
+    /// </summary>
     /// <remarks>
-    /// <b>Counted rather than deleted, and this is the guard that makes removal safe at all.</b> A
-    /// marker is joined to nothing by construction - measured on the owner's model, a freshly placed
-    /// one has four connectors and none of them connected. So an element of our type that <i>is</i>
-    /// joined to the structure is one somebody adopted into the wiring, and it stopped being ours
-    /// the moment they did.
+    /// <para>
+    /// <b>Every one the apply meets, wherever it stands</b> - the owner's decision of 2026-09-14. An
+    /// element of the indicator type, carrying our recommendation and connected to something, is never
+    /// rewritten and never removed, and each one is posted with
+    /// <c>CablingFeature.IndicatorJoinedIntoNetwork</c> against itself.
+    /// </para>
+    /// <para>
+    /// <b>This used to be called <c>Adopted</c>, and the name said something the tool does not
+    /// believe.</b> It read "stopped being ours the moment somebody joined it" - while the reader, which
+    /// goes by the type, went on treating the element as an indicator. The warning exists because of
+    /// exactly that gap, and the count is named for what is true of every element in it.
+    /// </para>
+    /// <para>
+    /// <b>Removal stays safe for the reason it always was.</b> A marker is joined to nothing by
+    /// construction - measured on the owner's model, a freshly placed one has four connectors and none
+    /// of them connected - so an element of our type that is joined to something was joined by a
+    /// person, and deleting it would delete part of their model.
+    /// </para>
     /// </remarks>
-    public int Adopted { get; internal set; }
+    public int Joined { get; internal set; }
+
+    /// <summary>
+    /// Of <see cref="Joined"/>, those standing where this run recommends a box, which took that box's place.
+    /// </summary>
+    /// <remarks>
+    /// Counted apart so the arithmetic of the recommended boxes still closes: each one is either placed,
+    /// updated, or stood in for by a joined indicator of ours within the box radius - which is left as
+    /// it is, and has no second indicator placed beside it.
+    /// </remarks>
+    public int JoinedInPlace { get; internal set; }
 
     /// <summary>Junction boxes already in the model that the plan used instead of recommending one.</summary>
     public int ExistingUsed { get; internal set; }
 
-    /// <summary>Carriers that were told which circuits run through them.</summary>
+    /// <summary>Carriers, and boxes already in the model, that were told which circuits run through them.</summary>
     public int CarriersMarked { get; internal set; }
 
     /// <summary>Elements that could not be written to because they live in a link.</summary>
@@ -57,7 +112,12 @@ public sealed class ApplyOutcome
     /// </remarks>
     public int InLinks { get; internal set; }
 
-    /// <summary>Warnings posted into the model's own warning list.</summary>
+    /// <summary>Warnings posted for Revit to show when the apply commits.</summary>
+    /// <remarks>
+    /// Posted, not stored. Revit's reference for <c>Document.PostFailure</c>: "warnings posted via
+    /// this method will not be stored in the document after they are resolved" - so this counts what
+    /// was put in front of whoever pressed Apply, not entries anybody will find in the model later.
+    /// </remarks>
     public int Warnings { get; internal set; }
 }
 
@@ -74,6 +134,13 @@ public sealed class ApplyOutcome
 /// that decision already.
 /// </para>
 /// <para>
+/// <b>Both transactions are asked how they ended, and anything but the expected answer is a
+/// refusal.</b> Revit's reference for <c>Transaction.Commit</c> tells callers to "always check the
+/// returned status", and names <c>RolledBack</c> as a possible outcome of failure handling and
+/// <c>Pending</c> as one where Revit is still waiting for a person. Neither is an exception, so code
+/// that ignored the status reported a full count about a model that holds none of it.
+/// </para>
+/// <para>
 /// <b>Nothing is written into a link, ever.</b> A linked document is not modifiable from the host,
 /// and the carriers of a real project routinely live in one - measured, a surveyed model held 13
 /// trays and 71 conduits in a link. So the references have nowhere to go for those, and the count of
@@ -82,9 +149,11 @@ public sealed class ApplyOutcome
 /// <para>
 /// <b>Warnings are posted here because here is the only place they can be.</b>
 /// <c>Document.PostFailure</c> is legal inside a transaction and nowhere else, and the compute phase
-/// has none - which is why the same four conditions appear twice, as lines on the result screen and
-/// as entries in Revit's warning list. The screen is read once, by whoever pressed the button; the
-/// warning list is read later, by whoever reviews the model.
+/// has none - which is why the same conditions appear twice: as lines on the result screen, and as
+/// warnings Revit shows when the transaction commits. The two addressees are the same person at two
+/// moments. The warning is not kept - Revit's reference says a warning posted this way "will not be
+/// stored in the document after they are resolved", and the owner's decision of 2026-09-14 accepts
+/// that - so what outlives the moment is the result screen and the log, not the model.
 /// </para>
 /// </remarks>
 public static class CablingApply
@@ -146,7 +215,22 @@ public static class CablingApply
         var scheme = new CablingParameters();
         var runtime = Runtime(indicator, catalogue);
 
-        scheme.Install(host, application, runtime);
+        scheme.Install(host, application, runtime, out var binding);
+
+        // Before the check for what is bound, and before anything else is opened. A binding Revit
+        // rolled back would otherwise surface below as "these parameters could not be bound" - true,
+        // and pointing at the categories rather than at the commit. And while a commit is Pending,
+        // Revit's reference says no new transaction may start - so going on would reach the screen as
+        // an exception from Start rather than as a sentence. Not measured; the reference is the source.
+        if (binding is { } bound && bound != TransactionStatus.Committed)
+        {
+            return NotKept(
+                bound,
+                binding: null,
+                "Revit did not keep the parameter binding: its transaction returned {0}, not Committed, "
+                + "so the run has nowhere to write and nothing was written.",
+                "Revit has not finished binding the parameters: its transaction returned Pending.");
+        }
 
         // The loud check the empty category list makes necessary. Two of the three parameters
         // declare no categories at compile time - the indicator's family is the project's to choose
@@ -172,19 +256,81 @@ public static class CablingApply
         var outcome = new ApplyOutcome(Array.Empty<string>());
 
         using var transaction = new Transaction(host, "BHS: apply cabling");
-        transaction.Start();
+        var started = transaction.Start();
+
+        // Revit documents a status here as well as exceptions, and says that unless starting succeeds
+        // no change can be made - so a start that returned anything else writes nothing and says so.
+        if (started != TransactionStatus.Started)
+        {
+            return NotKept(
+                started,
+                binding,
+                "Revit would not start the transaction the run is written in: starting it returned {0}, "
+                + "not Started, so nothing was placed, updated, removed or written.",
+                "Revit has not finished starting the transaction the run is written in: it returned Pending.");
+        }
 
         // Once, and before anything is placed: an inactive symbol places nothing and says nothing
         // about why. Autodesk's own samples do exactly this, immediately before NewFamilyInstance.
         if (!symbol.IsActive)
             symbol.Activate();
 
-        Indicators(host, symbol, run, project, outcome);
-        References(host, run, snapshot, outcome);
-        Warn(host, run, snapshot, outcome);
+        var joined = Indicators(host, symbol, run, project, outcome);
+        References(host, run, outcome);
+        Warn(host, run, snapshot, joined, outcome);
 
-        transaction.Commit();
+        var committed = transaction.Commit();
+
+        // The owner's decision of 2026-09-14, and the counts are why it matters: every number in the
+        // outcome above was counted inside a transaction Revit has just declined to keep.
+        if (committed != TransactionStatus.Committed)
+        {
+            return NotKept(
+                committed,
+                binding,
+                "Revit did not keep the changes: committing them returned {0}, not Committed, so nothing "
+                + "was placed, updated, removed or written.",
+                "Revit has not finished committing the changes: it returned Pending.");
+        }
+
         return outcome;
+    }
+
+    /// <summary>
+    /// A refusal for a transaction that did not end as it had to, with every count left at zero.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <b><c>Pending</c> gets its own sentence, because the other one would be false about it.</b>
+    /// Revit's reference for <c>Transaction.Commit</c> describes it as failure handling that "has not
+    /// been finalized yet" while Revit "awaits user's actions" - so the changes are not known to be
+    /// discarded, only not known to be kept. "Revit did not keep them" there would send somebody to
+    /// apply again over a write that may yet land. Whether a real apply ever returns it is not
+    /// measured; it is still a refusal, because nothing here can say what was written. The command
+    /// carries the same distinction onto the screen's headline and into the log.
+    /// </para>
+    /// <para>
+    /// <b>A binding that did commit is said, because "nothing was written" would be false about the
+    /// document.</b> The parameters are bound in a transaction of their own before the run's is opened,
+    /// so when the run's then fails the new bindings stay, the document is modified, and Revit will ask
+    /// about saving it - while the sentence above it says nothing changed.
+    /// </para>
+    /// </remarks>
+    /// <param name="status">What Revit returned.</param>
+    /// <param name="binding">What the binding transaction returned before this one, or nothing when there was none.</param>
+    /// <param name="notKept">The sentence for every status but Pending, with the status as <c>{0}</c>.</param>
+    /// <param name="pending">The first sentence for Pending; what it means and what to do is added here.</param>
+    private static ApplyOutcome NotKept(TransactionStatus status, TransactionStatus? binding, string notKept, string pending)
+    {
+        var sentence = status == TransactionStatus.Pending
+            ? pending + " Revit describes that as waiting for somebody to act on a message about it, so "
+              + "nothing is reported as written; look at the model before applying again."
+            : string.Format(CultureInfo.CurrentCulture, notKept, status);
+
+        if (binding == TransactionStatus.Committed)
+            sentence += " The parameters bound just before, in a transaction of their own, stay bound.";
+
+        return new ApplyOutcome(new[] { sentence }, status);
     }
 
     /// <summary>Where each parameter is wanted beyond what it could declare at compile time.</summary>
@@ -220,12 +366,32 @@ public static class CablingApply
     /// <para>
     /// <b>Deletion is narrow on purpose, and each condition is load-bearing.</b> It has to be of the
     /// configured type, it has to carry our recommendation, and it has to be joined to nothing. The
-    /// last one is what keeps a designer's work safe: a marker somebody has cut into the wiring is a
-    /// box now, whatever family it came from, and taking it away would delete part of the model to
-    /// tidy up after ourselves.
+    /// last one is what keeps a designer's work safe: a marker somebody has cut into the wiring is
+    /// part of their model now, and taking it away would delete it to tidy up after ourselves.
+    /// </para>
+    /// <para>
+    /// <b>A joined indicator of ours is left exactly as it is, and still takes a recommended box's
+    /// place</b> - the owner's decision of 2026-09-14, the second half being a reading of that decision
+    /// put back to the owner to confirm. Not rewritten, because its values are now the designer's; not
+    /// removed, for the reason above; and no second indicator is placed beside it, because a second
+    /// mark within the radius of the first is exactly what the radius exists to prevent. Every one is
+    /// returned for a warning, in place or not.
+    /// </para>
+    /// <para>
+    /// <b>So a box asks for a joined indicator first, and for one joined to nothing only when there is
+    /// none.</b> Nearest-first over both kinds let an unjoined indicator of ours that happened to stand
+    /// nearer take the box, which left the joined one unclaimed and rewrote the other beside it - two
+    /// marks of ours inside one radius, the state the reading above rules out. It is not far-fetched:
+    /// a copied indicator keeps our recommendation, and the copy is the one somebody joins. The unjoined
+    /// one, left unclaimed, is then removed like any other the plan no longer names.
+    /// </para>
+    /// <para>
+    /// <b>Whether it is joined is asked once per indicator, before anything is placed or removed</b>,
+    /// so one answer decides both what happens to it in place and whether it may be removed.
     /// </para>
     /// </remarks>
-    private static void Indicators(
+    /// <returns>Every joined indicator of ours the apply met, for the warning each one is owed.</returns>
+    private static List<ElementId> Indicators(
         Document host,
         FamilySymbol symbol,
         RouteRun run,
@@ -234,13 +400,24 @@ public static class CablingApply
     {
         var wanted = run.Boxes.Where(box => box.IsRecommendation).ToList();
         var standing = Standing(host, symbol);
+        var joined = standing.Select(Joined).ToArray();
         var taken = new bool[standing.Count];
         var level = Levels(host);
 
         foreach (var box in wanted)
         {
             var at = new XYZ(box.At.X, box.At.Y, box.At.Z);
-            var found = Match(standing, taken, at, project.BoxRadius);
+
+            // A joined one first, and only then one joined to nothing - see the remarks.
+            var found = Match(standing, taken, at, project.BoxRadius, joined, joinedOnes: true);
+
+            if (found >= 0)
+            {
+                outcome.JoinedInPlace++;
+                continue;
+            }
+
+            found = Match(standing, taken, at, project.BoxRadius, joined, joinedOnes: false);
 
             if (found >= 0)
             {
@@ -254,23 +431,28 @@ public static class CablingApply
             outcome.Placed++;
         }
 
+        var warned = new List<ElementId>();
+
         for (var i = 0; i < standing.Count; i++)
         {
-            if (taken[i])
-                continue;
-
-            // Joined to something, so not ours to remove any more - see the remarks above.
-            if (Joined(standing[i]))
+            // Before the claimed test, and that order is the decision: a joined indicator is owed its
+            // warning whether or not a box of this run stood on it.
+            if (joined[i])
             {
-                outcome.Adopted++;
+                warned.Add(standing[i].Id);
                 continue;
             }
+
+            if (taken[i])
+                continue;
 
             host.Delete(standing[i].Id);
             outcome.Removed++;
         }
 
+        outcome.Joined = warned.Count;
         outcome.ExistingUsed = run.Boxes.Count - wanted.Count;
+        return warned;
     }
 
     /// <summary>Every instance of the indicator type in the host that carries our recommendation.</summary>
@@ -292,15 +474,17 @@ public static class CablingApply
             RecommendsJunctionBox,
             StringComparison.OrdinalIgnoreCase);
 
-    /// <summary>The nearest unclaimed indicator within the radius, or -1.</summary>
-    private static int Match(List<FamilyInstance> standing, bool[] taken, XYZ at, double radius)
+    /// <summary>The nearest unclaimed indicator within the radius that is joined, or is not, as asked; or -1.</summary>
+    /// <param name="joined">Whether each standing indicator is joined to anything, by index.</param>
+    /// <param name="joinedOnes">True to consider only the joined ones, false only the ones joined to nothing.</param>
+    private static int Match(List<FamilyInstance> standing, bool[] taken, XYZ at, double radius, bool[] joined, bool joinedOnes)
     {
         var best = -1;
         var distance = double.MaxValue;
 
         for (var i = 0; i < standing.Count; i++)
         {
-            if (taken[i] || (standing[i].Location as LocationPoint)?.Point is not { } point)
+            if (taken[i] || joined[i] != joinedOnes || (standing[i].Location as LocationPoint)?.Point is not { } point)
                 continue;
 
             var candidate = point.DistanceTo(at);
@@ -339,7 +523,7 @@ public static class CablingApply
     private static void Describe(Element indicator, PlannedBox box)
     {
         Set(indicator, CablingParameters.Recommendation, RecommendsJunctionBox);
-        Set(indicator, CablingParameters.CircuitRefs, Refs(box.Circuits));
+        Set(indicator, CablingParameters.CircuitRefs, CircuitRefs(box.Circuits));
         Set(indicator, CablingParameters.TapCount, box.Entries);
     }
 
@@ -376,28 +560,30 @@ public static class CablingApply
     }
 
     /// <summary>Tells the carriers and the boxes that were used which circuits run through them.</summary>
-    private static void References(Document host, RouteRun run, CablingSnapshot snapshot, ApplyOutcome outcome)
+    /// <remarks>
+    /// <b>Circuit element ids, in the one format an indicator carries</b> - the owner's decision of
+    /// 2026-09-14. This wrote circuit numbers here while indicators got ids, so one parameter meant two
+    /// different things depending on which element held it, and a schedule or filter over it could
+    /// only ever be right about half of them. A number is also not an identity: two panels each have a
+    /// circuit 1.
+    /// </remarks>
+    private static void References(Document host, RouteRun run, ApplyOutcome outcome)
     {
-        var numbers = snapshot.Circuits.Described.ToDictionary(one => one.Id, one => one.Number);
-        var byElement = new Dictionary<long, List<string>>();
+        var byElement = new Dictionary<long, List<CarrierId>>();
         var inLinks = 0;
 
-        void Note(CarrierId carrier, CarrierId circuit)
+        void Note(CarrierId element, CarrierId circuit)
         {
-            if (carrier.IsLinked)
+            if (element.IsLinked)
             {
                 inLinks++;
                 return;
             }
 
-            if (!numbers.TryGetValue(circuit, out var number))
-                return;
+            if (!byElement.TryGetValue(element.Value, out var circuits))
+                byElement[element.Value] = circuits = new List<CarrierId>();
 
-            if (!byElement.TryGetValue(carrier.Value, out var list))
-                byElement[carrier.Value] = list = new List<string>();
-
-            if (!list.Contains(number))
-                list.Add(number);
+            circuits.Add(circuit);
         }
 
         foreach (var route in run.Results)
@@ -426,7 +612,7 @@ public static class CablingApply
             if (host.GetElement(new ElementId(pair.Key)) is not { } element)
                 continue;
 
-            if (Set(element, CablingParameters.CircuitRefs, Refs(pair.Value)))
+            if (Set(element, CablingParameters.CircuitRefs, CircuitRefs(pair.Value)))
                 outcome.CarriersMarked++;
         }
 
@@ -434,11 +620,11 @@ public static class CablingApply
     }
 
     /// <summary>
-    /// Posts the four conditions the owner chose into the model's own warning list.
+    /// Posts the five conditions the owner chose, for Revit to show when the apply commits.
     /// </summary>
     /// <remarks>
     /// <para>
-    /// <b>All four are warnings, never errors.</b> An error rolls the transaction back, and each of
+    /// <b>All five are warnings, never errors.</b> An error rolls the transaction back, and each of
     /// these describes work that did happen and should stay: a circuit the router could not reach is
     /// still a circuit the rest of the run served.
     /// </para>
@@ -450,17 +636,22 @@ public static class CablingApply
     /// carries no summary at all, only its exceptions; Autodesk's own six calls across two SDKs
     /// construct <c>new FailureMessage(id)</c> and post it without setting any text. So the wording
     /// registered with the definition is the whole of what Revit shows, and it has to stand on its
-    /// own for every circuit it will ever describe.
+    /// own for every element it will ever describe.
     /// </para>
     /// <para>
     /// <b>What the specifics cost is nothing, because they were never only here.</b>
-    /// <c>SetFailingElement</c> does compile, so each warning selects its own circuit or box in the
-    /// model - which is the part somebody acts on. The number, the value that could not be read and
-    /// the address the route stopped at are on the result screen and in the log, where they were
-    /// before any of this was posted.
+    /// <c>SetFailingElement</c> does compile, so each warning selects its own circuit, box or
+    /// indicator in the model - which is the part somebody acts on. The number, the value that could
+    /// not be read and the address the route stopped at are on the result screen and in the log,
+    /// where they were before any of this was posted.
     /// </para>
     /// </remarks>
-    private static void Warn(Document host, RouteRun run, CablingSnapshot snapshot, ApplyOutcome outcome)
+    private static void Warn(
+        Document host,
+        RouteRun run,
+        CablingSnapshot snapshot,
+        IReadOnlyList<ElementId> joined,
+        ApplyOutcome outcome)
     {
         foreach (var route in run.Blocked(RouteStatus.NoCarrierNear))
             Post(host, outcome, CablingFeature.NoCarrierNear, route.Circuit.Value);
@@ -473,6 +664,9 @@ public static class CablingApply
 
         foreach (var id in snapshot.BoxesUnconnectedIds)
             Post(host, outcome, CablingFeature.JunctionBoxJoinedToNothing, id);
+
+        foreach (var id in joined)
+            Post(host, outcome, CablingFeature.IndicatorJoinedIntoNetwork, id.Value);
     }
 
     /// <summary>Posts one warning against one element, when the element is still there to post against.</summary>
@@ -494,11 +688,29 @@ public static class CablingApply
         outcome.Warnings++;
     }
 
-    /// <summary>The circuits as one value, in the order they were first seen.</summary>
-    private static string Refs(IEnumerable<CarrierId> circuits) =>
-        string.Join("; ", circuits.Select(one => one.Value.ToString(CultureInfo.InvariantCulture)));
+    /// <summary>
+    /// The one value of <c>BHS_Cbl_CircuitRefs</c>, on an indicator, a carrier and a box alike.
+    /// </summary>
+    /// <remarks>
+    /// Circuit element ids in invariant digits, each once, in the order first seen, joined by "; ".
+    /// One helper for all three writers, so that the rule cannot be kept in one place and drift in
+    /// another - which is how the same parameter came to hold ids on indicators and numbers on
+    /// carriers. The repeats are dropped here rather than trusted to each caller: a box lists its
+    /// circuits once already, a carrier walked by two taps of one route would otherwise name it twice.
+    /// </remarks>
+    private static string CircuitRefs(IEnumerable<CarrierId> circuits)
+    {
+        var seen = new HashSet<CarrierId>();
+        var values = new List<string>();
 
-    private static string Refs(IEnumerable<string> numbers) => string.Join("; ", numbers);
+        foreach (var circuit in circuits)
+        {
+            if (seen.Add(circuit))
+                values.Add(circuit.Value.ToString(CultureInfo.InvariantCulture));
+        }
+
+        return string.Join("; ", values);
+    }
 
     private static bool Set(Element element, Guid parameter, string value)
     {

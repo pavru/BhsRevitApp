@@ -53,17 +53,27 @@ public sealed class CablingParameters : SharedParameterScheme
     /// <see cref="ElementRole"/>.</b> The role says what an element <i>is</i> - a designer sets it on
     /// a family type, and a real junction box carries it. This says that a calculation of ours put
     /// this instance here and what it is proposing, which nobody sets by hand. Keeping them apart is
-    /// what lets a marker become a real box by being connected, without the two ever contradicting
-    /// each other.
+    /// what lets the apply tell an indicator of ours from a box a designer placed; connecting an
+    /// indicator does not make it a box - it keeps the indicator type, is still read as an indicator,
+    /// and is warned about (<c>CablingFeature.IndicatorJoinedIntoNetwork</c>).
     /// </remarks>
     public static readonly Guid Recommendation = new("d43fe69a-326b-47a0-95d4-2bb20719a6d4");
 
     /// <summary>The circuits whose cable passes through this element.</summary>
     /// <remarks>
+    /// <para>
     /// <b>Written to carriers and to the boxes actually used, and to a real box it is the only thing
     /// written</b> - the owner's decision. A box somebody drew is theirs; what we may add to it is
     /// the fact that these circuits run through it, which is a reading of the model rather than a
     /// proposal about it.
+    /// </para>
+    /// <para>
+    /// <b>One format on every element that carries it: circuit element ids</b>, each once, in the
+    /// order first seen, joined by "; " - the owner's decision of 2026-09-14. It held ids on indicators
+    /// and circuit numbers on carriers until then, and the description said "as they are numbered".
+    /// The description travels into a shared parameter file only when that file first declares the
+    /// parameter, so a file written before the change keeps the old wording.
+    /// </para>
     /// </remarks>
     public static readonly Guid CircuitRefs = new("1b83d465-af5e-4d55-8e7a-b1ba0ee017cf");
 
@@ -195,10 +205,10 @@ public sealed class CablingParameters : SharedParameterScheme
             Carriers,
             english: new ParameterText(
                 "BHS_Cbl_CircuitRefs",
-                "The circuits whose cable passes through this element, as they are numbered."),
+                "The circuits whose cable passes through this element, as circuit element ids separated by semicolons."),
             russian: new ParameterText(
                 "BHS_Cbl_СсылкиНаЦепи",
-                "Цепи, кабель которых проходит через этот элемент, с их номерами.")),
+                "Цепи, кабель которых проходит через этот элемент: идентификаторы элементов цепей через точку с запятой.")),
 
         new SharedParameter(
             TapCount,

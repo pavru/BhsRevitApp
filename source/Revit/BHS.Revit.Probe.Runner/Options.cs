@@ -119,6 +119,14 @@ internal sealed class Options
     /// and not this set, and a flag that silently changed meaning with what happens to be on disk
     /// would record one mode while claiming another.
     /// </para>
+    /// <para>
+    /// <b>And the canonical sweep installs the edition beside the probe - <c>--edition</c>, the owner's
+    /// decision of 2026-09-14.</b> The cabling cases that put the apply phase's warnings to Revit need
+    /// the failure definitions, and those are registered only at startup, only by an edition that
+    /// declares the cabling module; the probe declares none. Without an edition those cases stand down
+    /// by name, so a record taken without it is complete and green and says nothing about the warnings.
+    /// The full command: <c>--deploy --edition --linked --report evidence/sweep-report.json</c>.
+    /// </para>
     /// </remarks>
     public bool Linked { get; set; }
 
@@ -230,6 +238,9 @@ internal sealed class Options
               --report <path>    write the machine-readable record CI verifies, e.g.
                                  evidence/sweep-report.json. Commit the code first: the record
                                  refuses to claim a clean tree it did not have.
+
+            The canonical record, the one committed for CI:
+              --deploy --edition --linked --report evidence/sweep-report.json
 
             The exit code is the number of failed checks.
             """);

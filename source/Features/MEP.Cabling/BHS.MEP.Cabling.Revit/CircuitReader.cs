@@ -80,7 +80,7 @@ public sealed class CircuitHarvest
     /// <summary>The same circuits as element ids, in the same order, for a posted warning.</summary>
     /// <remarks>
     /// Beside the prose rather than instead of it. The screen wants the number and the value it
-    /// found - that is what somebody fixes - and Revit's warning list wants an element to select.
+    /// found - that is what somebody fixes - and a warning Revit shows wants an element to select.
     /// Two audiences, one finding; deriving either from the other would mean parsing a sentence.
     /// </remarks>
     public IReadOnlyList<long> UnreadableConnectionIds { get; }

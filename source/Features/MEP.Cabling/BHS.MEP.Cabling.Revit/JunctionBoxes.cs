@@ -65,8 +65,8 @@ internal sealed class JunctionBoxReader
         if (JoinsACarrier(element))
             return true;
 
-        // The id and not only a tally: this ends up in Revit's own warning list, which addresses
-        // an element. A count can be shown on a screen and cannot be pointed at.
+        // The id and not only a tally: this ends up in a warning Revit shows, which addresses an
+        // element. A count can be shown on a screen and cannot be pointed at.
         _unconnected.Add(element.Id.Value);
         return false;
     }

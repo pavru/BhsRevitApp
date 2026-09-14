@@ -177,14 +177,53 @@ public sealed class RouteCablingCommand : IFeatureCommand
         if (reading.Run is not { } run || reading.Snapshot is not { } snapshot)
             return new ApplyReport("There is nothing to write yet.", refused: true);
 
-        var outcome = CablingApply.Apply(document, application, run, snapshot, project, new CarrierCatalogue());
+        ApplyOutcome outcome;
+
+        // Caught here rather than left to the window, which would show it and log nothing: Report logs a
+        // failure only for a run that never finished, and an apply always has a finished run. It is the
+        // failure the owner's decision of 2026-09-14 wants logged as an error - a write Revit did not
+        // keep - reached by a throw instead of a status. One way to get here is not far-fetched: on
+        // Revit 2024 a stale declaration assembly from another deployment can win the simple name and
+        // register fewer failure definitions than this apply posts, and a FailureMessage for an id
+        // nobody registered throws, by Revit's reference. Nothing of the run survives it: a transaction
+        // started and left unfinished is rolled back when it is disposed, by the same reference. Not
+        // measured.
+        try
+        {
+            outcome = CablingApply.Apply(document, application, run, snapshot, project, new CarrierCatalogue());
+        }
+        catch (Exception error)
+        {
+            log.Error(error, "cabling: the write threw, and nothing of the run was kept - {0}", error.Message);
+
+            return new ApplyReport(
+                "The write failed and nothing of the run was kept: " + error.GetType().Name + ": " + error.Message,
+                refused: true);
+        }
 
         if (outcome.Refused)
         {
+            // Two kinds of refusal, and they go to different levels. A family that is not loaded is a
+            // condition of the project and the sentence says what to do about it. A transaction Revit
+            // did not keep is a failure: the run did its work and Revit declined it, and the owner's
+            // decision of 2026-09-14 is that it is logged as one.
+            //
+            // Pending in words of its own, as CablingApply gives it: Revit is still waiting for somebody,
+            // so "not applied" would be as false about it as "applied".
             foreach (var refusal in outcome.Refusals)
-                log.Warn("cabling: nothing was written - {0}", refusal);
+            {
+                if (outcome.NotCommitted == TransactionStatus.Pending)
+                    log.Error("cabling: Revit has not finished the write, its transaction returned Pending - {0}", refusal);
+                else if (outcome.NotCommitted is { } status)
+                    log.Error("cabling: the write was not applied, Revit returned {0} - {1}", status, refusal);
+                else
+                    log.Warn("cabling: nothing was written - {0}", refusal);
+            }
 
-            return new ApplyReport(string.Join(" ", outcome.Refusals), refused: true);
+            return new ApplyReport(
+                string.Join(" ", outcome.Refusals),
+                refused: true,
+                unconfirmed: outcome.NotCommitted == TransactionStatus.Pending);
         }
 
         // One argument, and the sentence is the one the screen shows. ILog carries overloads for
@@ -213,18 +252,27 @@ public sealed class RouteCablingCommand : IFeatureCommand
 
         said.Add(outcome.CarriersMarked + " carrier(s) marked with their circuits");
 
-        // Only when it happened, and then prominently: an indicator somebody has joined to the
-        // structure is theirs now, and this is the line that says why it was left where it is.
-        if (outcome.Adopted > 0)
-            said.Add(outcome.Adopted + " indicator(s) left alone because they are now joined to the structure");
+        // Only when it happened, and then prominently: an indicator of ours somebody connected into
+        // the network is left exactly as it is, and still read as an indicator. This is the line that
+        // says why it did not move, and the warning Revit shows beside it says which one it is.
+        if (outcome.Joined > 0)
+        {
+            said.Add(
+                outcome.Joined + " indicator(s) left untouched because they are connected into the network"
+                + (outcome.JoinedInPlace > 0
+                    ? " (" + outcome.JoinedInPlace + " of them where a box is recommended, so none was placed beside them)"
+                    : string.Empty));
+        }
 
         // The difference between "nothing to write" and "nowhere to write it", which is the whole
         // of what somebody needs to know when their trays live in a link.
         if (outcome.InLinks > 0)
             said.Add(outcome.InLinks + " reference(s) had nowhere to go: those carriers are in a link");
 
+        // "Posted", not "into the model": Revit shows a warning posted this way and does not store it
+        // once it is resolved, by its own reference, so the model is not where anybody will find it.
         if (outcome.Warnings > 0)
-            said.Add(outcome.Warnings + " warning(s) posted into the model");
+            said.Add(outcome.Warnings + " warning(s) posted for Revit to show");
 
         return string.Join(", ", said) + ".";
     }

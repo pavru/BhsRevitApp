@@ -60,7 +60,12 @@ if (-not $Path) { $Path = Join-Path $root 'evidence/sweep-report.json' }
 # registration, asking it to close and killing it - it decides the outcome of checks like "the
 # add-in registers over the well-known pipe" as directly as the add-in does. Left out, an edit to
 # it would leave a stale sweep passing unchallenged.
-$revitSide = @('source/Revit', 'source/Shared', 'source/WinSide', 'build/BHS.Revit.Sdk')
+# source/Features/MEP.Cabling is here since 2026-09-14, the owner's decision. It was left out on the
+# premise that no sweep check changes with an edit to the feature; that stopped being true when the
+# probe began hosting the cabling test suites and carrying the feature's assemblies into Revit, and an
+# edit to the apply phase could then change what the in-Revit cases assert without making the record
+# stale. The same list, spelled the same, as SweepReport.RevitSidePaths in the runner that writes it.
+$revitSide = @('source/Revit', 'source/Shared', 'source/WinSide', 'source/Features/MEP.Cabling', 'build/BHS.Revit.Sdk')
 
 # Read from the SDK rather than repeated here. CLAUDE.md promises that adding a Revit release is
 # one line in Revit.Identity.targets; a second list in this file would mean the new release is
@@ -138,7 +143,7 @@ function Fail([string] $message) {
 Write-Host "check-sweep-report: verifying a RECORDED sweep. CI does not run Revit - see the header of this script."
 
 if (-not (Test-Path $Path)) {
-    Fail "there is no report at $Path. Run: dotnet run --project source/Revit/BHS.Revit.Probe.Runner -- --report evidence/sweep-report.json"
+    Fail "there is no report at $Path. Run the canonical sweep: dotnet run --project source/Revit/BHS.Revit.Probe.Runner -- --deploy --edition --linked --report evidence/sweep-report.json"
     exit $problems
 }
 
@@ -204,12 +209,15 @@ else {
         if ($now.Trim() -ne $was) {
             $changed = & git -C $root diff --name-only "$was" "$($now.Trim())" 2>$null
 
+            # The canonical command, --edition included since 2026-09-14: the cabling warning cases
+            # post failures whose definitions only an edition registers at startup, and without one
+            # installed beside the probe they stand down instead of asserting.
             Fail @"
 $path changed since the sweep was recorded, so the record no longer describes this branch.
 
 $(if ($changed) { ($changed | ForEach-Object { "  $path/$_" } | Out-String) })
 Sweep again and commit the new report:
-  dotnet run --project source/Revit/BHS.Revit.Probe.Runner -- --deploy --linked --report evidence/sweep-report.json
+  dotnet run --project source/Revit/BHS.Revit.Probe.Runner -- --deploy --edition --linked --report evidence/sweep-report.json
 "@
         }
     }

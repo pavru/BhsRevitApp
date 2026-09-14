@@ -453,7 +453,15 @@ public sealed class RoutingViewModel : INotifyPropertyChanged
         try
         {
             Applied = await _apply(_cancellation.Token).ConfigureAwait(true);
-            What = Applied.Refused ? "Nothing was written" : "Written";
+
+            // Three headlines, not two. A refusal whose transaction is still pending is not known to be
+            // unwritten, and "Nothing was applied" above a sentence that says to look at the model first
+            // would contradict it on the same screen.
+            What = !Applied.Refused
+                ? "Written"
+                : Applied.Unconfirmed
+                    ? "Revit has not confirmed the write"
+                    : "Nothing was applied";
         }
         catch (Exception error)
         {
@@ -549,17 +557,29 @@ public sealed class RoutingViewModel : INotifyPropertyChanged
 /// </remarks>
 public sealed class ApplyReport
 {
-    public ApplyReport(string text, bool refused)
+    public ApplyReport(string text, bool refused, bool unconfirmed = false)
     {
         Text = text;
         Refused = refused;
+        Unconfirmed = refused && unconfirmed;
     }
 
     /// <summary>What happened, or why nothing did, as a person reads it.</summary>
     public string Text { get; }
 
-    /// <summary>Whether the model was left untouched.</summary>
+    /// <summary>Whether the run was not applied.</summary>
+    /// <remarks>
+    /// About the run, not the document: the parameters are bound in a transaction of their own before
+    /// the run's, and a binding that committed stays when the run's does not - which <see cref="Text"/>
+    /// then says.
+    /// </remarks>
     public bool Refused { get; }
+
+    /// <summary>
+    /// Of a refusal, whether Revit had not yet settled the write - a transaction that returned
+    /// <c>Pending</c> - so it is not known to be unwritten either.
+    /// </summary>
+    public bool Unconfirmed { get; }
 }
 
 /// <summary>One step of a run, as the search reports it.</summary>
