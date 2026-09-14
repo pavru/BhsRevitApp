@@ -371,8 +371,8 @@ public static class CablingApply
     /// </para>
     /// <para>
     /// <b>A joined indicator of ours is left exactly as it is, and still takes a recommended box's
-    /// place</b> - the owner's decision of 2026-09-14, the second half being a reading of that decision
-    /// put back to the owner to confirm. Not rewritten, because its values are now the designer's; not
+    /// place</b> - the owner's decisions of 2026-09-14, the second half first a reading of the first and
+    /// then confirmed by the owner the same day. Not rewritten, because its values are now the designer's; not
     /// removed, for the reason above; and no second indicator is placed beside it, because a second
     /// mark within the radius of the first is exactly what the radius exists to prevent. Every one is
     /// returned for a warning, in place or not.
@@ -381,7 +381,7 @@ public static class CablingApply
     /// <b>So a box asks for a joined indicator first, and for one joined to nothing only when there is
     /// none.</b> Nearest-first over both kinds let an unjoined indicator of ours that happened to stand
     /// nearer take the box, which left the joined one unclaimed and rewrote the other beside it - two
-    /// marks of ours inside one radius, the state the reading above rules out. It is not far-fetched:
+    /// marks of ours inside one radius, the state the decision above rules out. It is not far-fetched:
     /// a copied indicator keeps our recommendation, and the copy is the one somebody joins. The unjoined
     /// one, left unclaimed, is then removed like any other the plan no longer names.
     /// </para>

@@ -34,6 +34,7 @@ internal static class RevitTests
     private static readonly IRevitTestSuite[] Declared =
     {
         new BHS.MEP.Cabling.Revit.Tests.CablingReadingTests(),
+        new BHS.MEP.Cabling.Revit.Tests.ConnectorCensusTests(),
         new BHS.MEP.Cabling.Revit.Tests.CircuitConnectionTests(),
         new BHS.MEP.Cabling.Revit.Tests.JunctionBoxTests(),
         new BHS.MEP.Cabling.Revit.Tests.CablingApplyTests(),

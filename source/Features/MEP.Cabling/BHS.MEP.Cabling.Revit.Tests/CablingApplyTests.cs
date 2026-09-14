@@ -486,6 +486,14 @@ public sealed class CablingApplyTests : IRevitTestSuite
     /// does not, "exactly one within the radius" fails and the note is what says why.
     /// </para>
     /// <para>
+    /// <b>Why routes were not found is noted before the case can stand down for want of them.</b> The
+    /// attended run of 2026-09-14 on the linked set, Revit 2026, stood this case down exactly there: every
+    /// circuit came back NoCarrierNear with every circuit cut in boxes. <see cref="ReachNotes"/> says which
+    /// end stopped each one, how far that end is from the structure and by which measure, where its point
+    /// came from, and whether a link's transform is to blame - as notes, which cannot change what this
+    /// case asserts or when it stands down.
+    /// </para>
+    /// <para>
     /// <b>The same apply also tells the carriers their circuits, and that is asserted here too</b>,
     /// after the indicators so a placement defect is named first: every host carrier a found route
     /// walks names, in the one format, exactly the circuits the plan puts through it - the id of every
@@ -525,6 +533,18 @@ public sealed class CablingApplyTests : IRevitTestSuite
         Note(context, "placement: boxes recommended", wanted.Count);
         Note(context, "placement: recommended boxes serving more than one circuit", wanted.Count(box => box.Circuits.Count > 1));
         Note(context, "placement: boxes already in the model used", plan.Run.Boxes.Count - wanted.Count);
+
+        // Before the skip, because the skip is where the answer is wanted: see the remarks.
+        ReachNotes.Explain(
+            context,
+            "placement reach",
+            document,
+            plan.Snapshot.Network,
+            plan.Snapshot.Circuits.Described,
+            plan.Results,
+            Options,
+            catalogue,
+            project.Boxes);
 
         Skip.When(
             wanted.Count == 0,
@@ -1054,11 +1074,12 @@ public sealed class CablingApplyTests : IRevitTestSuite
     /// </summary>
     /// <remarks>
     /// <para>
-    /// <b>The owner's decision of 2026-09-14, and the reading of it that was put back to the owner.</b>
-    /// The decision: a joined indicator of ours is never rewritten and never removed, and is warned about.
-    /// The reading: within the radius of a recommended box it still takes that box's place. This case pins
-    /// the reading as well, so that if the owner answers otherwise the change arrives as a red here and
-    /// not as a quiet difference on somebody's model.
+    /// <b>The owner's decisions of 2026-09-14, both of them.</b> A joined indicator of ours is never
+    /// rewritten and never removed, and is warned about. And within the radius of a recommended box it
+    /// takes that box's place, with no second indicator beside it, a joined one preferred over one joined
+    /// to nothing - first a reading of the decision made while implementing it, confirmed by the owner the
+    /// same day. This case pins the first half and the no-second-indicator part of the second; the
+    /// preference between a joined and an unjoined indicator at one box has no case yet.
     /// </para>
     /// <para>
     /// <b>The plan is computed first, and the joined indicator stood on one of its boxes afterwards.</b>
@@ -1436,6 +1457,14 @@ public sealed class CablingApplyTests : IRevitTestSuite
     /// say "this device" about an element that was never a device. If the warning moves, the body of
     /// this case changes and its name, which the record keys on, stays.
     /// </para>
+    /// <para>
+    /// <b>The model's own carriers are routed as well, in both connection modes, for notes only.</b> The
+    /// attended run of 2026-09-14 found no route on the linked set with every circuit cut in boxes. The
+    /// router asks the same ends in the same order in both modes - panel, then each device - so the mode
+    /// should not decide whether a circuit reaches the structure; the two counts and the comparison of
+    /// where each circuit stopped say whether it does, and <see cref="ReachNotes"/> says why the circuits
+    /// stopped at terminals, where no case writes anything to them first.
+    /// </para>
     /// </remarks>
     private static void WarnsOfNoCarrierNear(RevitTestContext context) => Watched(context, watch =>
     {
@@ -1468,6 +1497,28 @@ public sealed class CablingApplyTests : IRevitTestSuite
         var blocked = run.Blocked(RouteStatus.NoCarrierNear).Select(one => one.Circuit.Value).ToList();
 
         Note(context, "no carrier: circuits blocked", blocked.Count);
+
+        // The same circuits over the model's own carriers, in both connection modes, as notes: see the
+        // remarks. Nothing below them asserts on any of it.
+        var atTerminals = snapshot.Circuits.Described.Select(circuit => InMode(circuit, CircuitConnection.AtTerminal)).ToList();
+        var inBoxes = snapshot.Circuits.Described.Select(circuit => InMode(circuit, CircuitConnection.AtJunctionBox)).ToList();
+        var routedAtTerminals = atTerminals.Select(circuit => Router.Route(snapshot.Network, circuit, Options)).ToList();
+        var routedInBoxes = inBoxes.Select(circuit => Router.Route(snapshot.Network, circuit, Options)).ToList();
+
+        context.Note("no carrier: over the model's own carriers, at terminals", ReachNotes.ByStatus(routedAtTerminals));
+        context.Note("no carrier: over the model's own carriers, cut in boxes", ReachNotes.ByStatus(routedInBoxes));
+        context.Note("no carrier: NoCarrierNear in both modes", ReachNotes.SameEnd(routedAtTerminals, routedInBoxes));
+
+        ReachNotes.Explain(
+            context,
+            "no carrier reach, at terminals",
+            document,
+            snapshot.Network,
+            atTerminals,
+            routedAtTerminals,
+            Options,
+            catalogue,
+            project.Boxes);
 
         Skip.When(
             blocked.Count == 0,
@@ -2010,6 +2061,19 @@ public sealed class CablingApplyTests : IRevitTestSuite
 
         return (snapshot, results, run);
     }
+
+    /// <summary>The same circuit, routed in the connection mode given rather than the one it was read with.</summary>
+    /// <remarks>
+    /// Built with the public constructor and nothing written to the model, so a question about the mode
+    /// costs no transaction. What the router reads is carried across: the ends, their order, the number
+    /// and the length Revit reports.
+    /// </remarks>
+    private static CircuitSnapshot InMode(CircuitSnapshot circuit, CircuitConnection connection) =>
+        new(circuit.Id, circuit.Number, circuit.Source, circuit.Devices)
+        {
+            Connection = connection,
+            BuiltInLength = circuit.BuiltInLength,
+        };
 
     /// <summary>Why a plan recommends no box, as the middle of a skip reason; call only when it recommends none.</summary>
     /// <remarks>
@@ -2649,8 +2713,21 @@ public sealed class CablingApplyTests : IRevitTestSuite
     /// Not the command's: those defaults live in the feature assembly, which this one cannot see.
     /// </summary>
     /// <remarks>
+    /// <para>
     /// Every assertion in this suite holds whatever these two distances are, so they are deliberately
     /// not copied into a second literal that would have to be kept in step with the command.
+    /// </para>
+    /// <para>
+    /// <b>They are not the command's, and the two cases that explain a failed route say so in a note.</b>
+    /// The command reads 50 mm and 3000 mm by default; half a foot is 152.4 mm and ten feet 3048 mm, so
+    /// these cases join carriers across gaps three times as wide and reach 48 mm farther. By the code, not
+    /// by a measurement, neither difference can turn a circuit the command routes into one these cases
+    /// cannot - a wider joint only adds adjacency, the join tolerance never enters the reach, and the reach
+    /// here is the larger - but a run that routes here and not in the command is possible, and the attended
+    /// run of 2026-09-14 found no route here at all. <see cref="ReachNotes"/> restates the command's
+    /// defaults beside these, for a note and never for an assertion. Changing these is the owner's
+    /// decision, not a side effect of a diagnosis.
+    /// </para>
     /// </remarks>
     private static RoutingOptions Options { get; } = new()
     {
