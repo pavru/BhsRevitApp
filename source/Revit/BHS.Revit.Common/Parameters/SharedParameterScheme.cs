@@ -255,12 +255,44 @@ public abstract class SharedParameterScheme
     /// wanted.
     /// </para>
     /// </remarks>
-    /// <returns>The parameters that were bound.</returns>
+    /// <returns>The parameters that were bound, and that Revit kept.</returns>
     public IReadOnlyList<SharedParameter> Install(
         Document document,
         Application application,
-        RuntimeCategories? extra = null)
+        RuntimeCategories? extra = null) =>
+        Install(document, application, extra, out _);
+
+    /// <summary>
+    /// Binds whatever is missing, and says what Revit returned for the transaction that did it.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <b>The status is checked, and a binding Revit did not keep binds nothing.</b> Revit's reference
+    /// for <c>Transaction.Commit</c> tells callers to "always check the returned status" and names
+    /// <c>RolledBack</c> as a possible outcome of failure handling; neither that nor <c>Pending</c> is
+    /// an exception. This used to ignore it and return every parameter Insert had accepted - which,
+    /// after a rollback, is a list of parameters the document does not have. So a transaction that does
+    /// not start, or does not commit, returns an empty list here, and the status says why.
+    /// </para>
+    /// <para>
+    /// An <c>out</c> rather than a new return type, because the plain overload has callers that only
+    /// want the list, and the list is now honest on its own. The caller that owes somebody a sentence
+    /// about the commit - the apply phase - is the one that asks.
+    /// </para>
+    /// </remarks>
+    /// <param name="transaction">
+    /// What <c>Start</c> returned when it did not start, otherwise what <c>Commit</c> returned. Nothing
+    /// when no transaction was opened: nothing was missing, or our file could not be opened.
+    /// </param>
+    /// <returns>The parameters that were bound, and that Revit kept.</returns>
+    public IReadOnlyList<SharedParameter> Install(
+        Document document,
+        Application application,
+        RuntimeCategories? extra,
+        out TransactionStatus? transaction)
     {
+        transaction = null;
+
         if (document is null)
             throw new ArgumentNullException(nameof(document));
 
@@ -275,10 +307,20 @@ public abstract class SharedParameterScheme
         var bound = new List<SharedParameter>();
         var language = ParameterLanguages.For(application.Language);
 
+        // A local rather than the out parameter itself: a lambda cannot capture an out parameter.
+        TransactionStatus? status = null;
+
         WithOurFile(application, language, file =>
         {
-            using var transaction = new Transaction(document, "BHS: bind shared parameters");
-            transaction.Start();
+            using var binder = new Transaction(document, "BHS: bind shared parameters");
+            var started = binder.Start();
+
+            // Revit says that unless starting succeeds no change can be made, so nothing is attempted.
+            if (started != TransactionStatus.Started)
+            {
+                status = started;
+                return;
+            }
 
             foreach (var declared in missing)
             {
@@ -324,9 +366,14 @@ public abstract class SharedParameterScheme
                 }
             }
 
-            transaction.Commit();
+            status = binder.Commit();
+
+            // What Insert accepted inside a transaction Revit did not keep is not bound.
+            if (status != TransactionStatus.Committed)
+                bound.Clear();
         });
 
+        transaction = status;
         return bound;
     }
 

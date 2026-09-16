@@ -47,10 +47,18 @@ namespace BHS.MEP.Cabling.Declaration;
 /// checks the built assembly as well, because this repository has watched a written rule lapse.
 /// </para>
 /// <para>
-/// <b>Severity is <c>Warning</c> for all four, and that is a decision rather than a default.</b> An
+/// <b>Severity is <c>Warning</c> for all five, and that is a decision rather than a default.</b> An
 /// <c>Error</c> rolls the transaction back, and every one of these describes work that should happen
-/// and be visible afterwards: a circuit the router could not reach is still a circuit the rest of the
-/// run served. A warning stays in the model's warning list, which is where a reviewer looks.
+/// all the same: a circuit the router could not reach is still a circuit the rest of the run served.
+/// </para>
+/// <para>
+/// <b>A warning is read by whoever is in front of Revit when it shows it, and by nobody later.</b>
+/// This said once that a warning stays in the model's warning list, where a reviewer looks. Revit's
+/// own reference for <c>Document.PostFailure</c> says the opposite - "warnings posted via this method
+/// will not be stored in the document after they are resolved" - and the owner's decision of
+/// 2026-09-14 accepts it: a failure that is resolved is forgotten. So the second addressee is the
+/// person who pressed Apply, at the moment Revit puts the warning in front of them; the result screen
+/// and the log are what remains afterwards.
 /// </para>
 /// <para>
 /// <b>The registered string is the whole of what Revit will show, so each one has to stand alone.</b>
@@ -72,12 +80,20 @@ namespace BHS.MEP.Cabling.Declaration;
 /// </remarks>
 public sealed class CablingFeature : IFeatureModule
 {
-    /// <summary>A device with no cable tray or conduit within reach of it.</summary>
+    /// <summary>A circuit with an end - its panel or one of its devices - that has no carrier within reach.</summary>
     /// <remarks>
-    /// The most valuable of the four, measured: on the first real model this condition found a
+    /// <para>
+    /// The most valuable of the five, measured: on the first real model this condition found a
     /// consumer of an adjacent discipline that nobody had routed carriers to - in either discipline.
     /// It is a fault in the model rather than a choice about how to wire, and it reads differently
     /// from the rest for that reason.
+    /// </para>
+    /// <para>
+    /// <b>Its text names the circuit, because the circuit is what it is posted against.</b> It said
+    /// "this device" first, while the apply set the circuit as the failing element - so the element
+    /// Revit selected was never the thing the sentence was about. And the router stops at whichever
+    /// end has nothing near, which is as often the panel as a device, so the sentence says both.
+    /// </para>
     /// </remarks>
     public static readonly FailureDefinitionId NoCarrierNear =
         new(new Guid("2a7a9ac1-3cb9-499d-a354-0d61c9352bd9"));
@@ -106,16 +122,56 @@ public sealed class CablingFeature : IFeatureModule
     public static readonly FailureDefinitionId JunctionBoxJoinedToNothing =
         new(new Guid("06532413-0a11-49f2-b561-037b6975aa6d"));
 
+    /// <summary>An indicator of ours that somebody connected to other elements and left as an indicator.</summary>
+    /// <remarks>
+    /// <para>
+    /// <b>The owner's decision of 2026-09-14.</b> An element of the indicator type, carrying our
+    /// recommendation and connected to something, is left exactly as it is: the apply neither rewrites
+    /// it nor removes it. But nothing about it says it stopped being an indicator, so the tool still
+    /// reads it as one, and a designer who meant it to be a real box would never find that out from the
+    /// model. This is how they do.
+    /// </para>
+    /// <para>
+    /// <b>The sentence puts each consequence on the part that causes it, because the likely remedy
+    /// depends on it.</b> The reader goes by the <i>type</i> alone: every element of it is an indicator,
+    /// left out of the network and never taken for a real box. The <i>recommendation</i> is what only the
+    /// apply goes by, to recognise the element as its own. A first wording blamed both equally, and the
+    /// action it invited - clearing the recommendation - silences this warning and changes nothing else:
+    /// the element is still read as an indicator, and the next apply, no longer finding one of its own
+    /// there, places a second one beside it. The parameter is named because "the recommendation" is not
+    /// something anybody can find in the properties palette.
+    /// </para>
+    /// <para>
+    /// <b>Posted for every such indicator the apply meets</b>, whether or not the run recommends a box
+    /// at its place. One standing where a box is recommended still takes that box's place, so no
+    /// second indicator appears beside it; that does not make it any less a designer's element dressed
+    /// as ours.
+    /// </para>
+    /// <para>
+    /// The sentence says "connected to other elements", not "joined to a tray or a conduit" and not
+    /// "part of the network": the test is any connector that is connected, to anything - another
+    /// indicator included - and the registered string has to be true of every occurrence.
+    /// </para>
+    /// </remarks>
+    public static readonly FailureDefinitionId IndicatorJoinedIntoNetwork =
+        new(new Guid("7ee44da0-8299-470b-8d1a-71fd5e77bbd0"));
+
     private static readonly (FailureDefinitionId Id, string Message)[] Declared =
     {
         (NoCarrierNear,
-            "This device has no cable tray or conduit within reach, so no route to it could be found."),
+            "An end of this circuit - its panel or one of its devices - has no cable tray or conduit within reach, "
+            + "so no route could be found for this circuit."),
         (NoConnectivity,
             "This circuit's devices cannot be reached through the cable trays and conduits of this model."),
         (ConnectionUnreadable,
             "This circuit's cable connection type could not be read, so the project default was used."),
         (JunctionBoxJoinedToNothing,
             "This element's type calls it a junction box, but it is not joined to any cable tray or conduit."),
+        (IndicatorJoinedIntoNetwork,
+            "This junction box indicator has been connected to other elements, but it still has the indicator type. "
+            + "Cable routing reads every element of that type as an indicator and leaves it out of the network; "
+            + "and because it also still carries the tool's recommendation (BHS_Cbl_Recommendation), cable routing "
+            + "leaves it as it is."),
     };
 
     public void Start(IFeatureServices services)

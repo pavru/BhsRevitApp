@@ -112,4 +112,17 @@ public static class CircuitConnections
         connection = CircuitConnection.AtTerminal;
         return false;
     }
+
+    /// <summary>The value a resolved connection is written back as.</summary>
+    /// <remarks>
+    /// <b>Beside <see cref="TryParse"/> on purpose.</b> Reading and writing are one rule about one
+    /// vocabulary, and the day they live in two files is the day a run writes a word its own reader
+    /// does not recognise. Not translated, for the reason recorded on
+    /// <c>CablingParameters.JunctionBoxRole</c>: the name is read by a person, the value is compared
+    /// by code.
+    /// </remarks>
+    public static string Text(CircuitConnection connection) =>
+        connection == CircuitConnection.AtJunctionBox
+            ? CablingParameters.ConnectionAtJunctionBox
+            : CablingParameters.ConnectionAtTerminal;
 }

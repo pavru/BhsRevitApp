@@ -1,15 +1,16 @@
 {
   "Schema": 2,
   "Disclaimer": "Recorded on a developer machine. Revit cannot run on hosted CI, so CI verifies this record rather than reproducing it: no automated check here has ever started a Revit.",
-  "Commit": "57dde109423a00ea14ce704af22475a0961e82a2",
+  "Commit": "e907e85453c8cea464eaa0cdd662d3be3f02f4b0",
   "CommitClean": true,
   "Content": {
-    "source/Revit": "83693fe5eba202b5285143758e9091abcba7ffa3",
+    "source/Revit": "fbd88fee3d094cc574e09d67789cc45a35adedad",
     "source/Shared": "74994abc25e47a4a9233275e831de55cc6dbaabb",
     "source/WinSide": "5b71abdce4cd8186abf36416137a3dfa7f437a28",
+    "source/Features/MEP.Cabling": "20babb2a93b512191320506e45d9be96919daef7",
     "build/BHS.Revit.Sdk": "eb401a3b673fabf6b4ba9ee1286cf8a450e3ed1c"
   },
-  "RecordedUtc": "2026-09-13T21:33:37.2961382Z",
+  "RecordedUtc": "2026-09-16T07:31:43.9477643Z",
   "WithModel": true,
   "ShowTab": false,
   "Linked": true,
@@ -17,7 +18,7 @@
     {
       "Release": 2024,
       "FileVersion": "0.1.0.0",
-      "BuiltUtc": "2026-09-13T21:23:12.4018741Z",
+      "BuiltUtc": "2026-09-16T07:25:36.9522818Z",
       "Signed": true,
       "Checks": [
         {
@@ -405,6 +406,14 @@
           "Ok": true
         },
         {
+          "Name": "Connector census: every connector of the family instances, MEP curves, fabrication parts and MEP systems of the host and of each link it loads directly reads its type and domain, every physical one answers whether it is connected, and every other property asked of any of them reads or refuses with Revit\u0027s InvalidOperationException itself",
+          "Ok": true
+        },
+        {
+          "Name": "Connector census: every described circuit end stands where the first of the reader\u0027s ways that answers puts it",
+          "Ok": true
+        },
+        {
           "Name": "Cabling connection: a panel decides for its circuits, a circuit that says otherwise wins, and a typo is named",
           "Ok": true
         },
@@ -418,6 +427,62 @@
         },
         {
           "Name": "Cabling apply: an indicator family this model does not have is refused by name, not passed over",
+          "Ok": true
+        },
+        {
+          "Name": "Cabling apply: an apply whose transaction Revit rolls back is refused with the status Revit returned, counts no work and leaves no indicator of ours",
+          "Ok": true
+        },
+        {
+          "Name": "Cabling apply: every box the plan recommends gets one indicator of ours at its place, and nothing else is placed",
+          "Ok": true
+        },
+        {
+          "Name": "Cabling apply: applying the same run again places nothing and removes nothing",
+          "Ok": true
+        },
+        {
+          "Name": "Cabling apply: the indicators an apply placed are not read back as structure",
+          "Ok": true
+        },
+        {
+          "Name": "Cabling apply: every circuit that routed is told its length, the connection it was routed with, and the carriers it was measured along",
+          "Ok": true
+        },
+        {
+          "Name": "Cabling apply: a junction box already in the model is used instead of an indicator, and gets only the circuits through it",
+          "Ok": true
+        },
+        {
+          "Name": "Cabling apply: an indicator of ours the plan no longer names is removed, and one without our recommendation is left",
+          "Ok": true
+        },
+        {
+          "Name": "Cabling apply: an indicator of ours joined to the structure is left, not removed",
+          "Ok": true
+        },
+        {
+          "Name": "Cabling apply: an indicator of ours joined into the network where a box is recommended is left untouched, gets no second indicator beside it, and is named in a warning",
+          "Ok": true
+        },
+        {
+          "Name": "Cabling apply: an element of another type carrying our recommendation is never removed",
+          "Ok": true
+        },
+        {
+          "Name": "Cabling apply: an unreadable connection value is posted as a warning against its circuit",
+          "Ok": true
+        },
+        {
+          "Name": "Cabling apply: every circuit that reaches no carrier is posted as one warning",
+          "Ok": true
+        },
+        {
+          "Name": "Cabling apply: every circuit whose carriers do not join up is posted as one warning",
+          "Ok": true
+        },
+        {
+          "Name": "Cabling apply: a junction box joined to nothing is posted as a warning against it",
           "Ok": true
         },
         {
@@ -477,11 +542,11 @@
         },
         {
           "Name": "launched",
-          "Value": "pid 71876"
+          "Value": "pid 62140"
         },
         {
           "Name": "registered after",
-          "Value": "18.9s"
+          "Value": "21.6s"
         },
         {
           "Name": "recovered by enumeration",
@@ -497,11 +562,11 @@
         },
         {
           "Name": "probe log",
-          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2024-71876-20260914-072345.log"
+          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2024-62140-20260916-172610.log"
         },
         {
           "Name": "threads",
-          "Value": "api 1, call 12"
+          "Value": "api 1, call 14"
         },
         {
           "Name": "appdomain",
@@ -525,7 +590,7 @@
         },
         {
           "Name": "log",
-          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2024-71876-20260914-072345.log"
+          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2024-62140-20260916-172610.log"
         },
         {
           "Name": "sinks",
@@ -537,7 +602,7 @@
         },
         {
           "Name": "opened after registration",
-          "Value": "19.7s"
+          "Value": "20.3s"
         },
         {
           "Name": "availability and the press",
@@ -561,19 +626,19 @@
         },
         {
           "Name": "host:OST_CableTray",
-          "Value": "5"
+          "Value": "7"
         },
         {
           "Name": "host:OST_CableTrayFitting",
-          "Value": "1"
+          "Value": "3"
         },
         {
           "Name": "host:OST_Conduit",
-          "Value": "15"
+          "Value": "18"
         },
         {
           "Name": "host:OST_ConduitFitting",
-          "Value": "6"
+          "Value": "8"
         },
         {
           "Name": "host:circuits",
@@ -581,7 +646,7 @@
         },
         {
           "Name": "instance",
-          "Value": "282ebe4766c542ff8415ef1ec75f7b68"
+          "Value": "e0dc276a51e147c791574c6351459ea1"
         },
         {
           "Name": "link1:linked",
@@ -625,11 +690,11 @@
         },
         {
           "Name": "log",
-          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2024-71876-20260914-072345.log"
+          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2024-62140-20260916-172610.log"
         },
         {
           "Name": "pid",
-          "Value": "71876"
+          "Value": "62140"
         },
         {
           "Name": "release",
@@ -701,27 +766,27 @@
         },
         {
           "Name": "instance",
-          "Value": "282ebe4766c542ff8415ef1ec75f7b68"
+          "Value": "e0dc276a51e147c791574c6351459ea1"
         },
         {
           "Name": "log",
-          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2024-71876-20260914-072345.log"
+          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2024-62140-20260916-172610.log"
         },
         {
           "Name": "pid",
-          "Value": "71876"
+          "Value": "62140"
         },
         {
           "Name": "place:after",
-          "Value": "28"
+          "Value": "37"
         },
         {
           "Name": "place:afterRollback",
-          "Value": "27"
+          "Value": "36"
         },
         {
           "Name": "place:before",
-          "Value": "27"
+          "Value": "36"
         },
         {
           "Name": "place:connected",
@@ -729,6 +794,10 @@
         },
         {
           "Name": "place:connectors",
+          "Value": "4"
+        },
+        {
+          "Name": "place:physical",
           "Value": "4"
         },
         {
@@ -793,11 +862,11 @@
         },
         {
           "Name": "instance",
-          "Value": "282ebe4766c542ff8415ef1ec75f7b68"
+          "Value": "e0dc276a51e147c791574c6351459ea1"
         },
         {
           "Name": "log",
-          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2024-71876-20260914-072345.log"
+          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2024-62140-20260916-172610.log"
         },
         {
           "Name": "modal:apiCallWorked",
@@ -825,7 +894,7 @@
         },
         {
           "Name": "modal:awaitResumedAfter",
-          "Value": "0.52s"
+          "Value": "0.47s"
         },
         {
           "Name": "modal:awaitResumedOnApiThread",
@@ -849,7 +918,7 @@
         },
         {
           "Name": "modal:shownFor",
-          "Value": "2.58s"
+          "Value": "2.54s"
         },
         {
           "Name": "modal:transactionCommit",
@@ -861,7 +930,7 @@
         },
         {
           "Name": "modal:transactionCreated",
-          "Value": "626650"
+          "Value": "627004"
         },
         {
           "Name": "modal:transactionRolledBack",
@@ -881,7 +950,7 @@
         },
         {
           "Name": "pid",
-          "Value": "71876"
+          "Value": "62140"
         },
         {
           "Name": "release",
@@ -893,11 +962,11 @@
         },
         {
           "Name": "instance",
-          "Value": "282ebe4766c542ff8415ef1ec75f7b68"
+          "Value": "e0dc276a51e147c791574c6351459ea1"
         },
         {
           "Name": "log",
-          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2024-71876-20260914-072345.log"
+          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2024-62140-20260916-172610.log"
         },
         {
           "Name": "modal:measured",
@@ -909,7 +978,7 @@
         },
         {
           "Name": "modal:pumpRanAt",
-          "Value": "2.58s"
+          "Value": "2.54s"
         },
         {
           "Name": "modal:windowClosed",
@@ -917,7 +986,7 @@
         },
         {
           "Name": "pid",
-          "Value": "71876"
+          "Value": "62140"
         },
         {
           "Name": "release",
@@ -929,11 +998,11 @@
         },
         {
           "Name": "instance",
-          "Value": "282ebe4766c542ff8415ef1ec75f7b68"
+          "Value": "e0dc276a51e147c791574c6351459ea1"
         },
         {
           "Name": "log",
-          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2024-71876-20260914-072345.log"
+          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2024-62140-20260916-172610.log"
         },
         {
           "Name": "parameters:bound",
@@ -1009,7 +1078,7 @@
         },
         {
           "Name": "pid",
-          "Value": "71876"
+          "Value": "62140"
         },
         {
           "Name": "release",
@@ -1025,7 +1094,7 @@
         },
         {
           "Name": "suites declared",
-          "Value": "4"
+          "Value": "5"
         },
         {
           "Name": "catalogue categories",
@@ -1033,7 +1102,7 @@
         },
         {
           "Name": "carriers",
-          "Value": "40"
+          "Value": "49"
         },
         {
           "Name": "classes in use",
@@ -1041,11 +1110,11 @@
         },
         {
           "Name": "carriers",
-          "Value": "40"
+          "Value": "49"
         },
         {
           "Name": "carriers without the filter",
-          "Value": "40"
+          "Value": "49"
         },
         {
           "Name": "markers excluded",
@@ -1057,7 +1126,207 @@
         },
         {
           "Name": "total carrier length, internal feet",
-          "Value": "492.190"
+          "Value": "504.693"
+        },
+        {
+          "Name": "census: documents walked",
+          "Value": "3 (host 1, links 2)"
+        },
+        {
+          "Name": "census: link instances not loaded",
+          "Value": "0"
+        },
+        {
+          "Name": "census: link instances whose document was already walked",
+          "Value": "0"
+        },
+        {
+          "Name": "census: links inside links, not followed",
+          "Value": "1"
+        },
+        {
+          "Name": "census: elements walked, by the class asked for",
+          "Value": "FamilyInstance x68; MEPCurve x39; MEPSystem x15"
+        },
+        {
+          "Name": "census: elements with a connector manager",
+          "Value": "97 (host 84, links 13)"
+        },
+        {
+          "Name": "census: connector managers that could not be read, by the class asked for",
+          "Value": "none"
+        },
+        {
+          "Name": "census: collectors Revit refused",
+          "Value": "none"
+        },
+        {
+          "Name": "census: connector sets, entries they say they hold against entries walked",
+          "Value": "231 against 231; sets whose size did not read 0"
+        },
+        {
+          "Name": "census: connectors walked",
+          "Value": "231 (host 199, links 32)"
+        },
+        {
+          "Name": "census: connectors not physical",
+          "Value": "75 (host 75, links 0)"
+        },
+        {
+          "Name": "census: connectors met through an element that does not own them",
+          "Value": "0 (host 0, links 0)"
+        },
+        {
+          "Name": "census: type or domain unread",
+          "Value": "none"
+        },
+        {
+          "Name": "census: physical connectors refusing IsConnected",
+          "Value": "none"
+        },
+        {
+          "Name": "census: exceptions other than InvalidOperationException itself",
+          "Value": "none"
+        },
+        {
+          "Name": "connectors by what they answer: type 1 physical, domain 4: Origin reads, IsConnected true, CoordinateSystem reads, MEPSystem none",
+          "Value": "75 (host 56, links 19)"
+        },
+        {
+          "Name": "connectors by what they answer: type 4 not physical, domain 0: Origin refuses, IsConnected refuses, CoordinateSystem refuses, MEPSystem refuses",
+          "Value": "60 (host 60, links 0)"
+        },
+        {
+          "Name": "connectors by what they answer: type 1 physical, domain 2: Origin reads, IsConnected false, CoordinateSystem reads, MEPSystem none",
+          "Value": "27 (host 27, links 0)"
+        },
+        {
+          "Name": "connectors by what they answer: type 1 physical, domain 4: Origin reads, IsConnected false, CoordinateSystem reads, MEPSystem none",
+          "Value": "25 (host 17, links 8)"
+        },
+        {
+          "Name": "connectors by what they answer: type 2 physical, domain 4: Origin reads, IsConnected true, CoordinateSystem reads, MEPSystem none",
+          "Value": "15 (host 10, links 5)"
+        },
+        {
+          "Name": "connectors by what they answer: type 32 not physical, domain 4: Origin refuses, IsConnected refuses, CoordinateSystem refuses, MEPSystem none",
+          "Value": "15 (host 15, links 0)"
+        },
+        {
+          "Name": "connectors by what they answer: type 1 physical, domain 1: Origin reads, IsConnected false, CoordinateSystem reads, MEPSystem a system",
+          "Value": "6 (host 6, links 0)"
+        },
+        {
+          "Name": "connectors by what they answer: type 1 physical, domain 1: Origin reads, IsConnected true, CoordinateSystem reads, MEPSystem a system",
+          "Value": "6 (host 6, links 0)"
+        },
+        {
+          "Name": "connectors by what they answer: type 2 physical, domain 1: Origin reads, IsConnected true, CoordinateSystem reads, MEPSystem a system",
+          "Value": "2 (host 2, links 0)"
+        },
+        {
+          "Name": "connectors not physical, by where they live: ElectricalSystem OST_ElectricalCircuit, type 4, owned by the element walked",
+          "Value": "39 (host 39, links 0)"
+        },
+        {
+          "Name": "connectors not physical, by where they live: FamilyInstance OST_ElectricalEquipment, type 32, owned by the element walked",
+          "Value": "15 (host 15, links 0)"
+        },
+        {
+          "Name": "connectors not physical, by where they live: FamilyInstance OST_ElectricalEquipment, type 4, owned by the element walked",
+          "Value": "13 (host 13, links 0)"
+        },
+        {
+          "Name": "connectors not physical, by where they live: MechanicalSystem OST_DuctSystem, type 4, owned by the element walked",
+          "Value": "8 (host 8, links 0)"
+        },
+        {
+          "Name": "connectors not physical, by their references: ElectricalSystem OST_ElectricalCircuit, type 4: references 1, their types [1], owned by [FamilyInstance], IsConnectedTo the first true",
+          "Value": "26 (host 26, links 0)"
+        },
+        {
+          "Name": "connectors not physical, by their references: FamilyInstance OST_ElectricalEquipment, type 32: references 0, their types [], owned by [], IsConnectedTo the first no reference to ask about",
+          "Value": "15 (host 15, links 0)"
+        },
+        {
+          "Name": "connectors not physical, by their references: ElectricalSystem OST_ElectricalCircuit, type 4: references 1, their types [4], owned by [FamilyInstance], IsConnectedTo the first true",
+          "Value": "13 (host 13, links 0)"
+        },
+        {
+          "Name": "connectors not physical, by their references: FamilyInstance OST_ElectricalEquipment, type 4: references 1, their types [4], owned by [ElectricalSystem], IsConnectedTo the first true",
+          "Value": "13 (host 13, links 0)"
+        },
+        {
+          "Name": "connectors not physical, by their references: MechanicalSystem OST_DuctSystem, type 4: references 1, their types [1], owned by [Duct], IsConnectedTo the first true",
+          "Value": "6 (host 6, links 0)"
+        },
+        {
+          "Name": "connectors not physical, by their references: MechanicalSystem OST_DuctSystem, type 4: references 1, their types [2], owned by [Duct], IsConnectedTo the first true",
+          "Value": "2 (host 2, links 0)"
+        },
+        {
+          "Name": "connectors, listed unused against IsConnected: type 1: listed unused no, IsConnected true",
+          "Value": "81 (host 62, links 19)"
+        },
+        {
+          "Name": "connectors, listed unused against IsConnected: type 4: listed unused no, IsConnected refuses",
+          "Value": "60 (host 60, links 0)"
+        },
+        {
+          "Name": "connectors, listed unused against IsConnected: type 1: listed unused yes, IsConnected false",
+          "Value": "58 (host 50, links 8)"
+        },
+        {
+          "Name": "connectors, listed unused against IsConnected: type 2: listed unused no, IsConnected true",
+          "Value": "17 (host 12, links 5)"
+        },
+        {
+          "Name": "connectors, listed unused against IsConnected: type 32: listed unused no, IsConnected refuses",
+          "Value": "15 (host 15, links 0)"
+        },
+        {
+          "Name": "census: elapsed, ms",
+          "Value": "45"
+        },
+        {
+          "Name": "circuit ends: electrical systems",
+          "Value": "circuits 13, spare or space 0"
+        },
+        {
+          "Name": "circuit ends: described by the reader",
+          "Value": "circuits 13 with 26 devices; without a panel 0, without devices 0, devices dropped 0"
+        },
+        {
+          "Name": "circuit ends: panel points, by the way that answered",
+          "Value": "the panel\u0027s first physical electrical connector 13"
+        },
+        {
+          "Name": "circuit ends: device points, by the way that answered",
+          "Value": "its first physical electrical connector 26"
+        },
+        {
+          "Name": "circuit ends: points the copy of the reader does not give",
+          "Value": "none"
+        },
+        {
+          "Name": "circuit ends: element sets, entries they say they hold against entries walked",
+          "Value": "26 against 26; sets whose size did not read 0"
+        },
+        {
+          "Name": "circuit ends: exceptions other than InvalidOperationException itself",
+          "Value": "none"
+        },
+        {
+          "Name": "circuit feeds: feed type 4, owned by the panel, found again on the panel type 4, its references hold a physical connector of the panel no; the panel\u0027s physical electrical connectors on no system; point from the panel\u0027s first physical electrical connector",
+          "Value": "13"
+        },
+        {
+          "Name": "circuit devices: electrical connectors of type [1 x1]; on this circuit none; point from its first physical electrical connector",
+          "Value": "26"
+        },
+        {
+          "Name": "circuit ends: elapsed, ms",
+          "Value": "28"
         },
         {
           "Name": "circuits on the panel used",
@@ -1080,12 +1349,544 @@
           "Value": "0"
         },
         {
+          "Name": "binding: other failures while applying",
+          "Value": "0"
+        },
+        {
+          "Name": "binding: warnings dismissed while applying",
+          "Value": "0"
+        },
+        {
           "Name": "indicator category",
           "Value": "OST_ConduitFitting"
         },
         {
           "Name": "carrier categories",
           "Value": "4"
+        },
+        {
+          "Name": "rolled back: indicators of ours already in the model",
+          "Value": "0"
+        },
+        {
+          "Name": "rolled back: routes found",
+          "Value": "6"
+        },
+        {
+          "Name": "rolled back: boxes recommended",
+          "Value": "10"
+        },
+        {
+          "Name": "rolled back: what Revit returned",
+          "Value": "RolledBack"
+        },
+        {
+          "Name": "rolled back: rollbacks the watch answered",
+          "Value": "1"
+        },
+        {
+          "Name": "rolled back: failures processed while applying",
+          "Value": "1"
+        },
+        {
+          "Name": "placement: indicators of ours already in the model",
+          "Value": "0"
+        },
+        {
+          "Name": "placement: circuits cut in boxes",
+          "Value": "13"
+        },
+        {
+          "Name": "placement: routes found",
+          "Value": "6"
+        },
+        {
+          "Name": "placement: routes not found, left out of the run",
+          "Value": "7"
+        },
+        {
+          "Name": "placement: boxes recommended",
+          "Value": "10"
+        },
+        {
+          "Name": "placement: recommended boxes serving more than one circuit",
+          "Value": "1"
+        },
+        {
+          "Name": "placement: boxes already in the model used",
+          "Value": "0"
+        },
+        {
+          "Name": "placement reach: options passed, against the command\u0027s defaults",
+          "Value": "join 152.4 mm, reach 3048 mm, axis-aligned yes, conduit preference 0, length extension 0, single-device circuits routed; the command\u0027s defaults: join 50 mm, reach 3000 mm, axis-aligned yes, conduit preference 0, length extension 0, single-device circuits routed - so reach \u002B48 mm and join \u002B102.4 mm against them"
+        },
+        {
+          "Name": "placement reach: routes by status",
+          "Value": "found 6, no carrier near 6, no connectivity 1, nothing to route 0"
+        },
+        {
+          "Name": "placement reach: circuits NoCarrierNear, by the end they stopped at",
+          "Value": "at the panel 2, at a device 4, end not identified 0; ends matched more than once 0"
+        },
+        {
+          "Name": "placement reach: the case\u0027s copy of the router\u0027s rule stops at the same end",
+          "Value": "6 of 6"
+        },
+        {
+          "Name": "placement reach: distinct blocked ends",
+          "Value": "5 (panels 1, devices 4)"
+        },
+        {
+          "Name": "placement reach: blocked ends a carrier reaches by brute force, which the index did not offer",
+          "Value": "0"
+        },
+        {
+          "Name": "placement reach: ends reached, by the approach study, its copy here, and the router\u0027s rule",
+          "Value": "to terminals: study 30, copy 30; along carriers: study 31, copy 31; by the router\u0027s rule 30; of 39 ends (study 39)"
+        },
+        {
+          "Name": "placement reach: heights, mm",
+          "Value": "circuit ends 338 mm..717 mm; host carriers 460 mm..2750 mm; linked carriers 2750 mm..2750 mm"
+        },
+        {
+          "Name": "placement reach: link 589470",
+          "Value": "transform identity yes, moved 0 mm, rotated no; carriers in the network 0, read again without the transform 0; nearest to a blocked end none with the transform, none without; blocked ends its carriers would reach without the transform 0 of 5"
+        },
+        {
+          "Name": "placement reach: link 589473",
+          "Value": "transform identity yes, moved 0 mm, rotated no; carriers in the network 13, read again without the transform 13; nearest to a blocked end 4112 mm with the transform, 4112 mm without; blocked ends its carriers would reach without the transform 0 of 5"
+        },
+        {
+          "Name": "placement reach: links loaded",
+          "Value": "2"
+        },
+        {
+          "Name": "placement reach: blocked at panel 589735",
+          "Value": "circuits 2 [589828, 589835]; point from the panel\u0027s first physical electrical connector; nearest carrier 589473:589512 tray Segment in a link, 4320 mm by the approach metric, 3058 mm straight to the same point; nearest along any carrier, conduits not held to their ends, 2740 mm straight; to it: height \u002B2032.6 mm, across 2287 mm by the axes, 2285 mm straight; reach 3048 mm, over it by 1272 mm"
+        },
+        {
+          "Name": "placement reach: blocked at device 590765",
+          "Value": "circuits 1 [591759]; point from its first physical electrical connector; nearest carrier 589473:589474 tray Segment in a link, 4112 mm by the approach metric, 2921 mm straight to the same point; nearest along any carrier, conduits not held to their ends, 2921 mm straight; to it: height \u002B2251.9 mm, across 1860 mm by the axes, 1860 mm straight; reach 3048 mm, over it by 1064 mm"
+        },
+        {
+          "Name": "placement reach: blocked at device 591157",
+          "Value": "circuits 1 [591772]; point from its first physical electrical connector; nearest carrier 589473:589474 tray Segment in a link, 4112 mm by the approach metric, 2921 mm straight to the same point; nearest along any carrier, conduits not held to their ends, 2267 mm straight; to it: height \u002B2251.9 mm, across 1860 mm by the axes, 1860 mm straight; reach 3048 mm, over it by 1064 mm"
+        },
+        {
+          "Name": "placement reach: blocked at device 626302",
+          "Value": "circuits 1 [626600]; point from its first physical electrical connector; nearest carrier 591917 conduit Segment in the host, 3265 mm by the approach metric, 2244 mm straight to the same point; nearest along any carrier, conduits not held to their ends, 2244 mm straight; to it: height \u002B332.3 mm, across 2933 mm by the axes, 2219 mm straight; reach 3048 mm, over it by 217 mm"
+        },
+        {
+          "Name": "placement reach: blocked at device 626368",
+          "Value": "circuits 1 [626594]; point from its first physical electrical connector; nearest carrier 626248 conduit Segment in the host, 3900 mm by the approach metric, 2830 mm straight to the same point; nearest along any carrier, conduits not held to their ends, 2830 mm straight; to it: height \u002B2411.9 mm, across 1488 mm by the axes, 1481 mm straight; reach 3048 mm, over it by 852 mm"
+        },
+        {
+          "Name": "placement: carriers on found routes in the host",
+          "Value": "31"
+        },
+        {
+          "Name": "placement: of them already naming a circuit before the apply",
+          "Value": "0"
+        },
+        {
+          "Name": "placement: other failures while applying",
+          "Value": "0"
+        },
+        {
+          "Name": "placement: warnings dismissed while applying",
+          "Value": "0"
+        },
+        {
+          "Name": "placement: indicators placed",
+          "Value": "10"
+        },
+        {
+          "Name": "placement: indicators found in place",
+          "Value": "0"
+        },
+        {
+          "Name": "placement: carriers told their circuits",
+          "Value": "31"
+        },
+        {
+          "Name": "placement: references that fell in a link",
+          "Value": "22"
+        },
+        {
+          "Name": "placement: farthest planned box from its nearest instance of the indicator type, internal feet",
+          "Value": "0.0000"
+        },
+        {
+          "Name": "second apply: indicators of ours already in the model",
+          "Value": "0"
+        },
+        {
+          "Name": "second apply: boxes recommended",
+          "Value": "10"
+        },
+        {
+          "Name": "second apply, first press: other failures while applying",
+          "Value": "0"
+        },
+        {
+          "Name": "second apply, first press: warnings dismissed while applying",
+          "Value": "0"
+        },
+        {
+          "Name": "second apply, second press: other failures while applying",
+          "Value": "0"
+        },
+        {
+          "Name": "second apply, second press: warnings dismissed while applying",
+          "Value": "0"
+        },
+        {
+          "Name": "second apply: indicators placed by the first",
+          "Value": "10"
+        },
+        {
+          "Name": "second apply: indicators found in place by the second",
+          "Value": "10"
+        },
+        {
+          "Name": "re-read: indicators of ours already in the model",
+          "Value": "0"
+        },
+        {
+          "Name": "re-read: other failures while applying",
+          "Value": "0"
+        },
+        {
+          "Name": "re-read: warnings dismissed while applying",
+          "Value": "0"
+        },
+        {
+          "Name": "re-read: indicators placed in a carrier category",
+          "Value": "10"
+        },
+        {
+          "Name": "re-read: markers excluded before",
+          "Value": "0"
+        },
+        {
+          "Name": "re-read: markers excluded after",
+          "Value": "10"
+        },
+        {
+          "Name": "route written back: indicators of ours already in the model",
+          "Value": "0"
+        },
+        {
+          "Name": "route written back: circuits cut in boxes",
+          "Value": "13"
+        },
+        {
+          "Name": "route written back: routes found",
+          "Value": "6"
+        },
+        {
+          "Name": "route written back: routes not found",
+          "Value": "7"
+        },
+        {
+          "Name": "route written back: other failures while applying",
+          "Value": "0"
+        },
+        {
+          "Name": "route written back: warnings dismissed while applying",
+          "Value": "0"
+        },
+        {
+          "Name": "route written back: circuits told their route",
+          "Value": "6"
+        },
+        {
+          "Name": "route written back: circuits that did not route",
+          "Value": "7"
+        },
+        {
+          "Name": "existing box: box radius, mm",
+          "Value": "1000"
+        },
+        {
+          "Name": "existing box: indicators of ours already in the model",
+          "Value": "0"
+        },
+        {
+          "Name": "existing box: fitting types marked a box",
+          "Value": "4"
+        },
+        {
+          "Name": "existing box: boxes in the model",
+          "Value": "11"
+        },
+        {
+          "Name": "existing box: boxes in the model a tap used",
+          "Value": "1"
+        },
+        {
+          "Name": "existing box: boxes recommended",
+          "Value": "9"
+        },
+        {
+          "Name": "existing box: used boxes in a link",
+          "Value": "0"
+        },
+        {
+          "Name": "existing box: used boxes in the host already naming a circuit",
+          "Value": "0"
+        },
+        {
+          "Name": "existing box: other failures while applying",
+          "Value": "0"
+        },
+        {
+          "Name": "existing box: warnings dismissed while applying",
+          "Value": "0"
+        },
+        {
+          "Name": "existing box: boxes in the model the apply reports using",
+          "Value": "1"
+        },
+        {
+          "Name": "removal: other failures while applying",
+          "Value": "0"
+        },
+        {
+          "Name": "removal: warnings dismissed while applying",
+          "Value": "0"
+        },
+        {
+          "Name": "removal: indicators removed",
+          "Value": "1"
+        },
+        {
+          "Name": "removal: indicators left as joined",
+          "Value": "0"
+        },
+        {
+          "Name": "joined: indicator connectors",
+          "Value": "4: DomainCableTrayConduit"
+        },
+        {
+          "Name": "joined: other failures while applying",
+          "Value": "0"
+        },
+        {
+          "Name": "joined: warnings dismissed while applying",
+          "Value": "1"
+        },
+        {
+          "Name": "joined: indicators left as joined",
+          "Value": "1"
+        },
+        {
+          "Name": "joined: indicators of ours this case reads as joined",
+          "Value": "1"
+        },
+        {
+          "Name": "joined: cabling warnings posted",
+          "Value": "1"
+        },
+        {
+          "Name": "joined at a box: indicators of ours already in the model",
+          "Value": "0"
+        },
+        {
+          "Name": "joined at a box: boxes recommended",
+          "Value": "10"
+        },
+        {
+          "Name": "joined at a box: indicator connectors",
+          "Value": "4: DomainCableTrayConduit"
+        },
+        {
+          "Name": "joined at a box: distance of the joined indicator from its box, internal feet",
+          "Value": "0.0000"
+        },
+        {
+          "Name": "joined at a box: other failures while applying",
+          "Value": "0"
+        },
+        {
+          "Name": "joined at a box: warnings dismissed while applying",
+          "Value": "1"
+        },
+        {
+          "Name": "joined at a box: indicators placed",
+          "Value": "9"
+        },
+        {
+          "Name": "joined at a box: joined indicators standing for a box",
+          "Value": "1"
+        },
+        {
+          "Name": "joined at a box: cabling warnings posted",
+          "Value": "1"
+        },
+        {
+          "Name": "another type: the other type is of",
+          "Value": "another family"
+        },
+        {
+          "Name": "another type: other failures while applying",
+          "Value": "0"
+        },
+        {
+          "Name": "another type: warnings dismissed while applying",
+          "Value": "0"
+        },
+        {
+          "Name": "unreadable: other failures while applying",
+          "Value": "0"
+        },
+        {
+          "Name": "unreadable: warnings dismissed while applying",
+          "Value": "1"
+        },
+        {
+          "Name": "unreadable: circuits named unreadable",
+          "Value": "1"
+        },
+        {
+          "Name": "unreadable: cabling warnings posted",
+          "Value": "1"
+        },
+        {
+          "Name": "no carrier: circuits blocked",
+          "Value": "13"
+        },
+        {
+          "Name": "no carrier: over the model\u0027s own carriers, at terminals",
+          "Value": "found 6, no carrier near 6, no connectivity 1, nothing to route 0"
+        },
+        {
+          "Name": "no carrier: over the model\u0027s own carriers, cut in boxes",
+          "Value": "found 6, no carrier near 6, no connectivity 1, nothing to route 0"
+        },
+        {
+          "Name": "no carrier: NoCarrierNear in both modes",
+          "Value": "6 of 6 stopped at the same end; NoCarrierNear in one mode only: 0"
+        },
+        {
+          "Name": "no carrier reach, at terminals: options passed, against the command\u0027s defaults",
+          "Value": "join 152.4 mm, reach 3048 mm, axis-aligned yes, conduit preference 0, length extension 0, single-device circuits routed; the command\u0027s defaults: join 50 mm, reach 3000 mm, axis-aligned yes, conduit preference 0, length extension 0, single-device circuits routed - so reach \u002B48 mm and join \u002B102.4 mm against them"
+        },
+        {
+          "Name": "no carrier reach, at terminals: routes by status",
+          "Value": "found 6, no carrier near 6, no connectivity 1, nothing to route 0"
+        },
+        {
+          "Name": "no carrier reach, at terminals: circuits NoCarrierNear, by the end they stopped at",
+          "Value": "at the panel 2, at a device 4, end not identified 0; ends matched more than once 0"
+        },
+        {
+          "Name": "no carrier reach, at terminals: the case\u0027s copy of the router\u0027s rule stops at the same end",
+          "Value": "6 of 6"
+        },
+        {
+          "Name": "no carrier reach, at terminals: distinct blocked ends",
+          "Value": "5 (panels 1, devices 4)"
+        },
+        {
+          "Name": "no carrier reach, at terminals: blocked ends a carrier reaches by brute force, which the index did not offer",
+          "Value": "0"
+        },
+        {
+          "Name": "no carrier reach, at terminals: ends reached, by the approach study, its copy here, and the router\u0027s rule",
+          "Value": "to terminals: study 30, copy 30; along carriers: study 31, copy 31; by the router\u0027s rule 30; of 39 ends (study 39)"
+        },
+        {
+          "Name": "no carrier reach, at terminals: heights, mm",
+          "Value": "circuit ends 338 mm..717 mm; host carriers 460 mm..2750 mm; linked carriers 2750 mm..2750 mm"
+        },
+        {
+          "Name": "no carrier reach, at terminals: link 589470",
+          "Value": "transform identity yes, moved 0 mm, rotated no; carriers in the network 0, read again without the transform 0; nearest to a blocked end none with the transform, none without; blocked ends its carriers would reach without the transform 0 of 5"
+        },
+        {
+          "Name": "no carrier reach, at terminals: link 589473",
+          "Value": "transform identity yes, moved 0 mm, rotated no; carriers in the network 13, read again without the transform 13; nearest to a blocked end 4112 mm with the transform, 4112 mm without; blocked ends its carriers would reach without the transform 0 of 5"
+        },
+        {
+          "Name": "no carrier reach, at terminals: links loaded",
+          "Value": "2"
+        },
+        {
+          "Name": "no carrier reach, at terminals: blocked at panel 589735",
+          "Value": "circuits 2 [589828, 589835]; point from the panel\u0027s first physical electrical connector; nearest carrier 589473:589512 tray Segment in a link, 4320 mm by the approach metric, 3058 mm straight to the same point; nearest along any carrier, conduits not held to their ends, 2740 mm straight; to it: height \u002B2032.6 mm, across 2287 mm by the axes, 2285 mm straight; reach 3048 mm, over it by 1272 mm"
+        },
+        {
+          "Name": "no carrier reach, at terminals: blocked at device 590765",
+          "Value": "circuits 1 [591759]; point from its first physical electrical connector; nearest carrier 589473:589474 tray Segment in a link, 4112 mm by the approach metric, 2921 mm straight to the same point; nearest along any carrier, conduits not held to their ends, 2921 mm straight; to it: height \u002B2251.9 mm, across 1860 mm by the axes, 1860 mm straight; reach 3048 mm, over it by 1064 mm"
+        },
+        {
+          "Name": "no carrier reach, at terminals: blocked at device 591157",
+          "Value": "circuits 1 [591772]; point from its first physical electrical connector; nearest carrier 589473:589474 tray Segment in a link, 4112 mm by the approach metric, 2921 mm straight to the same point; nearest along any carrier, conduits not held to their ends, 2267 mm straight; to it: height \u002B2251.9 mm, across 1860 mm by the axes, 1860 mm straight; reach 3048 mm, over it by 1064 mm"
+        },
+        {
+          "Name": "no carrier reach, at terminals: blocked at device 626302",
+          "Value": "circuits 1 [626600]; point from its first physical electrical connector; nearest carrier 591917 conduit Segment in the host, 3265 mm by the approach metric, 2244 mm straight to the same point; nearest along any carrier, conduits not held to their ends, 2244 mm straight; to it: height \u002B332.3 mm, across 2933 mm by the axes, 2219 mm straight; reach 3048 mm, over it by 217 mm"
+        },
+        {
+          "Name": "no carrier reach, at terminals: blocked at device 626368",
+          "Value": "circuits 1 [626594]; point from its first physical electrical connector; nearest carrier 626248 conduit Segment in the host, 3900 mm by the approach metric, 2830 mm straight to the same point; nearest along any carrier, conduits not held to their ends, 2830 mm straight; to it: height \u002B2411.9 mm, across 1488 mm by the axes, 1481 mm straight; reach 3048 mm, over it by 852 mm"
+        },
+        {
+          "Name": "no carrier: other failures while applying",
+          "Value": "0"
+        },
+        {
+          "Name": "no carrier: warnings dismissed while applying",
+          "Value": "13"
+        },
+        {
+          "Name": "no carrier: cabling warnings posted",
+          "Value": "13"
+        },
+        {
+          "Name": "no joints: circuits that could not cross",
+          "Value": "8"
+        },
+        {
+          "Name": "no joints: circuits with no carrier near",
+          "Value": "5"
+        },
+        {
+          "Name": "no joints: circuits routed on one carrier",
+          "Value": "0"
+        },
+        {
+          "Name": "no joints: other failures while applying",
+          "Value": "0"
+        },
+        {
+          "Name": "no joints: warnings dismissed while applying",
+          "Value": "8"
+        },
+        {
+          "Name": "no joints: cabling warnings posted",
+          "Value": "8"
+        },
+        {
+          "Name": "box joined to nothing: the other type is of",
+          "Value": "another family"
+        },
+        {
+          "Name": "box joined to nothing: other failures while applying",
+          "Value": "0"
+        },
+        {
+          "Name": "box joined to nothing: warnings dismissed while applying",
+          "Value": "1"
+        },
+        {
+          "Name": "box joined to nothing: boxes named",
+          "Value": "1"
+        },
+        {
+          "Name": "box joined to nothing: cabling warnings posted",
+          "Value": "1"
         },
         {
           "Name": "cases skipped",
@@ -1229,7 +2030,7 @@
         },
         {
           "Name": "diagnostic events",
-          "Value": "509 received, 0 dropped by the publisher, longest quiet spell 11.8s during Starting"
+          "Value": "1716 received, 0 dropped by the publisher, longest quiet spell 11.9s during Starting"
         },
         {
           "Name": "phases seen",
@@ -1281,11 +2082,11 @@
         },
         {
           "Name": "progress caption",
-          "Value": "\u0424\u043E\u0440\u043C\u0438\u0440\u043E\u0432\u0430\u043D\u0438\u0435 \u0433\u0440\u0430\u0444\u0438\u043A\u0438 \u0434\u043B\u044F \u041F\u043B\u0430\u043D \u044D\u0442\u0430\u0436\u0430: 1 - \u0421\u0438\u043B\u043E\u0432\u044B\u0435 \u0446\u0435\u043F\u0438"
+          "Value": "\u0424\u043E\u0440\u043C\u0438\u0440\u043E\u0432\u0430\u043D\u0438\u0435 \u0433\u0440\u0430\u0444\u0438\u043A\u0438 \u0434\u043B\u044F 3D \u0432\u0438\u0434: {3D}"
         },
         {
           "Name": "progress caption",
-          "Value": "\u0424\u043E\u0440\u043C\u0438\u0440\u043E\u0432\u0430\u043D\u0438\u0435 \u0433\u0440\u0430\u0444\u0438\u043A\u0438 \u0434\u043B\u044F \u041F\u043B\u0430\u043D \u044D\u0442\u0430\u0436\u0430: Proxy of 1 - \u0421\u0438\u043B\u043E\u0432\u044B\u0435 \u0446\u0435\u043F\u0438"
+          "Value": "\u0424\u043E\u0440\u043C\u0438\u0440\u043E\u0432\u0430\u043D\u0438\u0435 \u0433\u0440\u0430\u0444\u0438\u043A\u0438 \u0434\u043B\u044F 3D \u0432\u0438\u0434: Proxy of {3D}"
         },
         {
           "Name": "progress caption",
@@ -1301,7 +2102,7 @@
         },
         {
           "Name": "progress caption",
-          "Value": "\u0427\u0435\u0440\u0442\u0435\u0436: TestCabling-\u042D\u041E\u041C.rvt - \u041F\u043B\u0430\u043D \u044D\u0442\u0430\u0436\u0430: 1 - \u0421\u0438\u043B\u043E\u0432\u044B\u0435 \u0446\u0435\u043F\u0438"
+          "Value": "\u0427\u0435\u0440\u0442\u0435\u0436: TestCabling-\u042D\u041E\u041C.rvt - 3D \u0432\u0438\u0434: {3D}"
         },
         {
           "Name": "progress caption",
@@ -1309,14 +2110,14 @@
         },
         {
           "Name": "closed after",
-          "Value": "21.9s"
+          "Value": "21.7s"
         }
       ]
     },
     {
       "Release": 2025,
       "FileVersion": "0.1.0.0",
-      "BuiltUtc": "2026-09-13T21:23:16.2788443Z",
+      "BuiltUtc": "2026-09-16T07:25:39.5571494Z",
       "Signed": true,
       "Checks": [
         {
@@ -1704,6 +2505,14 @@
           "Ok": true
         },
         {
+          "Name": "Connector census: every connector of the family instances, MEP curves, fabrication parts and MEP systems of the host and of each link it loads directly reads its type and domain, every physical one answers whether it is connected, and every other property asked of any of them reads or refuses with Revit\u0027s InvalidOperationException itself",
+          "Ok": true
+        },
+        {
+          "Name": "Connector census: every described circuit end stands where the first of the reader\u0027s ways that answers puts it",
+          "Ok": true
+        },
+        {
           "Name": "Cabling connection: a panel decides for its circuits, a circuit that says otherwise wins, and a typo is named",
           "Ok": true
         },
@@ -1717,6 +2526,62 @@
         },
         {
           "Name": "Cabling apply: an indicator family this model does not have is refused by name, not passed over",
+          "Ok": true
+        },
+        {
+          "Name": "Cabling apply: an apply whose transaction Revit rolls back is refused with the status Revit returned, counts no work and leaves no indicator of ours",
+          "Ok": true
+        },
+        {
+          "Name": "Cabling apply: every box the plan recommends gets one indicator of ours at its place, and nothing else is placed",
+          "Ok": true
+        },
+        {
+          "Name": "Cabling apply: applying the same run again places nothing and removes nothing",
+          "Ok": true
+        },
+        {
+          "Name": "Cabling apply: the indicators an apply placed are not read back as structure",
+          "Ok": true
+        },
+        {
+          "Name": "Cabling apply: every circuit that routed is told its length, the connection it was routed with, and the carriers it was measured along",
+          "Ok": true
+        },
+        {
+          "Name": "Cabling apply: a junction box already in the model is used instead of an indicator, and gets only the circuits through it",
+          "Ok": true
+        },
+        {
+          "Name": "Cabling apply: an indicator of ours the plan no longer names is removed, and one without our recommendation is left",
+          "Ok": true
+        },
+        {
+          "Name": "Cabling apply: an indicator of ours joined to the structure is left, not removed",
+          "Ok": true
+        },
+        {
+          "Name": "Cabling apply: an indicator of ours joined into the network where a box is recommended is left untouched, gets no second indicator beside it, and is named in a warning",
+          "Ok": true
+        },
+        {
+          "Name": "Cabling apply: an element of another type carrying our recommendation is never removed",
+          "Ok": true
+        },
+        {
+          "Name": "Cabling apply: an unreadable connection value is posted as a warning against its circuit",
+          "Ok": true
+        },
+        {
+          "Name": "Cabling apply: every circuit that reaches no carrier is posted as one warning",
+          "Ok": true
+        },
+        {
+          "Name": "Cabling apply: every circuit whose carriers do not join up is posted as one warning",
+          "Ok": true
+        },
+        {
+          "Name": "Cabling apply: a junction box joined to nothing is posted as a warning against it",
           "Ok": true
         },
         {
@@ -1776,11 +2641,11 @@
         },
         {
           "Name": "launched",
-          "Value": "pid 69056"
+          "Value": "pid 71236"
         },
         {
           "Name": "registered after",
-          "Value": "15.3s"
+          "Value": "15.4s"
         },
         {
           "Name": "recovered by enumeration",
@@ -1796,11 +2661,11 @@
         },
         {
           "Name": "probe log",
-          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2025-69056-20260914-072459.log"
+          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2025-71236-20260916-172729.log"
         },
         {
           "Name": "threads",
-          "Value": "api 1, call 17"
+          "Value": "api 1, call 23"
         },
         {
           "Name": "appdomain",
@@ -1824,7 +2689,7 @@
         },
         {
           "Name": "log",
-          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2025-69056-20260914-072459.log"
+          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2025-71236-20260916-172729.log"
         },
         {
           "Name": "sinks",
@@ -1836,7 +2701,7 @@
         },
         {
           "Name": "opened after registration",
-          "Value": "10.9s"
+          "Value": "11.0s"
         },
         {
           "Name": "availability and the press",
@@ -1860,19 +2725,19 @@
         },
         {
           "Name": "host:OST_CableTray",
-          "Value": "5"
+          "Value": "7"
         },
         {
           "Name": "host:OST_CableTrayFitting",
-          "Value": "1"
+          "Value": "3"
         },
         {
           "Name": "host:OST_Conduit",
-          "Value": "15"
+          "Value": "18"
         },
         {
           "Name": "host:OST_ConduitFitting",
-          "Value": "6"
+          "Value": "8"
         },
         {
           "Name": "host:circuits",
@@ -1880,7 +2745,7 @@
         },
         {
           "Name": "instance",
-          "Value": "ab865fab65cf4df7b00d0ae0ab9e6e99"
+          "Value": "2684c7f9ff3845cd8a25fd71cc2c6af4"
         },
         {
           "Name": "link1:linked",
@@ -1924,11 +2789,11 @@
         },
         {
           "Name": "log",
-          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2025-69056-20260914-072459.log"
+          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2025-71236-20260916-172729.log"
         },
         {
           "Name": "pid",
-          "Value": "69056"
+          "Value": "71236"
         },
         {
           "Name": "release",
@@ -2000,27 +2865,27 @@
         },
         {
           "Name": "instance",
-          "Value": "ab865fab65cf4df7b00d0ae0ab9e6e99"
+          "Value": "2684c7f9ff3845cd8a25fd71cc2c6af4"
         },
         {
           "Name": "log",
-          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2025-69056-20260914-072459.log"
+          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2025-71236-20260916-172729.log"
         },
         {
           "Name": "pid",
-          "Value": "69056"
+          "Value": "71236"
         },
         {
           "Name": "place:after",
-          "Value": "28"
+          "Value": "37"
         },
         {
           "Name": "place:afterRollback",
-          "Value": "27"
+          "Value": "36"
         },
         {
           "Name": "place:before",
-          "Value": "27"
+          "Value": "36"
         },
         {
           "Name": "place:connected",
@@ -2028,6 +2893,10 @@
         },
         {
           "Name": "place:connectors",
+          "Value": "4"
+        },
+        {
+          "Name": "place:physical",
           "Value": "4"
         },
         {
@@ -2092,11 +2961,11 @@
         },
         {
           "Name": "instance",
-          "Value": "ab865fab65cf4df7b00d0ae0ab9e6e99"
+          "Value": "2684c7f9ff3845cd8a25fd71cc2c6af4"
         },
         {
           "Name": "log",
-          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2025-69056-20260914-072459.log"
+          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2025-71236-20260916-172729.log"
         },
         {
           "Name": "modal:apiCallWorked",
@@ -2124,7 +2993,7 @@
         },
         {
           "Name": "modal:awaitResumedAfter",
-          "Value": "0.44s"
+          "Value": "0.42s"
         },
         {
           "Name": "modal:awaitResumedOnApiThread",
@@ -2148,7 +3017,7 @@
         },
         {
           "Name": "modal:shownFor",
-          "Value": "2.53s"
+          "Value": "2.48s"
         },
         {
           "Name": "modal:transactionCommit",
@@ -2160,7 +3029,7 @@
         },
         {
           "Name": "modal:transactionCreated",
-          "Value": "626917"
+          "Value": "627285"
         },
         {
           "Name": "modal:transactionRolledBack",
@@ -2180,7 +3049,7 @@
         },
         {
           "Name": "pid",
-          "Value": "69056"
+          "Value": "71236"
         },
         {
           "Name": "release",
@@ -2192,11 +3061,11 @@
         },
         {
           "Name": "instance",
-          "Value": "ab865fab65cf4df7b00d0ae0ab9e6e99"
+          "Value": "2684c7f9ff3845cd8a25fd71cc2c6af4"
         },
         {
           "Name": "log",
-          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2025-69056-20260914-072459.log"
+          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2025-71236-20260916-172729.log"
         },
         {
           "Name": "modal:measured",
@@ -2208,7 +3077,7 @@
         },
         {
           "Name": "modal:pumpRanAt",
-          "Value": "2.53s"
+          "Value": "2.48s"
         },
         {
           "Name": "modal:windowClosed",
@@ -2216,7 +3085,7 @@
         },
         {
           "Name": "pid",
-          "Value": "69056"
+          "Value": "71236"
         },
         {
           "Name": "release",
@@ -2228,11 +3097,11 @@
         },
         {
           "Name": "instance",
-          "Value": "ab865fab65cf4df7b00d0ae0ab9e6e99"
+          "Value": "2684c7f9ff3845cd8a25fd71cc2c6af4"
         },
         {
           "Name": "log",
-          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2025-69056-20260914-072459.log"
+          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2025-71236-20260916-172729.log"
         },
         {
           "Name": "parameters:bound",
@@ -2308,7 +3177,7 @@
         },
         {
           "Name": "pid",
-          "Value": "69056"
+          "Value": "71236"
         },
         {
           "Name": "release",
@@ -2324,7 +3193,7 @@
         },
         {
           "Name": "suites declared",
-          "Value": "4"
+          "Value": "5"
         },
         {
           "Name": "catalogue categories",
@@ -2332,7 +3201,7 @@
         },
         {
           "Name": "carriers",
-          "Value": "40"
+          "Value": "49"
         },
         {
           "Name": "classes in use",
@@ -2340,11 +3209,11 @@
         },
         {
           "Name": "carriers",
-          "Value": "40"
+          "Value": "49"
         },
         {
           "Name": "carriers without the filter",
-          "Value": "40"
+          "Value": "49"
         },
         {
           "Name": "markers excluded",
@@ -2356,7 +3225,207 @@
         },
         {
           "Name": "total carrier length, internal feet",
-          "Value": "492.190"
+          "Value": "504.693"
+        },
+        {
+          "Name": "census: documents walked",
+          "Value": "3 (host 1, links 2)"
+        },
+        {
+          "Name": "census: link instances not loaded",
+          "Value": "0"
+        },
+        {
+          "Name": "census: link instances whose document was already walked",
+          "Value": "0"
+        },
+        {
+          "Name": "census: links inside links, not followed",
+          "Value": "1"
+        },
+        {
+          "Name": "census: elements walked, by the class asked for",
+          "Value": "FamilyInstance x68; MEPCurve x39; MEPSystem x15"
+        },
+        {
+          "Name": "census: elements with a connector manager",
+          "Value": "97 (host 84, links 13)"
+        },
+        {
+          "Name": "census: connector managers that could not be read, by the class asked for",
+          "Value": "none"
+        },
+        {
+          "Name": "census: collectors Revit refused",
+          "Value": "none"
+        },
+        {
+          "Name": "census: connector sets, entries they say they hold against entries walked",
+          "Value": "231 against 231; sets whose size did not read 0"
+        },
+        {
+          "Name": "census: connectors walked",
+          "Value": "231 (host 199, links 32)"
+        },
+        {
+          "Name": "census: connectors not physical",
+          "Value": "75 (host 75, links 0)"
+        },
+        {
+          "Name": "census: connectors met through an element that does not own them",
+          "Value": "0 (host 0, links 0)"
+        },
+        {
+          "Name": "census: type or domain unread",
+          "Value": "none"
+        },
+        {
+          "Name": "census: physical connectors refusing IsConnected",
+          "Value": "none"
+        },
+        {
+          "Name": "census: exceptions other than InvalidOperationException itself",
+          "Value": "none"
+        },
+        {
+          "Name": "connectors by what they answer: type 1 physical, domain 4: Origin reads, IsConnected true, CoordinateSystem reads, MEPSystem none",
+          "Value": "75 (host 56, links 19)"
+        },
+        {
+          "Name": "connectors by what they answer: type 4 not physical, domain 0: Origin refuses, IsConnected refuses, CoordinateSystem refuses, MEPSystem refuses",
+          "Value": "60 (host 60, links 0)"
+        },
+        {
+          "Name": "connectors by what they answer: type 1 physical, domain 2: Origin reads, IsConnected false, CoordinateSystem reads, MEPSystem none",
+          "Value": "27 (host 27, links 0)"
+        },
+        {
+          "Name": "connectors by what they answer: type 1 physical, domain 4: Origin reads, IsConnected false, CoordinateSystem reads, MEPSystem none",
+          "Value": "25 (host 17, links 8)"
+        },
+        {
+          "Name": "connectors by what they answer: type 2 physical, domain 4: Origin reads, IsConnected true, CoordinateSystem reads, MEPSystem none",
+          "Value": "15 (host 10, links 5)"
+        },
+        {
+          "Name": "connectors by what they answer: type 32 not physical, domain 4: Origin refuses, IsConnected refuses, CoordinateSystem refuses, MEPSystem none",
+          "Value": "15 (host 15, links 0)"
+        },
+        {
+          "Name": "connectors by what they answer: type 1 physical, domain 1: Origin reads, IsConnected false, CoordinateSystem reads, MEPSystem a system",
+          "Value": "6 (host 6, links 0)"
+        },
+        {
+          "Name": "connectors by what they answer: type 1 physical, domain 1: Origin reads, IsConnected true, CoordinateSystem reads, MEPSystem a system",
+          "Value": "6 (host 6, links 0)"
+        },
+        {
+          "Name": "connectors by what they answer: type 2 physical, domain 1: Origin reads, IsConnected true, CoordinateSystem reads, MEPSystem a system",
+          "Value": "2 (host 2, links 0)"
+        },
+        {
+          "Name": "connectors not physical, by where they live: ElectricalSystem OST_ElectricalCircuit, type 4, owned by the element walked",
+          "Value": "39 (host 39, links 0)"
+        },
+        {
+          "Name": "connectors not physical, by where they live: FamilyInstance OST_ElectricalEquipment, type 32, owned by the element walked",
+          "Value": "15 (host 15, links 0)"
+        },
+        {
+          "Name": "connectors not physical, by where they live: FamilyInstance OST_ElectricalEquipment, type 4, owned by the element walked",
+          "Value": "13 (host 13, links 0)"
+        },
+        {
+          "Name": "connectors not physical, by where they live: MechanicalSystem OST_DuctSystem, type 4, owned by the element walked",
+          "Value": "8 (host 8, links 0)"
+        },
+        {
+          "Name": "connectors not physical, by their references: ElectricalSystem OST_ElectricalCircuit, type 4: references 1, their types [1], owned by [FamilyInstance], IsConnectedTo the first true",
+          "Value": "26 (host 26, links 0)"
+        },
+        {
+          "Name": "connectors not physical, by their references: FamilyInstance OST_ElectricalEquipment, type 32: references 0, their types [], owned by [], IsConnectedTo the first no reference to ask about",
+          "Value": "15 (host 15, links 0)"
+        },
+        {
+          "Name": "connectors not physical, by their references: ElectricalSystem OST_ElectricalCircuit, type 4: references 1, their types [4], owned by [FamilyInstance], IsConnectedTo the first true",
+          "Value": "13 (host 13, links 0)"
+        },
+        {
+          "Name": "connectors not physical, by their references: FamilyInstance OST_ElectricalEquipment, type 4: references 1, their types [4], owned by [ElectricalSystem], IsConnectedTo the first true",
+          "Value": "13 (host 13, links 0)"
+        },
+        {
+          "Name": "connectors not physical, by their references: MechanicalSystem OST_DuctSystem, type 4: references 1, their types [1], owned by [Duct], IsConnectedTo the first true",
+          "Value": "6 (host 6, links 0)"
+        },
+        {
+          "Name": "connectors not physical, by their references: MechanicalSystem OST_DuctSystem, type 4: references 1, their types [2], owned by [Duct], IsConnectedTo the first true",
+          "Value": "2 (host 2, links 0)"
+        },
+        {
+          "Name": "connectors, listed unused against IsConnected: type 1: listed unused no, IsConnected true",
+          "Value": "81 (host 62, links 19)"
+        },
+        {
+          "Name": "connectors, listed unused against IsConnected: type 4: listed unused no, IsConnected refuses",
+          "Value": "60 (host 60, links 0)"
+        },
+        {
+          "Name": "connectors, listed unused against IsConnected: type 1: listed unused yes, IsConnected false",
+          "Value": "58 (host 50, links 8)"
+        },
+        {
+          "Name": "connectors, listed unused against IsConnected: type 2: listed unused no, IsConnected true",
+          "Value": "17 (host 12, links 5)"
+        },
+        {
+          "Name": "connectors, listed unused against IsConnected: type 32: listed unused no, IsConnected refuses",
+          "Value": "15 (host 15, links 0)"
+        },
+        {
+          "Name": "census: elapsed, ms",
+          "Value": "35"
+        },
+        {
+          "Name": "circuit ends: electrical systems",
+          "Value": "circuits 13, spare or space 0"
+        },
+        {
+          "Name": "circuit ends: described by the reader",
+          "Value": "circuits 13 with 26 devices; without a panel 0, without devices 0, devices dropped 0"
+        },
+        {
+          "Name": "circuit ends: panel points, by the way that answered",
+          "Value": "the panel\u0027s first physical electrical connector 13"
+        },
+        {
+          "Name": "circuit ends: device points, by the way that answered",
+          "Value": "its first physical electrical connector 26"
+        },
+        {
+          "Name": "circuit ends: points the copy of the reader does not give",
+          "Value": "none"
+        },
+        {
+          "Name": "circuit ends: element sets, entries they say they hold against entries walked",
+          "Value": "26 against 26; sets whose size did not read 0"
+        },
+        {
+          "Name": "circuit ends: exceptions other than InvalidOperationException itself",
+          "Value": "none"
+        },
+        {
+          "Name": "circuit feeds: feed type 4, owned by the panel, found again on the panel type 4, its references hold a physical connector of the panel no; the panel\u0027s physical electrical connectors on no system; point from the panel\u0027s first physical electrical connector",
+          "Value": "13"
+        },
+        {
+          "Name": "circuit devices: electrical connectors of type [1 x1]; on this circuit none; point from its first physical electrical connector",
+          "Value": "26"
+        },
+        {
+          "Name": "circuit ends: elapsed, ms",
+          "Value": "17"
         },
         {
           "Name": "circuits on the panel used",
@@ -2379,12 +3448,544 @@
           "Value": "0"
         },
         {
+          "Name": "binding: other failures while applying",
+          "Value": "0"
+        },
+        {
+          "Name": "binding: warnings dismissed while applying",
+          "Value": "0"
+        },
+        {
           "Name": "indicator category",
           "Value": "OST_ConduitFitting"
         },
         {
           "Name": "carrier categories",
           "Value": "4"
+        },
+        {
+          "Name": "rolled back: indicators of ours already in the model",
+          "Value": "0"
+        },
+        {
+          "Name": "rolled back: routes found",
+          "Value": "6"
+        },
+        {
+          "Name": "rolled back: boxes recommended",
+          "Value": "10"
+        },
+        {
+          "Name": "rolled back: what Revit returned",
+          "Value": "RolledBack"
+        },
+        {
+          "Name": "rolled back: rollbacks the watch answered",
+          "Value": "1"
+        },
+        {
+          "Name": "rolled back: failures processed while applying",
+          "Value": "1"
+        },
+        {
+          "Name": "placement: indicators of ours already in the model",
+          "Value": "0"
+        },
+        {
+          "Name": "placement: circuits cut in boxes",
+          "Value": "13"
+        },
+        {
+          "Name": "placement: routes found",
+          "Value": "6"
+        },
+        {
+          "Name": "placement: routes not found, left out of the run",
+          "Value": "7"
+        },
+        {
+          "Name": "placement: boxes recommended",
+          "Value": "10"
+        },
+        {
+          "Name": "placement: recommended boxes serving more than one circuit",
+          "Value": "1"
+        },
+        {
+          "Name": "placement: boxes already in the model used",
+          "Value": "0"
+        },
+        {
+          "Name": "placement reach: options passed, against the command\u0027s defaults",
+          "Value": "join 152.4 mm, reach 3048 mm, axis-aligned yes, conduit preference 0, length extension 0, single-device circuits routed; the command\u0027s defaults: join 50 mm, reach 3000 mm, axis-aligned yes, conduit preference 0, length extension 0, single-device circuits routed - so reach \u002B48 mm and join \u002B102.4 mm against them"
+        },
+        {
+          "Name": "placement reach: routes by status",
+          "Value": "found 6, no carrier near 6, no connectivity 1, nothing to route 0"
+        },
+        {
+          "Name": "placement reach: circuits NoCarrierNear, by the end they stopped at",
+          "Value": "at the panel 2, at a device 4, end not identified 0; ends matched more than once 0"
+        },
+        {
+          "Name": "placement reach: the case\u0027s copy of the router\u0027s rule stops at the same end",
+          "Value": "6 of 6"
+        },
+        {
+          "Name": "placement reach: distinct blocked ends",
+          "Value": "5 (panels 1, devices 4)"
+        },
+        {
+          "Name": "placement reach: blocked ends a carrier reaches by brute force, which the index did not offer",
+          "Value": "0"
+        },
+        {
+          "Name": "placement reach: ends reached, by the approach study, its copy here, and the router\u0027s rule",
+          "Value": "to terminals: study 30, copy 30; along carriers: study 31, copy 31; by the router\u0027s rule 30; of 39 ends (study 39)"
+        },
+        {
+          "Name": "placement reach: heights, mm",
+          "Value": "circuit ends 338 mm..717 mm; host carriers 460 mm..2750 mm; linked carriers 2750 mm..2750 mm"
+        },
+        {
+          "Name": "placement reach: link 589470",
+          "Value": "transform identity yes, moved 0 mm, rotated no; carriers in the network 0, read again without the transform 0; nearest to a blocked end none with the transform, none without; blocked ends its carriers would reach without the transform 0 of 5"
+        },
+        {
+          "Name": "placement reach: link 589473",
+          "Value": "transform identity yes, moved 0 mm, rotated no; carriers in the network 13, read again without the transform 13; nearest to a blocked end 4112 mm with the transform, 4112 mm without; blocked ends its carriers would reach without the transform 0 of 5"
+        },
+        {
+          "Name": "placement reach: links loaded",
+          "Value": "2"
+        },
+        {
+          "Name": "placement reach: blocked at panel 589735",
+          "Value": "circuits 2 [589828, 589835]; point from the panel\u0027s first physical electrical connector; nearest carrier 589473:589512 tray Segment in a link, 4320 mm by the approach metric, 3058 mm straight to the same point; nearest along any carrier, conduits not held to their ends, 2740 mm straight; to it: height \u002B2032.6 mm, across 2287 mm by the axes, 2285 mm straight; reach 3048 mm, over it by 1272 mm"
+        },
+        {
+          "Name": "placement reach: blocked at device 590765",
+          "Value": "circuits 1 [591759]; point from its first physical electrical connector; nearest carrier 589473:589474 tray Segment in a link, 4112 mm by the approach metric, 2921 mm straight to the same point; nearest along any carrier, conduits not held to their ends, 2921 mm straight; to it: height \u002B2251.9 mm, across 1860 mm by the axes, 1860 mm straight; reach 3048 mm, over it by 1064 mm"
+        },
+        {
+          "Name": "placement reach: blocked at device 591157",
+          "Value": "circuits 1 [591772]; point from its first physical electrical connector; nearest carrier 589473:589474 tray Segment in a link, 4112 mm by the approach metric, 2921 mm straight to the same point; nearest along any carrier, conduits not held to their ends, 2267 mm straight; to it: height \u002B2251.9 mm, across 1860 mm by the axes, 1860 mm straight; reach 3048 mm, over it by 1064 mm"
+        },
+        {
+          "Name": "placement reach: blocked at device 626302",
+          "Value": "circuits 1 [626600]; point from its first physical electrical connector; nearest carrier 591917 conduit Segment in the host, 3265 mm by the approach metric, 2244 mm straight to the same point; nearest along any carrier, conduits not held to their ends, 2244 mm straight; to it: height \u002B332.3 mm, across 2933 mm by the axes, 2219 mm straight; reach 3048 mm, over it by 217 mm"
+        },
+        {
+          "Name": "placement reach: blocked at device 626368",
+          "Value": "circuits 1 [626594]; point from its first physical electrical connector; nearest carrier 626248 conduit Segment in the host, 3900 mm by the approach metric, 2830 mm straight to the same point; nearest along any carrier, conduits not held to their ends, 2830 mm straight; to it: height \u002B2411.9 mm, across 1488 mm by the axes, 1481 mm straight; reach 3048 mm, over it by 852 mm"
+        },
+        {
+          "Name": "placement: carriers on found routes in the host",
+          "Value": "31"
+        },
+        {
+          "Name": "placement: of them already naming a circuit before the apply",
+          "Value": "0"
+        },
+        {
+          "Name": "placement: other failures while applying",
+          "Value": "0"
+        },
+        {
+          "Name": "placement: warnings dismissed while applying",
+          "Value": "0"
+        },
+        {
+          "Name": "placement: indicators placed",
+          "Value": "10"
+        },
+        {
+          "Name": "placement: indicators found in place",
+          "Value": "0"
+        },
+        {
+          "Name": "placement: carriers told their circuits",
+          "Value": "31"
+        },
+        {
+          "Name": "placement: references that fell in a link",
+          "Value": "22"
+        },
+        {
+          "Name": "placement: farthest planned box from its nearest instance of the indicator type, internal feet",
+          "Value": "0.0000"
+        },
+        {
+          "Name": "second apply: indicators of ours already in the model",
+          "Value": "0"
+        },
+        {
+          "Name": "second apply: boxes recommended",
+          "Value": "10"
+        },
+        {
+          "Name": "second apply, first press: other failures while applying",
+          "Value": "0"
+        },
+        {
+          "Name": "second apply, first press: warnings dismissed while applying",
+          "Value": "0"
+        },
+        {
+          "Name": "second apply, second press: other failures while applying",
+          "Value": "0"
+        },
+        {
+          "Name": "second apply, second press: warnings dismissed while applying",
+          "Value": "0"
+        },
+        {
+          "Name": "second apply: indicators placed by the first",
+          "Value": "10"
+        },
+        {
+          "Name": "second apply: indicators found in place by the second",
+          "Value": "10"
+        },
+        {
+          "Name": "re-read: indicators of ours already in the model",
+          "Value": "0"
+        },
+        {
+          "Name": "re-read: other failures while applying",
+          "Value": "0"
+        },
+        {
+          "Name": "re-read: warnings dismissed while applying",
+          "Value": "0"
+        },
+        {
+          "Name": "re-read: indicators placed in a carrier category",
+          "Value": "10"
+        },
+        {
+          "Name": "re-read: markers excluded before",
+          "Value": "0"
+        },
+        {
+          "Name": "re-read: markers excluded after",
+          "Value": "10"
+        },
+        {
+          "Name": "route written back: indicators of ours already in the model",
+          "Value": "0"
+        },
+        {
+          "Name": "route written back: circuits cut in boxes",
+          "Value": "13"
+        },
+        {
+          "Name": "route written back: routes found",
+          "Value": "6"
+        },
+        {
+          "Name": "route written back: routes not found",
+          "Value": "7"
+        },
+        {
+          "Name": "route written back: other failures while applying",
+          "Value": "0"
+        },
+        {
+          "Name": "route written back: warnings dismissed while applying",
+          "Value": "0"
+        },
+        {
+          "Name": "route written back: circuits told their route",
+          "Value": "6"
+        },
+        {
+          "Name": "route written back: circuits that did not route",
+          "Value": "7"
+        },
+        {
+          "Name": "existing box: box radius, mm",
+          "Value": "1000"
+        },
+        {
+          "Name": "existing box: indicators of ours already in the model",
+          "Value": "0"
+        },
+        {
+          "Name": "existing box: fitting types marked a box",
+          "Value": "4"
+        },
+        {
+          "Name": "existing box: boxes in the model",
+          "Value": "11"
+        },
+        {
+          "Name": "existing box: boxes in the model a tap used",
+          "Value": "1"
+        },
+        {
+          "Name": "existing box: boxes recommended",
+          "Value": "9"
+        },
+        {
+          "Name": "existing box: used boxes in a link",
+          "Value": "0"
+        },
+        {
+          "Name": "existing box: used boxes in the host already naming a circuit",
+          "Value": "0"
+        },
+        {
+          "Name": "existing box: other failures while applying",
+          "Value": "0"
+        },
+        {
+          "Name": "existing box: warnings dismissed while applying",
+          "Value": "0"
+        },
+        {
+          "Name": "existing box: boxes in the model the apply reports using",
+          "Value": "1"
+        },
+        {
+          "Name": "removal: other failures while applying",
+          "Value": "0"
+        },
+        {
+          "Name": "removal: warnings dismissed while applying",
+          "Value": "0"
+        },
+        {
+          "Name": "removal: indicators removed",
+          "Value": "1"
+        },
+        {
+          "Name": "removal: indicators left as joined",
+          "Value": "0"
+        },
+        {
+          "Name": "joined: indicator connectors",
+          "Value": "4: DomainCableTrayConduit"
+        },
+        {
+          "Name": "joined: other failures while applying",
+          "Value": "0"
+        },
+        {
+          "Name": "joined: warnings dismissed while applying",
+          "Value": "1"
+        },
+        {
+          "Name": "joined: indicators left as joined",
+          "Value": "1"
+        },
+        {
+          "Name": "joined: indicators of ours this case reads as joined",
+          "Value": "1"
+        },
+        {
+          "Name": "joined: cabling warnings posted",
+          "Value": "1"
+        },
+        {
+          "Name": "joined at a box: indicators of ours already in the model",
+          "Value": "0"
+        },
+        {
+          "Name": "joined at a box: boxes recommended",
+          "Value": "10"
+        },
+        {
+          "Name": "joined at a box: indicator connectors",
+          "Value": "4: DomainCableTrayConduit"
+        },
+        {
+          "Name": "joined at a box: distance of the joined indicator from its box, internal feet",
+          "Value": "0.0000"
+        },
+        {
+          "Name": "joined at a box: other failures while applying",
+          "Value": "0"
+        },
+        {
+          "Name": "joined at a box: warnings dismissed while applying",
+          "Value": "1"
+        },
+        {
+          "Name": "joined at a box: indicators placed",
+          "Value": "9"
+        },
+        {
+          "Name": "joined at a box: joined indicators standing for a box",
+          "Value": "1"
+        },
+        {
+          "Name": "joined at a box: cabling warnings posted",
+          "Value": "1"
+        },
+        {
+          "Name": "another type: the other type is of",
+          "Value": "another family"
+        },
+        {
+          "Name": "another type: other failures while applying",
+          "Value": "0"
+        },
+        {
+          "Name": "another type: warnings dismissed while applying",
+          "Value": "0"
+        },
+        {
+          "Name": "unreadable: other failures while applying",
+          "Value": "0"
+        },
+        {
+          "Name": "unreadable: warnings dismissed while applying",
+          "Value": "1"
+        },
+        {
+          "Name": "unreadable: circuits named unreadable",
+          "Value": "1"
+        },
+        {
+          "Name": "unreadable: cabling warnings posted",
+          "Value": "1"
+        },
+        {
+          "Name": "no carrier: circuits blocked",
+          "Value": "13"
+        },
+        {
+          "Name": "no carrier: over the model\u0027s own carriers, at terminals",
+          "Value": "found 6, no carrier near 6, no connectivity 1, nothing to route 0"
+        },
+        {
+          "Name": "no carrier: over the model\u0027s own carriers, cut in boxes",
+          "Value": "found 6, no carrier near 6, no connectivity 1, nothing to route 0"
+        },
+        {
+          "Name": "no carrier: NoCarrierNear in both modes",
+          "Value": "6 of 6 stopped at the same end; NoCarrierNear in one mode only: 0"
+        },
+        {
+          "Name": "no carrier reach, at terminals: options passed, against the command\u0027s defaults",
+          "Value": "join 152.4 mm, reach 3048 mm, axis-aligned yes, conduit preference 0, length extension 0, single-device circuits routed; the command\u0027s defaults: join 50 mm, reach 3000 mm, axis-aligned yes, conduit preference 0, length extension 0, single-device circuits routed - so reach \u002B48 mm and join \u002B102.4 mm against them"
+        },
+        {
+          "Name": "no carrier reach, at terminals: routes by status",
+          "Value": "found 6, no carrier near 6, no connectivity 1, nothing to route 0"
+        },
+        {
+          "Name": "no carrier reach, at terminals: circuits NoCarrierNear, by the end they stopped at",
+          "Value": "at the panel 2, at a device 4, end not identified 0; ends matched more than once 0"
+        },
+        {
+          "Name": "no carrier reach, at terminals: the case\u0027s copy of the router\u0027s rule stops at the same end",
+          "Value": "6 of 6"
+        },
+        {
+          "Name": "no carrier reach, at terminals: distinct blocked ends",
+          "Value": "5 (panels 1, devices 4)"
+        },
+        {
+          "Name": "no carrier reach, at terminals: blocked ends a carrier reaches by brute force, which the index did not offer",
+          "Value": "0"
+        },
+        {
+          "Name": "no carrier reach, at terminals: ends reached, by the approach study, its copy here, and the router\u0027s rule",
+          "Value": "to terminals: study 30, copy 30; along carriers: study 31, copy 31; by the router\u0027s rule 30; of 39 ends (study 39)"
+        },
+        {
+          "Name": "no carrier reach, at terminals: heights, mm",
+          "Value": "circuit ends 338 mm..717 mm; host carriers 460 mm..2750 mm; linked carriers 2750 mm..2750 mm"
+        },
+        {
+          "Name": "no carrier reach, at terminals: link 589470",
+          "Value": "transform identity yes, moved 0 mm, rotated no; carriers in the network 0, read again without the transform 0; nearest to a blocked end none with the transform, none without; blocked ends its carriers would reach without the transform 0 of 5"
+        },
+        {
+          "Name": "no carrier reach, at terminals: link 589473",
+          "Value": "transform identity yes, moved 0 mm, rotated no; carriers in the network 13, read again without the transform 13; nearest to a blocked end 4112 mm with the transform, 4112 mm without; blocked ends its carriers would reach without the transform 0 of 5"
+        },
+        {
+          "Name": "no carrier reach, at terminals: links loaded",
+          "Value": "2"
+        },
+        {
+          "Name": "no carrier reach, at terminals: blocked at panel 589735",
+          "Value": "circuits 2 [589828, 589835]; point from the panel\u0027s first physical electrical connector; nearest carrier 589473:589512 tray Segment in a link, 4320 mm by the approach metric, 3058 mm straight to the same point; nearest along any carrier, conduits not held to their ends, 2740 mm straight; to it: height \u002B2032.6 mm, across 2287 mm by the axes, 2285 mm straight; reach 3048 mm, over it by 1272 mm"
+        },
+        {
+          "Name": "no carrier reach, at terminals: blocked at device 590765",
+          "Value": "circuits 1 [591759]; point from its first physical electrical connector; nearest carrier 589473:589474 tray Segment in a link, 4112 mm by the approach metric, 2921 mm straight to the same point; nearest along any carrier, conduits not held to their ends, 2921 mm straight; to it: height \u002B2251.9 mm, across 1860 mm by the axes, 1860 mm straight; reach 3048 mm, over it by 1064 mm"
+        },
+        {
+          "Name": "no carrier reach, at terminals: blocked at device 591157",
+          "Value": "circuits 1 [591772]; point from its first physical electrical connector; nearest carrier 589473:589474 tray Segment in a link, 4112 mm by the approach metric, 2921 mm straight to the same point; nearest along any carrier, conduits not held to their ends, 2267 mm straight; to it: height \u002B2251.9 mm, across 1860 mm by the axes, 1860 mm straight; reach 3048 mm, over it by 1064 mm"
+        },
+        {
+          "Name": "no carrier reach, at terminals: blocked at device 626302",
+          "Value": "circuits 1 [626600]; point from its first physical electrical connector; nearest carrier 591917 conduit Segment in the host, 3265 mm by the approach metric, 2244 mm straight to the same point; nearest along any carrier, conduits not held to their ends, 2244 mm straight; to it: height \u002B332.3 mm, across 2933 mm by the axes, 2219 mm straight; reach 3048 mm, over it by 217 mm"
+        },
+        {
+          "Name": "no carrier reach, at terminals: blocked at device 626368",
+          "Value": "circuits 1 [626594]; point from its first physical electrical connector; nearest carrier 626248 conduit Segment in the host, 3900 mm by the approach metric, 2830 mm straight to the same point; nearest along any carrier, conduits not held to their ends, 2830 mm straight; to it: height \u002B2411.9 mm, across 1488 mm by the axes, 1481 mm straight; reach 3048 mm, over it by 852 mm"
+        },
+        {
+          "Name": "no carrier: other failures while applying",
+          "Value": "0"
+        },
+        {
+          "Name": "no carrier: warnings dismissed while applying",
+          "Value": "13"
+        },
+        {
+          "Name": "no carrier: cabling warnings posted",
+          "Value": "13"
+        },
+        {
+          "Name": "no joints: circuits that could not cross",
+          "Value": "8"
+        },
+        {
+          "Name": "no joints: circuits with no carrier near",
+          "Value": "5"
+        },
+        {
+          "Name": "no joints: circuits routed on one carrier",
+          "Value": "0"
+        },
+        {
+          "Name": "no joints: other failures while applying",
+          "Value": "0"
+        },
+        {
+          "Name": "no joints: warnings dismissed while applying",
+          "Value": "8"
+        },
+        {
+          "Name": "no joints: cabling warnings posted",
+          "Value": "8"
+        },
+        {
+          "Name": "box joined to nothing: the other type is of",
+          "Value": "another family"
+        },
+        {
+          "Name": "box joined to nothing: other failures while applying",
+          "Value": "0"
+        },
+        {
+          "Name": "box joined to nothing: warnings dismissed while applying",
+          "Value": "1"
+        },
+        {
+          "Name": "box joined to nothing: boxes named",
+          "Value": "1"
+        },
+        {
+          "Name": "box joined to nothing: cabling warnings posted",
+          "Value": "1"
         },
         {
           "Name": "cases skipped",
@@ -2560,7 +4161,7 @@
         },
         {
           "Name": "diagnostic events",
-          "Value": "433 received, 0 dropped by the publisher, longest quiet spell 3.7s during Working"
+          "Value": "1651 received, 0 dropped by the publisher, longest quiet spell 3.9s during Working"
         },
         {
           "Name": "phases seen",
@@ -2636,14 +4237,14 @@
         },
         {
           "Name": "closed after",
-          "Value": "4.2s"
+          "Value": "3.7s"
         }
       ]
     },
     {
       "Release": 2026,
       "FileVersion": "0.1.0.0",
-      "BuiltUtc": "2026-09-13T21:23:16.7631040Z",
+      "BuiltUtc": "2026-09-16T07:25:40.7303373Z",
       "Signed": true,
       "Checks": [
         {
@@ -3031,6 +4632,14 @@
           "Ok": true
         },
         {
+          "Name": "Connector census: every connector of the family instances, MEP curves, fabrication parts and MEP systems of the host and of each link it loads directly reads its type and domain, every physical one answers whether it is connected, and every other property asked of any of them reads or refuses with Revit\u0027s InvalidOperationException itself",
+          "Ok": true
+        },
+        {
+          "Name": "Connector census: every described circuit end stands where the first of the reader\u0027s ways that answers puts it",
+          "Ok": true
+        },
+        {
           "Name": "Cabling connection: a panel decides for its circuits, a circuit that says otherwise wins, and a typo is named",
           "Ok": true
         },
@@ -3044,6 +4653,62 @@
         },
         {
           "Name": "Cabling apply: an indicator family this model does not have is refused by name, not passed over",
+          "Ok": true
+        },
+        {
+          "Name": "Cabling apply: an apply whose transaction Revit rolls back is refused with the status Revit returned, counts no work and leaves no indicator of ours",
+          "Ok": true
+        },
+        {
+          "Name": "Cabling apply: every box the plan recommends gets one indicator of ours at its place, and nothing else is placed",
+          "Ok": true
+        },
+        {
+          "Name": "Cabling apply: applying the same run again places nothing and removes nothing",
+          "Ok": true
+        },
+        {
+          "Name": "Cabling apply: the indicators an apply placed are not read back as structure",
+          "Ok": true
+        },
+        {
+          "Name": "Cabling apply: every circuit that routed is told its length, the connection it was routed with, and the carriers it was measured along",
+          "Ok": true
+        },
+        {
+          "Name": "Cabling apply: a junction box already in the model is used instead of an indicator, and gets only the circuits through it",
+          "Ok": true
+        },
+        {
+          "Name": "Cabling apply: an indicator of ours the plan no longer names is removed, and one without our recommendation is left",
+          "Ok": true
+        },
+        {
+          "Name": "Cabling apply: an indicator of ours joined to the structure is left, not removed",
+          "Ok": true
+        },
+        {
+          "Name": "Cabling apply: an indicator of ours joined into the network where a box is recommended is left untouched, gets no second indicator beside it, and is named in a warning",
+          "Ok": true
+        },
+        {
+          "Name": "Cabling apply: an element of another type carrying our recommendation is never removed",
+          "Ok": true
+        },
+        {
+          "Name": "Cabling apply: an unreadable connection value is posted as a warning against its circuit",
+          "Ok": true
+        },
+        {
+          "Name": "Cabling apply: every circuit that reaches no carrier is posted as one warning",
+          "Ok": true
+        },
+        {
+          "Name": "Cabling apply: every circuit whose carriers do not join up is posted as one warning",
+          "Ok": true
+        },
+        {
+          "Name": "Cabling apply: a junction box joined to nothing is posted as a warning against it",
           "Ok": true
         },
         {
@@ -3103,11 +4768,11 @@
         },
         {
           "Name": "launched",
-          "Value": "pid 37444"
+          "Value": "pid 67900"
         },
         {
           "Name": "registered after",
-          "Value": "31.2s"
+          "Value": "30.0s"
         },
         {
           "Name": "recovered by enumeration",
@@ -3123,11 +4788,11 @@
         },
         {
           "Name": "probe log",
-          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2026-37444-20260914-072539.log"
+          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2026-67900-20260916-172811.log"
         },
         {
           "Name": "threads",
-          "Value": "api 1, call 15"
+          "Value": "api 1, call 18"
         },
         {
           "Name": "appdomain",
@@ -3151,7 +4816,7 @@
         },
         {
           "Name": "log",
-          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2026-37444-20260914-072539.log"
+          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2026-67900-20260916-172811.log"
         },
         {
           "Name": "sinks",
@@ -3163,7 +4828,7 @@
         },
         {
           "Name": "opened after registration",
-          "Value": "70.5s"
+          "Value": "41.0s"
         },
         {
           "Name": "availability and the press",
@@ -3187,19 +4852,19 @@
         },
         {
           "Name": "host:OST_CableTray",
-          "Value": "5"
+          "Value": "7"
         },
         {
           "Name": "host:OST_CableTrayFitting",
-          "Value": "1"
+          "Value": "3"
         },
         {
           "Name": "host:OST_Conduit",
-          "Value": "15"
+          "Value": "18"
         },
         {
           "Name": "host:OST_ConduitFitting",
-          "Value": "6"
+          "Value": "8"
         },
         {
           "Name": "host:circuits",
@@ -3207,7 +4872,7 @@
         },
         {
           "Name": "instance",
-          "Value": "a38b5db4047e4d52b5c5586885fc9bec"
+          "Value": "d673db0288414c578a80852ff418632e"
         },
         {
           "Name": "link1:linked",
@@ -3251,11 +4916,11 @@
         },
         {
           "Name": "log",
-          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2026-37444-20260914-072539.log"
+          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2026-67900-20260916-172811.log"
         },
         {
           "Name": "pid",
-          "Value": "37444"
+          "Value": "67900"
         },
         {
           "Name": "release",
@@ -3327,27 +4992,27 @@
         },
         {
           "Name": "instance",
-          "Value": "a38b5db4047e4d52b5c5586885fc9bec"
+          "Value": "d673db0288414c578a80852ff418632e"
         },
         {
           "Name": "log",
-          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2026-37444-20260914-072539.log"
+          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2026-67900-20260916-172811.log"
         },
         {
           "Name": "pid",
-          "Value": "37444"
+          "Value": "67900"
         },
         {
           "Name": "place:after",
-          "Value": "28"
+          "Value": "37"
         },
         {
           "Name": "place:afterRollback",
-          "Value": "27"
+          "Value": "36"
         },
         {
           "Name": "place:before",
-          "Value": "27"
+          "Value": "36"
         },
         {
           "Name": "place:connected",
@@ -3355,6 +5020,10 @@
         },
         {
           "Name": "place:connectors",
+          "Value": "4"
+        },
+        {
+          "Name": "place:physical",
           "Value": "4"
         },
         {
@@ -3419,11 +5088,11 @@
         },
         {
           "Name": "instance",
-          "Value": "a38b5db4047e4d52b5c5586885fc9bec"
+          "Value": "d673db0288414c578a80852ff418632e"
         },
         {
           "Name": "log",
-          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2026-37444-20260914-072539.log"
+          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2026-67900-20260916-172811.log"
         },
         {
           "Name": "modal:apiCallWorked",
@@ -3451,7 +5120,7 @@
         },
         {
           "Name": "modal:awaitResumedAfter",
-          "Value": "0.28s"
+          "Value": "0.27s"
         },
         {
           "Name": "modal:awaitResumedOnApiThread",
@@ -3475,7 +5144,7 @@
         },
         {
           "Name": "modal:shownFor",
-          "Value": "2.35s"
+          "Value": "2.34s"
         },
         {
           "Name": "modal:transactionCommit",
@@ -3487,7 +5156,7 @@
         },
         {
           "Name": "modal:transactionCreated",
-          "Value": "627038"
+          "Value": "627392"
         },
         {
           "Name": "modal:transactionRolledBack",
@@ -3507,7 +5176,7 @@
         },
         {
           "Name": "pid",
-          "Value": "37444"
+          "Value": "67900"
         },
         {
           "Name": "release",
@@ -3519,11 +5188,11 @@
         },
         {
           "Name": "instance",
-          "Value": "a38b5db4047e4d52b5c5586885fc9bec"
+          "Value": "d673db0288414c578a80852ff418632e"
         },
         {
           "Name": "log",
-          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2026-37444-20260914-072539.log"
+          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2026-67900-20260916-172811.log"
         },
         {
           "Name": "modal:measured",
@@ -3535,7 +5204,7 @@
         },
         {
           "Name": "modal:pumpRanAt",
-          "Value": "2.35s"
+          "Value": "2.34s"
         },
         {
           "Name": "modal:windowClosed",
@@ -3543,7 +5212,7 @@
         },
         {
           "Name": "pid",
-          "Value": "37444"
+          "Value": "67900"
         },
         {
           "Name": "release",
@@ -3555,11 +5224,11 @@
         },
         {
           "Name": "instance",
-          "Value": "a38b5db4047e4d52b5c5586885fc9bec"
+          "Value": "d673db0288414c578a80852ff418632e"
         },
         {
           "Name": "log",
-          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2026-37444-20260914-072539.log"
+          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2026-67900-20260916-172811.log"
         },
         {
           "Name": "parameters:bound",
@@ -3635,7 +5304,7 @@
         },
         {
           "Name": "pid",
-          "Value": "37444"
+          "Value": "67900"
         },
         {
           "Name": "release",
@@ -3651,7 +5320,7 @@
         },
         {
           "Name": "suites declared",
-          "Value": "4"
+          "Value": "5"
         },
         {
           "Name": "catalogue categories",
@@ -3659,7 +5328,7 @@
         },
         {
           "Name": "carriers",
-          "Value": "40"
+          "Value": "49"
         },
         {
           "Name": "classes in use",
@@ -3667,11 +5336,11 @@
         },
         {
           "Name": "carriers",
-          "Value": "40"
+          "Value": "49"
         },
         {
           "Name": "carriers without the filter",
-          "Value": "40"
+          "Value": "49"
         },
         {
           "Name": "markers excluded",
@@ -3683,7 +5352,207 @@
         },
         {
           "Name": "total carrier length, internal feet",
-          "Value": "492.190"
+          "Value": "504.693"
+        },
+        {
+          "Name": "census: documents walked",
+          "Value": "3 (host 1, links 2)"
+        },
+        {
+          "Name": "census: link instances not loaded",
+          "Value": "0"
+        },
+        {
+          "Name": "census: link instances whose document was already walked",
+          "Value": "0"
+        },
+        {
+          "Name": "census: links inside links, not followed",
+          "Value": "1"
+        },
+        {
+          "Name": "census: elements walked, by the class asked for",
+          "Value": "FamilyInstance x68; MEPCurve x39; MEPSystem x15"
+        },
+        {
+          "Name": "census: elements with a connector manager",
+          "Value": "97 (host 84, links 13)"
+        },
+        {
+          "Name": "census: connector managers that could not be read, by the class asked for",
+          "Value": "none"
+        },
+        {
+          "Name": "census: collectors Revit refused",
+          "Value": "none"
+        },
+        {
+          "Name": "census: connector sets, entries they say they hold against entries walked",
+          "Value": "231 against 231; sets whose size did not read 0"
+        },
+        {
+          "Name": "census: connectors walked",
+          "Value": "231 (host 199, links 32)"
+        },
+        {
+          "Name": "census: connectors not physical",
+          "Value": "75 (host 75, links 0)"
+        },
+        {
+          "Name": "census: connectors met through an element that does not own them",
+          "Value": "0 (host 0, links 0)"
+        },
+        {
+          "Name": "census: type or domain unread",
+          "Value": "none"
+        },
+        {
+          "Name": "census: physical connectors refusing IsConnected",
+          "Value": "none"
+        },
+        {
+          "Name": "census: exceptions other than InvalidOperationException itself",
+          "Value": "none"
+        },
+        {
+          "Name": "connectors by what they answer: type 1 physical, domain 4: Origin reads, IsConnected true, CoordinateSystem reads, MEPSystem none",
+          "Value": "75 (host 56, links 19)"
+        },
+        {
+          "Name": "connectors by what they answer: type 4 not physical, domain 0: Origin refuses, IsConnected refuses, CoordinateSystem refuses, MEPSystem refuses",
+          "Value": "60 (host 60, links 0)"
+        },
+        {
+          "Name": "connectors by what they answer: type 1 physical, domain 2: Origin reads, IsConnected false, CoordinateSystem reads, MEPSystem none",
+          "Value": "27 (host 27, links 0)"
+        },
+        {
+          "Name": "connectors by what they answer: type 1 physical, domain 4: Origin reads, IsConnected false, CoordinateSystem reads, MEPSystem none",
+          "Value": "25 (host 17, links 8)"
+        },
+        {
+          "Name": "connectors by what they answer: type 2 physical, domain 4: Origin reads, IsConnected true, CoordinateSystem reads, MEPSystem none",
+          "Value": "15 (host 10, links 5)"
+        },
+        {
+          "Name": "connectors by what they answer: type 32 not physical, domain 4: Origin refuses, IsConnected refuses, CoordinateSystem refuses, MEPSystem none",
+          "Value": "15 (host 15, links 0)"
+        },
+        {
+          "Name": "connectors by what they answer: type 1 physical, domain 1: Origin reads, IsConnected false, CoordinateSystem reads, MEPSystem a system",
+          "Value": "6 (host 6, links 0)"
+        },
+        {
+          "Name": "connectors by what they answer: type 1 physical, domain 1: Origin reads, IsConnected true, CoordinateSystem reads, MEPSystem a system",
+          "Value": "6 (host 6, links 0)"
+        },
+        {
+          "Name": "connectors by what they answer: type 2 physical, domain 1: Origin reads, IsConnected true, CoordinateSystem reads, MEPSystem a system",
+          "Value": "2 (host 2, links 0)"
+        },
+        {
+          "Name": "connectors not physical, by where they live: ElectricalSystem OST_ElectricalCircuit, type 4, owned by the element walked",
+          "Value": "39 (host 39, links 0)"
+        },
+        {
+          "Name": "connectors not physical, by where they live: FamilyInstance OST_ElectricalEquipment, type 32, owned by the element walked",
+          "Value": "15 (host 15, links 0)"
+        },
+        {
+          "Name": "connectors not physical, by where they live: FamilyInstance OST_ElectricalEquipment, type 4, owned by the element walked",
+          "Value": "13 (host 13, links 0)"
+        },
+        {
+          "Name": "connectors not physical, by where they live: MechanicalSystem OST_DuctSystem, type 4, owned by the element walked",
+          "Value": "8 (host 8, links 0)"
+        },
+        {
+          "Name": "connectors not physical, by their references: ElectricalSystem OST_ElectricalCircuit, type 4: references 1, their types [1], owned by [FamilyInstance], IsConnectedTo the first true",
+          "Value": "26 (host 26, links 0)"
+        },
+        {
+          "Name": "connectors not physical, by their references: FamilyInstance OST_ElectricalEquipment, type 32: references 0, their types [], owned by [], IsConnectedTo the first no reference to ask about",
+          "Value": "15 (host 15, links 0)"
+        },
+        {
+          "Name": "connectors not physical, by their references: ElectricalSystem OST_ElectricalCircuit, type 4: references 1, their types [4], owned by [FamilyInstance], IsConnectedTo the first true",
+          "Value": "13 (host 13, links 0)"
+        },
+        {
+          "Name": "connectors not physical, by their references: FamilyInstance OST_ElectricalEquipment, type 4: references 1, their types [4], owned by [ElectricalSystem], IsConnectedTo the first true",
+          "Value": "13 (host 13, links 0)"
+        },
+        {
+          "Name": "connectors not physical, by their references: MechanicalSystem OST_DuctSystem, type 4: references 1, their types [1], owned by [Duct], IsConnectedTo the first true",
+          "Value": "6 (host 6, links 0)"
+        },
+        {
+          "Name": "connectors not physical, by their references: MechanicalSystem OST_DuctSystem, type 4: references 1, their types [2], owned by [Duct], IsConnectedTo the first true",
+          "Value": "2 (host 2, links 0)"
+        },
+        {
+          "Name": "connectors, listed unused against IsConnected: type 1: listed unused no, IsConnected true",
+          "Value": "81 (host 62, links 19)"
+        },
+        {
+          "Name": "connectors, listed unused against IsConnected: type 4: listed unused no, IsConnected refuses",
+          "Value": "60 (host 60, links 0)"
+        },
+        {
+          "Name": "connectors, listed unused against IsConnected: type 1: listed unused yes, IsConnected false",
+          "Value": "58 (host 50, links 8)"
+        },
+        {
+          "Name": "connectors, listed unused against IsConnected: type 2: listed unused no, IsConnected true",
+          "Value": "17 (host 12, links 5)"
+        },
+        {
+          "Name": "connectors, listed unused against IsConnected: type 32: listed unused no, IsConnected refuses",
+          "Value": "15 (host 15, links 0)"
+        },
+        {
+          "Name": "census: elapsed, ms",
+          "Value": "50"
+        },
+        {
+          "Name": "circuit ends: electrical systems",
+          "Value": "circuits 13, spare or space 0"
+        },
+        {
+          "Name": "circuit ends: described by the reader",
+          "Value": "circuits 13 with 26 devices; without a panel 0, without devices 0, devices dropped 0"
+        },
+        {
+          "Name": "circuit ends: panel points, by the way that answered",
+          "Value": "the panel\u0027s first physical electrical connector 13"
+        },
+        {
+          "Name": "circuit ends: device points, by the way that answered",
+          "Value": "its first physical electrical connector 26"
+        },
+        {
+          "Name": "circuit ends: points the copy of the reader does not give",
+          "Value": "none"
+        },
+        {
+          "Name": "circuit ends: element sets, entries they say they hold against entries walked",
+          "Value": "26 against 26; sets whose size did not read 0"
+        },
+        {
+          "Name": "circuit ends: exceptions other than InvalidOperationException itself",
+          "Value": "none"
+        },
+        {
+          "Name": "circuit feeds: feed type 4, owned by the panel, found again on the panel type 4, its references hold a physical connector of the panel no; the panel\u0027s physical electrical connectors on no system; point from the panel\u0027s first physical electrical connector",
+          "Value": "13"
+        },
+        {
+          "Name": "circuit devices: electrical connectors of type [1 x1]; on this circuit none; point from its first physical electrical connector",
+          "Value": "26"
+        },
+        {
+          "Name": "circuit ends: elapsed, ms",
+          "Value": "21"
         },
         {
           "Name": "circuits on the panel used",
@@ -3706,12 +5575,544 @@
           "Value": "0"
         },
         {
+          "Name": "binding: other failures while applying",
+          "Value": "0"
+        },
+        {
+          "Name": "binding: warnings dismissed while applying",
+          "Value": "0"
+        },
+        {
           "Name": "indicator category",
           "Value": "OST_ConduitFitting"
         },
         {
           "Name": "carrier categories",
           "Value": "4"
+        },
+        {
+          "Name": "rolled back: indicators of ours already in the model",
+          "Value": "0"
+        },
+        {
+          "Name": "rolled back: routes found",
+          "Value": "6"
+        },
+        {
+          "Name": "rolled back: boxes recommended",
+          "Value": "10"
+        },
+        {
+          "Name": "rolled back: what Revit returned",
+          "Value": "RolledBack"
+        },
+        {
+          "Name": "rolled back: rollbacks the watch answered",
+          "Value": "1"
+        },
+        {
+          "Name": "rolled back: failures processed while applying",
+          "Value": "1"
+        },
+        {
+          "Name": "placement: indicators of ours already in the model",
+          "Value": "0"
+        },
+        {
+          "Name": "placement: circuits cut in boxes",
+          "Value": "13"
+        },
+        {
+          "Name": "placement: routes found",
+          "Value": "6"
+        },
+        {
+          "Name": "placement: routes not found, left out of the run",
+          "Value": "7"
+        },
+        {
+          "Name": "placement: boxes recommended",
+          "Value": "10"
+        },
+        {
+          "Name": "placement: recommended boxes serving more than one circuit",
+          "Value": "1"
+        },
+        {
+          "Name": "placement: boxes already in the model used",
+          "Value": "0"
+        },
+        {
+          "Name": "placement reach: options passed, against the command\u0027s defaults",
+          "Value": "join 152.4 mm, reach 3048 mm, axis-aligned yes, conduit preference 0, length extension 0, single-device circuits routed; the command\u0027s defaults: join 50 mm, reach 3000 mm, axis-aligned yes, conduit preference 0, length extension 0, single-device circuits routed - so reach \u002B48 mm and join \u002B102.4 mm against them"
+        },
+        {
+          "Name": "placement reach: routes by status",
+          "Value": "found 6, no carrier near 6, no connectivity 1, nothing to route 0"
+        },
+        {
+          "Name": "placement reach: circuits NoCarrierNear, by the end they stopped at",
+          "Value": "at the panel 2, at a device 4, end not identified 0; ends matched more than once 0"
+        },
+        {
+          "Name": "placement reach: the case\u0027s copy of the router\u0027s rule stops at the same end",
+          "Value": "6 of 6"
+        },
+        {
+          "Name": "placement reach: distinct blocked ends",
+          "Value": "5 (panels 1, devices 4)"
+        },
+        {
+          "Name": "placement reach: blocked ends a carrier reaches by brute force, which the index did not offer",
+          "Value": "0"
+        },
+        {
+          "Name": "placement reach: ends reached, by the approach study, its copy here, and the router\u0027s rule",
+          "Value": "to terminals: study 30, copy 30; along carriers: study 31, copy 31; by the router\u0027s rule 30; of 39 ends (study 39)"
+        },
+        {
+          "Name": "placement reach: heights, mm",
+          "Value": "circuit ends 338 mm..717 mm; host carriers 460 mm..2750 mm; linked carriers 2750 mm..2750 mm"
+        },
+        {
+          "Name": "placement reach: link 589470",
+          "Value": "transform identity yes, moved 0 mm, rotated no; carriers in the network 0, read again without the transform 0; nearest to a blocked end none with the transform, none without; blocked ends its carriers would reach without the transform 0 of 5"
+        },
+        {
+          "Name": "placement reach: link 589473",
+          "Value": "transform identity yes, moved 0 mm, rotated no; carriers in the network 13, read again without the transform 13; nearest to a blocked end 4112 mm with the transform, 4112 mm without; blocked ends its carriers would reach without the transform 0 of 5"
+        },
+        {
+          "Name": "placement reach: links loaded",
+          "Value": "2"
+        },
+        {
+          "Name": "placement reach: blocked at panel 589735",
+          "Value": "circuits 2 [589828, 589835]; point from the panel\u0027s first physical electrical connector; nearest carrier 589473:589512 tray Segment in a link, 4320 mm by the approach metric, 3058 mm straight to the same point; nearest along any carrier, conduits not held to their ends, 2740 mm straight; to it: height \u002B2032.6 mm, across 2287 mm by the axes, 2285 mm straight; reach 3048 mm, over it by 1272 mm"
+        },
+        {
+          "Name": "placement reach: blocked at device 590765",
+          "Value": "circuits 1 [591759]; point from its first physical electrical connector; nearest carrier 589473:589474 tray Segment in a link, 4112 mm by the approach metric, 2921 mm straight to the same point; nearest along any carrier, conduits not held to their ends, 2921 mm straight; to it: height \u002B2251.9 mm, across 1860 mm by the axes, 1860 mm straight; reach 3048 mm, over it by 1064 mm"
+        },
+        {
+          "Name": "placement reach: blocked at device 591157",
+          "Value": "circuits 1 [591772]; point from its first physical electrical connector; nearest carrier 589473:589474 tray Segment in a link, 4112 mm by the approach metric, 2921 mm straight to the same point; nearest along any carrier, conduits not held to their ends, 2267 mm straight; to it: height \u002B2251.9 mm, across 1860 mm by the axes, 1860 mm straight; reach 3048 mm, over it by 1064 mm"
+        },
+        {
+          "Name": "placement reach: blocked at device 626302",
+          "Value": "circuits 1 [626600]; point from its first physical electrical connector; nearest carrier 591917 conduit Segment in the host, 3265 mm by the approach metric, 2244 mm straight to the same point; nearest along any carrier, conduits not held to their ends, 2244 mm straight; to it: height \u002B332.3 mm, across 2933 mm by the axes, 2219 mm straight; reach 3048 mm, over it by 217 mm"
+        },
+        {
+          "Name": "placement reach: blocked at device 626368",
+          "Value": "circuits 1 [626594]; point from its first physical electrical connector; nearest carrier 626248 conduit Segment in the host, 3900 mm by the approach metric, 2830 mm straight to the same point; nearest along any carrier, conduits not held to their ends, 2830 mm straight; to it: height \u002B2411.9 mm, across 1488 mm by the axes, 1481 mm straight; reach 3048 mm, over it by 852 mm"
+        },
+        {
+          "Name": "placement: carriers on found routes in the host",
+          "Value": "31"
+        },
+        {
+          "Name": "placement: of them already naming a circuit before the apply",
+          "Value": "0"
+        },
+        {
+          "Name": "placement: other failures while applying",
+          "Value": "0"
+        },
+        {
+          "Name": "placement: warnings dismissed while applying",
+          "Value": "0"
+        },
+        {
+          "Name": "placement: indicators placed",
+          "Value": "10"
+        },
+        {
+          "Name": "placement: indicators found in place",
+          "Value": "0"
+        },
+        {
+          "Name": "placement: carriers told their circuits",
+          "Value": "31"
+        },
+        {
+          "Name": "placement: references that fell in a link",
+          "Value": "22"
+        },
+        {
+          "Name": "placement: farthest planned box from its nearest instance of the indicator type, internal feet",
+          "Value": "0.0000"
+        },
+        {
+          "Name": "second apply: indicators of ours already in the model",
+          "Value": "0"
+        },
+        {
+          "Name": "second apply: boxes recommended",
+          "Value": "10"
+        },
+        {
+          "Name": "second apply, first press: other failures while applying",
+          "Value": "0"
+        },
+        {
+          "Name": "second apply, first press: warnings dismissed while applying",
+          "Value": "0"
+        },
+        {
+          "Name": "second apply, second press: other failures while applying",
+          "Value": "0"
+        },
+        {
+          "Name": "second apply, second press: warnings dismissed while applying",
+          "Value": "0"
+        },
+        {
+          "Name": "second apply: indicators placed by the first",
+          "Value": "10"
+        },
+        {
+          "Name": "second apply: indicators found in place by the second",
+          "Value": "10"
+        },
+        {
+          "Name": "re-read: indicators of ours already in the model",
+          "Value": "0"
+        },
+        {
+          "Name": "re-read: other failures while applying",
+          "Value": "0"
+        },
+        {
+          "Name": "re-read: warnings dismissed while applying",
+          "Value": "0"
+        },
+        {
+          "Name": "re-read: indicators placed in a carrier category",
+          "Value": "10"
+        },
+        {
+          "Name": "re-read: markers excluded before",
+          "Value": "0"
+        },
+        {
+          "Name": "re-read: markers excluded after",
+          "Value": "10"
+        },
+        {
+          "Name": "route written back: indicators of ours already in the model",
+          "Value": "0"
+        },
+        {
+          "Name": "route written back: circuits cut in boxes",
+          "Value": "13"
+        },
+        {
+          "Name": "route written back: routes found",
+          "Value": "6"
+        },
+        {
+          "Name": "route written back: routes not found",
+          "Value": "7"
+        },
+        {
+          "Name": "route written back: other failures while applying",
+          "Value": "0"
+        },
+        {
+          "Name": "route written back: warnings dismissed while applying",
+          "Value": "0"
+        },
+        {
+          "Name": "route written back: circuits told their route",
+          "Value": "6"
+        },
+        {
+          "Name": "route written back: circuits that did not route",
+          "Value": "7"
+        },
+        {
+          "Name": "existing box: box radius, mm",
+          "Value": "1000"
+        },
+        {
+          "Name": "existing box: indicators of ours already in the model",
+          "Value": "0"
+        },
+        {
+          "Name": "existing box: fitting types marked a box",
+          "Value": "4"
+        },
+        {
+          "Name": "existing box: boxes in the model",
+          "Value": "11"
+        },
+        {
+          "Name": "existing box: boxes in the model a tap used",
+          "Value": "1"
+        },
+        {
+          "Name": "existing box: boxes recommended",
+          "Value": "9"
+        },
+        {
+          "Name": "existing box: used boxes in a link",
+          "Value": "0"
+        },
+        {
+          "Name": "existing box: used boxes in the host already naming a circuit",
+          "Value": "0"
+        },
+        {
+          "Name": "existing box: other failures while applying",
+          "Value": "0"
+        },
+        {
+          "Name": "existing box: warnings dismissed while applying",
+          "Value": "0"
+        },
+        {
+          "Name": "existing box: boxes in the model the apply reports using",
+          "Value": "1"
+        },
+        {
+          "Name": "removal: other failures while applying",
+          "Value": "0"
+        },
+        {
+          "Name": "removal: warnings dismissed while applying",
+          "Value": "0"
+        },
+        {
+          "Name": "removal: indicators removed",
+          "Value": "1"
+        },
+        {
+          "Name": "removal: indicators left as joined",
+          "Value": "0"
+        },
+        {
+          "Name": "joined: indicator connectors",
+          "Value": "4: DomainCableTrayConduit"
+        },
+        {
+          "Name": "joined: other failures while applying",
+          "Value": "0"
+        },
+        {
+          "Name": "joined: warnings dismissed while applying",
+          "Value": "1"
+        },
+        {
+          "Name": "joined: indicators left as joined",
+          "Value": "1"
+        },
+        {
+          "Name": "joined: indicators of ours this case reads as joined",
+          "Value": "1"
+        },
+        {
+          "Name": "joined: cabling warnings posted",
+          "Value": "1"
+        },
+        {
+          "Name": "joined at a box: indicators of ours already in the model",
+          "Value": "0"
+        },
+        {
+          "Name": "joined at a box: boxes recommended",
+          "Value": "10"
+        },
+        {
+          "Name": "joined at a box: indicator connectors",
+          "Value": "4: DomainCableTrayConduit"
+        },
+        {
+          "Name": "joined at a box: distance of the joined indicator from its box, internal feet",
+          "Value": "0.0000"
+        },
+        {
+          "Name": "joined at a box: other failures while applying",
+          "Value": "0"
+        },
+        {
+          "Name": "joined at a box: warnings dismissed while applying",
+          "Value": "1"
+        },
+        {
+          "Name": "joined at a box: indicators placed",
+          "Value": "9"
+        },
+        {
+          "Name": "joined at a box: joined indicators standing for a box",
+          "Value": "1"
+        },
+        {
+          "Name": "joined at a box: cabling warnings posted",
+          "Value": "1"
+        },
+        {
+          "Name": "another type: the other type is of",
+          "Value": "another family"
+        },
+        {
+          "Name": "another type: other failures while applying",
+          "Value": "0"
+        },
+        {
+          "Name": "another type: warnings dismissed while applying",
+          "Value": "0"
+        },
+        {
+          "Name": "unreadable: other failures while applying",
+          "Value": "0"
+        },
+        {
+          "Name": "unreadable: warnings dismissed while applying",
+          "Value": "1"
+        },
+        {
+          "Name": "unreadable: circuits named unreadable",
+          "Value": "1"
+        },
+        {
+          "Name": "unreadable: cabling warnings posted",
+          "Value": "1"
+        },
+        {
+          "Name": "no carrier: circuits blocked",
+          "Value": "13"
+        },
+        {
+          "Name": "no carrier: over the model\u0027s own carriers, at terminals",
+          "Value": "found 6, no carrier near 6, no connectivity 1, nothing to route 0"
+        },
+        {
+          "Name": "no carrier: over the model\u0027s own carriers, cut in boxes",
+          "Value": "found 6, no carrier near 6, no connectivity 1, nothing to route 0"
+        },
+        {
+          "Name": "no carrier: NoCarrierNear in both modes",
+          "Value": "6 of 6 stopped at the same end; NoCarrierNear in one mode only: 0"
+        },
+        {
+          "Name": "no carrier reach, at terminals: options passed, against the command\u0027s defaults",
+          "Value": "join 152.4 mm, reach 3048 mm, axis-aligned yes, conduit preference 0, length extension 0, single-device circuits routed; the command\u0027s defaults: join 50 mm, reach 3000 mm, axis-aligned yes, conduit preference 0, length extension 0, single-device circuits routed - so reach \u002B48 mm and join \u002B102.4 mm against them"
+        },
+        {
+          "Name": "no carrier reach, at terminals: routes by status",
+          "Value": "found 6, no carrier near 6, no connectivity 1, nothing to route 0"
+        },
+        {
+          "Name": "no carrier reach, at terminals: circuits NoCarrierNear, by the end they stopped at",
+          "Value": "at the panel 2, at a device 4, end not identified 0; ends matched more than once 0"
+        },
+        {
+          "Name": "no carrier reach, at terminals: the case\u0027s copy of the router\u0027s rule stops at the same end",
+          "Value": "6 of 6"
+        },
+        {
+          "Name": "no carrier reach, at terminals: distinct blocked ends",
+          "Value": "5 (panels 1, devices 4)"
+        },
+        {
+          "Name": "no carrier reach, at terminals: blocked ends a carrier reaches by brute force, which the index did not offer",
+          "Value": "0"
+        },
+        {
+          "Name": "no carrier reach, at terminals: ends reached, by the approach study, its copy here, and the router\u0027s rule",
+          "Value": "to terminals: study 30, copy 30; along carriers: study 31, copy 31; by the router\u0027s rule 30; of 39 ends (study 39)"
+        },
+        {
+          "Name": "no carrier reach, at terminals: heights, mm",
+          "Value": "circuit ends 338 mm..717 mm; host carriers 460 mm..2750 mm; linked carriers 2750 mm..2750 mm"
+        },
+        {
+          "Name": "no carrier reach, at terminals: link 589470",
+          "Value": "transform identity yes, moved 0 mm, rotated no; carriers in the network 0, read again without the transform 0; nearest to a blocked end none with the transform, none without; blocked ends its carriers would reach without the transform 0 of 5"
+        },
+        {
+          "Name": "no carrier reach, at terminals: link 589473",
+          "Value": "transform identity yes, moved 0 mm, rotated no; carriers in the network 13, read again without the transform 13; nearest to a blocked end 4112 mm with the transform, 4112 mm without; blocked ends its carriers would reach without the transform 0 of 5"
+        },
+        {
+          "Name": "no carrier reach, at terminals: links loaded",
+          "Value": "2"
+        },
+        {
+          "Name": "no carrier reach, at terminals: blocked at panel 589735",
+          "Value": "circuits 2 [589828, 589835]; point from the panel\u0027s first physical electrical connector; nearest carrier 589473:589512 tray Segment in a link, 4320 mm by the approach metric, 3058 mm straight to the same point; nearest along any carrier, conduits not held to their ends, 2740 mm straight; to it: height \u002B2032.6 mm, across 2287 mm by the axes, 2285 mm straight; reach 3048 mm, over it by 1272 mm"
+        },
+        {
+          "Name": "no carrier reach, at terminals: blocked at device 590765",
+          "Value": "circuits 1 [591759]; point from its first physical electrical connector; nearest carrier 589473:589474 tray Segment in a link, 4112 mm by the approach metric, 2921 mm straight to the same point; nearest along any carrier, conduits not held to their ends, 2921 mm straight; to it: height \u002B2251.9 mm, across 1860 mm by the axes, 1860 mm straight; reach 3048 mm, over it by 1064 mm"
+        },
+        {
+          "Name": "no carrier reach, at terminals: blocked at device 591157",
+          "Value": "circuits 1 [591772]; point from its first physical electrical connector; nearest carrier 589473:589474 tray Segment in a link, 4112 mm by the approach metric, 2921 mm straight to the same point; nearest along any carrier, conduits not held to their ends, 2267 mm straight; to it: height \u002B2251.9 mm, across 1860 mm by the axes, 1860 mm straight; reach 3048 mm, over it by 1064 mm"
+        },
+        {
+          "Name": "no carrier reach, at terminals: blocked at device 626302",
+          "Value": "circuits 1 [626600]; point from its first physical electrical connector; nearest carrier 591917 conduit Segment in the host, 3265 mm by the approach metric, 2244 mm straight to the same point; nearest along any carrier, conduits not held to their ends, 2244 mm straight; to it: height \u002B332.3 mm, across 2933 mm by the axes, 2219 mm straight; reach 3048 mm, over it by 217 mm"
+        },
+        {
+          "Name": "no carrier reach, at terminals: blocked at device 626368",
+          "Value": "circuits 1 [626594]; point from its first physical electrical connector; nearest carrier 626248 conduit Segment in the host, 3900 mm by the approach metric, 2830 mm straight to the same point; nearest along any carrier, conduits not held to their ends, 2830 mm straight; to it: height \u002B2411.9 mm, across 1488 mm by the axes, 1481 mm straight; reach 3048 mm, over it by 852 mm"
+        },
+        {
+          "Name": "no carrier: other failures while applying",
+          "Value": "0"
+        },
+        {
+          "Name": "no carrier: warnings dismissed while applying",
+          "Value": "13"
+        },
+        {
+          "Name": "no carrier: cabling warnings posted",
+          "Value": "13"
+        },
+        {
+          "Name": "no joints: circuits that could not cross",
+          "Value": "8"
+        },
+        {
+          "Name": "no joints: circuits with no carrier near",
+          "Value": "5"
+        },
+        {
+          "Name": "no joints: circuits routed on one carrier",
+          "Value": "0"
+        },
+        {
+          "Name": "no joints: other failures while applying",
+          "Value": "0"
+        },
+        {
+          "Name": "no joints: warnings dismissed while applying",
+          "Value": "8"
+        },
+        {
+          "Name": "no joints: cabling warnings posted",
+          "Value": "8"
+        },
+        {
+          "Name": "box joined to nothing: the other type is of",
+          "Value": "another family"
+        },
+        {
+          "Name": "box joined to nothing: other failures while applying",
+          "Value": "0"
+        },
+        {
+          "Name": "box joined to nothing: warnings dismissed while applying",
+          "Value": "1"
+        },
+        {
+          "Name": "box joined to nothing: boxes named",
+          "Value": "1"
+        },
+        {
+          "Name": "box joined to nothing: cabling warnings posted",
+          "Value": "1"
         },
         {
           "Name": "cases skipped",
@@ -3851,7 +6252,7 @@
         },
         {
           "Name": "diagnostic events",
-          "Value": "509 received, 0 dropped by the publisher, longest quiet spell 54.2s during Starting"
+          "Value": "1758 received, 0 dropped by the publisher, longest quiet spell 24.5s during Starting"
         },
         {
           "Name": "phases seen",
@@ -3907,11 +6308,11 @@
         },
         {
           "Name": "progress caption",
-          "Value": "\u0424\u043E\u0440\u043C\u0438\u0440\u043E\u0432\u0430\u043D\u0438\u0435 \u0433\u0440\u0430\u0444\u0438\u043A\u0438 \u0434\u043B\u044F \u041F\u043B\u0430\u043D \u044D\u0442\u0430\u0436\u0430: 1 - \u0421\u0438\u043B\u043E\u0432\u044B\u0435 \u0446\u0435\u043F\u0438"
+          "Value": "\u0424\u043E\u0440\u043C\u0438\u0440\u043E\u0432\u0430\u043D\u0438\u0435 \u0433\u0440\u0430\u0444\u0438\u043A\u0438 \u0434\u043B\u044F 3D \u0432\u0438\u0434: {3D}"
         },
         {
           "Name": "progress caption",
-          "Value": "\u0424\u043E\u0440\u043C\u0438\u0440\u043E\u0432\u0430\u043D\u0438\u0435 \u0433\u0440\u0430\u0444\u0438\u043A\u0438 \u0434\u043B\u044F \u041F\u043B\u0430\u043D \u044D\u0442\u0430\u0436\u0430: Proxy of 1 - \u0421\u0438\u043B\u043E\u0432\u044B\u0435 \u0446\u0435\u043F\u0438"
+          "Value": "\u0424\u043E\u0440\u043C\u0438\u0440\u043E\u0432\u0430\u043D\u0438\u0435 \u0433\u0440\u0430\u0444\u0438\u043A\u0438 \u0434\u043B\u044F 3D \u0432\u0438\u0434: Proxy of {3D}"
         },
         {
           "Name": "progress caption",
@@ -3919,7 +6320,7 @@
         },
         {
           "Name": "progress caption",
-          "Value": "\u0427\u0435\u0440\u0442\u0435\u0436: TestCabling-\u042D\u041E\u041C.rvt - \u041F\u043B\u0430\u043D \u044D\u0442\u0430\u0436\u0430: 1 - \u0421\u0438\u043B\u043E\u0432\u044B\u0435 \u0446\u0435\u043F\u0438"
+          "Value": "\u0427\u0435\u0440\u0442\u0435\u0436: TestCabling-\u042D\u041E\u041C.rvt - 3D \u0432\u0438\u0434: {3D}"
         },
         {
           "Name": "progress caption",
@@ -3931,14 +6332,14 @@
         },
         {
           "Name": "closed after",
-          "Value": "16.9s"
+          "Value": "15.8s"
         }
       ]
     },
     {
       "Release": 2027,
       "FileVersion": "0.1.0.0",
-      "BuiltUtc": "2026-09-13T21:23:15.2592876Z",
+      "BuiltUtc": "2026-09-16T07:25:38.1112225Z",
       "Signed": true,
       "Checks": [
         {
@@ -4326,6 +6727,14 @@
           "Ok": true
         },
         {
+          "Name": "Connector census: every connector of the family instances, MEP curves, fabrication parts and MEP systems of the host and of each link it loads directly reads its type and domain, every physical one answers whether it is connected, and every other property asked of any of them reads or refuses with Revit\u0027s InvalidOperationException itself",
+          "Ok": true
+        },
+        {
+          "Name": "Connector census: every described circuit end stands where the first of the reader\u0027s ways that answers puts it",
+          "Ok": true
+        },
+        {
           "Name": "Cabling connection: a panel decides for its circuits, a circuit that says otherwise wins, and a typo is named",
           "Ok": true
         },
@@ -4339,6 +6748,62 @@
         },
         {
           "Name": "Cabling apply: an indicator family this model does not have is refused by name, not passed over",
+          "Ok": true
+        },
+        {
+          "Name": "Cabling apply: an apply whose transaction Revit rolls back is refused with the status Revit returned, counts no work and leaves no indicator of ours",
+          "Ok": true
+        },
+        {
+          "Name": "Cabling apply: every box the plan recommends gets one indicator of ours at its place, and nothing else is placed",
+          "Ok": true
+        },
+        {
+          "Name": "Cabling apply: applying the same run again places nothing and removes nothing",
+          "Ok": true
+        },
+        {
+          "Name": "Cabling apply: the indicators an apply placed are not read back as structure",
+          "Ok": true
+        },
+        {
+          "Name": "Cabling apply: every circuit that routed is told its length, the connection it was routed with, and the carriers it was measured along",
+          "Ok": true
+        },
+        {
+          "Name": "Cabling apply: a junction box already in the model is used instead of an indicator, and gets only the circuits through it",
+          "Ok": true
+        },
+        {
+          "Name": "Cabling apply: an indicator of ours the plan no longer names is removed, and one without our recommendation is left",
+          "Ok": true
+        },
+        {
+          "Name": "Cabling apply: an indicator of ours joined to the structure is left, not removed",
+          "Ok": true
+        },
+        {
+          "Name": "Cabling apply: an indicator of ours joined into the network where a box is recommended is left untouched, gets no second indicator beside it, and is named in a warning",
+          "Ok": true
+        },
+        {
+          "Name": "Cabling apply: an element of another type carrying our recommendation is never removed",
+          "Ok": true
+        },
+        {
+          "Name": "Cabling apply: an unreadable connection value is posted as a warning against its circuit",
+          "Ok": true
+        },
+        {
+          "Name": "Cabling apply: every circuit that reaches no carrier is posted as one warning",
+          "Ok": true
+        },
+        {
+          "Name": "Cabling apply: every circuit whose carriers do not join up is posted as one warning",
+          "Ok": true
+        },
+        {
+          "Name": "Cabling apply: a junction box joined to nothing is posted as a warning against it",
           "Ok": true
         },
         {
@@ -4398,11 +6863,11 @@
         },
         {
           "Name": "launched",
-          "Value": "pid 49852"
+          "Value": "pid 58216"
         },
         {
           "Name": "registered after",
-          "Value": "18.7s"
+          "Value": "19.9s"
         },
         {
           "Name": "recovered by enumeration",
@@ -4418,11 +6883,11 @@
         },
         {
           "Name": "probe log",
-          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2027-49852-20260914-072743.log"
+          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2027-58216-20260916-172948.log"
         },
         {
           "Name": "threads",
-          "Value": "api 2, call 22"
+          "Value": "api 2, call 16"
         },
         {
           "Name": "appdomain",
@@ -4446,7 +6911,7 @@
         },
         {
           "Name": "log",
-          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2027-49852-20260914-072743.log"
+          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2027-58216-20260916-172948.log"
         },
         {
           "Name": "sinks",
@@ -4458,7 +6923,7 @@
         },
         {
           "Name": "opened after registration",
-          "Value": "329.5s"
+          "Value": "86.3s"
         },
         {
           "Name": "availability and the press",
@@ -4482,19 +6947,19 @@
         },
         {
           "Name": "host:OST_CableTray",
-          "Value": "5"
+          "Value": "7"
         },
         {
           "Name": "host:OST_CableTrayFitting",
-          "Value": "1"
+          "Value": "3"
         },
         {
           "Name": "host:OST_Conduit",
-          "Value": "15"
+          "Value": "18"
         },
         {
           "Name": "host:OST_ConduitFitting",
-          "Value": "6"
+          "Value": "8"
         },
         {
           "Name": "host:circuits",
@@ -4502,7 +6967,7 @@
         },
         {
           "Name": "instance",
-          "Value": "06aa1e7596b147f59566429d2d311983"
+          "Value": "3e580f0490b247debe651c67cc393449"
         },
         {
           "Name": "link1:linked",
@@ -4546,11 +7011,11 @@
         },
         {
           "Name": "log",
-          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2027-49852-20260914-072743.log"
+          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2027-58216-20260916-172948.log"
         },
         {
           "Name": "pid",
-          "Value": "49852"
+          "Value": "58216"
         },
         {
           "Name": "release",
@@ -4622,27 +7087,27 @@
         },
         {
           "Name": "instance",
-          "Value": "06aa1e7596b147f59566429d2d311983"
+          "Value": "3e580f0490b247debe651c67cc393449"
         },
         {
           "Name": "log",
-          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2027-49852-20260914-072743.log"
+          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2027-58216-20260916-172948.log"
         },
         {
           "Name": "pid",
-          "Value": "49852"
+          "Value": "58216"
         },
         {
           "Name": "place:after",
-          "Value": "28"
+          "Value": "37"
         },
         {
           "Name": "place:afterRollback",
-          "Value": "27"
+          "Value": "36"
         },
         {
           "Name": "place:before",
-          "Value": "27"
+          "Value": "36"
         },
         {
           "Name": "place:connected",
@@ -4650,6 +7115,10 @@
         },
         {
           "Name": "place:connectors",
+          "Value": "4"
+        },
+        {
+          "Name": "place:physical",
           "Value": "4"
         },
         {
@@ -4714,11 +7183,11 @@
         },
         {
           "Name": "instance",
-          "Value": "06aa1e7596b147f59566429d2d311983"
+          "Value": "3e580f0490b247debe651c67cc393449"
         },
         {
           "Name": "log",
-          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2027-49852-20260914-072743.log"
+          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2027-58216-20260916-172948.log"
         },
         {
           "Name": "modal:apiCallWorked",
@@ -4746,7 +7215,7 @@
         },
         {
           "Name": "modal:awaitResumedAfter",
-          "Value": "0.30s"
+          "Value": "0.29s"
         },
         {
           "Name": "modal:awaitResumedOnApiThread",
@@ -4770,7 +7239,7 @@
         },
         {
           "Name": "modal:shownFor",
-          "Value": "2.37s"
+          "Value": "2.38s"
         },
         {
           "Name": "modal:transactionCommit",
@@ -4782,7 +7251,7 @@
         },
         {
           "Name": "modal:transactionCreated",
-          "Value": "627057"
+          "Value": "627411"
         },
         {
           "Name": "modal:transactionRolledBack",
@@ -4802,7 +7271,7 @@
         },
         {
           "Name": "pid",
-          "Value": "49852"
+          "Value": "58216"
         },
         {
           "Name": "release",
@@ -4814,11 +7283,11 @@
         },
         {
           "Name": "instance",
-          "Value": "06aa1e7596b147f59566429d2d311983"
+          "Value": "3e580f0490b247debe651c67cc393449"
         },
         {
           "Name": "log",
-          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2027-49852-20260914-072743.log"
+          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2027-58216-20260916-172948.log"
         },
         {
           "Name": "modal:measured",
@@ -4830,7 +7299,7 @@
         },
         {
           "Name": "modal:pumpRanAt",
-          "Value": "2.37s"
+          "Value": "2.38s"
         },
         {
           "Name": "modal:windowClosed",
@@ -4838,7 +7307,7 @@
         },
         {
           "Name": "pid",
-          "Value": "49852"
+          "Value": "58216"
         },
         {
           "Name": "release",
@@ -4850,11 +7319,11 @@
         },
         {
           "Name": "instance",
-          "Value": "06aa1e7596b147f59566429d2d311983"
+          "Value": "3e580f0490b247debe651c67cc393449"
         },
         {
           "Name": "log",
-          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2027-49852-20260914-072743.log"
+          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2027-58216-20260916-172948.log"
         },
         {
           "Name": "parameters:bound",
@@ -4930,7 +7399,7 @@
         },
         {
           "Name": "pid",
-          "Value": "49852"
+          "Value": "58216"
         },
         {
           "Name": "release",
@@ -4946,7 +7415,7 @@
         },
         {
           "Name": "suites declared",
-          "Value": "4"
+          "Value": "5"
         },
         {
           "Name": "catalogue categories",
@@ -4954,7 +7423,7 @@
         },
         {
           "Name": "carriers",
-          "Value": "40"
+          "Value": "49"
         },
         {
           "Name": "classes in use",
@@ -4962,11 +7431,11 @@
         },
         {
           "Name": "carriers",
-          "Value": "40"
+          "Value": "49"
         },
         {
           "Name": "carriers without the filter",
-          "Value": "40"
+          "Value": "49"
         },
         {
           "Name": "markers excluded",
@@ -4978,7 +7447,207 @@
         },
         {
           "Name": "total carrier length, internal feet",
-          "Value": "492.190"
+          "Value": "504.693"
+        },
+        {
+          "Name": "census: documents walked",
+          "Value": "3 (host 1, links 2)"
+        },
+        {
+          "Name": "census: link instances not loaded",
+          "Value": "0"
+        },
+        {
+          "Name": "census: link instances whose document was already walked",
+          "Value": "0"
+        },
+        {
+          "Name": "census: links inside links, not followed",
+          "Value": "1"
+        },
+        {
+          "Name": "census: elements walked, by the class asked for",
+          "Value": "FamilyInstance x68; MEPCurve x39; MEPSystem x15"
+        },
+        {
+          "Name": "census: elements with a connector manager",
+          "Value": "97 (host 84, links 13)"
+        },
+        {
+          "Name": "census: connector managers that could not be read, by the class asked for",
+          "Value": "none"
+        },
+        {
+          "Name": "census: collectors Revit refused",
+          "Value": "none"
+        },
+        {
+          "Name": "census: connector sets, entries they say they hold against entries walked",
+          "Value": "231 against 231; sets whose size did not read 0"
+        },
+        {
+          "Name": "census: connectors walked",
+          "Value": "231 (host 199, links 32)"
+        },
+        {
+          "Name": "census: connectors not physical",
+          "Value": "75 (host 75, links 0)"
+        },
+        {
+          "Name": "census: connectors met through an element that does not own them",
+          "Value": "0 (host 0, links 0)"
+        },
+        {
+          "Name": "census: type or domain unread",
+          "Value": "none"
+        },
+        {
+          "Name": "census: physical connectors refusing IsConnected",
+          "Value": "none"
+        },
+        {
+          "Name": "census: exceptions other than InvalidOperationException itself",
+          "Value": "none"
+        },
+        {
+          "Name": "connectors by what they answer: type 1 physical, domain 4: Origin reads, IsConnected true, CoordinateSystem reads, MEPSystem none",
+          "Value": "75 (host 56, links 19)"
+        },
+        {
+          "Name": "connectors by what they answer: type 4 not physical, domain 0: Origin refuses, IsConnected refuses, CoordinateSystem refuses, MEPSystem refuses",
+          "Value": "60 (host 60, links 0)"
+        },
+        {
+          "Name": "connectors by what they answer: type 1 physical, domain 2: Origin reads, IsConnected false, CoordinateSystem reads, MEPSystem none",
+          "Value": "27 (host 27, links 0)"
+        },
+        {
+          "Name": "connectors by what they answer: type 1 physical, domain 4: Origin reads, IsConnected false, CoordinateSystem reads, MEPSystem none",
+          "Value": "25 (host 17, links 8)"
+        },
+        {
+          "Name": "connectors by what they answer: type 2 physical, domain 4: Origin reads, IsConnected true, CoordinateSystem reads, MEPSystem none",
+          "Value": "15 (host 10, links 5)"
+        },
+        {
+          "Name": "connectors by what they answer: type 32 not physical, domain 4: Origin refuses, IsConnected refuses, CoordinateSystem refuses, MEPSystem none",
+          "Value": "15 (host 15, links 0)"
+        },
+        {
+          "Name": "connectors by what they answer: type 1 physical, domain 1: Origin reads, IsConnected false, CoordinateSystem reads, MEPSystem a system",
+          "Value": "6 (host 6, links 0)"
+        },
+        {
+          "Name": "connectors by what they answer: type 1 physical, domain 1: Origin reads, IsConnected true, CoordinateSystem reads, MEPSystem a system",
+          "Value": "6 (host 6, links 0)"
+        },
+        {
+          "Name": "connectors by what they answer: type 2 physical, domain 1: Origin reads, IsConnected true, CoordinateSystem reads, MEPSystem a system",
+          "Value": "2 (host 2, links 0)"
+        },
+        {
+          "Name": "connectors not physical, by where they live: ElectricalSystem OST_ElectricalCircuit, type 4, owned by the element walked",
+          "Value": "39 (host 39, links 0)"
+        },
+        {
+          "Name": "connectors not physical, by where they live: FamilyInstance OST_ElectricalEquipment, type 32, owned by the element walked",
+          "Value": "15 (host 15, links 0)"
+        },
+        {
+          "Name": "connectors not physical, by where they live: FamilyInstance OST_ElectricalEquipment, type 4, owned by the element walked",
+          "Value": "13 (host 13, links 0)"
+        },
+        {
+          "Name": "connectors not physical, by where they live: MechanicalSystem OST_DuctSystem, type 4, owned by the element walked",
+          "Value": "8 (host 8, links 0)"
+        },
+        {
+          "Name": "connectors not physical, by their references: ElectricalSystem OST_ElectricalCircuit, type 4: references 1, their types [1], owned by [FamilyInstance], IsConnectedTo the first true",
+          "Value": "26 (host 26, links 0)"
+        },
+        {
+          "Name": "connectors not physical, by their references: FamilyInstance OST_ElectricalEquipment, type 32: references 0, their types [], owned by [], IsConnectedTo the first no reference to ask about",
+          "Value": "15 (host 15, links 0)"
+        },
+        {
+          "Name": "connectors not physical, by their references: ElectricalSystem OST_ElectricalCircuit, type 4: references 1, their types [4], owned by [FamilyInstance], IsConnectedTo the first true",
+          "Value": "13 (host 13, links 0)"
+        },
+        {
+          "Name": "connectors not physical, by their references: FamilyInstance OST_ElectricalEquipment, type 4: references 1, their types [4], owned by [ElectricalSystem], IsConnectedTo the first true",
+          "Value": "13 (host 13, links 0)"
+        },
+        {
+          "Name": "connectors not physical, by their references: MechanicalSystem OST_DuctSystem, type 4: references 1, their types [1], owned by [Duct], IsConnectedTo the first true",
+          "Value": "6 (host 6, links 0)"
+        },
+        {
+          "Name": "connectors not physical, by their references: MechanicalSystem OST_DuctSystem, type 4: references 1, their types [2], owned by [Duct], IsConnectedTo the first true",
+          "Value": "2 (host 2, links 0)"
+        },
+        {
+          "Name": "connectors, listed unused against IsConnected: type 1: listed unused no, IsConnected true",
+          "Value": "81 (host 62, links 19)"
+        },
+        {
+          "Name": "connectors, listed unused against IsConnected: type 4: listed unused no, IsConnected refuses",
+          "Value": "60 (host 60, links 0)"
+        },
+        {
+          "Name": "connectors, listed unused against IsConnected: type 1: listed unused yes, IsConnected false",
+          "Value": "58 (host 50, links 8)"
+        },
+        {
+          "Name": "connectors, listed unused against IsConnected: type 2: listed unused no, IsConnected true",
+          "Value": "17 (host 12, links 5)"
+        },
+        {
+          "Name": "connectors, listed unused against IsConnected: type 32: listed unused no, IsConnected refuses",
+          "Value": "15 (host 15, links 0)"
+        },
+        {
+          "Name": "census: elapsed, ms",
+          "Value": "36"
+        },
+        {
+          "Name": "circuit ends: electrical systems",
+          "Value": "circuits 13, spare or space 0"
+        },
+        {
+          "Name": "circuit ends: described by the reader",
+          "Value": "circuits 13 with 26 devices; without a panel 0, without devices 0, devices dropped 0"
+        },
+        {
+          "Name": "circuit ends: panel points, by the way that answered",
+          "Value": "the panel\u0027s first physical electrical connector 13"
+        },
+        {
+          "Name": "circuit ends: device points, by the way that answered",
+          "Value": "its first physical electrical connector 26"
+        },
+        {
+          "Name": "circuit ends: points the copy of the reader does not give",
+          "Value": "none"
+        },
+        {
+          "Name": "circuit ends: element sets, entries they say they hold against entries walked",
+          "Value": "26 against 26; sets whose size did not read 0"
+        },
+        {
+          "Name": "circuit ends: exceptions other than InvalidOperationException itself",
+          "Value": "none"
+        },
+        {
+          "Name": "circuit feeds: feed type 4, owned by the panel, found again on the panel type 4, its references hold a physical connector of the panel no; the panel\u0027s physical electrical connectors on no system; point from the panel\u0027s first physical electrical connector",
+          "Value": "13"
+        },
+        {
+          "Name": "circuit devices: electrical connectors of type [1 x1]; on this circuit none; point from its first physical electrical connector",
+          "Value": "26"
+        },
+        {
+          "Name": "circuit ends: elapsed, ms",
+          "Value": "17"
         },
         {
           "Name": "circuits on the panel used",
@@ -5001,12 +7670,544 @@
           "Value": "0"
         },
         {
+          "Name": "binding: other failures while applying",
+          "Value": "0"
+        },
+        {
+          "Name": "binding: warnings dismissed while applying",
+          "Value": "0"
+        },
+        {
           "Name": "indicator category",
           "Value": "OST_ConduitFitting"
         },
         {
           "Name": "carrier categories",
           "Value": "4"
+        },
+        {
+          "Name": "rolled back: indicators of ours already in the model",
+          "Value": "0"
+        },
+        {
+          "Name": "rolled back: routes found",
+          "Value": "6"
+        },
+        {
+          "Name": "rolled back: boxes recommended",
+          "Value": "10"
+        },
+        {
+          "Name": "rolled back: what Revit returned",
+          "Value": "RolledBack"
+        },
+        {
+          "Name": "rolled back: rollbacks the watch answered",
+          "Value": "1"
+        },
+        {
+          "Name": "rolled back: failures processed while applying",
+          "Value": "1"
+        },
+        {
+          "Name": "placement: indicators of ours already in the model",
+          "Value": "0"
+        },
+        {
+          "Name": "placement: circuits cut in boxes",
+          "Value": "13"
+        },
+        {
+          "Name": "placement: routes found",
+          "Value": "6"
+        },
+        {
+          "Name": "placement: routes not found, left out of the run",
+          "Value": "7"
+        },
+        {
+          "Name": "placement: boxes recommended",
+          "Value": "10"
+        },
+        {
+          "Name": "placement: recommended boxes serving more than one circuit",
+          "Value": "1"
+        },
+        {
+          "Name": "placement: boxes already in the model used",
+          "Value": "0"
+        },
+        {
+          "Name": "placement reach: options passed, against the command\u0027s defaults",
+          "Value": "join 152.4 mm, reach 3048 mm, axis-aligned yes, conduit preference 0, length extension 0, single-device circuits routed; the command\u0027s defaults: join 50 mm, reach 3000 mm, axis-aligned yes, conduit preference 0, length extension 0, single-device circuits routed - so reach \u002B48 mm and join \u002B102.4 mm against them"
+        },
+        {
+          "Name": "placement reach: routes by status",
+          "Value": "found 6, no carrier near 6, no connectivity 1, nothing to route 0"
+        },
+        {
+          "Name": "placement reach: circuits NoCarrierNear, by the end they stopped at",
+          "Value": "at the panel 2, at a device 4, end not identified 0; ends matched more than once 0"
+        },
+        {
+          "Name": "placement reach: the case\u0027s copy of the router\u0027s rule stops at the same end",
+          "Value": "6 of 6"
+        },
+        {
+          "Name": "placement reach: distinct blocked ends",
+          "Value": "5 (panels 1, devices 4)"
+        },
+        {
+          "Name": "placement reach: blocked ends a carrier reaches by brute force, which the index did not offer",
+          "Value": "0"
+        },
+        {
+          "Name": "placement reach: ends reached, by the approach study, its copy here, and the router\u0027s rule",
+          "Value": "to terminals: study 30, copy 30; along carriers: study 31, copy 31; by the router\u0027s rule 30; of 39 ends (study 39)"
+        },
+        {
+          "Name": "placement reach: heights, mm",
+          "Value": "circuit ends 338 mm..717 mm; host carriers 460 mm..2750 mm; linked carriers 2750 mm..2750 mm"
+        },
+        {
+          "Name": "placement reach: link 589470",
+          "Value": "transform identity yes, moved 0 mm, rotated no; carriers in the network 0, read again without the transform 0; nearest to a blocked end none with the transform, none without; blocked ends its carriers would reach without the transform 0 of 5"
+        },
+        {
+          "Name": "placement reach: link 589473",
+          "Value": "transform identity yes, moved 0 mm, rotated no; carriers in the network 13, read again without the transform 13; nearest to a blocked end 4112 mm with the transform, 4112 mm without; blocked ends its carriers would reach without the transform 0 of 5"
+        },
+        {
+          "Name": "placement reach: links loaded",
+          "Value": "2"
+        },
+        {
+          "Name": "placement reach: blocked at panel 589735",
+          "Value": "circuits 2 [589828, 589835]; point from the panel\u0027s first physical electrical connector; nearest carrier 589473:589512 tray Segment in a link, 4320 mm by the approach metric, 3058 mm straight to the same point; nearest along any carrier, conduits not held to their ends, 2740 mm straight; to it: height \u002B2032.6 mm, across 2287 mm by the axes, 2285 mm straight; reach 3048 mm, over it by 1272 mm"
+        },
+        {
+          "Name": "placement reach: blocked at device 590765",
+          "Value": "circuits 1 [591759]; point from its first physical electrical connector; nearest carrier 589473:589474 tray Segment in a link, 4112 mm by the approach metric, 2921 mm straight to the same point; nearest along any carrier, conduits not held to their ends, 2921 mm straight; to it: height \u002B2251.9 mm, across 1860 mm by the axes, 1860 mm straight; reach 3048 mm, over it by 1064 mm"
+        },
+        {
+          "Name": "placement reach: blocked at device 591157",
+          "Value": "circuits 1 [591772]; point from its first physical electrical connector; nearest carrier 589473:589474 tray Segment in a link, 4112 mm by the approach metric, 2921 mm straight to the same point; nearest along any carrier, conduits not held to their ends, 2267 mm straight; to it: height \u002B2251.9 mm, across 1860 mm by the axes, 1860 mm straight; reach 3048 mm, over it by 1064 mm"
+        },
+        {
+          "Name": "placement reach: blocked at device 626302",
+          "Value": "circuits 1 [626600]; point from its first physical electrical connector; nearest carrier 591917 conduit Segment in the host, 3265 mm by the approach metric, 2244 mm straight to the same point; nearest along any carrier, conduits not held to their ends, 2244 mm straight; to it: height \u002B332.3 mm, across 2933 mm by the axes, 2219 mm straight; reach 3048 mm, over it by 217 mm"
+        },
+        {
+          "Name": "placement reach: blocked at device 626368",
+          "Value": "circuits 1 [626594]; point from its first physical electrical connector; nearest carrier 626248 conduit Segment in the host, 3900 mm by the approach metric, 2830 mm straight to the same point; nearest along any carrier, conduits not held to their ends, 2830 mm straight; to it: height \u002B2411.9 mm, across 1488 mm by the axes, 1481 mm straight; reach 3048 mm, over it by 852 mm"
+        },
+        {
+          "Name": "placement: carriers on found routes in the host",
+          "Value": "31"
+        },
+        {
+          "Name": "placement: of them already naming a circuit before the apply",
+          "Value": "0"
+        },
+        {
+          "Name": "placement: other failures while applying",
+          "Value": "0"
+        },
+        {
+          "Name": "placement: warnings dismissed while applying",
+          "Value": "0"
+        },
+        {
+          "Name": "placement: indicators placed",
+          "Value": "10"
+        },
+        {
+          "Name": "placement: indicators found in place",
+          "Value": "0"
+        },
+        {
+          "Name": "placement: carriers told their circuits",
+          "Value": "31"
+        },
+        {
+          "Name": "placement: references that fell in a link",
+          "Value": "22"
+        },
+        {
+          "Name": "placement: farthest planned box from its nearest instance of the indicator type, internal feet",
+          "Value": "0.0000"
+        },
+        {
+          "Name": "second apply: indicators of ours already in the model",
+          "Value": "0"
+        },
+        {
+          "Name": "second apply: boxes recommended",
+          "Value": "10"
+        },
+        {
+          "Name": "second apply, first press: other failures while applying",
+          "Value": "0"
+        },
+        {
+          "Name": "second apply, first press: warnings dismissed while applying",
+          "Value": "0"
+        },
+        {
+          "Name": "second apply, second press: other failures while applying",
+          "Value": "0"
+        },
+        {
+          "Name": "second apply, second press: warnings dismissed while applying",
+          "Value": "0"
+        },
+        {
+          "Name": "second apply: indicators placed by the first",
+          "Value": "10"
+        },
+        {
+          "Name": "second apply: indicators found in place by the second",
+          "Value": "10"
+        },
+        {
+          "Name": "re-read: indicators of ours already in the model",
+          "Value": "0"
+        },
+        {
+          "Name": "re-read: other failures while applying",
+          "Value": "0"
+        },
+        {
+          "Name": "re-read: warnings dismissed while applying",
+          "Value": "0"
+        },
+        {
+          "Name": "re-read: indicators placed in a carrier category",
+          "Value": "10"
+        },
+        {
+          "Name": "re-read: markers excluded before",
+          "Value": "0"
+        },
+        {
+          "Name": "re-read: markers excluded after",
+          "Value": "10"
+        },
+        {
+          "Name": "route written back: indicators of ours already in the model",
+          "Value": "0"
+        },
+        {
+          "Name": "route written back: circuits cut in boxes",
+          "Value": "13"
+        },
+        {
+          "Name": "route written back: routes found",
+          "Value": "6"
+        },
+        {
+          "Name": "route written back: routes not found",
+          "Value": "7"
+        },
+        {
+          "Name": "route written back: other failures while applying",
+          "Value": "0"
+        },
+        {
+          "Name": "route written back: warnings dismissed while applying",
+          "Value": "0"
+        },
+        {
+          "Name": "route written back: circuits told their route",
+          "Value": "6"
+        },
+        {
+          "Name": "route written back: circuits that did not route",
+          "Value": "7"
+        },
+        {
+          "Name": "existing box: box radius, mm",
+          "Value": "1000"
+        },
+        {
+          "Name": "existing box: indicators of ours already in the model",
+          "Value": "0"
+        },
+        {
+          "Name": "existing box: fitting types marked a box",
+          "Value": "4"
+        },
+        {
+          "Name": "existing box: boxes in the model",
+          "Value": "11"
+        },
+        {
+          "Name": "existing box: boxes in the model a tap used",
+          "Value": "1"
+        },
+        {
+          "Name": "existing box: boxes recommended",
+          "Value": "9"
+        },
+        {
+          "Name": "existing box: used boxes in a link",
+          "Value": "0"
+        },
+        {
+          "Name": "existing box: used boxes in the host already naming a circuit",
+          "Value": "0"
+        },
+        {
+          "Name": "existing box: other failures while applying",
+          "Value": "0"
+        },
+        {
+          "Name": "existing box: warnings dismissed while applying",
+          "Value": "0"
+        },
+        {
+          "Name": "existing box: boxes in the model the apply reports using",
+          "Value": "1"
+        },
+        {
+          "Name": "removal: other failures while applying",
+          "Value": "0"
+        },
+        {
+          "Name": "removal: warnings dismissed while applying",
+          "Value": "0"
+        },
+        {
+          "Name": "removal: indicators removed",
+          "Value": "1"
+        },
+        {
+          "Name": "removal: indicators left as joined",
+          "Value": "0"
+        },
+        {
+          "Name": "joined: indicator connectors",
+          "Value": "4: DomainCableTrayConduit"
+        },
+        {
+          "Name": "joined: other failures while applying",
+          "Value": "0"
+        },
+        {
+          "Name": "joined: warnings dismissed while applying",
+          "Value": "1"
+        },
+        {
+          "Name": "joined: indicators left as joined",
+          "Value": "1"
+        },
+        {
+          "Name": "joined: indicators of ours this case reads as joined",
+          "Value": "1"
+        },
+        {
+          "Name": "joined: cabling warnings posted",
+          "Value": "1"
+        },
+        {
+          "Name": "joined at a box: indicators of ours already in the model",
+          "Value": "0"
+        },
+        {
+          "Name": "joined at a box: boxes recommended",
+          "Value": "10"
+        },
+        {
+          "Name": "joined at a box: indicator connectors",
+          "Value": "4: DomainCableTrayConduit"
+        },
+        {
+          "Name": "joined at a box: distance of the joined indicator from its box, internal feet",
+          "Value": "0.0000"
+        },
+        {
+          "Name": "joined at a box: other failures while applying",
+          "Value": "0"
+        },
+        {
+          "Name": "joined at a box: warnings dismissed while applying",
+          "Value": "1"
+        },
+        {
+          "Name": "joined at a box: indicators placed",
+          "Value": "9"
+        },
+        {
+          "Name": "joined at a box: joined indicators standing for a box",
+          "Value": "1"
+        },
+        {
+          "Name": "joined at a box: cabling warnings posted",
+          "Value": "1"
+        },
+        {
+          "Name": "another type: the other type is of",
+          "Value": "another family"
+        },
+        {
+          "Name": "another type: other failures while applying",
+          "Value": "0"
+        },
+        {
+          "Name": "another type: warnings dismissed while applying",
+          "Value": "0"
+        },
+        {
+          "Name": "unreadable: other failures while applying",
+          "Value": "0"
+        },
+        {
+          "Name": "unreadable: warnings dismissed while applying",
+          "Value": "1"
+        },
+        {
+          "Name": "unreadable: circuits named unreadable",
+          "Value": "1"
+        },
+        {
+          "Name": "unreadable: cabling warnings posted",
+          "Value": "1"
+        },
+        {
+          "Name": "no carrier: circuits blocked",
+          "Value": "13"
+        },
+        {
+          "Name": "no carrier: over the model\u0027s own carriers, at terminals",
+          "Value": "found 6, no carrier near 6, no connectivity 1, nothing to route 0"
+        },
+        {
+          "Name": "no carrier: over the model\u0027s own carriers, cut in boxes",
+          "Value": "found 6, no carrier near 6, no connectivity 1, nothing to route 0"
+        },
+        {
+          "Name": "no carrier: NoCarrierNear in both modes",
+          "Value": "6 of 6 stopped at the same end; NoCarrierNear in one mode only: 0"
+        },
+        {
+          "Name": "no carrier reach, at terminals: options passed, against the command\u0027s defaults",
+          "Value": "join 152.4 mm, reach 3048 mm, axis-aligned yes, conduit preference 0, length extension 0, single-device circuits routed; the command\u0027s defaults: join 50 mm, reach 3000 mm, axis-aligned yes, conduit preference 0, length extension 0, single-device circuits routed - so reach \u002B48 mm and join \u002B102.4 mm against them"
+        },
+        {
+          "Name": "no carrier reach, at terminals: routes by status",
+          "Value": "found 6, no carrier near 6, no connectivity 1, nothing to route 0"
+        },
+        {
+          "Name": "no carrier reach, at terminals: circuits NoCarrierNear, by the end they stopped at",
+          "Value": "at the panel 2, at a device 4, end not identified 0; ends matched more than once 0"
+        },
+        {
+          "Name": "no carrier reach, at terminals: the case\u0027s copy of the router\u0027s rule stops at the same end",
+          "Value": "6 of 6"
+        },
+        {
+          "Name": "no carrier reach, at terminals: distinct blocked ends",
+          "Value": "5 (panels 1, devices 4)"
+        },
+        {
+          "Name": "no carrier reach, at terminals: blocked ends a carrier reaches by brute force, which the index did not offer",
+          "Value": "0"
+        },
+        {
+          "Name": "no carrier reach, at terminals: ends reached, by the approach study, its copy here, and the router\u0027s rule",
+          "Value": "to terminals: study 30, copy 30; along carriers: study 31, copy 31; by the router\u0027s rule 30; of 39 ends (study 39)"
+        },
+        {
+          "Name": "no carrier reach, at terminals: heights, mm",
+          "Value": "circuit ends 338 mm..717 mm; host carriers 460 mm..2750 mm; linked carriers 2750 mm..2750 mm"
+        },
+        {
+          "Name": "no carrier reach, at terminals: link 589470",
+          "Value": "transform identity yes, moved 0 mm, rotated no; carriers in the network 0, read again without the transform 0; nearest to a blocked end none with the transform, none without; blocked ends its carriers would reach without the transform 0 of 5"
+        },
+        {
+          "Name": "no carrier reach, at terminals: link 589473",
+          "Value": "transform identity yes, moved 0 mm, rotated no; carriers in the network 13, read again without the transform 13; nearest to a blocked end 4112 mm with the transform, 4112 mm without; blocked ends its carriers would reach without the transform 0 of 5"
+        },
+        {
+          "Name": "no carrier reach, at terminals: links loaded",
+          "Value": "2"
+        },
+        {
+          "Name": "no carrier reach, at terminals: blocked at panel 589735",
+          "Value": "circuits 2 [589828, 589835]; point from the panel\u0027s first physical electrical connector; nearest carrier 589473:589512 tray Segment in a link, 4320 mm by the approach metric, 3058 mm straight to the same point; nearest along any carrier, conduits not held to their ends, 2740 mm straight; to it: height \u002B2032.6 mm, across 2287 mm by the axes, 2285 mm straight; reach 3048 mm, over it by 1272 mm"
+        },
+        {
+          "Name": "no carrier reach, at terminals: blocked at device 590765",
+          "Value": "circuits 1 [591759]; point from its first physical electrical connector; nearest carrier 589473:589474 tray Segment in a link, 4112 mm by the approach metric, 2921 mm straight to the same point; nearest along any carrier, conduits not held to their ends, 2921 mm straight; to it: height \u002B2251.9 mm, across 1860 mm by the axes, 1860 mm straight; reach 3048 mm, over it by 1064 mm"
+        },
+        {
+          "Name": "no carrier reach, at terminals: blocked at device 591157",
+          "Value": "circuits 1 [591772]; point from its first physical electrical connector; nearest carrier 589473:589474 tray Segment in a link, 4112 mm by the approach metric, 2921 mm straight to the same point; nearest along any carrier, conduits not held to their ends, 2267 mm straight; to it: height \u002B2251.9 mm, across 1860 mm by the axes, 1860 mm straight; reach 3048 mm, over it by 1064 mm"
+        },
+        {
+          "Name": "no carrier reach, at terminals: blocked at device 626302",
+          "Value": "circuits 1 [626600]; point from its first physical electrical connector; nearest carrier 591917 conduit Segment in the host, 3265 mm by the approach metric, 2244 mm straight to the same point; nearest along any carrier, conduits not held to their ends, 2244 mm straight; to it: height \u002B332.3 mm, across 2933 mm by the axes, 2219 mm straight; reach 3048 mm, over it by 217 mm"
+        },
+        {
+          "Name": "no carrier reach, at terminals: blocked at device 626368",
+          "Value": "circuits 1 [626594]; point from its first physical electrical connector; nearest carrier 626248 conduit Segment in the host, 3900 mm by the approach metric, 2830 mm straight to the same point; nearest along any carrier, conduits not held to their ends, 2830 mm straight; to it: height \u002B2411.9 mm, across 1488 mm by the axes, 1481 mm straight; reach 3048 mm, over it by 852 mm"
+        },
+        {
+          "Name": "no carrier: other failures while applying",
+          "Value": "0"
+        },
+        {
+          "Name": "no carrier: warnings dismissed while applying",
+          "Value": "13"
+        },
+        {
+          "Name": "no carrier: cabling warnings posted",
+          "Value": "13"
+        },
+        {
+          "Name": "no joints: circuits that could not cross",
+          "Value": "8"
+        },
+        {
+          "Name": "no joints: circuits with no carrier near",
+          "Value": "5"
+        },
+        {
+          "Name": "no joints: circuits routed on one carrier",
+          "Value": "0"
+        },
+        {
+          "Name": "no joints: other failures while applying",
+          "Value": "0"
+        },
+        {
+          "Name": "no joints: warnings dismissed while applying",
+          "Value": "8"
+        },
+        {
+          "Name": "no joints: cabling warnings posted",
+          "Value": "8"
+        },
+        {
+          "Name": "box joined to nothing: the other type is of",
+          "Value": "another family"
+        },
+        {
+          "Name": "box joined to nothing: other failures while applying",
+          "Value": "0"
+        },
+        {
+          "Name": "box joined to nothing: warnings dismissed while applying",
+          "Value": "1"
+        },
+        {
+          "Name": "box joined to nothing: boxes named",
+          "Value": "1"
+        },
+        {
+          "Name": "box joined to nothing: cabling warnings posted",
+          "Value": "1"
         },
         {
           "Name": "cases skipped",
@@ -5430,11 +8631,11 @@
         },
         {
           "Name": "diagnostic events",
-          "Value": "516 received, 0 dropped by the publisher, longest quiet spell 265.2s during Blocked"
+          "Value": "1732 received, 0 dropped by the publisher, longest quiet spell 66.6s during Starting"
         },
         {
           "Name": "phases seen",
-          "Value": "Starting, Idle, OpeningDocument, Working, DocumentReady, Blocked"
+          "Value": "Starting, Idle, OpeningDocument, Working, DocumentReady"
         },
         {
           "Name": "progress caption",
@@ -5455,10 +8656,6 @@
         {
           "Name": "progress caption",
           "Value": "\u0417\u0430\u0433\u0440\u0443\u0437\u043A\u0430 TestCabling-\u042D\u041E\u041C.rvt"
-        },
-        {
-          "Name": "progress caption",
-          "Value": "dialog"
         },
         {
           "Name": "progress caption",
@@ -5490,11 +8687,11 @@
         },
         {
           "Name": "progress caption",
-          "Value": "\u0424\u043E\u0440\u043C\u0438\u0440\u043E\u0432\u0430\u043D\u0438\u0435 \u0433\u0440\u0430\u0444\u0438\u043A\u0438 \u0434\u043B\u044F \u041F\u043B\u0430\u043D \u044D\u0442\u0430\u0436\u0430: 1 - \u0421\u0438\u043B\u043E\u0432\u044B\u0435 \u0446\u0435\u043F\u0438"
+          "Value": "\u0424\u043E\u0440\u043C\u0438\u0440\u043E\u0432\u0430\u043D\u0438\u0435 \u0433\u0440\u0430\u0444\u0438\u043A\u0438 \u0434\u043B\u044F 3D \u0432\u0438\u0434: {3D}"
         },
         {
           "Name": "progress caption",
-          "Value": "\u0424\u043E\u0440\u043C\u0438\u0440\u043E\u0432\u0430\u043D\u0438\u0435 \u0433\u0440\u0430\u0444\u0438\u043A\u0438 \u0434\u043B\u044F \u041F\u043B\u0430\u043D \u044D\u0442\u0430\u0436\u0430: Proxy of 1 - \u0421\u0438\u043B\u043E\u0432\u044B\u0435 \u0446\u0435\u043F\u0438"
+          "Value": "\u0424\u043E\u0440\u043C\u0438\u0440\u043E\u0432\u0430\u043D\u0438\u0435 \u0433\u0440\u0430\u0444\u0438\u043A\u0438 \u0434\u043B\u044F 3D \u0432\u0438\u0434: Proxy of {3D}"
         },
         {
           "Name": "progress caption",
@@ -5502,7 +8699,7 @@
         },
         {
           "Name": "progress caption",
-          "Value": "\u0427\u0435\u0440\u0442\u0435\u0436: TestCabling-\u042D\u041E\u041C.rvt - \u041F\u043B\u0430\u043D \u044D\u0442\u0430\u0436\u0430: 1 - \u0421\u0438\u043B\u043E\u0432\u044B\u0435 \u0446\u0435\u043F\u0438"
+          "Value": "\u0427\u0435\u0440\u0442\u0435\u0436: TestCabling-\u042D\u041E\u041C.rvt - 3D \u0432\u0438\u0434: {3D}"
         },
         {
           "Name": "progress caption",
@@ -5513,16 +8710,12 @@
           "Value": "\u0410\u0432\u0442\u043E\u043C\u0430\u0442\u0438\u0447\u0435\u0441\u043A\u043E\u0435 \u0441\u043E\u0435\u0434\u0438\u043D\u0435\u043D\u0438\u0435 \u0438\u0437\u043C\u0435\u043D\u0435\u043D\u043D\u044B\u0445 \u044D\u043B\u0435\u043C\u0435\u043D\u0442\u043E\u0432"
         },
         {
-          "Name": "modal dialog",
-          "Value": "TaskDialog_Stop_Operation"
-        },
-        {
           "Name": "closed after",
-          "Value": "13.0s"
+          "Value": "13.1s"
         }
       ]
     }
   ],
-  "Performed": 448,
+  "Performed": 512,
   "Failed": 0
 }

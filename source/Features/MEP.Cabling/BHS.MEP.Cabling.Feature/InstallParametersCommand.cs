@@ -89,24 +89,43 @@ public sealed class InstallParametersCommand : IFeatureCommand
         if (missing.Count == 0)
         {
             log.Info("parameters: this model already has all of them bound");
-            Show(active, files, language, bound: Array.Empty<SharedParameter>(), alreadyThere: true);
+            Show(active, files, language, bound: Array.Empty<SharedParameter>(), alreadyThere: true, notApplied: null);
             return Result.Succeeded;
         }
 
-        var bound = scheme.Install(document, application).Where(one => one.Categories.Count > 0).ToList();
+        var bound = scheme.Install(document, application, extra: null, out var binding)
+            .Where(one => one.Categories.Count > 0)
+            .ToList();
+
+        var notApplied = binding is { } status && status != TransactionStatus.Committed ? binding : null;
+
+        // Said before the per-parameter lines, because it is their cause: a binding Revit did not keep
+        // returns nothing bound. Pending in words of its own - Revit is still waiting for somebody, so
+        // "not applied" would be as false about it as "applied".
+        if (notApplied == TransactionStatus.Pending)
+            log.Error("parameters: Revit has not finished the binding, its transaction returned Pending");
+        else if (notApplied is { } refused)
+            log.Error("parameters: the binding was not applied - its transaction returned {0}, not Committed", refused);
 
         foreach (var one in bound)
             log.Info("parameters: bound {0} to {1} category(ies)", one.In(language).Name, one.Categories.Count);
 
         // Named rather than counted. "Two of three bound" leaves the reader to work out which one
-        // did not, and the one that did not is the whole message.
+        // did not, and the one that did not is the whole message. After a binding Revit did not keep,
+        // each one is a consequence of the line above rather than a refusal of its own, and is logged
+        // as that - otherwise every parameter would read as refused for a reason of its own.
         foreach (var one in missing)
         {
-            if (!bound.Contains(one))
+            if (bound.Contains(one))
+                continue;
+
+            if (notApplied is not null)
+                log.Info("parameters: {0} is not bound, because the binding was not applied", one.In(language).Name);
+            else
                 log.Warn("parameters: {0} could not be bound", one.In(language).Name);
         }
 
-        Show(active, files, language, bound, alreadyThere: false);
+        Show(active, files, language, bound, alreadyThere: false, notApplied);
         return Result.Succeeded;
     }
 
@@ -114,17 +133,37 @@ public sealed class InstallParametersCommand : IFeatureCommand
     /// A <c>TaskDialog</c> for the same reason the collect command uses one: a window of our own
     /// belongs to the design pass, and borrowing Revit's costs nothing and cannot quietly become the
     /// design.
+    /// <para>
+    /// <b>A binding Revit did not keep is said on the dialog, not only in the log.</b> Its list comes
+    /// back empty, and "Nothing could be bound" alone reads as a problem with the categories or the
+    /// file - which sends the person who pressed the button to the wrong place.
+    /// </para>
     /// </remarks>
+    /// <param name="notApplied">What the binding transaction returned when it was not <c>Committed</c>, otherwise nothing.</param>
     private static void Show(
         string active,
         IReadOnlyList<string> files,
         ParameterLanguage language,
         IReadOnlyList<SharedParameter> bound,
-        bool alreadyThere)
+        bool alreadyThere,
+        TransactionStatus? notApplied)
     {
         var others = files.Where(file => !string.Equals(file, active, StringComparison.OrdinalIgnoreCase));
 
-        var body = string.Format(
+        var status = notApplied switch
+        {
+            null => string.Empty,
+            TransactionStatus.Pending =>
+                "Revit has not finished the binding: its transaction returned Pending. Revit describes that as "
+                + "waiting for somebody to act on a message about it, so nothing is reported as bound; look at "
+                + "the model before pressing this again.\n\n",
+            _ => string.Format(
+                CultureInfo.CurrentCulture,
+                "Revit did not apply the binding: its transaction returned {0}, not Committed, so nothing was bound.\n\n",
+                notApplied),
+        };
+
+        var body = status + string.Format(
             CultureInfo.CurrentCulture,
             "This Revit reads:\n{0}\n\nPoint Revit at it when adding these parameters to a family - "
             + "a parameter added from another vendor's file has a different identity, whatever it is "
@@ -138,9 +177,13 @@ public sealed class InstallParametersCommand : IFeatureCommand
         {
             MainInstruction = alreadyThere
                 ? "This model already has them"
-                : bound.Count == 0
-                    ? "Nothing could be bound"
-                    : string.Format(CultureInfo.CurrentCulture, "{0} parameter(s) bound", bound.Count),
+                : notApplied == TransactionStatus.Pending
+                    ? "Revit has not finished the binding"
+                    : notApplied is { } refused
+                        ? string.Format(CultureInfo.CurrentCulture, "Revit did not apply the binding ({0})", refused)
+                        : bound.Count == 0
+                            ? "Nothing could be bound"
+                            : string.Format(CultureInfo.CurrentCulture, "{0} parameter(s) bound", bound.Count),
             MainContent = body,
             ExpandedContent = bound.Count == 0
                 ? null

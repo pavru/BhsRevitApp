@@ -188,16 +188,28 @@ internal sealed class SweepReport
     /// The directories whose content decides what a sweep would find.
     /// </summary>
     /// <remarks>
+    /// <para>
     /// Deliberately not everything: documentation and CI wiring change nothing about how the add-in
     /// behaves inside Revit, and a rule that made fixing a typo cost twenty minutes of Revit is a
     /// rule somebody switches off within the week. Kept in step with the same list in
-    /// build/scripts/Check-SweepReport.ps1, which is the reader of what this writes.
+    /// build/scripts/Check-SweepReport.ps1, which is the reader of what this writes - same entries,
+    /// same spelling, because the reader looks each one up by name in the record.
+    /// </para>
+    /// <para>
+    /// <b><c>source/Features/MEP.Cabling</c> is here since 2026-09-14, the owner's decision.</b> It was
+    /// left out on the premise that no check in a sweep changes with an edit to the feature - true
+    /// while the probe ran only framework questions, and false since it hosts the cabling test suites
+    /// and carries the feature's assemblies into Revit. An edit to the apply phase could then change
+    /// what the in-Revit cases assert while a record from before the edit went on passing. The feature's
+    /// directory as a whole, tests included, because the suites under it are what the sweep runs.
+    /// </para>
     /// </remarks>
     public static readonly string[] RevitSidePaths =
     {
         "source/Revit",
         "source/Shared",
         "source/WinSide",
+        "source/Features/MEP.Cabling",
         "build/BHS.Revit.Sdk",
     };
 

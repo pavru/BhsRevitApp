@@ -38,6 +38,7 @@
             <RowDefinition Height="Auto" />
             <RowDefinition Height="Auto" />
             <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
         </Grid.RowDefinitions>
 
         <!-- Never a bare bar: a bar says something is happening and nothing about what, and the
@@ -119,7 +120,16 @@
             </ItemsControl.ItemTemplate>
         </ItemsControl>
 
-        <StackPanel Grid.Row="8"
+        <!-- What the write did, or why it did not. The headline above says which of the two; this is
+             the sentence somebody acts on - a refusal names what Revit returned, a write names what it
+             placed and what it left alone - and without it that sentence reached only the log. -->
+        <TextBlock Grid.Row="8"
+                   Margin="0,14,0,0"
+                   Text="{Binding ApplySummary}"
+                   TextWrapping="Wrap"
+                   Visibility="{Binding HasApplySummary, Converter={StaticResource Shown}}" />
+
+        <StackPanel Grid.Row="9"
                     Orientation="Horizontal"
                     HorizontalAlignment="Right"
                     Margin="0,20,0,0">
