@@ -1,0 +1,228 @@
+[
+  {
+    "run": 1,
+    "case": "applying binds every parameter it is about to write, including the runtime categories",
+    "file": "source/Features/MEP.Cabling/BHS.MEP.Cabling.Revit/CablingApply.cs",
+    "anchor": "            .Add(CablingParameters.TapCount, indicator)",
+    "replacement": "            .Add(CablingParameters.TapCount, BuiltInCategory.OST_Conduit)",
+    "reddens": "parameters still unbound after applying, which means the run had nowhere to write: \" + string.Join(\", \", missing)",
+    "rationale": "BHS_Cbl_TapCount declares no category at compile time (WhicheverTheIndicatorIs is empty), so the only thing that ever puts it on the indicator is this one runtime Add. Writing a hand-picked category there instead of the symbol's own is exactly the guessed registry CablingParameters' remarks forbid, and it is the failure that is silent by construction: the parameter still binds somewhere real, so the apply's own 'these parameters could not be bound' guard is satisfied and it does not refuse - it simply has nowhere to write the entry count on the family the project chose. The case exists for precisely this, because it asks the document afterwards with the runtime set the apply path should have composed. OST_Conduit is guaranteed not to be the indicator's category: a conduit is an MEPCurve with a ConduitType, never a FamilySymbol, so the two sets cannot accidentally coincide on any model.",
+    "leftUnproven": "None - it is the case's last assertion. The three guards inside ApplyWatched run first and still pass: 'the test's own failure handler threw, so what Revit did with the apply's failures is unknown: ', 'failures worse than a warning while applying, which the handler rolled back: ' and 'applying refused on a model that has the indicator family: '. In the two cases this breakage also reddens, the WrittenOn comparison falls before their warning assertions, so any red aimed at those is masked - run this breakage alone.",
+    "risk": "If Category.GetCategory(document, OST_Conduit) came back null the parameter would bind to nothing, the apply's own Missing check would catch it and refuse, and the first red would instead be ApplyWatched's 'applying refused on a model that has the indicator family: ' - a red, but the wrong one. In a project document that category always exists, so this is remote. If the opened model does not hold the indicator family the case stands down at NeedsIndicatorFamily and nothing is proven. Nothing throws: binding an integer instance parameter to conduits is ordinary, and the run is empty so nothing is written through the broken binding.",
+    "alsoReddens": [
+      "every box the plan recommends gets one indicator of ours at its place, and nothing else is placed",
+      "an indicator of ours joined to the structure is left, not removed",
+      "an indicator of ours joined into the network where a box is recommended is left untouched, gets no second indicator beside it, and is named in a warning"
+    ],
+    "hides": [
+      "an indicator of ours joined to the structure is left, not removed",
+      "an indicator of ours joined into the network where a box is recommended is left untouched, gets no second indicator beside it, and is named in a warning"
+    ]
+  },
+  {
+    "run": 1,
+    "case": "applying the same run again places nothing and removes nothing",
+    "file": "source/Features/MEP.Cabling/BHS.MEP.Cabling.Revit/CablingApply.cs",
+    "anchor": "            found = Match(standing, taken, at, project.BoxRadius, joined, joinedOnes: false);",
+    "replacement": "            found = Match(standing, taken, at, project.BoxRadius, joined, joinedOnes: true);",
+    "reddens": "indicators placed anew by a second apply of the same run",
+    "rationale": "This second Match call is the only path by which an indicator a previous run left standing is found in place and rewritten instead of placed again - it is matching-by-place, which is what the case is named for. Asking it for joined indicators a second time is a copy-paste of the argument from the identical call eight lines above (line 424), and it is the whole regression: no unjoined indicator of ours is ever matched again, so the second press places a fresh indicator at every recommended box and deletes the first press's as unclaimed. Idempotence, which the case remarks call \"place is all an indicator is between runs\", is gone.",
+    "leftUnproven": "Everything after the first: \"indicators removed by a second apply of the same run\" (which would also be red - second.Removed equals the recommendation count); \"indicators the first apply left standing, against the ones the second apply found in place\"; \"indicators left as joined by the first apply, against the second\"; the per-id loop \"indicator <id>, standing after the first apply, is gone after the second\"; and \"indicators of ours after the first apply, against after the second\".",
+    "risk": "The case stands down before any assertion if the plan recommends no box (Skip.When(wanted == 0, ...)) - which is exactly where the 2026-09-14 attended run stopped it, before the owner fixed the model; the 2026-09-16 run measured 10 recommended boxes, so on that set it reaches the apply. Second risk: the broken second press now deletes every indicator the first press placed, and if Revit raised anything worse than a warning on those deletions, ApplyWatched would fail earlier on \"failures worse than a warning while applying, which the handler rolled back\" - a red, but on the wrong assertion. Deleting a free-standing unjoined instance is what the removal case already exercises, so this is unlikely. Nothing can throw: only a bool literal changes, the signature is untouched, and it compiles identically on all four TFMs. Verified targeted: the placement, re-read, existing-box, removal, joined-indicator and rollback cases all start from a model holding no indicators of ours, so their single apply never reaches this line with a non-empty standing list, and the joined-in-place case is served by the unchanged first Match call.",
+    "alsoReddens": [],
+    "hides": []
+  },
+  {
+    "run": 1,
+    "case": "an element of another type carrying our recommendation is never removed",
+    "file": "source/Features/MEP.Cabling/BHS.MEP.Cabling.Revit/CablingApply.cs",
+    "anchor": "            .Where(one => one.GetTypeId() == symbol.Id && Ours(one))",
+    "replacement": "            .Where(one => Ours(one))",
+    "reddens": "\"element \" + stranger + \" of a type other than the indicator's, carrying our recommendation and joined to nothing, was removed by an apply whose plan names no box\"",
+    "rationale": "Drops one conjunct from the filter that decides what counts as ours to remove, leaving recognition by the recommendation parameter alone. This is the regression the production remarks name in advance - \"Both tests, and neither alone would do ... the parameter alone would trust a value anybody can type into a family of their own\" - and it is plausible precisely because it looks like a simplification: the parameter is our own, so surely carrying it is enough. It is not: the recommendation is bound to the indicator's whole category, so any fitting of that category that somebody typed it into, or copied from an indicator, becomes ours to delete. The apply then removes elements of the model and counts them as its own cleanup.",
+    "leftUnproven": "Nothing - this is the case's last assertion. The one before it, \"element \" + stranger + \" does not read back the recommendation just written on it, so binding through the production path did not reach its category\", runs before the apply and is untouched by this edit. Worth saying plainly: no other case in the suite covers this. Case 1's loose instance differs from a real indicator by its recommendation, not by its type, so case 1 stays green on this breakage; that is why this case exists.",
+    "risk": "Compiles on all four TFMs: `symbol` becomes an unused parameter of `Standing`, and an unused parameter is never a C# warning - there is no .editorconfig and no EnforceCodeStyleInBuild in this tree, so TreatWarningsAsErrors does not bite. `Ours(one)` now runs on every FamilyInstance in the host instead of short-circuiting behind the type test: get_Parameter returns null on an element that has no such binding, so it is slower on a large model but cannot throw. The stranger is free-standing 40 ft beyond everything and PlaceLoose has already stood the case down unless it is joined to nothing, so deleting it should raise nothing worse than a warning; if it does, ApplyWatched's \"failures worse than a warning while applying, which the handler rolled back: ...\" falls first. Stand-down risk: NeedsAnotherType skips when the model holds no second type in the indicator's category.",
+    "alsoReddens": [],
+    "hides": []
+  },
+  {
+    "run": 1,
+    "case": "an unreadable connection value is posted as a warning against its circuit",
+    "file": "source/Features/MEP.Cabling/BHS.MEP.Cabling.Revit/CablingApply.cs",
+    "anchor": "            Post(host, outcome, CablingFeature.ConnectionUnreadable, id);",
+    "replacement": "            Post(host, outcome, CablingFeature.NoCarrierNear, id);",
+    "reddens": "ConnectionUnreadable warnings Revit processed against circuit <circuit id>, which holds 'Junkbox' on itself: expected 1, got 0",
+    "rationale": "Warn posts five conditions through five near-identical two-line loops, each naming a different FailureDefinitionId. Naming the wrong one is the copy-paste this shape invites, and it is silent everywhere else: the warning is still posted, still a warning, still against the right circuit, still counted in outcome.Warnings - it simply says the wrong thing to the person who pressed Apply, who is told a circuit reaches no carrier when what is wrong is a typo in its connection value. Nothing but this case's definition filter can tell the difference.",
+    "leftUnproven": "Everything after it in the case: Expect.Same(expected.Count, mine.Count, \"ConnectionUnreadable warnings Revit processed, against circuits the read named unreadable\") and EachAgainstOneOf's \"a ConnectionUnreadable failure was not a warning, or named something other than one circuit the read called unreadable: ...\". The assertions before it do run and pass - SetText's two writes, \"circuit <id> holds 'Junkbox' on itself and the read did not name it unreadable, so the apply had nothing to warn about\", ApplyWatched's three, and SawWhatWasPosted - so this red proves the posting, not the reading.",
+    "risk": "Needs --edition: without the failure definitions registered the case stands down at NeedsDefinitionsFor before applying, and without a described circuit it stands down earlier still. SawWhatWasPosted cannot fall first here - the apply still posts exactly one warning and the watch still sees one cabling warning, because NoCarrierNear is one of the five in ProcessedFailure.Cabling - unless Revit's FailuresProcessing does not fire at all, which the green run of 2026-09-16 rules out for this commit. Harmless side effect worth knowing: on a model whose own circuits hold an unreadable connection value, this posts an extra NoCarrierNear against each - zero on the sweep models, which carry no connection values.",
+    "alsoReddens": [],
+    "hides": []
+  },
+  {
+    "run": 1,
+    "case": "a junction box joined to nothing is posted as a warning against it",
+    "file": "source/Features/MEP.Cabling/BHS.MEP.Cabling.Revit/CablingApply.cs",
+    "anchor": "        foreach (var id in snapshot.BoxesUnconnectedIds)",
+    "replacement": "        foreach (var id in snapshot.Circuits.UnreadableConnectionIds)",
+    "reddens": "JunctionBoxJoinedToNothing warnings Revit processed against element <box id>, whose type says JunctionBox and which is joined to nothing: expected 1, got 0",
+    "rationale": "The third knob: the right definition posted over the wrong list. Both are IReadOnlyList<long> read off the same snapshot two lines apart, so copying the loop above and changing only the definition compiles and runs - and on any model with no mistyped connection values it posts nothing at all, which from outside is indistinguishable from a model with no box drawn beside its run. This is the apply-side break; the reader-side alternative is deleting JunctionBoxes.cs:75 (_unconnected.Add(element.Id.Value)), which reddens this case earlier, at \"element <id>, whose type says JunctionBox and which is joined to nothing, was not named by the read, so the apply had nothing to warn about\" - and, unlike this one, does so even without an edition, since that assertion precedes NeedsDefinitionsFor.",
+    "leftUnproven": "Expect.Same(expected.Count, mine.Count, \"JunctionBoxJoinedToNothing warnings Revit processed, against boxes the read named joined to nothing\") and \"a JunctionBoxJoinedToNothing failure was not a warning, or named something other than one box the read called joined to nothing: ...\". The reader side stays proven: \"element <id>, whose type says JunctionBox and which is joined to nothing, was not named by the read...\" runs before the apply and passes, which is what tells this red apart from a reading regression.",
+    "risk": "Needs --edition, and needs the case to get as far as placing its box - it stands down when the indicator family is not in a role category, when the model has no second type of that category, and when that type has no connector. On the sweep models UnreadableConnectionIds is empty, so nothing is posted and SawWhatWasPosted passes at 0 against 0; if some model did hold a mistyped connection value, both loops would post against circuits, SawWhatWasPosted would still balance at 2k against 2k, and the named assertion would still be the first to fall, since none of those warnings names the box. Side effect on the unreadable-connection case: it would see a second warning against its circuit, which leaves its own assertions green.",
+    "alsoReddens": [],
+    "hides": []
+  },
+  {
+    "run": 2,
+    "case": "an indicator family this model does not have is refused by name, not passed over",
+    "file": "source/Features/MEP.Cabling/BHS.MEP.Cabling.Revit/CablingApply.cs",
+    "anchor": "        var symbol = project.Boxes.In(host);",
+    "replacement": "        var symbol = project.Boxes.In(host)\n            ?? new RecommendedBoxes(RecommendedBoxes.DefaultFamily, RecommendedBoxes.DefaultType).In(host);",
+    "reddens": "applying accepted an indicator family this model does not have",
+    "rationale": "The forgiving fallback RecommendedBoxes' own remarks argue against - 'that is why In reports rather than falls back'. Somebody adds it so a project that has not set the family still gets markers; what it actually does is place against a different family than the one the setting names, which is the 'passed over' this case is named for. The apply then runs its whole path on a real symbol and returns an outcome with no refusals, so the first assertion falls. The change cannot fail to compile: RecommendedBoxes sits in the same namespace and assembly, its constructor and both defaults are public.",
+    "leftUnproven": "\"the refusal does not name the family that is missing: \" + string.Join(\" \", outcome.Refusals) - the 'by name' half of the case stays behind the red.",
+    "risk": "The red depends on the sweep's model holding the shipped default family. If it does not, the fallback returns null too, the apply refuses with the project's own absent name in the sentence, and both assertions pass - green, nothing proven. Every other case needs that family as well, so a sweep where this risk bites is a sweep of skips. A fully deterministic alternative, which reddens the SECOND assertion on any model at all: in the missing-family refusal a few lines below, pass project.Boxes.Type where project.Boxes.Family is passed (line 209) - the sentence then names the type twice and never the family. Second risk: this case deliberately asks for no failure definitions, so with the apply now going ahead, a model that happens to hold an unreadable connection value or a box joined to nothing would make new FailureMessage throw in a sweep run without --edition, reporting 'threw before it could assert'. The canonical command installs the edition, which registers them.",
+    "alsoReddens": [],
+    "hides": []
+  },
+  {
+    "run": 2,
+    "case": "every box the plan recommends gets one indicator of ours at its place, and nothing else is placed",
+    "file": "source/Features/MEP.Cabling/BHS.MEP.Cabling.Revit/CablingApply.cs",
+    "anchor": "            var at = new XYZ(box.At.X, box.At.Y, box.At.Z);",
+    "replacement": "            var at = new XYZ(box.At.X, box.At.Y, 0);",
+    "reddens": "indicators of ours within the box radius of the box planned at \" + Describe(at) + \" ft",
+    "rationale": "Drops the height and lets the level carry it - the simplification that is tempting right beside the Levels helper on the next lines, and the sort of thing somebody writes when Revit objects to a placement. Every recommended box still gets exactly one indicator and every reported count still closes with the plan, so nothing the apply says about itself changes; only the model read back can tell that the mark no longer stands where the cable leaves the trunk. That is precisely what this case asserts against the document rather than against the outcome.",
+    "leftUnproven": "The rest of the case, and the rest of the box loop: \"indicator <id> carries no cable entry count\"; \"cable entries written on indicator <id>, against the plan's count for its box\"; every assertion inside ExpectCircuitRefs for the indicator and for each host carrier; \"instance <id> of the indicator type was placed without our recommendation on it\"; \"indicator <id> stands where the plan recommends no box\"; and the InLinks presence assertion. The two assertions before it pass and stay proven only as far as counting goes: \"boxes the plan recommends, against indicators the apply reports placing, finding in place, or finding joined in place\" and \"indicators the apply reports placing, against new instances of the indicator type in the model\".",
+    "risk": "Two honest doubts. Whether Revit keeps the height an instance is handed is not measured - the case says so itself - but the case passing on 2026-09-16 with a 150 mm radius says it keeps it well inside that radius, so handing it 0 instead of the tap height must move it. And if a model's recommended boxes sat within 150 mm of z = 0 the indicator would stay in the radius and nothing would redden; on the owner's set the taps lie on trays at about 2.75 m, so the note printed just before the assertion - 'placement: farthest planned box from its nearest instance of the indicator type, internal feet' - should read roughly nine, and that note is what explains the red. Remote third: if Revit refused to place an instance far below its level the case would report 'threw before it could assert'. An alternative with the same effect and no height question is to transpose X and Y in the same expression.",
+    "alsoReddens": [
+      "an indicator of ours joined into the network where a box is recommended is left untouched, gets no second indicator beside it, and is named in a warning"
+    ],
+    "hides": [
+      "an indicator of ours joined into the network where a box is recommended is left untouched, gets no second indicator beside it, and is named in a warning"
+    ]
+  },
+  {
+    "run": 2,
+    "case": "an indicator of ours the plan no longer names is removed, and one without our recommendation is left",
+    "file": "source/Features/MEP.Cabling/BHS.MEP.Cabling.Revit/CablingApply.cs",
+    "anchor": "            if (taken[i])\n                continue;\n\n            host.Delete(standing[i].Id);",
+    "replacement": "            if (!taken[i])\n                continue;\n\n            host.Delete(standing[i].Id);",
+    "reddens": "\"indicator \" + stale + \", ours and joined to nothing, is still standing after an apply whose plan names no box\"",
+    "rationale": "Inverts the one guard that decides which standing indicator of ours the run no longer wants. `taken[i]` means \"a box of this run claimed it\", so the delete must take the UNclaimed ones; inverted, the apply removes exactly the ones it just matched and keeps the stale ones forever. A misread of `taken` is a regression somebody writes in a minute - the identifier reads equally well as \"taken over by this run, therefore ours to take away\". It stands for the whole class of stale-marker leak: the plan turns to terminals, the previous run's indicators stay in the model, and nothing says so because the apply reports Removed = 0 rather than an error.",
+    "leftUnproven": "Both assertions after it: \"instance \" + loose + \" of the indicator type, without our recommendation, was removed by an apply whose plan names no box\" (the second half of the case name - that removal is narrow) and \"the apply reports removing nothing, though indicator \" + stale + \" is gone\" (that the count agrees with the model). The setup assertion before it - \"indicator ... does not read back the recommendation just written on it ...\" - is untouched by this edit and passes.",
+    "risk": "Low. With an empty plan nothing is `taken`, so the loop deletes nothing at all: no Revit failure can be raised, so the three assertions inside ApplyWatched (`watch.Fault is null`, `Expect.Same(0, worse.Count, ...)`, `!outcome.Refused`) cannot fall in front of it. The real risk is a stand-down, not a wrong red: the case skips if the model has no indicator family, if PlaceLoose's instance lands joined to something, or if NeedsDefinitionsFor finds a definition missing - so run this with --edition, and a skip here proves nothing. Collateral: it also reddens the second-apply case, where every indicator IS taken and so all of them get deleted (`Expect.Same(0, second.Removed, \"indicators removed by a second apply of the same run\")`); that is honest extra red, not a mask. Do NOT run this breakage in the same red run as the case 2 or case 4 breakages - it suppresses every deletion, so both of those would pass on broken code.",
+    "alsoReddens": [
+      "applying the same run again places nothing and removes nothing"
+    ],
+    "hides": [
+      "an indicator of ours joined to the structure is left, not removed",
+      "an element of another type carrying our recommendation is never removed"
+    ]
+  },
+  {
+    "run": 2,
+    "case": "every circuit that reaches no carrier is posted as one warning",
+    "file": "source/Features/MEP.Cabling/BHS.MEP.Cabling.Revit/CablingApply.cs",
+    "anchor": "        foreach (var route in run.Blocked(RouteStatus.NoCarrierNear))",
+    "replacement": "        foreach (var route in run.Blocked(RouteStatus.NoConnectivity))",
+    "reddens": "NoCarrierNear warnings Revit processed against circuit <circuit id>, which reached no carrier: expected 1, got 0",
+    "rationale": "The other knob on the same shape: which failures get this warning, rather than which warning they get. The line below it reads run.Blocked(RouteStatus.NoConnectivity), so this is the adjacent-line copy-paste, and it compiles and runs without complaint - the circuits that reached nothing simply stop being told about, while the ones that did reach the structure are told twice. It has to be broken here and not in RouteRun or Router: the case builds its own blocked list through run.Blocked, so a regression there empties both sides at once and the case stands down instead of failing.",
+    "leftUnproven": "The rest of OnePerCircuit: the same per-circuit assertion for every other blocked circuit, Expect.Same(blocked.Count, mine.Count, \"NoCarrierNear warnings Revit processed, against circuits the run could not bring near a carrier\"), and \"a NoCarrierNear failure was not a warning, or named something other than one circuit the run could not route: ...\". SawWhatWasPosted runs first and passes at 0 against 0, so it stays proven of nothing here.",
+    "risk": "Needs --edition, and needs the model to describe at least one circuit with a device - otherwise the case skips before applying (Router returns NoCarrierNear over the bare network for every described circuit, since SkipSingleDeviceCircuits defaults to false, so the blocked.Count == 0 skip should not fire). The one honest side effect: while this is in place, the NoConnectivity case posts two warnings per circuit instead of one, and I expect it to stay green because its own assertions count only NoConnectivity-definition failures and SawWhatWasPosted compares 2N against 2N. If Revit merged those two warnings into one - different definitions, so unlikely, and not measured - that case would go red on SawWhatWasPosted. Replacing NoCarrierNear with RouteStatus.NothingToRoute instead is the zero-collateral variant, at some cost in plausibility.",
+    "alsoReddens": [],
+    "hides": []
+  },
+  {
+    "run": 2,
+    "case": "every circuit whose carriers do not join up is posted as one warning",
+    "file": "source/Features/MEP.Cabling/BHS.MEP.Cabling.Revit/CablingApply.cs",
+    "anchor": "            Post(host, outcome, CablingFeature.NoConnectivity, route.Circuit.Value);",
+    "replacement": "            Post(host, outcome, CablingFeature.NoCarrierNear, route.Circuit.Value);",
+    "reddens": "NoConnectivity warnings Revit processed against circuit <circuit id>, whose carriers do not join up: expected 1, got 0",
+    "rationale": "The wrong definition on the second loop, and the two it confuses are the pair the declaration itself warns are easy to confuse: NoConnectivity is \"carriers exist near both ends and do not join up\", NoCarrierNear is \"nothing is near at all\". A designer told the second when the first is true goes looking for missing trays near the panel instead of for the gap between the two runs they already have. The warning is still posted against the right circuit and still counted, so only the definition filter in this case can see it.",
+    "leftUnproven": "The remaining per-circuit iterations, Expect.Same(blocked.Count, mine.Count, \"NoConnectivity warnings Revit processed, against circuits the run could not carry across the structure\"), and \"a NoConnectivity failure was not a warning, or named something other than one circuit the run could not route: ...\". SawWhatWasPosted passes ahead of the red, N against N, since the warnings are still posted under another name.",
+    "risk": "Needs --edition, and needs the model to give at least one NoConnectivity circuit once the join tolerance is set to -1 - the case skips by name when none does, and how many there are is the model's to say (one on the owner's linked set, Revit 2026, 2026-09-16). The first loop is untouched and iterates NoCarrierNear failures, of which this case's run has none, so no other case changes: the no-carrier case's run holds no NoConnectivity result for this loop to reach.",
+    "alsoReddens": [],
+    "hides": []
+  },
+  {
+    "run": 3,
+    "case": "an apply whose transaction Revit rolls back is refused with the status Revit returned, counts no work and leaves no indicator of ours",
+    "file": "source/Features/MEP.Cabling/BHS.MEP.Cabling.Revit/CablingApply.cs",
+    "anchor": "        if (committed != TransactionStatus.Committed)",
+    "replacement": "        if (committed == TransactionStatus.Pending)",
+    "reddens": "an apply whose transaction Revit rolled back was not refused, and reports \" + Claimed(outcome)",
+    "rationale": "Narrows the commit check to the one status somebody might think is the special case and lets RolledBack through - the reading that 'a rollback just means our failure handling did its job'. That is the exact state the owner's decision of 2026-09-14 exists for: the counts were all gathered inside a transaction Revit has just thrown away, so the apply comes back not refused, with placements and writes reported about a model that holds none of them. It is one operator and one enum member, and it keeps both sentences in NotKept referenced, so the file still compiles on all four TFMs.",
+    "leftUnproven": "Everything after it: \"an apply whose transaction Revit rolled back reports no status other than Committed: \"; \"the refusal does not name what Revit returned, \"; the ten per-count assertions \"<what> reported by an apply whose transaction Revit rolled back\"; \"instances of the indicator type standing after an apply Revit rolled back, that were not there before it: \"; \"indicators of ours standing after an apply Revit rolled back, on a model that held none before it\"; \"carriers on a found route whose circuit references changed across an apply Revit rolled back: \". The four assertions before it still pass, and assertion four passing is what proves the rollback took: the placements are gone, so added.Count == 0 satisfies the disjunction and the red lands on the production status check rather than on the case's own mechanism.",
+    "risk": "What Commit returns after a ProceedWithRollBack is not measured anywhere in this repository. If Revit returns Pending there, the narrowed check still refuses and the case stays green - that is the one way this breakage proves nothing. The case also stands down, with nothing proven, if no box is recommended with every circuit cut in boxes, if the read does not name the mistyped circuit unreadable, or if the sweep runs without --edition so the failure definitions are absent. Nothing can throw: the apply just returns the outcome it built.",
+    "alsoReddens": [],
+    "hides": []
+  },
+  {
+    "run": 3,
+    "case": "every circuit that routed is told its length, the connection it was routed with, and the carriers it was measured along",
+    "file": "source/Features/MEP.Cabling/BHS.MEP.Cabling.Revit/CablingApply.cs",
+    "anchor": "            if (written)\n                outcome.CircuitsWritten++;",
+    "replacement": "            if (!written)\n                outcome.CircuitsWritten++;",
+    "reddens": "routes found, against circuits the apply reports telling their length, connection and carriers",
+    "rationale": "CircuitsWritten is the one number the apply reports about the three values it writes on a circuit, and like every count in this outcome it is gathered inside the transaction - the accounting-regression class this repository has been bitten by before. A stray negation leaves all three values correctly written to the model and only the report wrong: the screen tells somebody \"0 circuits told their route\" about a model where six now carry a length, a connection and a stamp. It is the narrowest possible change that falsifies the first assertion, because it touches the report and nothing else.",
+    "leftUnproven": "The whole per-route loop and the closing check: \"circuit <id>: the length stored against the length the run computed - stored <x>, computed <y> ft\"; \"circuit <id>: the connection stored against the one it was routed with - stored <x>, routed with <y>\"; \"circuit <id>: the carriers stored against the ones the route walked - stored <x>, walked <y>\"; and \"circuits that did not route whose stored length, connection or carriers changed across the apply\". Under this breakage all four would pass if reached - the writes still happen - so this red proves the count claim and nothing more.",
+    "risk": "Biggest risk is that this case has never been executed anywhere: it was written 2026-09-16 and the record says so explicitly, so there is no green baseline to break. It stands down when no circuit routed (Skip.When(plan.Run.Found == 0, ...)), which is where the whole suite stopped on 2026-09-14 before the owner fixed the model; six routed on the fixed 2026 set. The one way this goes green on broken code is if every found circuit failed all three writes - all three parameters unbound or kept read-only by Revit - because then !written is true for each and the count accidentally equals Found; the case would then go red one assertion later, on the stored length, not on the one named here. CircuitsWritten is read nowhere else in the suite except CountsOf, and the rollback case compares CountsOf against a refusal outcome whose counts are all zero by construction, so that case stays green.",
+    "alsoReddens": [],
+    "hides": []
+  },
+  {
+    "run": 3,
+    "case": "a junction box already in the model is used instead of an indicator, and gets only the circuits through it",
+    "file": "source/Features/MEP.Cabling/BHS.MEP.Cabling.Revit/CablingApply.cs",
+    "anchor": "        var wanted = run.Boxes.Where(box => box.IsRecommendation).ToList();",
+    "replacement": "        var wanted = run.Boxes.ToList();",
+    "reddens": "indicators of ours within the box radius of box <CarrierId>, which is already in the model and served a tap",
+    "rationale": "That filter is the production rule the case is named for: a junction box already in the model is used instead of an indicator, so no indicator is placed for it. Losing the Where in a refactor is the plausible way it goes - run.Boxes reads like \"the boxes of the plan\", and the recommendation/existing distinction lives in a property rather than in two lists. The apply then plants one of our indicators on top of somebody's own fitting at every existing box the plan used, while recommendations keep working, so the behavioural change is narrow and lands squarely on the rule under test.",
+    "leftUnproven": "Everything the case asserts about what the used box itself carries: the ExpectCircuitRefs chain on \"box <id>, already in the model and used by the plan,\" - which is five assertions of its own (names no circuit after the apply / parts that are not ids / a circuit named more than once / the set of circuits / the order the plan met them) - and \"box <id>, already in the model, had its recommendation or cable entry count written: before <x>, after <y>\".",
+    "risk": "The case stands down before the apply if the model has no fitting type whose every instance is joined to a carrier, or if no tap comes within the widened 1000 mm radius of a box already in the model (used.Count == 0). The 2026-09-16 run measured 11 real boxes with 1 used, so it holds on the owner's 2026 set; 2024, 2025 and 2027 have never run these cases. Whether Revit keeps the point an indicator is placed at, height included, is explicitly not measured in this suite - if Revit moved the new indicator more than 1000 mm from the existing box, near would stay 0 and a broken apply would pass; against that, the placement case asserted on 2026-09-16 that one of ours stands within the default 150 mm of the planned point, so the point is kept far more tightly than this radius. Last risk: placing an instance at the same coordinate as an existing fitting could in principle raise a Revit failure worse than a warning, in which case ApplyWatched fails first on \"failures worse than a warning while applying, which the handler rolled back\" - still red, but on the wrong assertion. The named collateral is the placement case's own first assertion, \"boxes the plan recommends, against indicators the apply reports placing, finding in place, or finding joined in place\", because Placed now exceeds the recommendation count by the number of used boxes; on a model with no used box it stays green. Case 1 and case 2 both stay green: the second press still matches every extra indicator by place so its arithmetic closes, and the marker accounting counts the extra indicators on both sides.",
+    "alsoReddens": [
+      "every box the plan recommends gets one indicator of ours at its place, and nothing else is placed"
+    ],
+    "hides": []
+  },
+  {
+    "run": 3,
+    "case": "an indicator of ours joined to the structure is left, not removed",
+    "file": "source/Features/MEP.Cabling/BHS.MEP.Cabling.Revit/CablingApply.cs",
+    "anchor": "                warned.Add(standing[i].Id);\n                continue;",
+    "replacement": "                warned.Add(standing[i].Id);",
+    "reddens": "\"indicator \" + joined + \", ours and joined to a conduit, was removed by an apply whose plan names no box\"",
+    "rationale": "Drops the `continue` that makes the joined branch terminal, so a joined indicator is warned about and then falls through to the delete. This is the classic missing-fallthrough-guard regression - the branch still looks right, the warning is still collected, and the count `outcome.Joined` is still correct, which is exactly why it would survive a reading. It breaks the single condition the production remarks call load-bearing: \"a marker somebody has cut into the wiring is part of their model now, and taking it away would delete it to tidy up after ourselves.\" It removes part of a designer's model and reports it as tidying up.",
+    "leftUnproven": "Everything after it: \"the apply counted no indicator as left for being joined, though indicator \" + joined + \" is joined to a conduit\"; \"indicator \" + joined + \", ours and joined to a conduit, had what the apply writes changed: before ... after ...\" (the untouched half of the owner's rule); SawWhatWasPosted's \"cabling warnings Revit processed, against warnings the apply reports posting - fewer means something dismissed them before this handler ran, another add-in's FailuresProcessing handler for one\"; and the three IndicatorJoinedIntoNetwork assertions. Note the breakage would in fact also silence the warning - Post skips an element deleted earlier in the same transaction - but that red is unreachable behind this one.",
+    "risk": "This is the one breakage that must delete an element, because the assertion is about deletion, so the risk is inherent: if Revit answers `host.Delete` of a conduit-joined fitting with a failure worse than a warning, the watch rolls it back and ApplyWatched's \"failures worse than a warning while applying, which the handler rolled back: ...\" falls FIRST - still red, but naming the wrong thing. I rate that unlikely (deleting a connected fitting normally disconnects silently or warns), but it is not measured. The larger practical risk is a skip: PlaceJoined has six stand-down gates (conduit type, free conduit connector, Conduit.Create, ConnectTo, commit, joint surviving the commit) and was only ever measured on Revit 2026, so on another release this case may stand down and the red is not proven there.",
+    "alsoReddens": [],
+    "hides": []
+  },
+  {
+    "run": 3,
+    "case": "an indicator of ours joined into the network where a box is recommended is left untouched, gets no second indicator beside it, and is named in a warning",
+    "file": "source/Features/MEP.Cabling/BHS.MEP.Cabling.Revit/CablingApply.cs",
+    "anchor": "            if (taken[i] || joined[i] != joinedOnes || (standing[i].Location as LocationPoint)?.Point is not { } point)",
+    "replacement": "            if (taken[i] || joined[i] == joinedOnes || (standing[i].Location as LocationPoint)?.Point is not { } point)",
+    "reddens": "\"joined indicators of ours the apply reports standing for a recommended box, on a model whose only indicator of ours is joined and stands on one\" - printed by Expect.Same as \"...stands on one: expected 1, got 0\"",
+    "rationale": "One operator, and it inverts the sense of both passes: the joined-first pass now considers only indicators joined to nothing, and the fallback pass only joined ones. A flipped `!=`/`==` in a filter that skips non-candidates is the most ordinary regression there is - the loop still runs, still finds a nearest, still respects the radius. What it destroys is the owner's decision of 2026-09-14: the joined indicator no longer stands for its box (JoinedInPlace stays 0), it is taken by the fallback pass instead and `Describe` rewrites the designer's values on it - which is precisely the state the rule forbids.",
+    "leftUnproven": "The first assertion, \"indicator ... was removed\", passes and is not the red here - it cannot be reddened by any single edit, because to delete that indicator the apply would have to both fail to see it as joined AND fail to match it. Behind the red stay: the sum \"boxes the plan recommends, against indicators the apply reports placing, finding in place, or finding joined in place\" (which this breakage keeps balanced, so it would have passed anyway); \"instances of the indicator type within the box radius ... where only that indicator should stand\"; \"indicator ... was rewritten: before ... after ...\" - which this same breakage WOULD also redden, since the fallback pass calls Describe on it, so the untouched half of the rule is proven by nothing here; SawWhatWasPosted; and the two IndicatorJoinedIntoNetwork counts.",
+    "risk": "Nothing is placed and nothing is deleted under this breakage - only a parameter write onto an element that was already ours - so no Revit failure path opens in front of the assertion and ApplyWatched's three cannot pre-empt it. The risk is stand-down, not misfire: the case skips if the plan recommends no box (every circuit cut in boxes yet nothing reachable - the exact state the owner's model was in before 2026-09-16), if Revit moves the placed indicator outside the box radius, if PlaceJoined's gates refuse, or if IndicatorJoinedIntoNetwork is unregistered, so the run needs --edition. A skip here is not a red. One alternative with the same first faller, if a reviewer finds the operator flip too subtle to be worth pinning: change the first call site, `joinedOnes: true` on line 424, to `joinedOnes: false` - but that one places a second indicator on top of the joined one, and a duplicate-instance failure from Revit could fall in front of the assertion.",
+    "alsoReddens": [],
+    "hides": []
+  },
+  {
+    "run": 3,
+    "case": "the indicators an apply placed are not read back as structure",
+    "file": "source/Features/MEP.Cabling/BHS.MEP.Cabling.Revit/RecommendedBoxes.cs",
+    "anchor": "        _type is not null && element is not null && element.GetTypeId() == _type;",
+    "replacement": "        _type is not null && element is not null && element.Id == _type;",
+    "reddens": "carriers read before the apply, against after it placed <inCatalogue> indicator(s) of a carrier category",
+    "rationale": "RecommendedBoxMarkers.Marks is the whole of the marker exclusion - the single predicate at CarrierReader.cs:123 that keeps an indicator we placed out of the carrier network. Comparing the instance's own id against the type id instead of its type id is the classic Id/GetTypeId slip; it compiles, it reads plausibly, and because element ids and type ids are distinct within one document the predicate is simply never true again. The exclusion stops working in silence, which is precisely the 358 -> 359 hazard this case exists to close - and the only place in the suite where markers ever reach a model is the apply's own placement.",
+    "leftUnproven": "\"markers excluded before the apply plus the indicators it placed, against markers excluded reading again\" - the second and last assertion of the case.",
+    "risk": "The case stands down earlier if the plan recommends no box, or if inCatalogue == 0 (the apply placed nothing of a category the catalogue collects); on the owner's set the indicator family is a cable tray fitting, which the catalogue does collect. The red assumes each placed indicator reads back as a carrier, i.e. that CarrierReader.TryExtent gives it an extent - a freshly placed indicator has four physical connectors, so it does. If none of them did, they would be counted as Skipped rather than as carriers, the first assertion would pass with a delta of zero, and the case would go red one assertion later on \"markers excluded before the apply plus the indicators it placed, against markers excluded reading again\" instead. Checked for collateral: MarkersAreNotStructure in CablingReadingTests asserts plain.Carriers.Count - filtered.Carriers.Count == filtered.MarkersExcluded, which on a model holding no markers is 0 - 0 = 0 and stays green; AnUnknownMarkerTypeIsReported reads MarkerTypeKnown, which comes from markers.Known and not from Marks, so it is untouched. Marks has exactly one caller in the whole tree.",
+    "alsoReddens": [],
+    "hides": []
+  }
+]
