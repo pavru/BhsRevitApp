@@ -104,6 +104,14 @@ public sealed class ApplyOutcome
     /// <summary>Carriers, and boxes already in the model, that were told which circuits run through them.</summary>
     public int CarriersMarked { get; internal set; }
 
+    /// <summary>Circuits told the length of their route, how it was routed and what it ran through.</summary>
+    /// <remarks>
+    /// Three parameters and one count, because they are written together or not at all: a length
+    /// without the connection it was computed with is a number nobody can check, and without the
+    /// carriers it was measured along nobody can tell a current one from a stale one.
+    /// </remarks>
+    public int CircuitsWritten { get; internal set; }
+
     /// <summary>Elements that could not be written to because they live in a link.</summary>
     /// <remarks>
     /// Said out loud rather than skipped in silence. A model whose trays are all in a link gets no
@@ -240,7 +248,10 @@ public static class CablingApply
         var missing = scheme.Missing(host, runtime)
             .Where(one => one.Id == CablingParameters.Recommendation
                           || one.Id == CablingParameters.CircuitRefs
-                          || one.Id == CablingParameters.TapCount)
+                          || one.Id == CablingParameters.TapCount
+                          || one.Id == CablingParameters.CableLength
+                          || one.Id == CablingParameters.RouteConnection
+                          || one.Id == CablingParameters.RouteStamp)
             .ToList();
 
         if (missing.Count > 0)
@@ -277,6 +288,7 @@ public static class CablingApply
 
         var joined = Indicators(host, symbol, run, project, outcome);
         References(host, run, outcome);
+        Lengths(host, run, outcome);
         Warn(host, run, snapshot, joined, outcome);
 
         var committed = transaction.Commit();
@@ -693,6 +705,52 @@ public static class CablingApply
     }
 
     /// <summary>
+    /// Tells every circuit that routed its length, how it was routed, and what it ran through.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <b>Only the circuits that routed, and what is already there is left alone.</b> A circuit the
+    /// search could not finish has no length to store, and a zero written in its place is a number
+    /// somebody schedules. The previous run's three still describe the model they were computed on -
+    /// which is what lets a check tell a stale answer from an absent one, and is the whole point of
+    /// the stamp.
+    /// </para>
+    /// <para>
+    /// <b>The three are one write.</b> A length without the connection it was computed with cannot be
+    /// checked by anyone - the two connections differ by about 38 % on the owner's own model - and
+    /// without the carriers it was measured along, "has this changed" has no answer but re-running
+    /// everything and comparing numbers. So they are counted together, and a circuit counts when
+    /// Revit accepted any of them: the alternative is to report nothing about a model that now holds
+    /// two values out of three, which is the state hardest to reason about later.
+    /// </para>
+    /// <para>
+    /// <b>Circuits are host elements by construction</b> - the reader takes them from the document
+    /// that owns the panel - so there is no link to skip here, unlike the carriers in
+    /// <see cref="References"/>. An id that no longer resolves is stepped over the same way, because
+    /// between the read and the write somebody may have deleted the circuit.
+    /// </para>
+    /// </remarks>
+    private static void Lengths(Document host, RouteRun run, ApplyOutcome outcome)
+    {
+        foreach (var route in run.Results)
+        {
+            if (route.Status != RouteStatus.Found)
+                continue;
+
+            if (host.GetElement(new ElementId(route.Circuit.Value)) is not { } circuit)
+                continue;
+
+            var written = Set(circuit, CablingParameters.CableLength, route.TotalLength);
+
+            written |= Set(circuit, CablingParameters.RouteConnection, CircuitConnections.Text(route.Connection));
+            written |= Set(circuit, CablingParameters.RouteStamp, RouteStamp(route.Path));
+
+            if (written)
+                outcome.CircuitsWritten++;
+        }
+    }
+
+    /// <summary>
     /// The one value of <c>BHS_Cbl_CircuitRefs</c>, on an indicator, a carrier and a box alike.
     /// </summary>
     /// <remarks>
@@ -702,15 +760,35 @@ public static class CablingApply
     /// carriers. The repeats are dropped here rather than trusted to each caller: a box lists its
     /// circuits once already, a carrier walked by two taps of one route would otherwise name it twice.
     /// </remarks>
-    private static string CircuitRefs(IEnumerable<CarrierId> circuits)
+    private static string CircuitRefs(IEnumerable<CarrierId> circuits) =>
+        Ids(circuits, one => one.Value.ToString(CultureInfo.InvariantCulture));
+
+    /// <summary>The one value of <c>BHS_Cbl_RouteStamp</c>: the carriers a stored length was measured along.</summary>
+    /// <remarks>
+    /// <b>The same rule as <see cref="CircuitRefs"/> and one deliberate difference: the id is
+    /// qualified.</b> A carrier in a link is written <c>&lt;link instance&gt;:&lt;element&gt;</c>, because
+    /// an element id alone means different elements in the host and in each link - and carriers live in
+    /// links routinely, 13 of the 49 on the owner's set. Circuits never do, so the references keep the
+    /// bare number. The qualified spelling is <c>CarrierId.ToString</c> itself rather than a second
+    /// rendering written here, which is also what the reach notes print.
+    /// </remarks>
+    private static string RouteStamp(IEnumerable<CarrierId> path) => Ids(path, one => one.ToString());
+
+    /// <summary>Ids, each once, in the order first seen, joined by "; ".</summary>
+    /// <remarks>
+    /// The shape both values share, held once. What differs between them is how a single id is
+    /// spelled, and that is the argument - so the part that could drift silently cannot, and the part
+    /// that must differ is named where it differs.
+    /// </remarks>
+    private static string Ids(IEnumerable<CarrierId> ids, Func<CarrierId, string> spell)
     {
         var seen = new HashSet<CarrierId>();
         var values = new List<string>();
 
-        foreach (var circuit in circuits)
+        foreach (var id in ids)
         {
-            if (seen.Add(circuit))
-                values.Add(circuit.Value.ToString(CultureInfo.InvariantCulture));
+            if (seen.Add(id))
+                values.Add(spell(id));
         }
 
         return string.Join("; ", values);
@@ -724,6 +802,20 @@ public static class CablingApply
     }
 
     private static bool Set(Element element, Guid parameter, int value)
+    {
+        var found = element?.get_Parameter(parameter);
+
+        return found is { IsReadOnly: false } && found.Set(value);
+    }
+
+    /// <summary>Sets a length, in Revit's internal units.</summary>
+    /// <remarks>
+    /// Internal feet, raw, exactly as the search computed them: the document's units decide how the
+    /// number is shown, and converting here would store one project's display in every project's
+    /// model. The predecessor formatted its breakdown through <c>CurrentCulture</c> and left "30,2"
+    /// or "30.2" in the model depending on whose Revit wrote it.
+    /// </remarks>
+    private static bool Set(Element element, Guid parameter, double value)
     {
         var found = element?.get_Parameter(parameter);
 

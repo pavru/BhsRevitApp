@@ -130,6 +130,11 @@ public sealed class CablingApplyTests : IRevitTestSuite
             writes: true),
 
         new RevitTestCase(
+            "every circuit that routed is told its length, the connection it was routed with, and the carriers it was measured along",
+            CircuitsAreToldTheirRoute,
+            writes: true),
+
+        new RevitTestCase(
             "a junction box already in the model is used instead of an indicator, and gets only the circuits through it",
             AnExistingBoxIsUsed,
             writes: true),
@@ -234,7 +239,10 @@ public sealed class CablingApplyTests : IRevitTestSuite
             .Missing(document, RuntimeFor(symbol, catalogue))
             .Where(one => one.Id == CablingParameters.Recommendation
                           || one.Id == CablingParameters.CircuitRefs
-                          || one.Id == CablingParameters.TapCount)
+                          || one.Id == CablingParameters.TapCount
+                          || one.Id == CablingParameters.CableLength
+                          || one.Id == CablingParameters.RouteConnection
+                          || one.Id == CablingParameters.RouteStamp)
             .Select(one => string.Join(" / ", one.Names()))
             .ToList();
 
@@ -1837,6 +1845,154 @@ public sealed class CablingApplyTests : IRevitTestSuite
     /// to the outcome and not here goes red on any sweep, rather than letting a refusal claim that work
     /// unnoticed. Given no outcome, every count reads zero, which is all that comparison needs.
     /// </remarks>
+    /// <summary>
+    /// Every circuit that routed carries the length, the connection it was routed with and the
+    /// carriers it was measured along; a circuit that did not route carries what it carried before.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <b>Three values, one write, and all three read back out of the model.</b> The length is
+    /// compared against the number the search produced, in internal feet - what the apply answers for
+    /// is storing it, and the value it stores is the router's. The connection is compared against the
+    /// vocabulary the reader parses, so a run that wrote a word its own reader does not recognise is
+    /// red here rather than on somebody's next check.
+    /// </para>
+    /// <para>
+    /// <b>The stamp is built here, spelled out, rather than asked of the apply.</b> Ids in the order
+    /// the route walked them, each once, joined by "; ", and a carrier in a link written
+    /// <c>link:element</c> - spelled out in this case rather than taken from <c>CarrierId.ToString</c>,
+    /// so that a change which dropped the link qualifier turns red instead of agreeing with itself.
+    /// The distinction is not academic on the owner's set: 13 of its 49 carriers live in a link, and
+    /// an unqualified id there names a different element in the host.
+    /// </para>
+    /// <para>
+    /// <b>The circuits that did not route are the other half of it.</b> A zero written where nothing
+    /// was found is a number somebody puts in a journal, and an empty stamp beside a length left over
+    /// from an earlier run is worse than either - it makes a stale answer look current. So their three
+    /// values are read before the apply and compared after.
+    /// </para>
+    /// </remarks>
+    private static void CircuitsAreToldTheirRoute(RevitTestContext context) => Watched(context, watch =>
+    {
+        var document = context.Document!;
+        var application = context.Application.Application;
+        var catalogue = new CarrierCatalogue();
+        var project = CablingProjectSettings.Read(new Fixed());
+        var symbol = NeedsIndicatorFamily(document, project);
+
+        NeedsNoIndicatorsOfOurs(context, document, symbol, "route written back");
+
+        var cut = CutEveryCircuitInBoxes(watch, document, application);
+        var plan = PlanFound(document, project, catalogue);
+
+        Note(context, "route written back: circuits cut in boxes", cut);
+        Note(context, "route written back: routes found", plan.Run.Found);
+        Note(context, "route written back: routes not found", plan.Results.Count - plan.Run.Found);
+
+        Skip.When(
+            plan.Run.Found == 0,
+            "no circuit of this model routed, so there is no length, connection or set of carriers to write");
+
+        // Read before the apply, so that a value already standing on a circuit answers for itself
+        // rather than for something this apply wrote.
+        var untouched = plan.Results
+            .Where(one => one.Status != RouteStatus.Found)
+            .Select(one => (Circuit: one.Circuit.Value, Before: Stored(document, one.Circuit.Value)))
+            .ToList();
+
+        NeedsDefinitionsFor(document, symbol, plan.Run, plan.Snapshot);
+
+        var outcome = ApplyWatched(context, watch, "route written back", plan.Run, plan.Snapshot, project, catalogue);
+
+        Note(context, "route written back: circuits told their route", outcome.CircuitsWritten);
+        Note(context, "route written back: circuits that did not route", untouched.Count);
+
+        Expect.Same(
+            plan.Run.Found,
+            outcome.CircuitsWritten,
+            "routes found, against circuits the apply reports telling their length, connection and carriers");
+
+        foreach (var route in plan.Run.Results)
+        {
+            var circuit = document.GetElement(new ElementId(route.Circuit.Value));
+            var where = "circuit " + route.Circuit.Value.ToString(CultureInfo.InvariantCulture);
+            var length = circuit?.get_Parameter(CablingParameters.CableLength);
+            var stored = length is { HasValue: true }
+                ? length.AsDouble().ToString("F6", CultureInfo.InvariantCulture)
+                : "nothing";
+
+            Expect.That(
+                length is { HasValue: true } && Math.Abs(length.AsDouble() - route.TotalLength) < 1e-9,
+                where + ": the length stored against the length the run computed - stored " + stored
+                + ", computed " + route.TotalLength.ToString("F6", CultureInfo.InvariantCulture) + " ft");
+
+            var connection = Value(circuit, CablingParameters.RouteConnection);
+            var routedWith = route.Connection == CircuitConnection.AtJunctionBox
+                ? CablingParameters.ConnectionAtJunctionBox
+                : CablingParameters.ConnectionAtTerminal;
+
+            Expect.That(
+                string.Equals(connection, routedWith, StringComparison.Ordinal),
+                where + ": the connection stored against the one it was routed with - stored " + connection
+                + ", routed with " + routedWith);
+
+            var stamp = Value(circuit, CablingParameters.RouteStamp);
+            var walked = Stamp(route.Path);
+
+            Expect.That(
+                string.Equals(stamp, walked, StringComparison.Ordinal),
+                where + ": the carriers stored against the ones the route walked - stored " + stamp
+                + ", walked " + walked);
+        }
+
+        var changed = untouched
+            .Where(one => !string.Equals(Stored(document, one.Circuit), one.Before, StringComparison.Ordinal))
+            .ToList();
+
+        Expect.That(
+            changed.Count == 0,
+            "circuits that did not route whose stored length, connection or carriers changed across the apply: "
+            + string.Join(", ", changed.Select(one => one.Circuit.ToString(CultureInfo.InvariantCulture))));
+    });
+
+    /// <summary>The three values a run writes on a circuit, as one comparable string.</summary>
+    /// <remarks>
+    /// Round-trip formatting on the length, because this is used to show that nothing changed: a value
+    /// compared after rounding would hide a write that moved the number by less than it prints.
+    /// </remarks>
+    private static string Stored(Document document, long circuit)
+    {
+        var element = document.GetElement(new ElementId(circuit));
+        var length = element?.get_Parameter(CablingParameters.CableLength);
+
+        return (length is { HasValue: true } ? length.AsDouble().ToString("R", CultureInfo.InvariantCulture) : string.Empty)
+            + " | " + Value(element, CablingParameters.RouteConnection)
+            + " | " + Value(element, CablingParameters.RouteStamp);
+    }
+
+    /// <summary>The carriers of a route, spelled the way the stamp has to spell them.</summary>
+    /// <remarks>
+    /// Spelled out here rather than taken from <c>CarrierId.ToString</c>: a case and the code it checks
+    /// must not agree by sharing the one thing being checked.
+    /// </remarks>
+    private static string Stamp(IEnumerable<CarrierId> path)
+    {
+        var seen = new HashSet<CarrierId>();
+        var parts = new List<string>();
+
+        foreach (var id in path)
+        {
+            if (!seen.Add(id))
+                continue;
+
+            parts.Add(id.IsLinked
+                ? id.Source.ToString(CultureInfo.InvariantCulture) + ":" + id.Value.ToString(CultureInfo.InvariantCulture)
+                : id.Value.ToString(CultureInfo.InvariantCulture));
+        }
+
+        return string.Join("; ", parts);
+    }
+
     private static (string What, int Count)[] CountsOf(ApplyOutcome? outcome) => new[]
     {
         ("indicators placed", outcome?.Placed ?? 0),
@@ -1846,6 +2002,7 @@ public sealed class CablingApplyTests : IRevitTestSuite
         ("joined indicators standing for a recommended box", outcome?.JoinedInPlace ?? 0),
         ("boxes already in the model used", outcome?.ExistingUsed ?? 0),
         ("carriers and boxes told their circuits", outcome?.CarriersMarked ?? 0),
+        ("circuits told their length, connection and route", outcome?.CircuitsWritten ?? 0),
         ("references that fell in a link", outcome?.InLinks ?? 0),
         ("warnings posted", outcome?.Warnings ?? 0),
     };

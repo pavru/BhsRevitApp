@@ -8,10 +8,12 @@ namespace BHS.MEP.Cabling.Revit;
 /// </summary>
 /// <remarks>
 /// <para>
-/// <b>Two, because two have consumers.</b> A parameter declared before something reads it is the
-/// same mistake as a mechanism with no consumer, and it is worse here: a parameter that has reached
-/// a customer's model cannot be withdrawn, only ignored. The apply phase will want more - a computed
-/// length, a route identity - and they arrive with the code that writes them.
+/// <b>Eight, and each one has something that reads it.</b> A parameter declared before something
+/// reads it is the same mistake as a mechanism with no consumer, and it is worse here: a parameter
+/// that has reached a customer's model cannot be withdrawn, only ignored. The rule has held through
+/// every addition - the three the apply writes arrived with the apply, and the three on the circuit
+/// with the code that computes them. Four more are named in <see cref="CableLength"/> and
+/// deliberately not declared, because nothing reads them yet.
 /// </para>
 /// <para>
 /// <b>The GUIDs are new rather than the predecessor's</b> - the owner's decision, a clean slate. They
@@ -86,6 +88,64 @@ public sealed class CablingParameters : SharedParameterScheme
     /// </remarks>
     public static readonly Guid TapCount = new("39098f30-b004-4d27-a294-9aa978603b7a");
 
+    /// <summary>The length of the route the run found for this circuit.</summary>
+    /// <remarks>
+    /// <para>
+    /// <b>The total, and the breakdown is deliberately not here yet.</b> The owner asked on
+    /// 2026-09-16 for lengths laid in trays and in conduits, for the cable journal and for estimates,
+    /// and that is a family of numbers rather than a second parameter: reserved as
+    /// <c>BHS_Cbl_LengthInTray</c>, <c>BHS_Cbl_LengthInConduit</c>, <c>BHS_Cbl_LengthFree</c> and
+    /// <c>BHS_Cbl_LengthOther</c>, each a length a schedule can sum, together adding up to this one.
+    /// They arrive with the code that writes them, which is the same rule that kept this one out
+    /// until now.
+    /// </para>
+    /// <para>
+    /// <b>Four buckets and not two, because trays and conduits do not cover the cable.</b> The drop
+    /// from the structure to a device lies in neither, and on the first real model the drops were
+    /// 472 485 mm of 1 235 289 - 38 % of the total. A breakdown of tray and conduit alone would
+    /// silently lose that share or add it to the conduits. The fourth exists because a carrier's
+    /// class is an open string in <c>CarrierCatalogue</c>: a project may name a third kind, and a
+    /// parameter for each named kind would be a registry that drifts.
+    /// </para>
+    /// </remarks>
+    public static readonly Guid CableLength = new("169b79de-4c42-4632-a173-1c7b86f30ebc");
+
+    /// <summary>Which of the two connections the stored length was computed with.</summary>
+    /// <remarks>
+    /// <b>A second parameter rather than a value written back into
+    /// <see cref="CircuitConnection"/>, and they are not the same question.</b> That one is the
+    /// input - what a designer asked for - and it is read from the circuit, then from its panel,
+    /// then from the project; most circuits leave it empty on purpose, and the rule that the
+    /// calculation fills only what is empty exists so that a run can never overwrite somebody's
+    /// choice. This one is the output: which answer the run resolved and computed with. Writing it
+    /// into the input would erase the person's field and destroy the difference between "asked for"
+    /// and "worked out" - and that difference is worth about 38 % of the number beside it.
+    /// </remarks>
+    public static readonly Guid RouteConnection = new("34a49319-33ee-4fc5-bf4c-5f0e37fabf46");
+
+    /// <summary>The carriers the route ran through, so that a stored length can be told from a stale one.</summary>
+    /// <remarks>
+    /// <para>
+    /// <b>Element ids rather than an opaque fingerprint - the owner's decision of 2026-09-16.</b>
+    /// Both forms answer "has this changed"; only this one answers "changed how". A check for stale
+    /// lengths has to re-read the model and route again either way, so neither form saves the work -
+    /// what it buys is the ability to say which tray left the route, and to let a person select the
+    /// stored path by ID in Revit. Everything this project has already decided about addresses
+    /// pointed the same way: the element id in a refusal paid for itself the day it was written, and
+    /// <see cref="CircuitRefs"/> holds ids rather than circuit numbers for the same reason.
+    /// </para>
+    /// <para>
+    /// <b>The format is <c>CarrierId.ToString</c>, which already exists and already distinguishes a
+    /// link.</b> Ids in the order the route walked them, each once, joined by "; "; a carrier in a
+    /// link reads <c>&lt;link instance id&gt;:&lt;element id&gt;</c>, because an element id alone
+    /// means different elements in the host and in each link - and carriers routinely live in the
+    /// link, 13 of the 49 on the owner's own set. Invariant digits, never a localised number: the
+    /// predecessor wrote its breakdown through <c>CurrentCulture</c> and its models hold "30,2" or
+    /// "30.2" depending on which Revit the author had open.
+    /// </para>
+    /// </remarks>
+    public static readonly Guid RouteStamp = new("c70d7950-f065-4f47-aba2-a29ea0148caf");
+
     /// <summary>The value of <see cref="ElementRole"/> that means "this is a junction box".</summary>
     /// <remarks>
     /// <b>Values are not translated, and that is deliberate rather than unfinished.</b> The name is
@@ -143,6 +203,18 @@ public sealed class CablingParameters : SharedParameterScheme
     {
         BuiltInCategory.OST_ElectricalCircuit,
         BuiltInCategory.OST_ElectricalEquipment,
+    };
+
+    /// <summary>What a run writes back belongs to the circuit alone, never to its panel.</summary>
+    /// <remarks>
+    /// The three outputs describe one circuit's route, and a panel has no route of its own. Binding
+    /// them to it as well - which <see cref="CircuitAndPanel"/> does, and rightly, for the question
+    /// a panel answers for all its circuits - would offer a schedule three columns that are always
+    /// empty.
+    /// </remarks>
+    private static readonly BuiltInCategory[] Circuits =
+    {
+        BuiltInCategory.OST_ElectricalCircuit,
     };
 
     protected override string GroupName(ParameterLanguage language) => language switch
@@ -222,5 +294,48 @@ public sealed class CablingParameters : SharedParameterScheme
             russian: new ParameterText(
                 "BHS_Cbl_ЧислоВводов",
                 "Сколько кабелей входит в эту коробку: магистраль на вход, на выход и каждый отвод.")),
+
+        new SharedParameter(
+            CableLength,
+            SpecTypeId.Length,
+            GroupTypeId.ElectricalCircuiting,
+            instance: true,
+            Circuits,
+            english: new ParameterText(
+                "BHS_Cbl_CableLength",
+                "The cable length BHS cable routing computed for this circuit, drops to the devices included."),
+            russian: new ParameterText(
+                "BHS_Cbl_ДлинаКабеля",
+                "Длина кабеля этой цепи, посчитанная прокладкой BHS, включая спуски к устройствам.")),
+
+        new SharedParameter(
+            RouteConnection,
+            SpecTypeId.String.Text,
+            GroupTypeId.ElectricalCircuiting,
+            instance: true,
+            Circuits,
+            english: new ParameterText(
+                "BHS_Cbl_RouteConnection",
+                "How the cable was routed for the length stored here: Terminal or JunctionBox. "
+                + "Written by the tool; what was asked for is BHS_Cbl_CircuitConnection."),
+            russian: new ParameterText(
+                "BHS_Cbl_ПодключениеМаршрута",
+                "Как проложен кабель, которым посчитана записанная здесь длина: Terminal или JunctionBox. "
+                + "Пишется инструментом; то, что было задано, - BHS_Cbl_ПодключениеЦепи.")),
+
+        new SharedParameter(
+            RouteStamp,
+            SpecTypeId.String.Text,
+            GroupTypeId.ElectricalCircuiting,
+            instance: true,
+            Circuits,
+            english: new ParameterText(
+                "BHS_Cbl_RouteStamp",
+                "The carriers the stored length was measured along, as element ids separated by semicolons, "
+                + "in the order the route walked them; one inside a link reads link:element."),
+            russian: new ParameterText(
+                "BHS_Cbl_ОтпечатокМаршрута",
+                "Носители, по которым измерена записанная длина: идентификаторы элементов через точку с запятой, "
+                + "в порядке прохождения; элемент внутри связи записывается как связь:элемент.")),
     };
 }

@@ -251,6 +251,7 @@ public sealed class RouteCablingCommand : IFeatureCommand
             said.Add(outcome.ExistingUsed + " existing box(es) used");
 
         said.Add(outcome.CarriersMarked + " carrier(s) marked with their circuits");
+        said.Add(outcome.CircuitsWritten + " circuit(s) told their length, connection and route");
 
         // Only when it happened, and then prominently: an indicator of ours somebody connected into
         // the network is left exactly as it is, and still read as an indicator. This is the line that
