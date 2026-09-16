@@ -142,6 +142,16 @@ public sealed class CablingFeature : IFeatureModule
     /// something anybody can find in the properties palette.
     /// </para>
     /// <para>
+    /// <b>And named in both spellings, because a parameter has two names and only one of them is in
+    /// this model.</b> The scheme writes an English and a Russian file carrying the same GUIDs, and the
+    /// name that lands in a document is the one the Revit that bound it was speaking - the file decides,
+    /// and <c>Definition.Name</c> is read-only afterwards. Naming only the English one would send a
+    /// designer on a Russian Revit looking for a parameter their palette does not have, which is worse
+    /// than not naming it at all. The registered string is everything Revit shows, so there is no later
+    /// place to qualify it. That the rest of the sentence is English is a separate debt - interface
+    /// strings belong in resources - and it does not excuse pointing at the wrong name.
+    /// </para>
+    /// <para>
     /// <b>Posted for every such indicator the apply meets</b>, whether or not the run recommends a box
     /// at its place. One standing where a box is recommended still takes that box's place, so no
     /// second indicator appears beside it; that does not make it any less a designer's element dressed
@@ -170,8 +180,9 @@ public sealed class CablingFeature : IFeatureModule
         (IndicatorJoinedIntoNetwork,
             "This junction box indicator has been connected to other elements, but it still has the indicator type. "
             + "Cable routing reads every element of that type as an indicator and leaves it out of the network; "
-            + "and because it also still carries the tool's recommendation (BHS_Cbl_Recommendation), cable routing "
-            + "leaves it as it is."),
+            + "and because it also still carries the tool's recommendation (BHS_Cbl_Recommendation, or "
+            + "BHS_Cbl_Рекомендация where these parameters were created on a Russian Revit), "
+            + "cable routing leaves it as it is."),
     };
 
     public void Start(IFeatureServices services)

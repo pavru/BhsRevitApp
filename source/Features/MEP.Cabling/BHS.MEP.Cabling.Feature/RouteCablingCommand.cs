@@ -188,16 +188,27 @@ public sealed class RouteCablingCommand : IFeatureCommand
         // nobody registered throws, by Revit's reference. Nothing of the run survives it: a transaction
         // started and left unfinished is rolled back when it is disposed, by the same reference. Not
         // measured.
+        //
+        // "Nothing of the run", and not "nothing at all" - the difference is about the document Revit
+        // will ask to save on the way out. The parameters are bound before the run's transaction is ever
+        // opened, in a transaction of their own that Install commits, so a throw from anywhere after that
+        // leaves them bound and the document modified. This path cannot tell which side of the binding it
+        // threw on, so it says so instead of claiming the document is untouched. Where the answer is
+        // known, the status path says the same thing - see CablingApply.NotKept.
         try
         {
             outcome = CablingApply.Apply(document, application, run, snapshot, project, new CarrierCatalogue());
         }
         catch (Exception error)
         {
-            log.Error(error, "cabling: the write threw, and nothing of the run was kept - {0}", error.Message);
+            log.Error(
+                error,
+                "cabling: the write threw, and nothing of the run was kept; any parameters bound before it stay bound - {0}",
+                error.Message);
 
             return new ApplyReport(
-                "The write failed and nothing of the run was kept: " + error.GetType().Name + ": " + error.Message,
+                "The write failed and nothing of the run was kept: " + error.GetType().Name + ": " + error.Message
+                + " Any parameters bound just before, in a transaction of their own, stay bound.",
                 refused: true);
         }
 

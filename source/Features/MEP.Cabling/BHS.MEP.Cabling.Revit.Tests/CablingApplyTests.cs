@@ -1837,14 +1837,6 @@ public sealed class CablingApplyTests : IRevitTestSuite
         return names.Count == 0 ? "none" : string.Join(", ", names);
     }
 
-    /// <summary>Every count an outcome reports, by what it counts.</summary>
-    /// <remarks>
-    /// All nine the outcome has today, including the ones no case here makes non-zero. The list is
-    /// guarded: the rollback case first compares its length with the public <c>int</c> properties of
-    /// <see cref="ApplyOutcome"/>, before anything that can stand the case down - so a tenth count added
-    /// to the outcome and not here goes red on any sweep, rather than letting a refusal claim that work
-    /// unnoticed. Given no outcome, every count reads zero, which is all that comparison needs.
-    /// </remarks>
     /// <summary>
     /// Every circuit that routed carries the length, the connection it was routed with and the
     /// carriers it was measured along; a circuit that did not route carries what it carried before.
@@ -1993,6 +1985,14 @@ public sealed class CablingApplyTests : IRevitTestSuite
         return string.Join("; ", parts);
     }
 
+    /// <summary>Every count an outcome reports, by what it counts.</summary>
+    /// <remarks>
+    /// All ten the outcome has today, including the ones no case here makes non-zero. The list is
+    /// guarded: the rollback case first compares its length with the public <c>int</c> properties of
+    /// <see cref="ApplyOutcome"/>, before anything that can stand the case down - so an eleventh count
+    /// added to the outcome and not here goes red on any sweep, rather than letting a refusal claim that
+    /// work unnoticed. Given no outcome, every count reads zero, which is all that comparison needs.
+    /// </remarks>
     private static (string What, int Count)[] CountsOf(ApplyOutcome? outcome) => new[]
     {
         ("indicators placed", outcome?.Placed ?? 0),
