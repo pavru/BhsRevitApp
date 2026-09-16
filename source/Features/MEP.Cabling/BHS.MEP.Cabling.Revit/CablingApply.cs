@@ -502,7 +502,11 @@ public static class CablingApply
         return best;
     }
 
-    /// <summary>Whether any connector of this element is joined to anything at all.</summary>
+    /// <summary>Whether any physical connector of this element is joined to anything at all.</summary>
+    /// <remarks>
+    /// Physical only - the owner's decision of 2026-09-16, and a connector that is not physical
+    /// refuses the question rather than answering it. See <see cref="Connectors"/>.
+    /// </remarks>
     private static bool Joined(FamilyInstance instance)
     {
         var manager = instance.MEPModel?.ConnectorManager;
@@ -512,7 +516,7 @@ public static class CablingApply
 
         foreach (Connector connector in manager.Connectors)
         {
-            if (connector is not null && connector.IsConnected)
+            if (connector.IsJoined())
                 return true;
         }
 

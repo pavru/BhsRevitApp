@@ -304,17 +304,28 @@ internal static class RecommendedBoxFacts
         }
 
         var total = 0;
+        var physical = 0;
         var connected = 0;
 
         foreach (Connector connector in manager.Connectors)
         {
             total++;
 
+            // The type is asked before IsConnected, because a connector that is not physical refuses
+            // that question rather than answering it - measured by the connector census on 2026. This
+            // family has four physical connectors and nothing else, so the guard changes no number
+            // here today; it is here so that the fact-gathering survives a family that does not.
+            if ((connector.ConnectorType & ConnectorType.Physical) == 0)
+                continue;
+
+            physical++;
+
             if (connector.IsConnected)
                 connected++;
         }
 
         answer[prefix + "connectors"] = total.ToString(CultureInfo.InvariantCulture);
+        answer[prefix + "physical"] = physical.ToString(CultureInfo.InvariantCulture);
         answer[prefix + "connected"] = connected.ToString(CultureInfo.InvariantCulture);
     }
 

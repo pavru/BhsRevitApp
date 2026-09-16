@@ -21,6 +21,11 @@ namespace BHS.MEP.Cabling.Revit;
 /// on purpose. <c>Connector.IsConnected</c> and <c>AllRefs</c> describe a joint somebody made.
 /// </para>
 /// <para>
+/// <b>And asked only of a physical connector</b> - the owner's decision of 2026-09-16. A logical or
+/// surface connector refuses <c>IsConnected</c> outright, measured; membership of an electrical
+/// circuit is not a joint in a cable run either way. See <see cref="Connectors"/>.
+/// </para>
+/// <para>
 /// <b>Joined to a carrier, not merely joined.</b> A fitting whose only connection is to a device
 /// answers "connected" and is not a box in a cable run. So the far end of the joint has to be an
 /// element of a category the catalogue collects - which is the same list the network is built from,
@@ -105,7 +110,7 @@ internal sealed class JunctionBoxReader
 
         foreach (Connector connector in manager.Connectors)
         {
-            if (connector is null || !connector.IsConnected)
+            if (!connector.IsJoined())
                 continue;
 
             foreach (Connector other in connector.AllRefs)

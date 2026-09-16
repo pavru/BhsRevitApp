@@ -12,13 +12,23 @@ namespace BHS.MEP.Cabling.Revit.Tests;
 /// </summary>
 /// <remarks>
 /// <para>
-/// <b>A measurement that has two consumers waiting for it.</b> What "joined" means for a logical
-/// connector is an open question for the owner, and the code asks <c>IsConnected</c> of every connector,
-/// logical ones included, in two places; and a circuit's panel end is taken from the connector it is fed
-/// from, which is often logical and has no place. Both rest on what Revit answers, and all that is
-/// measured of it is one message, once: "Origin is available only for connectors of PhysicalConn type".
-/// The rest is the reference's word. This walks every connector the host and its loaded links hold and
-/// counts what each one says.
+/// <b>A measurement that had two consumers waiting for it, and has answered the first.</b> What "joined"
+/// means for a logical connector was an open question, and the code asked <c>IsConnected</c> of every
+/// connector, logical ones included, in two places; and a circuit's panel end is taken from the connector
+/// it is fed from, which is often logical and has no place. Both rest on what Revit answers, and all that
+/// was measured of it was one message, once: "Origin is available only for connectors of PhysicalConn
+/// type". The rest was the reference's word. This walks every connector the host and its loaded links hold
+/// and counts what each one says.
+/// </para>
+/// <para>
+/// <b>The first answer, measured on 2026 against the linked set:</b> 75 of 212 connectors are not physical
+/// - 60 <c>Logical</c> (type 4) and 15 <c>MainSurface</c> (type 32) - and every one of them refuses
+/// <c>Origin</c>, <c>CoordinateSystem</c>, <c>MEPSystem</c> and <c>IsConnected</c> alike, while
+/// <c>AllRefs</c> answers. On that the owner decided, 2026-09-16, that only a physical connector counts as
+/// joined, and both places now ask the type first - see <c>Connectors</c> in the feature. The premise that
+/// decision rests on is asserted here, and only that one: a physical connector has to answer
+/// <c>IsConnected</c>, because production puts the question to it. What a connector that is not physical
+/// answers stays a note, since the rule ignores it either way.
 /// </para>
 /// <para>
 /// <b>Why catching is right here, when <c>Connectors.OriginOrNull</c> refuses to.</b> Production tests the
@@ -33,12 +43,12 @@ namespace BHS.MEP.Cabling.Revit.Tests;
 /// the walk, so the census that found it is still written down.
 /// </para>
 /// <para>
-/// <b>Invariants, not answers.</b> What a logical connector says to <c>IsConnected</c> is exactly what
-/// nobody knows yet, and a check written before its answer is a check that agrees with whoever wrote it.
-/// So the first case asserts only what holds of any model it does not stand down on: every connector says
-/// its type and domain, nothing throws but the measured type, every collector and connector manager the
-/// walk asks for reads, and every connector set holds as many entries as walking it met - a count Revit
-/// gives on its own, where the tables here could only agree with the loop that fills them. The second
+/// <b>Invariants, not answers.</b> A check written before its answer is a check that agrees with whoever
+/// wrote it. So the first case asserts only what holds of any model it does not stand down on: every
+/// connector says its type and domain, every physical one answers whether it is connected, nothing throws
+/// but the measured type, every collector and connector manager the walk asks for reads, and every
+/// connector set holds as many entries as walking it met - a count Revit gives on its own, where the
+/// tables here could only agree with the loop that fills them. The second
 /// asserts that this suite's own copy of the reader's ladder is the reader's, which is what makes its
 /// notes about the ladder true, and that it walked as many circuits and devices as Revit counts. The
 /// answers are notes, and a case that asserts them comes after they have been read.
@@ -72,7 +82,7 @@ public sealed class ConnectorCensusTests : IRevitTestSuite
     public IEnumerable<RevitTestCase> Cases => new[]
     {
         new RevitTestCase(
-            "every connector of the family instances, MEP curves, fabrication parts and MEP systems of the host and of each link it loads directly reads its type and domain, and every other property asked of it reads or refuses with Revit's InvalidOperationException itself",
+            "every connector of the family instances, MEP curves, fabrication parts and MEP systems of the host and of each link it loads directly reads its type and domain, every physical one answers whether it is connected, and every other property asked of any of them reads or refuses with Revit's InvalidOperationException itself",
             EveryConnectorIsCounted,
             needsDocument: true),
 
@@ -155,6 +165,11 @@ public sealed class ConnectorCensusTests : IRevitTestSuite
             Expect.That(
                 census.TypeOrDomainUnread.Count == 0,
                 "connectors whose type or domain could not be read: " + Listed(census.TypeOrDomainUnread));
+
+            Expect.That(
+                census.PhysicalRefusingIsConnected.Count == 0,
+                "physical connectors that would not answer IsConnected, which is the question both places asking whether something is joined put to them: "
+                + Listed(census.PhysicalRefusingIsConnected));
         }
         finally
         {
@@ -420,6 +435,21 @@ public sealed class ConnectorCensusTests : IRevitTestSuite
 
         public SortedDictionary<string, int> TypeOrDomainUnread { get; } = new(StringComparer.Ordinal);
 
+        /// <summary>
+        /// Physical connectors that would not answer <c>IsConnected</c>, by type and what they said.
+        /// </summary>
+        /// <remarks>
+        /// The premise the production rule stands on, and the only part of this census that is asserted
+        /// rather than noted. Since the owner's decision of 2026-09-16 both places that ask whether
+        /// something is joined - an indicator of ours drawn into the wiring, a fitting that is a real
+        /// junction box - ask <c>IsConnected</c> of physical connectors only. A physical connector that
+        /// refused would throw out of reading or applying, so it belongs in a red line here rather than
+        /// in an exception on somebody's model. What a connector that is <b>not</b> physical answers is
+        /// still a note: the rule ignores those either way, so Revit answering where it once refused
+        /// breaks nothing and must not fail a run.
+        /// </remarks>
+        public SortedDictionary<string, int> PhysicalRefusingIsConnected { get; } = new(StringComparer.Ordinal);
+
         public SortedDictionary<string, int> Unexpected { get; } = new(StringComparer.Ordinal);
 
         /// <summary>By type, domain and what Origin, IsConnected, CoordinateSystem and MEPSystem say.</summary>
@@ -576,6 +606,9 @@ public sealed class ConnectorCensusTests : IRevitTestSuite
                 + ", MEPSystem " + (system == Said.Reads ? (onSystem is null ? "none" : "a system") : Word(system)),
                 linked);
 
+            if (physical && connected != Said.Reads)
+                Add(PhysicalRefusingIsConnected, "type " + typeText + ": IsConnected " + Word(connected));
+
             var ownedBy = ownerSaid != Said.Reads
                 ? "unread"
                 : owner is null
@@ -687,6 +720,7 @@ public sealed class ConnectorCensusTests : IRevitTestSuite
             context.Note("census: connectors not physical", NotPhysical.ToString());
             context.Note("census: connectors met through an element that does not own them", OwnedElsewhere.ToString());
             context.Note("census: type or domain unread", Listed(TypeOrDomainUnread));
+            context.Note("census: physical connectors refusing IsConnected", Listed(PhysicalRefusingIsConnected));
             context.Note("census: exceptions other than InvalidOperationException itself", Listed(Unexpected));
 
             Kinds.Note(context, "connectors by what they answer");
