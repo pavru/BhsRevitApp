@@ -343,6 +343,26 @@ public abstract class SharedParameterScheme
                 if (categories.IsEmpty)
                     continue;
 
+                // Never narrower than the binding the document already has - the owner's decision,
+                // 2026-09-17. ReInsert replaces the category set, and a category left out of the new
+                // one loses every value already written on it: measured by red run 1, "entries '1'"
+                // before an apply and an empty string after. The ways that happens are ordinary - a
+                // project that moves the indicator to a family of another category, a user who bound
+                // one of our parameters somewhere else as well - and what it costs is silent: indicators
+                // standing in the model stop carrying our recommendation, stop being ours, and get a
+                // second one placed beside them. Only on the same side of the instance/type line; a
+                // binding on the other side cannot be widened into this one, and crossing it is a
+                // separate question nobody has asked yet.
+                if (document.ParameterBindings.get_Item(definition) is ElementBinding existing
+                    && (existing is InstanceBinding) == declared.Instance)
+                {
+                    foreach (Category held in existing.Categories)
+                    {
+                        if (!categories.Contains(held))
+                            categories.Insert(held);
+                    }
+                }
+
                 var binding = declared.Instance
                     ? (ElementBinding)application.Create.NewInstanceBinding(categories)
                     : application.Create.NewTypeBinding(categories);

@@ -104,6 +104,12 @@ public sealed class CablingApplyTests : IRevitTestSuite
             writes: true),
 
         new RevitTestCase(
+            "applying never narrows a binding: a category the parameter already covers stays covered, with the values written on it",
+            KeepsWhatABindingAlreadyCovers,
+            needsDocument: true,
+            writes: true),
+
+        new RevitTestCase(
             "an indicator family this model does not have is refused by name, not passed over",
             RefusesAMissingFamily,
             needsDocument: true,
@@ -209,6 +215,126 @@ public sealed class CablingApplyTests : IRevitTestSuite
         BuiltInCategory.OST_CableTrayFitting,
         BuiltInCategory.OST_ConduitFitting,
     };
+
+    /// <remarks>
+    /// <para>
+    /// <b>The owner's decision of 2026-09-17, pinned.</b> Red run 1 found it by the way: rebinding a
+    /// parameter to another category set dropped the values already written - "entries '1'" before the
+    /// apply, an empty string after. The apply rebinds whenever the parameter does not cover the
+    /// indicator's category, so a project that moves the indicator to a family of another category
+    /// would lose our recommendation on every indicator standing in the model, and with it the fact that
+    /// they are ours.
+    /// </para>
+    /// <para>
+    /// <b>Built on circuits, not on a second indicator family.</b> The question is about the binding,
+    /// not the family: bind the recommendation where the apply does not want it, write a value there, and
+    /// let the apply rebind for the indicator's category. Circuits are in every model this suite runs on
+    /// and are never the indicator's category; the value written is not a word the apply ever writes, so
+    /// finding it afterwards cannot be the apply's own doing.
+    /// </para>
+    /// </remarks>
+    private static void KeepsWhatABindingAlreadyCovers(RevitTestContext context) => Watched(context, watch =>
+    {
+        var document = context.Document!;
+        var application = context.Application.Application;
+        var catalogue = new CarrierCatalogue();
+        var project = CablingProjectSettings.Read(new Fixed());
+        var symbol = NeedsIndicatorFamily(document, project);
+        const BuiltInCategory Earlier = BuiltInCategory.OST_ElectricalCircuit;
+        const string Kept = "written by the case before the apply";
+
+        Skip.When(CategoryOf(symbol) == Earlier, "the indicator family is itself a circuit category, so no other category can stand for an earlier one");
+
+        var scheme = new CablingParameters();
+        scheme.Export(application);
+
+        // What the document binds before the case touches it: a model already bound on circuits would
+        // make the first Install below a no-op, and the case would prove nothing about widening.
+        var boundBefore = BoundCategories(document, CablingParameters.Recommendation);
+        context.Note("recommendation bound before the case to", boundBefore.Count == 0 ? "(nothing)" : string.Join(", ", boundBefore));
+
+        Skip.When(
+            boundBefore.Contains(CategoryOf(symbol)),
+            "the model already binds the recommendation on the indicator's category, so the apply would not rebind it and the case would ask nothing");
+
+        var circuit = new FilteredElementCollector(document)
+            .OfCategory(Earlier)
+            .WhereElementIsNotElementType()
+            .FirstElement();
+
+        Skip.When(circuit is null, "the model has no electrical circuit to hold a value on the earlier category");
+
+        // The earlier binding: the recommendation on circuits only, as a project whose indicator
+        // family used to be of that category would have it.
+        var mark = watch.Mark;
+        var earlier = scheme.Install(document, application, new RuntimeCategories().Add(CablingParameters.Recommendation, Earlier), out var installed);
+
+        NothingWorse(watch, mark, "binding the recommendation on circuits");
+        Skip.When(installed is { } status && status != TransactionStatus.Committed, "binding the recommendation on circuits did not commit (" + installed + ")");
+        Expect.That(
+            BoundCategories(document, CablingParameters.Recommendation).Contains(Earlier),
+            "the recommendation is not bound on circuits after Install was asked for exactly that; Install reported "
+            + earlier.Count + " parameter(s) bound");
+
+        mark = watch.Mark;
+        TransactionStatus wrote;
+
+        using (var transaction = new Transaction(document, "BHS test: a value on the earlier category"))
+        {
+            transaction.Start();
+            SetText(circuit, CablingParameters.Recommendation, Kept, "recommendation");
+            wrote = transaction.Commit();
+        }
+
+        Committed(watch, mark, wrote, "writing a recommendation on a circuit");
+
+        var snapshot = CablingSnapshot.Build(
+            document, Options, catalogue, version: 1, project.Boxes, project.DefaultConnection);
+        var run = new RouteRun(Array.Empty<RouteResult>(), snapshot.Network.Version, TimeSpan.Zero);
+
+        NeedsDefinitionsFor(document, symbol, run, snapshot);
+        ApplyWatched(context, watch, "rebinding", run, snapshot, project, catalogue);
+
+        var boundAfter = BoundCategories(document, CablingParameters.Recommendation);
+        context.Note("recommendation bound after the apply to", string.Join(", ", boundAfter));
+
+        // The rebinding itself is the premise: without it the case would prove only that nothing
+        // happened. The indicator's category is what the apply wants and circuits did not cover it.
+        Expect.That(
+            boundAfter.Contains(CategoryOf(symbol)),
+            "the apply did not bind the recommendation on the indicator's category " + CategoryOf(symbol)
+            + ", so it never rebound and the case asked nothing");
+
+        Expect.That(
+            boundAfter.Contains(Earlier),
+            "the apply rebound the recommendation without circuits, which it already covered: now bound to "
+            + string.Join(", ", boundAfter));
+
+        var value = document.GetElement(circuit!.Id)?.get_Parameter(CablingParameters.Recommendation)?.AsString();
+
+        // Both sides named, as Expect.Same would name them for numbers.
+        Expect.That(
+            value == Kept,
+            "the recommendation written on circuit " + circuit.Id.Value + " before the apply rebound the parameter: expected '"
+            + Kept + "', got " + (value is null ? "no value" : "'" + value + "'"));
+    });
+
+    /// <summary>The categories a parameter is bound to in the document, by GUID, or none.</summary>
+    private static List<BuiltInCategory> BoundCategories(Document document, Guid parameter)
+    {
+        var bound = new List<BuiltInCategory>();
+
+        if (SharedParameterElement.Lookup(document, parameter) is not { } element
+            || document.ParameterBindings.get_Item(element.GetDefinition()) is not ElementBinding binding)
+        {
+            return bound;
+        }
+
+        foreach (Category category in binding.Categories)
+            bound.Add((BuiltInCategory)category.Id.Value);
+
+        return bound;
+    }
 
     private static void BindsWhatItWrites(RevitTestContext context) => Watched(context, watch =>
     {
