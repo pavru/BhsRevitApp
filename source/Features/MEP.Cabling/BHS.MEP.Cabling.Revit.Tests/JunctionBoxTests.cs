@@ -131,7 +131,8 @@ public sealed class JunctionBoxTests : IRevitTestSuite
 
         foreach (Connector connector in manager.Connectors)
         {
-            if (connector is null || !connector.IsConnected)
+            // Physical only, as the reader asks: a surface or logical connector refuses IsConnected.
+            if (connector is null || (connector.ConnectorType & ConnectorType.Physical) == 0 || !connector.IsConnected)
                 continue;
 
             foreach (Connector other in connector.AllRefs)
