@@ -14,7 +14,7 @@ namespace BHS.MEP.Cabling.Routing.Probe;
 internal static class Program
 {
     private const double Tolerance = 0.1;
-    private const int Floor = 95;
+    private const int Floor = 108;
 
     private static int _run;
     private static int _failed;
@@ -38,6 +38,7 @@ internal static class Program
         BoxesAreWhereTheTapsAreAndCountWhatTheyTake();
         WithoutAdditionalBoxesEveryDeviceIsServedFromOneThatStands();
         TheLengthIsToldByWhereItIsLaid();
+        AStoredLengthIsToldFromAStaleOne();
 
         Console.WriteLine();
 
@@ -770,6 +771,96 @@ internal static class Program
         Check("with no slack asked for there is none, and a class the route never walked reads zero",
             Near(none.Slack, 0) && Near(none.TotalLength, 40) && Near(none.AlongClass("busway"), 0));
     }
+
+    /// <summary>
+    /// What a circuit carries from an earlier apply, against what the search finds today.
+    /// <code>
+    ///   P                       S
+    ///   |                       |
+    ///   +---[1]---+---[2]---+---+
+    ///   0        10        20
+    /// </code>
+    /// </summary>
+    /// <remarks>
+    /// The route walks both trays and comes down a foot at each end: along 20, drops 2, total 22. Each
+    /// case below stores something different against that and asks what the review makes of it.
+    /// </remarks>
+    private static void AStoredLengthIsToldFromAStaleOne()
+    {
+        Section("a stored length against the one found today");
+
+        var network = NetworkBuilder.Build(1, new[] { Tray(1, 0, 10), Tray(2, 10, 20) }, Options());
+        var circuit = new CircuitSnapshot(
+            new CarrierId(100), "P-1",
+            Terminal(0, 0, -1, "panel"),
+            new[] { Terminal(20, 0, -1, "socket") });
+
+        var routed = Router.Route(network, circuit, Options());
+        var walked = RouteStamp.Of(routed.Path);
+
+        Check("the route walks both trays", routed.Status == RouteStatus.Found && Near(routed.TotalLength, 22));
+        Check("the stamp names them in order, each once, as ids", walked == "1; 2");
+        Check("and a stamp reads back into the carriers it names",
+            RouteStamp.Parse(walked).SequenceEqual(new[] { new CarrierId(1), new CarrierId(2) }));
+        Check("a carrier in a link keeps its link in both directions",
+            RouteStamp.Of(new[] { new CarrierId(7, 3) }) == "7:3"
+            && RouteStamp.Parse("7:3").Single() == new CarrierId(7, 3));
+
+        var results = new[] { routed };
+
+        Check("what the last apply wrote, unchanged, is current",
+            !Review(results, Stored(routed.Circuit, 22, CircuitConnection.AtTerminal, walked)).Any);
+
+        var longer = Review(results, Stored(routed.Circuit, 23, CircuitConnection.AtTerminal, walked));
+
+        Check("a length that no longer matches is stale, and both numbers are named",
+            longer.Stale.Count == 1 && longer.Stale[0].Has(StaleReason.LengthDiffers)
+            && Near(longer.Stale[0].StoredLength, 23) && Near(longer.Stale[0].ComputedLength, 22));
+        Check("and only for that reason", longer.Stale[0].Reasons == StaleReason.LengthDiffers);
+
+        Check("a difference inside the tolerance is not a change",
+            !Review(results, Stored(routed.Circuit, 22.0005, CircuitConnection.AtTerminal, walked)).Any);
+
+        var elsewhere = Review(results, Stored(routed.Circuit, 22, CircuitConnection.AtTerminal, "1; 9"));
+
+        Check("a stamp naming other carriers is stale, and says which left and which arrived",
+            elsewhere.Stale.Count == 1 && elsewhere.Stale[0].Has(StaleReason.CarriersDiffer)
+            && elsewhere.Stale[0].Left.SequenceEqual(new[] { new CarrierId(9) })
+            && elsewhere.Stale[0].Arrived.SequenceEqual(new[] { new CarrierId(2) }));
+
+        var other = Review(results, Stored(routed.Circuit, 22, CircuitConnection.AtJunctionBox, walked));
+
+        Check("a length computed in the other connection is stale, and both are named",
+            other.Stale.Count == 1 && other.Stale[0].Has(StaleReason.ConnectionDiffers)
+            && other.Stale[0].StoredConnection == CircuitConnection.AtJunctionBox
+            && other.Stale[0].ComputedConnection == CircuitConnection.AtTerminal);
+
+        var blocked = new[] { Failed(100, RouteStatus.NoCarrierNear, "P-1 - socket", 0) };
+        var gone = Review(blocked, Stored(new CarrierId(100), 22, CircuitConnection.AtTerminal, walked));
+
+        Check("a length stored where nothing routes any more is stale, and says where it stopped",
+            gone.Stale.Count == 1 && gone.Stale[0].Reasons == StaleReason.NoRouteNow
+            && gone.Stale[0].BlockedAt == "P-1 - socket");
+        Check("and it still names the carriers the stored length was measured along",
+            gone.Stale[0].Left.SequenceEqual(new[] { new CarrierId(1), new CarrierId(2) }));
+
+        var nothing = LengthReview.Of(results, new Dictionary<CarrierId, StoredRoute>(), Millimetre);
+
+        Check("a circuit nobody ever wrote is counted apart, not reported as stale",
+            !nothing.Any && nothing.NeverWritten == 1 && nothing.Current == 0 && nothing.Examined == 1);
+        Check("and a circuit that neither routes nor carries anything is neither",
+            LengthReview.Of(blocked, new Dictionary<CarrierId, StoredRoute>(), Millimetre) is
+            { Stale.Count: 0, NeverWritten: 0, Current: 0, Examined: 1 });
+    }
+
+    /// <summary>A millimetre in internal feet, the tolerance the command uses.</summary>
+    private const double Millimetre = 1 / 304.8;
+
+    private static LengthReview Review(IReadOnlyList<RouteResult> results, StoredRoute stored) =>
+        LengthReview.Of(results, new Dictionary<CarrierId, StoredRoute> { [stored.Circuit] = stored }, Millimetre);
+
+    private static StoredRoute Stored(CarrierId circuit, double length, CircuitConnection connection, string stamp) =>
+        new(circuit, length, connection, stamp);
 
     /// <summary>A box: a fitting of no length with one connector, where the trays either side of it meet.</summary>
     private static CarrierNode Box(long id, double at) =>

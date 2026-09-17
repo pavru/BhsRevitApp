@@ -479,5 +479,33 @@
     "risk": "Needs a circuit that did not route and carries no slack yet: the linked set has seven.",
     "alsoReddens": [],
     "hides": []
+  },
+  {
+    "run": 11,
+    "case": "what the search found, written onto its circuits, reads back as a current answer",
+    "file": "source/Features/MEP.Cabling/BHS.MEP.Cabling.Revit/StoredRoutes.cs",
+    "anchor": "        element.get_Parameter(CablingParameters.CableLength) is { HasValue: true } found\n            ? found.AsDouble()\n            : null;",
+    "replacement": "        element.get_Parameter(CablingParameters.CableLength) is { HasValue: false } found\n            ? found.AsDouble()\n            : null;",
+    "reddens": "routes found, against circuits whose stored answer still holds",
+    "rationale": "Stale lengths, 2026-09-18. The stored length is read as absent, so every circuit reads as never written: nothing is reported stale - the first assertion still passes - and the red lands on the count of circuits whose answer still holds.",
+    "leftUnproven": "the two assertions after it: circuits that routed and carry nothing, and circuits that did not route and were read as carrying something",
+    "risk": "Needs one found route on the model the sweep opens; the case stands down by name without one.",
+    "alsoReddens": [
+      "a length, a stamp or a connection that no longer matches is reported, and so is one stored where nothing routes"
+    ],
+    "hides": []
+  },
+  {
+    "run": 12,
+    "case": "a length, a stamp or a connection that no longer matches is reported, and so is one stored where nothing routes",
+    "file": "source/Features/MEP.Cabling/BHS.MEP.Cabling.Revit/StoredRoutes.cs",
+    "anchor": "        return CircuitConnections.TryParse(found.AsString(), out var connection) ? connection : null;",
+    "replacement": "        return found.AsString() is null ? null : null;",
+    "reddens": "circuits made stale by this case, against circuits the check reports: expected 4, got 3",
+    "rationale": "Stale lengths, 2026-09-18. The stored connection is read as absent, so the circuit this case gave the other connection to is no longer reported; the other three reasons are untouched, and the red is one circuit short of four.",
+    "leftUnproven": "the four assertions after the count, one per reason",
+    "risk": "Needs three found routes and one circuit that does not route; the case stands down by name without them. Separate from run 11 because that breakage reddens this case first, on a count that says nothing about the connection.",
+    "alsoReddens": [],
+    "hides": []
   }
 ]

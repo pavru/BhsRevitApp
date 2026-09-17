@@ -89,6 +89,15 @@
             <ToolTip>Writes the shared parameter file for family authors and binds the parameters this model is missing.</ToolTip>
             <Order>3</Order>
         </RevitRibbonButton>
+
+        <RevitRibbonButton Include="BHS.Cabling.CheckLengths">
+            <Panel>Cabling</Panel>
+            <Text>Check lengths</Text>
+            <ClassName>BHS.MEP.Cabling.Entry.CheckLengthsEntryPoint</ClassName>
+            <AvailabilityClassName>BHS.MEP.Cabling.Entry.CablingNeedsProjectDocument</AvailabilityClassName>
+            <ToolTip>Routes every circuit again and says which ones carry a stored length that no longer describes this model.</ToolTip>
+            <Order>4</Order>
+        </RevitRibbonButton>
     </ItemGroup>
 
 </Project>
