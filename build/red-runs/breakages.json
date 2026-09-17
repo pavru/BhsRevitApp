@@ -224,5 +224,18 @@
     "risk": "The case stands down earlier if the plan recommends no box, or if inCatalogue == 0 (the apply placed nothing of a category the catalogue collects); on the owner's set the indicator family is a cable tray fitting, which the catalogue does collect. The red assumes each placed indicator reads back as a carrier, i.e. that CarrierReader.TryExtent gives it an extent - a freshly placed indicator has four physical connectors, so it does. If none of them did, they would be counted as Skipped rather than as carriers, the first assertion would pass with a delta of zero, and the case would go red one assertion later on \"markers excluded before the apply plus the indicators it placed, against markers excluded reading again\" instead. Checked for collateral: MarkersAreNotStructure in CablingReadingTests asserts plain.Carriers.Count - filtered.Carriers.Count == filtered.MarkersExcluded, which on a model holding no markers is 0 - 0 = 0 and stays green; AnUnknownMarkerTypeIsReported reads MarkerTypeKnown, which comes from markers.Known and not from Marks, so it is untouched. Marks has exactly one caller in the whole tree.",
     "alsoReddens": [],
     "hides": []
+  },
+  {
+    "run": 4,
+    "case": "every circuit whose carriers do not join up is posted as one warning",
+    "file": "source/Features/MEP.Cabling/BHS.MEP.Cabling.Revit/CablingApply.cs",
+    "anchor": "            Post(host, outcome, CablingFeature.NoConnectivity, route.Circuit.Value);",
+    "replacement": "            Post(host, outcome, CablingFeature.NoCarrierNear, route.Circuit.Value);",
+    "reddens": "NoConnectivity warnings Revit processed against circuit <circuit id>, whose carriers do not join up: expected 1, got 0",
+    "rationale": "Isolation re-test of the same breakage. In run 2 it shared a run with the loop-source breakage, so every NoConnectivity circuit got TWO NoCarrierNear posts; Revit collapsed each pair into one, 'posted = processed' fell 16 against 8, and the per-definition assertion this breakage aims at was never reached. Alone, each circuit gets exactly one post, there is nothing to collapse, and the red lands where it was designed to.",
+    "leftUnproven": "Everything of that case behind its per-definition assertion, as before: the total count and the EachAgainstOneOf clause including severity.",
+    "risk": "The no-carrier case routes over a network with no carriers at all, so it has no NoConnectivity route and this breakage is inert there. Every other case hands the apply found routes or NoCarrierNear ones. Expected: exactly ONE red. More than one means the isolation argument is wrong and the run says nothing about collapsing.",
+    "alsoReddens": [],
+    "hides": []
   }
 ]
