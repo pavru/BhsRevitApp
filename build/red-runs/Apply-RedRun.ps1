@@ -17,7 +17,7 @@
     evidence. Each anchor must occur exactly once in its file or nothing is applied at all.
 
 .PARAMETER Run
-    Which run to apply, 1..4. See readme.md for what each one proves.
+    Which run to apply, 1..8. Runs 5-8 are the second round. See readme.md for what each one proves.
 
 .PARAMETER Revert
     Take the breakages back off with git restore, instead of applying them.
@@ -34,7 +34,7 @@
 #>
 [CmdletBinding()]
 param(
-    [Parameter(Mandatory = $true)][ValidateRange(1, 4)][int] $Run,
+    [Parameter(Mandatory = $true)][ValidateRange(1, 8)][int] $Run,
     [switch] $Revert,
     [switch] $List
 )

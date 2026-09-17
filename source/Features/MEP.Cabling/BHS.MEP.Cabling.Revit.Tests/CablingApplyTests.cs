@@ -2127,6 +2127,15 @@ public sealed class CablingApplyTests : IRevitTestSuite
     /// from an earlier run is worse than either - it makes a stale answer look current. So their three
     /// values are read before the apply and compared after.
     /// </para>
+    /// <para>
+    /// <b>And so the apply is handed every route, found or not - unlike the placement cases.</b> Until
+    /// 2026-09-17 this case gave the apply only the found routes, as <c>PlanFound</c> builds its run, so
+    /// a circuit that did not route never reached the write at all and "carries what it carried before"
+    /// held by construction: no defect in the apply could have turned it red. Found while designing the
+    /// second round of red runs, before any Revit was started. The blocked routes make the apply post
+    /// NoCarrierNear and NoConnectivity, whose definitions only the edition registers - the case stands
+    /// down by name without them, as the warning cases do.
+    /// </para>
     /// </remarks>
     private static void CircuitsAreToldTheirRoute(RevitTestContext context) => Watched(context, watch =>
     {
@@ -2149,6 +2158,12 @@ public sealed class CablingApplyTests : IRevitTestSuite
             plan.Run.Found == 0,
             "no circuit of this model routed, so there is no length, connection or set of carriers to write");
 
+        // Every route, the blocked ones too, and the plan's own boxes: see the remarks.
+        var run = new RouteRun(plan.Results, plan.Snapshot.Network.Version, TimeSpan.Zero)
+        {
+            Boxes = plan.Run.Boxes,
+        };
+
         // Read before the apply, so that a value already standing on a circuit answers for itself
         // rather than for something this apply wrote.
         var untouched = plan.Results
@@ -2156,9 +2171,9 @@ public sealed class CablingApplyTests : IRevitTestSuite
             .Select(one => (Circuit: one.Circuit.Value, Before: Stored(document, one.Circuit.Value)))
             .ToList();
 
-        NeedsDefinitionsFor(document, symbol, plan.Run, plan.Snapshot);
+        NeedsDefinitionsFor(document, symbol, run, plan.Snapshot);
 
-        var outcome = ApplyWatched(context, watch, "route written back", plan.Run, plan.Snapshot, project, catalogue);
+        var outcome = ApplyWatched(context, watch, "route written back", run, plan.Snapshot, project, catalogue);
 
         Note(context, "route written back: circuits told their route", outcome.CircuitsWritten);
         Note(context, "route written back: circuits that did not route", untouched.Count);
@@ -2168,7 +2183,7 @@ public sealed class CablingApplyTests : IRevitTestSuite
             outcome.CircuitsWritten,
             "routes found, against circuits the apply reports telling their length, connection and carriers");
 
-        foreach (var route in plan.Run.Results)
+        foreach (var route in run.Results.Where(one => one.Status == RouteStatus.Found))
         {
             var circuit = document.GetElement(new ElementId(route.Circuit.Value));
             var where = "circuit " + route.Circuit.Value.ToString(CultureInfo.InvariantCulture);
