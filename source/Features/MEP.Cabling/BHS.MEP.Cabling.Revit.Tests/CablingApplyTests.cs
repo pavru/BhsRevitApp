@@ -263,7 +263,7 @@ public sealed class CablingApplyTests : IRevitTestSuite
         var document = context.Document!;
         var application = context.Application.Application;
         var catalogue = new CarrierCatalogue();
-        var project = CablingProjectSettings.Read(new Fixed());
+        var project = CablingProjectSettings.Read(new FixedSettings());
         var symbol = NeedsIndicatorFamily(document, project);
         const BuiltInCategory Earlier = BuiltInCategory.OST_ElectricalCircuit;
         const string Kept = "written by the case before the apply";
@@ -366,7 +366,7 @@ public sealed class CablingApplyTests : IRevitTestSuite
         var document = context.Document!;
         var application = context.Application.Application;
         var catalogue = new CarrierCatalogue();
-        var project = CablingProjectSettings.Read(new Fixed());
+        var project = CablingProjectSettings.Read(new FixedSettings());
         var symbol = NeedsIndicatorFamily(document, project);
 
         // Written here rather than trusted to a suite declared earlier. The apply binds from our
@@ -426,7 +426,7 @@ public sealed class CablingApplyTests : IRevitTestSuite
         // case would be passing for the wrong reason.
         const string Absent = "BHS_CBL_NoSuchFamily_ForTheSweepOnly";
 
-        var project = CablingProjectSettings.Read(new Fixed
+        var project = CablingProjectSettings.Read(new FixedSettings
         {
             [RecommendedBoxes.FamilyKey] = Absent,
             [RecommendedBoxes.TypeKey] = "NoSuchType",
@@ -492,7 +492,7 @@ public sealed class CablingApplyTests : IRevitTestSuite
         var document = context.Document!;
         var application = context.Application.Application;
         var catalogue = new CarrierCatalogue();
-        var project = CablingProjectSettings.Read(new Fixed
+        var project = CablingProjectSettings.Read(new FixedSettings
         {
             [CablingProjectSettings.ConnectionKey] = CablingParameters.ConnectionAtJunctionBox,
         });
@@ -677,7 +677,7 @@ public sealed class CablingApplyTests : IRevitTestSuite
         var document = context.Document!;
         var application = context.Application.Application;
         var catalogue = new CarrierCatalogue();
-        var project = CablingProjectSettings.Read(new Fixed());
+        var project = CablingProjectSettings.Read(new FixedSettings());
         var symbol = NeedsIndicatorFamily(document, project);
 
         NeedsNoIndicatorsOfOurs(context, document, symbol, "placement");
@@ -846,7 +846,7 @@ public sealed class CablingApplyTests : IRevitTestSuite
         var document = context.Document!;
         var application = context.Application.Application;
         var catalogue = new CarrierCatalogue();
-        var project = CablingProjectSettings.Read(new Fixed());
+        var project = CablingProjectSettings.Read(new FixedSettings());
         var symbol = NeedsIndicatorFamily(document, project);
 
         NeedsNoIndicatorsOfOurs(context, document, symbol, "second apply");
@@ -910,7 +910,7 @@ public sealed class CablingApplyTests : IRevitTestSuite
         var document = context.Document!;
         var application = context.Application.Application;
         var catalogue = new CarrierCatalogue();
-        var project = CablingProjectSettings.Read(new Fixed());
+        var project = CablingProjectSettings.Read(new FixedSettings());
         var symbol = NeedsIndicatorFamily(document, project);
 
         NeedsNoIndicatorsOfOurs(context, document, symbol, "re-read");
@@ -988,7 +988,7 @@ public sealed class CablingApplyTests : IRevitTestSuite
         var document = context.Document!;
         var application = context.Application.Application;
         var catalogue = new CarrierCatalogue();
-        var project = CablingProjectSettings.Read(new Fixed { [CablingProjectSettings.BoxRadiusKey] = RadiusMm });
+        var project = CablingProjectSettings.Read(new FixedSettings { [CablingProjectSettings.BoxRadiusKey] = RadiusMm });
         var symbol = NeedsIndicatorFamily(document, project);
 
         context.Note("existing box: box radius, mm", RadiusMm);
@@ -1135,7 +1135,7 @@ public sealed class CablingApplyTests : IRevitTestSuite
         var document = context.Document!;
         var application = context.Application.Application;
         var catalogue = new CarrierCatalogue();
-        var project = CablingProjectSettings.Read(new Fixed { [CablingProjectSettings.ExistingBoxesOnlyKey] = "true" });
+        var project = CablingProjectSettings.Read(new FixedSettings { [CablingProjectSettings.ExistingBoxesOnlyKey] = "true" });
         var symbol = NeedsIndicatorFamily(document, project);
 
         Expect.That(project.ExistingBoxesOnly, "the project setting that asks for no additional boxes did not read back as asked");
@@ -1210,7 +1210,7 @@ public sealed class CablingApplyTests : IRevitTestSuite
     {
         var document = context.Document!;
         var catalogue = new CarrierCatalogue();
-        var project = CablingProjectSettings.Read(new Fixed { [CablingProjectSettings.ExistingBoxesOnlyKey] = "true" });
+        var project = CablingProjectSettings.Read(new FixedSettings { [CablingProjectSettings.ExistingBoxesOnlyKey] = "true" });
         var symbol = NeedsIndicatorFamily(document, project);
 
         // See the NoCarrierNear case: the file the apply binds from is written by the case, not inherited.
@@ -1267,7 +1267,7 @@ public sealed class CablingApplyTests : IRevitTestSuite
         var document = context.Document!;
         var application = context.Application.Application;
         var catalogue = new CarrierCatalogue();
-        var ordinary = CablingProjectSettings.Read(new Fixed());
+        var ordinary = CablingProjectSettings.Read(new FixedSettings());
         var symbol = NeedsIndicatorFamily(document, ordinary);
 
         NeedsNoIndicatorsOfOurs(context, document, symbol, "mode");
@@ -1299,7 +1299,7 @@ public sealed class CablingApplyTests : IRevitTestSuite
 
         asked.Clear();
 
-        var same = CablingProjectSettings.Read(new Fixed { [CablingProjectSettings.ExistingBoxesOnlyKey] = "true" });
+        var same = CablingProjectSettings.Read(new FixedSettings { [CablingProjectSettings.ExistingBoxesOnlyKey] = "true" });
         var unchanged = CablingApply.Apply(
             document, application, run, snapshot, same, catalogue,
             (key, value) => asked.Add((key, value, document.IsModifiable)));
@@ -1322,7 +1322,7 @@ public sealed class CablingApplyTests : IRevitTestSuite
         var document = context.Document!;
         var application = context.Application.Application;
         var catalogue = new CarrierCatalogue();
-        var project = CablingProjectSettings.Read(new Fixed());
+        var project = CablingProjectSettings.Read(new FixedSettings());
         var symbol = NeedsIndicatorFamily(document, project);
         var snapshot = Prepare(watch, document, application, symbol, project, catalogue);
         var level = LowestLevel(document);
@@ -1391,7 +1391,7 @@ public sealed class CablingApplyTests : IRevitTestSuite
         var document = context.Document!;
         var application = context.Application.Application;
         var catalogue = new CarrierCatalogue();
-        var project = CablingProjectSettings.Read(new Fixed());
+        var project = CablingProjectSettings.Read(new FixedSettings());
         var symbol = NeedsIndicatorFamily(document, project);
         var snapshot = Prepare(watch, document, application, symbol, project, catalogue);
 
@@ -1479,7 +1479,7 @@ public sealed class CablingApplyTests : IRevitTestSuite
         var document = context.Document!;
         var application = context.Application.Application;
         var catalogue = new CarrierCatalogue();
-        var project = CablingProjectSettings.Read(new Fixed());
+        var project = CablingProjectSettings.Read(new FixedSettings());
         var symbol = NeedsIndicatorFamily(document, project);
 
         NeedsNoIndicatorsOfOurs(context, document, symbol, "joined at a box");
@@ -1606,7 +1606,7 @@ public sealed class CablingApplyTests : IRevitTestSuite
         var document = context.Document!;
         var application = context.Application.Application;
         var catalogue = new CarrierCatalogue();
-        var project = CablingProjectSettings.Read(new Fixed());
+        var project = CablingProjectSettings.Read(new FixedSettings());
         var symbol = NeedsIndicatorFamily(document, project);
 
         NeedsNoIndicatorsOfOurs(context, document, symbol, Label);
@@ -1851,7 +1851,7 @@ public sealed class CablingApplyTests : IRevitTestSuite
         var document = context.Document!;
         var application = context.Application.Application;
         var catalogue = new CarrierCatalogue();
-        var project = CablingProjectSettings.Read(new Fixed());
+        var project = CablingProjectSettings.Read(new FixedSettings());
         var symbol = NeedsIndicatorFamily(document, project);
         var snapshot = Prepare(watch, document, application, symbol, project, catalogue);
         var other = NeedsAnotherType(context, document, symbol, "another type");
@@ -1885,7 +1885,7 @@ public sealed class CablingApplyTests : IRevitTestSuite
         var document = context.Document!;
         var application = context.Application.Application;
         var catalogue = new CarrierCatalogue();
-        var project = CablingProjectSettings.Read(new Fixed());
+        var project = CablingProjectSettings.Read(new FixedSettings());
         var symbol = NeedsIndicatorFamily(document, project);
 
         var described = new CircuitReader().Read(document).Described;
@@ -1977,7 +1977,7 @@ public sealed class CablingApplyTests : IRevitTestSuite
     {
         var document = context.Document!;
         var catalogue = new CarrierCatalogue();
-        var project = CablingProjectSettings.Read(new Fixed());
+        var project = CablingProjectSettings.Read(new FixedSettings());
         var symbol = NeedsIndicatorFamily(document, project);
 
         // Written here, as every other case that binds writes it: the apply binds from our shared
@@ -2063,7 +2063,7 @@ public sealed class CablingApplyTests : IRevitTestSuite
     {
         var document = context.Document!;
         var catalogue = new CarrierCatalogue();
-        var project = CablingProjectSettings.Read(new Fixed());
+        var project = CablingProjectSettings.Read(new FixedSettings());
         var symbol = NeedsIndicatorFamily(document, project);
 
         // See the case above: the file the apply binds from is written by the case, not inherited.
@@ -2122,7 +2122,7 @@ public sealed class CablingApplyTests : IRevitTestSuite
         var document = context.Document!;
         var application = context.Application.Application;
         var catalogue = new CarrierCatalogue();
-        var project = CablingProjectSettings.Read(new Fixed());
+        var project = CablingProjectSettings.Read(new FixedSettings());
         var symbol = NeedsIndicatorFamily(document, project);
 
         Skip.When(
@@ -2377,7 +2377,7 @@ public sealed class CablingApplyTests : IRevitTestSuite
         var document = context.Document!;
         var application = context.Application.Application;
         var catalogue = new CarrierCatalogue();
-        var project = CablingProjectSettings.Read(new Fixed());
+        var project = CablingProjectSettings.Read(new FixedSettings());
         var symbol = NeedsIndicatorFamily(document, project);
 
         NeedsNoIndicatorsOfOurs(context, document, symbol, "route written back");
@@ -2517,7 +2517,7 @@ public sealed class CablingApplyTests : IRevitTestSuite
         var document = context.Document!;
         var application = context.Application.Application;
         var catalogue = new CarrierCatalogue();
-        var project = CablingProjectSettings.Read(new Fixed());
+        var project = CablingProjectSettings.Read(new FixedSettings());
         var symbol = NeedsIndicatorFamily(document, project);
 
         NeedsNoIndicatorsOfOurs(context, document, symbol, "length by where");
@@ -3473,44 +3473,6 @@ public sealed class CablingApplyTests : IRevitTestSuite
 
     private static BuiltInCategory CategoryOf(FamilySymbol symbol) =>
         (BuiltInCategory)symbol.Category.Id.Value;
-
-    /// <summary>
-    /// Settings that hold exactly what a case puts in them.
-    /// </summary>
-    /// <remarks>
-    /// <b>Fifteen lines instead of loosening the production type, which is the better trade.</b>
-    /// <c>CablingProjectSettings</c> is constructed only through <c>Read(ISettings)</c>, and the
-    /// first thought was to add a constructor for tests - a change to shipped code so that a test
-    /// could reach it. <c>ISettings</c> turns out to be an indexer, a key list and a section view, so
-    /// the seam that already exists is enough, and nothing a customer receives changes shape to be
-    /// testable.
-    /// </remarks>
-    private sealed class Fixed : ISettings
-    {
-        private readonly Dictionary<string, string> _values = new(StringComparer.OrdinalIgnoreCase);
-
-        public string? this[string key]
-        {
-            get => _values.TryGetValue(key, out var found) ? found : null;
-            set => _values[key] = value ?? string.Empty;
-        }
-
-        public IEnumerable<string> Keys => _values.Keys;
-
-        public ISettings Section(string name)
-        {
-            var prefix = name + ":";
-            var section = new Fixed();
-
-            foreach (var pair in _values)
-            {
-                if (pair.Key.StartsWith(prefix, StringComparison.OrdinalIgnoreCase))
-                    section[pair.Key.Substring(prefix.Length)] = pair.Value;
-            }
-
-            return section;
-        }
-    }
 
     /// <summary>
     /// Not the command's: those defaults live in the feature assembly, which this one cannot see.

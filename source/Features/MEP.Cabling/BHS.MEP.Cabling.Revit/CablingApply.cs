@@ -821,8 +821,13 @@ public static class CablingApply
     /// links routinely, 13 of the 49 on the owner's set. Circuits never do, so the references keep the
     /// bare number. The qualified spelling is <c>CarrierId.ToString</c> itself rather than a second
     /// rendering written here, which is also what the reach notes print.
+    /// <b>And it is taken from the routing assembly since 2026-09-18</b>, because the check for stale
+    /// lengths reads this value back and compares it with what the search walks today: two copies of one
+    /// spelling would let the writer and the reader drift, and the drift would read as "every circuit is
+    /// stale". <see cref="CircuitRefs"/> keeps its own spelling - it is a different value with a
+    /// different rule.
     /// </remarks>
-    private static string RouteStamp(IEnumerable<CarrierId> path) => Ids(path, one => one.ToString());
+    private static string RouteStamp(IEnumerable<CarrierId> path) => Routing.RouteStamp.Of(path);
 
     /// <summary>Ids, each once, in the order first seen, joined by "; ".</summary>
     /// <remarks>

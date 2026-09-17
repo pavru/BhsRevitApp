@@ -38,6 +38,7 @@ internal static class RevitTests
         new BHS.MEP.Cabling.Revit.Tests.CircuitConnectionTests(),
         new BHS.MEP.Cabling.Revit.Tests.JunctionBoxTests(),
         new BHS.MEP.Cabling.Revit.Tests.CablingApplyTests(),
+        new BHS.MEP.Cabling.Revit.Tests.LengthCheckTests(),
     };
 
     /// <summary>How many suites were declared, whatever happens when they run.</summary>
