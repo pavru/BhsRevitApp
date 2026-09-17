@@ -24,7 +24,20 @@ namespace BHS.MEP.Cabling.Routing;
 public static class Router
 {
     /// <summary>Routes one circuit, or says why it could not be routed.</summary>
-    public static RouteResult Route(RouteNetwork network, CircuitSnapshot circuit, RoutingOptions options)
+    public static RouteResult Route(RouteNetwork network, CircuitSnapshot circuit, RoutingOptions options) =>
+        Route(network, circuit, options, null);
+
+    /// <summary>Routes one circuit, or says why it could not be routed.</summary>
+    /// <param name="existingBoxesOnly">
+    /// The boxes already in the model, when the project routes without additional boxes; null when it
+    /// does not. Consulted only for a circuit cut in boxes - a circuit cut at the terminal has no box to
+    /// be served from, in this mode or any other.
+    /// </param>
+    public static RouteResult Route(
+        RouteNetwork network,
+        CircuitSnapshot circuit,
+        RoutingOptions options,
+        IReadOnlyCollection<ExistingBox>? existingBoxesOnly)
     {
         if (circuit.Devices.Count == 0)
         {
@@ -43,6 +56,9 @@ public static class Router
                 BuiltInLength = circuit.BuiltInLength,
             };
         }
+
+        if (existingBoxesOnly is not null && circuit.Connection == CircuitConnection.AtJunctionBox)
+            return ThroughExistingBoxes(network, circuit, options, existingBoxesOnly);
 
         // A circuit is a chain: panel to the first device, then device to device. Each leg is routed
         // on its own and the legs are concatenated, which is what the predecessor did and is right -
@@ -109,6 +125,124 @@ public static class Router
         };
     }
 
+    /// <summary>A circuit cut in boxes, served only from boxes already in the model.</summary>
+    /// <remarks>
+    /// <para>
+    /// <b>Every rule here is the owner's, answered on 2026-09-17 before a line of it was written.</b>
+    /// Each device is served from the existing box nearest it <i>along the structure</i>, however far -
+    /// a box behind a wall or on another tray is not near because it is close on a plan, and a box on a
+    /// part of the structure the device does not reach is not reachable at all. The trunk runs from the
+    /// panel through those boxes, in the order the circuit visits its devices; a spur leaves the box
+    /// along the structure and comes down to the device. A device no box reaches fails the circuit.
+    /// </para>
+    /// <para>
+    /// <b>Every device is given its box before the trunk is walked</b>, because the trunk visits boxes
+    /// and cannot know which until every device has been asked. Consecutive devices on one box share one
+    /// visit; a box the circuit comes back to after another is visited again, which is how it would be
+    /// wired.
+    /// </para>
+    /// </remarks>
+    private static RouteResult ThroughExistingBoxes(
+        RouteNetwork network,
+        CircuitSnapshot circuit,
+        RoutingOptions options,
+        IReadOnlyCollection<ExistingBox> boxes)
+    {
+        var standing = new Dictionary<CarrierId, (Point3 At, double Cost)>();
+
+        foreach (var box in boxes)
+        {
+            if (box is not null && network.Node(box.Id) is not null)
+                standing[box.Id] = (box.At, 0);
+        }
+
+        var served = new List<(Terminal Device, CarrierId Box, Walked Spur, Point3 At, double Drop)>();
+
+        foreach (var device in circuit.Devices)
+        {
+            var exits = Approachable(network, device, options);
+
+            if (exits.Count == 0)
+                return Failed(network, circuit, RouteStatus.NoCarrierNear, device);
+
+            if (standing.Count == 0 || Walk(network, standing, exits, options) is not { } spur)
+                return Failed(network, circuit, RouteStatus.NoBoxReachable, device);
+
+            served.Add((device, spur.Seed, spur, exits[spur.Exit].At, exits[spur.Exit].Cost));
+        }
+
+        var fromPanel = Approachable(network, circuit.Source, options);
+
+        if (fromPanel.Count == 0)
+            return Failed(network, circuit, RouteStatus.NoCarrierNear, circuit.Source);
+
+        var path = new List<CarrierId>();
+        var taps = new List<Tap>();
+        var alongCarriers = 0.0;
+        var approaches = 0.0;
+        CarrierId? at = null;
+
+        foreach (var one in served)
+        {
+            if (at != one.Box)
+            {
+                var from = at is { } previous
+                    ? new Dictionary<CarrierId, (Point3 At, double Cost)> { [previous] = standing[previous] }
+                    : fromPanel;
+
+                var to = new Dictionary<CarrierId, (Point3 At, double Cost)> { [one.Box] = standing[one.Box] };
+
+                if (Walk(network, from, to, options) is not { } trunk)
+                    return Failed(network, circuit, RouteStatus.NoConnectivity, one.Device);
+
+                Append(path, trunk.Result.Path);
+                alongCarriers += trunk.Result.AlongCarriers;
+                approaches += trunk.Result.Approaches;
+                at = one.Box;
+            }
+
+            Append(path, one.Spur.Result.Path);
+            alongCarriers += one.Spur.Result.AlongCarriers;
+            approaches += one.Drop;
+
+            taps.Add(new Tap(one.Device, one.Spur.Exit, one.At, one.Drop)
+            {
+                Box = one.Box,
+                SpurAlongCarriers = one.Spur.Result.AlongCarriers,
+            });
+        }
+
+        var total = alongCarriers + approaches;
+
+        return new RouteResult(circuit.Id, RouteStatus.Found, network.Version)
+        {
+            Path = path,
+            AlongCarriers = alongCarriers + (total * options.LengthExtend),
+            Approaches = approaches,
+            BuiltInLength = circuit.BuiltInLength,
+            Connection = circuit.Connection,
+            Taps = taps,
+        };
+    }
+
+    /// <summary>The carriers of a walk after those already walked, a carrier repeated in place said once.</summary>
+    private static void Append(List<CarrierId> path, IReadOnlyList<CarrierId> walked)
+    {
+        foreach (var step in walked)
+        {
+            if (path.Count == 0 || path[path.Count - 1] != step)
+                path.Add(step);
+        }
+    }
+
+    /// <summary>A circuit that stopped at one of its ends, named the way a leg that stopped is named.</summary>
+    private static RouteResult Failed(RouteNetwork network, CircuitSnapshot circuit, RouteStatus status, Terminal at) =>
+        new(circuit.Id, status, network.Version)
+        {
+            BlockedAt = circuit.Number + " - " + at.Label,
+            BuiltInLength = circuit.BuiltInLength,
+        };
+
     /// <summary>One leg: from one terminal to the next, through the structure.</summary>
     /// <remarks>
     /// <para>
@@ -154,6 +288,42 @@ public static class Router
         if (exits.Count == 0)
             return (Blocked(RouteStatus.NoCarrierNear, to), null);
 
+        if (Walk(network, entries, exits, options) is not { } walked)
+            return (Blocked(RouteStatus.NoConnectivity, to), null);
+
+        return (walked.Result, new Tap(to, walked.Exit, exits[walked.Exit].At, exits[walked.Exit].Cost));
+    }
+
+    /// <summary>What one walk through the structure found.</summary>
+    /// <param name="Result">The carriers walked and what they measure, with the two approaches.</param>
+    /// <param name="Seed">The entry the walk started from.</param>
+    /// <param name="Exit">The exit it finished at.</param>
+    private sealed record Walked(RouteResult Result, CarrierId Seed, CarrierId Exit);
+
+    /// <summary>
+    /// The shortest walk from any of the entries to any of the exits, or null when none joins them.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <b>Entries and exits rather than two terminals</b>, because three questions ask it: a leg of a
+    /// circuit, from what a device reaches to what the next one reaches; the trunk of a circuit routed
+    /// without additional boxes, from one existing box to the next; and which existing box is nearest a
+    /// device, which is the same walk with every box as an entry - the search answers all of them at once
+    /// and names the one it started from.
+    /// </para>
+    /// <para>
+    /// A box given as an entry or an exit costs nothing to reach, and a box is a fitting, so a walk that
+    /// passes through it pays the fitting's length on the way in and again on the way out. A stated
+    /// approximation, the size of one box family; measuring what a box's body really adds is not
+    /// something the snapshot knows.
+    /// </para>
+    /// </remarks>
+    private static Walked? Walk(
+        RouteNetwork network,
+        Dictionary<CarrierId, (Point3 At, double Cost)> entries,
+        Dictionary<CarrierId, (Point3 At, double Cost)> exits,
+        RoutingOptions options)
+    {
         var best = new Dictionary<Port, double>();
         var came = new Dictionary<Port, Port>();
         var entered = new Dictionary<Port, Point3>();
@@ -237,7 +407,7 @@ public static class Router
         }
 
         if (finish >= double.MaxValue)
-            return (Blocked(RouteStatus.NoConnectivity, to), null);
+            return null;
 
         var carriers = new List<CarrierId>();
 
@@ -290,7 +460,7 @@ public static class Router
             Approaches = approach + exits[finishAt].Cost,
         };
 
-        return (result, new Tap(to, finishAt, exits[finishAt].At, exits[finishAt].Cost));
+        return new Walked(result, seed, finishAt);
     }
 
     /// <summary>The carriers a terminal can reach, where it meets each one, and what that costs.</summary>

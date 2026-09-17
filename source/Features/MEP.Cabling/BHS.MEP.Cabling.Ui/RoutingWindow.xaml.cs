@@ -66,6 +66,19 @@ public partial class RoutingWindow : Window
 
     private void OnCancel(object sender, RoutedEventArgs e) => _model.Cancel();
 
+    /// <summary>Runs the search again for the mode just chosen.</summary>
+    /// <remarks>
+    /// From here rather than from the property's setter, so that a close asked for during this run is
+    /// honoured the same way as during the first one.
+    /// </remarks>
+    private async void OnModeChanged(object sender, RoutedEventArgs e)
+    {
+        await _model.RecomputeAsync().ConfigureAwait(true);
+
+        if (_closeWhenIdle)
+            Close();
+    }
+
     /// <summary>
     /// Writes the run into the model, without closing the window first.
     /// </summary>

@@ -111,6 +111,13 @@ public sealed class RouteRun
     /// </remarks>
     public IReadOnlyList<PlannedBox> Boxes { get; init; } = Array.Empty<PlannedBox>();
 
+    /// <summary>Whether the circuits cut in boxes were routed without additional boxes.</summary>
+    /// <remarks>
+    /// Carried on the run, not read again at write time: the apply writes the mode the run was computed
+    /// with back into the project, and a mode read a second time is the one somebody changed in between.
+    /// </remarks>
+    public bool ExistingBoxesOnly { get; init; }
+
     /// <summary>How long the search itself took, without the reading that preceded it.</summary>
     /// <remarks>
     /// Apart from the read on purpose. Reading a model is dominated by how big the model is and how
@@ -161,7 +168,7 @@ public sealed class RouteRun
     {
         get
         {
-            foreach (var status in new[] { RouteStatus.NoCarrierNear, RouteStatus.NoConnectivity, RouteStatus.NothingToRoute })
+            foreach (var status in new[] { RouteStatus.NoCarrierNear, RouteStatus.NoConnectivity, RouteStatus.NoBoxReachable, RouteStatus.NothingToRoute })
             {
                 if (Count(status) > 0)
                     yield return status;

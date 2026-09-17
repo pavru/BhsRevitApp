@@ -134,7 +134,14 @@ public static class BoxPlanner
 
             foreach (var tap in route.Taps)
             {
-                var box = Nearest(boxes, tap.At, radius);
+                // A tap the router already gave a box goes to that box, however far it stands: routed
+                // without additional boxes, the router chose it along the structure, and a radius on a
+                // plan has no say in that. Everything else is decided by nearness, as it always was.
+                var box = tap.Box is { } served
+                    ? boxes.Find(one => one.Existing is { } existing && existing.Id == served)
+                    : null;
+
+                box ??= Nearest(boxes, tap.At, radius);
 
                 if (box is null)
                 {

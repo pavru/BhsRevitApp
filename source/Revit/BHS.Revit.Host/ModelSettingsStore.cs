@@ -157,6 +157,10 @@ internal sealed class ModelSettingsStore
     }
 
     /// <summary>Writes the document's own layer. On the API thread, inside one transaction.</summary>
+    /// <remarks>
+    /// Joins a transaction the caller already has open, and opens its own otherwise - see
+    /// <see cref="Set"/> for why the first became necessary.
+    /// </remarks>
     public void Write(Document document, IReadOnlyDictionary<string, string?> values)
     {
         if (document is null)
@@ -164,6 +168,51 @@ internal sealed class ModelSettingsStore
         if (values is null)
             throw new ArgumentNullException(nameof(values));
 
+        Put(document, values);
+    }
+
+    /// <summary>
+    /// Changes one key of the document's own layer and keeps every other. On the API thread.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <b>Because <see cref="Write"/> replaces the layer, and a feature that owns one key must not own
+    /// the rest.</b> A command that wrote only its own setting through <see cref="Write"/> would erase
+    /// every other project rule the model holds - silently, since an absent key reads as its default.
+    /// So the layer is read, the one key changed, and the whole written back.
+    /// </para>
+    /// <para>
+    /// <b>A layer that cannot be read is refused, not overwritten.</b> Reading it fails soft for the
+    /// reader, which then answers from the layers below; writing on top of that failure would replace
+    /// what the document holds with one key, and the rules nobody could read would be gone for good.
+    /// </para>
+    /// <para>
+    /// <b>It joins a transaction the caller has open.</b> Asked for by the cabling apply, which writes
+    /// the mode a run was computed with in the same transaction as the run: a setting kept while the
+    /// run it describes was rolled back would describe nothing. Revit refuses a second transaction
+    /// while one is open, so joining is the only way to be part of the caller's.
+    /// </para>
+    /// </remarks>
+    public void Set(Document document, string key, string? value)
+    {
+        if (document is null)
+            throw new ArgumentNullException(nameof(document));
+        if (string.IsNullOrEmpty(key))
+            throw new ArgumentException("A key is needed.", nameof(key));
+
+        if (!TryRead(document, out var values))
+        {
+            throw new InvalidOperationException(
+                $"The settings held in {Title(document)} could not be read, so '{key}' was not written: "
+                + "changing one key rewrites the rest, and what could not be read would be lost.");
+        }
+
+        values[key] = value;
+        Put(document, values);
+    }
+
+    private void Put(Document document, IEnumerable<KeyValuePair<string, string?>> values)
+    {
         var schema = Schema.Lookup(SchemaId) ?? Build();
         var entity = new Entity(schema);
 
@@ -191,13 +240,20 @@ internal sealed class ModelSettingsStore
         entity.Set<IDictionary<string, string>>(ValuesField, set);
         entity.Set<IList<string>>(ClearedField, cleared);
 
-        using var transaction = new Transaction(document, "BHS model settings");
-        transaction.Start();
+        if (document.IsModifiable)
+        {
+            (Find(document, schema) ?? DataStorage.Create(document)).SetEntity(entity);
+        }
+        else
+        {
+            using var transaction = new Transaction(document, "BHS model settings");
+            transaction.Start();
 
-        var storage = Find(document, schema) ?? DataStorage.Create(document);
-        storage.SetEntity(entity);
+            var storage = Find(document, schema) ?? DataStorage.Create(document);
+            storage.SetEntity(entity);
 
-        transaction.Commit();
+            transaction.Commit();
+        }
 
         _log.Info("wrote {0} value(s) and {1} cleared key(s) into {2}",
             set.Count, cleared.Count, Title(document));

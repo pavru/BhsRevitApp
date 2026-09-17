@@ -14,7 +14,7 @@ namespace BHS.MEP.Cabling.Routing.Probe;
 internal static class Program
 {
     private const double Tolerance = 0.1;
-    private const int Floor = 75;
+    private const int Floor = 85;
 
     private static int _run;
     private static int _failed;
@@ -36,6 +36,7 @@ internal static class Program
         ACableLeavesATrayWhereItLikesAndPaysForWhatItWalks();
         ACableCutInBoxesComesDownOnce();
         BoxesAreWhereTheTapsAreAndCountWhatTheyTake();
+        WithoutAdditionalBoxesEveryDeviceIsServedFromOneThatStands();
 
         Console.WriteLine();
 
@@ -609,6 +610,101 @@ internal static class Program
 
         Check("a circuit cut at its terminals asks for no boxes", terminals.Count == 0);
     }
+
+    /// <summary>
+    /// Routed without additional boxes: two boxes stand in the structure, three sockets hang under it.
+    /// <code>
+    ///   +====T0====X==========T1==========Y====T2====+     trays at z = 0, boxes X at 10, Y at 30
+    ///   P                  S1          S3        S2        all one foot below
+    ///   0                  18          24        38
+    /// </code>
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// The owner's rules of 2026-09-17, as arithmetic. S1 is 8 from X along the tray and 12 from Y, so
+    /// X; S3 is 14 from X and 6 from Y, so Y; S2 is 8 from Y. None of them is within a radius of any box,
+    /// so the ordinary mode would recommend three boxes and this one recommends none.
+    /// </para>
+    /// <para>
+    /// The trunk climbs once at the panel and runs P - X - Y, thirty feet; S2 and S3 share Y's one visit.
+    /// The spurs walk 8, 8 and 6 along the tray and come down a foot each. Along the structure 52, drops 4.
+    /// The boxes are fittings of no length, so passing through one costs nothing to reason about.
+    /// </para>
+    /// </remarks>
+    private static void WithoutAdditionalBoxesEveryDeviceIsServedFromOneThatStands()
+    {
+        Section("without additional boxes, every device is served from a box that stands");
+
+        var x = Box(50, 10);
+        var y = Box(51, 30);
+        var network = NetworkBuilder.Build(1, new[] { Tray(0, 0, 10), x, Tray(1, 10, 30), y, Tray(2, 30, 40) }, Options());
+        var standing = new[] { new ExistingBox(new CarrierId(50), P(10, 0, 0)), new ExistingBox(new CarrierId(51), P(30, 0, 0)) };
+
+        var circuit = new CircuitSnapshot(
+            new CarrierId(1), "P-1",
+            Terminal(0, 0, -1, "panel"),
+            new[] { Terminal(18, 0, -1, "S1"), Terminal(38, 0, -1, "S2"), Terminal(24, 0, -1, "S3") })
+        {
+            Connection = CircuitConnection.AtJunctionBox,
+        };
+
+        var routed = Router.Route(network, circuit, Options(), standing);
+
+        Check("a circuit whose every device reaches a box is routed", routed.Status == RouteStatus.Found);
+        Check("each device is served from the box nearest it along the structure, however far",
+            routed.Taps.Count == 3
+            && routed.Taps[0].Box == new CarrierId(50)
+            && routed.Taps[1].Box == new CarrierId(51)
+            && routed.Taps[2].Box == new CarrierId(51));
+        Check("each spur walks the tray from its box to above the device",
+            Near(routed.Taps[0].SpurAlongCarriers, 8) && Near(routed.Taps[1].SpurAlongCarriers, 8)
+            && Near(routed.Taps[2].SpurAlongCarriers, 6));
+        Check("and comes down a foot", routed.Taps.All(tap => Near(tap.Spur, 1)));
+        Check("along the structure: the trunk P - X - Y once, thirty, and the spurs, twenty-two",
+            Near(routed.AlongCarriers, 52));
+        Check("drops: the panel once and a foot per device", Near(routed.Approaches, 4));
+
+        var planned = BoxPlanner.Plan(new[] { routed }, standing, radius: 1.5);
+
+        Check("the planner recommends nothing, although no tap is within a radius of a box",
+            planned.Count == 2 && planned.All(box => !box.IsRecommendation));
+        Check("X takes the trunk in and out and one spur - three",
+            planned.SingleOrDefault(box => box.Existing?.Id == new CarrierId(50)) is { Entries: 3, Spurs: 1 });
+        Check("Y takes the trunk in and two spurs - three",
+            planned.SingleOrDefault(box => box.Existing?.Id == new CarrierId(51)) is { Entries: 3, Spurs: 2 });
+
+        var ordinary = Router.Route(network, circuit, Options());
+
+        Check("the ordinary mode on the same circuit gives no box to any tap", ordinary.Taps.All(tap => tap.Box is null));
+        Check("and its taps would ask for three boxes",
+            BoxPlanner.Plan(new[] { ordinary }, standing, radius: 1.5).Count(box => box.IsRecommendation) == 3);
+
+        var atTerminals = new CircuitSnapshot(circuit.Id, circuit.Number, circuit.Source, circuit.Devices);
+
+        Check("a circuit cut at its terminals ignores the boxes",
+            Router.Route(network, atTerminals, Options(), standing).Taps.All(tap => tap.Box is null));
+
+        // A socket under a tray of its own, which no box reaches through the structure.
+        var island = NetworkBuilder.Build(2, new[] { Tray(0, 0, 10), x, Tray(1, 10, 30), y, Tray(3, 100, 110) }, Options());
+        var stranded = new CircuitSnapshot(
+            new CarrierId(2), "P-2",
+            Terminal(0, 0, -1, "panel"),
+            new[] { Terminal(18, 0, -1, "S1"), Terminal(105, 0, -1, "S9") })
+        {
+            Connection = CircuitConnection.AtJunctionBox,
+        };
+
+        var unserved = Router.Route(island, stranded, Options(), standing);
+
+        Check("a device no box reaches fails the circuit, and says which", unserved.Status == RouteStatus.NoBoxReachable
+            && unserved.BlockedAt == "P-2 - S9");
+        Check("and so does a model with no boxes at all",
+            Router.Route(network, circuit, Options(), Array.Empty<ExistingBox>()).Status == RouteStatus.NoBoxReachable);
+    }
+
+    /// <summary>A box: a fitting of no length with one connector, where the trays either side of it meet.</summary>
+    private static CarrierNode Box(long id, double at) =>
+        new(new CarrierId(id), CarrierKind.Fitting, "tray", 0, 0.05, P(at, 0, 0), P(at, 0, 0), new[] { P(at, 0, 0) });
 
     /// <summary>A found route cut in boxes, with a tap on the tray above each x given.</summary>
     private static RouteResult InBoxes(long circuit, params double[] taps) =>

@@ -166,6 +166,21 @@ public sealed class CablingFeature : IFeatureModule
     public static readonly FailureDefinitionId IndicatorJoinedIntoNetwork =
         new(new Guid("7ee44da0-8299-470b-8d1a-71fd5e77bbd0"));
 
+    /// <summary>A circuit routed without additional boxes, with a device no existing box reaches.</summary>
+    /// <remarks>
+    /// <para>
+    /// <b>The owner's decision of 2026-09-17: the route is not found, and it is said.</b> The project
+    /// asked not to be given new boxes, so a device no box serves has no length this mode can honestly
+    /// give; this is how the designer learns which circuit needs a box they have not drawn.
+    /// </para>
+    /// <para>
+    /// Posted against the circuit, like the other two routing failures, and worded for any device of
+    /// it: the registered string is all Revit shows, and the device is on the result screen.
+    /// </para>
+    /// </remarks>
+    public static readonly FailureDefinitionId NoBoxReachable =
+        new(new Guid("1da845fd-1306-4c83-b52a-0a936bca4536"));
+
     private static readonly (FailureDefinitionId Id, string Message)[] Declared =
     {
         (NoCarrierNear,
@@ -177,6 +192,10 @@ public sealed class CablingFeature : IFeatureModule
             "This circuit's cable connection type could not be read, so the project default was used."),
         (JunctionBoxJoinedToNothing,
             "This element's type calls it a junction box, but it is not joined to any cable tray or conduit."),
+        (NoBoxReachable,
+            "This circuit is routed without additional junction boxes, and one of its devices is not reached "
+            + "through the cable trays and conduits by any junction box already in the model, "
+            + "so no route could be found for this circuit."),
         (IndicatorJoinedIntoNetwork,
             "This junction box indicator has been connected to other elements, but it still has the indicator type. "
             + "Cable routing reads every element of that type as an indicator and leaves it out of the network; "

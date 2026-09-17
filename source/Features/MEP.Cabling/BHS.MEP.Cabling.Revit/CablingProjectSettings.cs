@@ -28,6 +28,14 @@ public sealed class CablingProjectSettings
     /// <summary>The box radius, in millimetres.</summary>
     public const string BoxRadiusKey = "Model:Cabling:BoxRadiusMm";
 
+    /// <summary>Whether circuits cut in boxes are served only from boxes already in the model.</summary>
+    /// <remarks>
+    /// The owner's decision: a project rule, here with its neighbours rather than a parameter on the
+    /// circuit, because it is how the project is built and not a property of one circuit. Changed from
+    /// the routing window and written back when a run is applied.
+    /// </remarks>
+    public const string ExistingBoxesOnlyKey = "Model:Cabling:ExistingBoxesOnly";
+
     /// <summary>A hundred and fifty millimetres - the owner's value, 2026-09-13.</summary>
     /// <remarks>
     /// <b>It replaces a guess of mine, and the difference is the point.</b> Half a metre was written
@@ -38,11 +46,17 @@ public sealed class CablingProjectSettings
     /// </remarks>
     public const double DefaultBoxRadiusMm = 150;
 
-    private CablingProjectSettings(RecommendedBoxes boxes, CircuitConnection connection, double boxRadius, string unreadable)
+    private CablingProjectSettings(
+        RecommendedBoxes boxes,
+        CircuitConnection connection,
+        double boxRadius,
+        bool existingBoxesOnly,
+        string unreadable)
     {
         Boxes = boxes;
         DefaultConnection = connection;
         BoxRadius = boxRadius;
+        ExistingBoxesOnly = existingBoxesOnly;
         Unreadable = unreadable;
     }
 
@@ -54,6 +68,9 @@ public sealed class CablingProjectSettings
 
     /// <summary>The box radius, in internal feet.</summary>
     public double BoxRadius { get; }
+
+    /// <summary>Whether circuits cut in boxes are served only from boxes already in the model.</summary>
+    public bool ExistingBoxesOnly { get; }
 
     /// <summary>A setting that is present and cannot be read, or empty.</summary>
     /// <remarks>
@@ -81,7 +98,21 @@ public sealed class CablingProjectSettings
             model.Real(BoxRadiusKey, DefaultBoxRadiusMm),
             UnitTypeId.Millimeters);
 
-        return new CablingProjectSettings(RecommendedBoxes.Read(model), connection, radius, unreadable);
+        // Soft, like the connection above and unlike the reader's default: a mode nobody can read runs
+        // the ordinary mode and is named, rather than stopping the command over one project value.
+        var existingBoxesOnly = false;
+
+        try
+        {
+            existingBoxesOnly = model.Flag(ExistingBoxesOnlyKey, false);
+        }
+        catch (InvalidOperationException)
+        {
+            var said = ExistingBoxesOnlyKey + " = '" + model[ExistingBoxesOnlyKey] + "'";
+            unreadable = unreadable.Length == 0 ? said : unreadable + "; " + said;
+        }
+
+        return new CablingProjectSettings(RecommendedBoxes.Read(model), connection, radius, existingBoxesOnly, unreadable);
     }
 }
 
