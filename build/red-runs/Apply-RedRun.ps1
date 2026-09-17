@@ -17,7 +17,7 @@
     evidence. Each anchor must occur exactly once in its file or nothing is applied at all.
 
 .PARAMETER Run
-    Which run to apply, 1..10. Runs 5-8 are the second round; run 9 is the mode without additional boxes; run 10 is the length breakdown; runs 11-12 are the check for stale lengths. See readme.md for what each one proves.
+    Which run to apply, 1..10. Runs 5-8 are the second round; run 9 is the mode without additional boxes; run 10 is the length breakdown; runs 11-12 are the check for stale lengths; runs 13-15 are the third round, behind what a small breakage could not reach. See readme.md for what each one proves.
 
 .PARAMETER Revert
     Take the breakages back off with git restore, instead of applying them.
@@ -34,7 +34,7 @@
 #>
 [CmdletBinding()]
 param(
-    [Parameter(Mandatory = $true)][ValidateRange(1, 12)][int] $Run,
+    [Parameter(Mandatory = $true)][ValidateRange(1, 15)][int] $Run,
     [switch] $Revert,
     [switch] $List
 )

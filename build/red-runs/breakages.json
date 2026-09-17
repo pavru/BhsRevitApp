@@ -507,5 +507,111 @@
     "risk": "Needs three found routes and one circuit that does not route; the case stands down by name without them. Separate from run 11 because that breakage reddens this case first, on a count that says nothing about the connection.",
     "alsoReddens": [],
     "hides": []
+  },
+  {
+    "run": 13,
+    "case": "an apply whose transaction Revit rolls back is refused with the status Revit returned, counts no work and leaves no indicator of ours",
+    "file": "source/Features/MEP.Cabling/BHS.MEP.Cabling.Revit/CablingApply.cs",
+    "anchor": "            return NotKept(\n                committed,\n                binding,\n                \"Revit did not keep the changes: committing them returned {0}, not Committed, so nothing \"\n                + \"was placed, updated, removed or written.\",\n                \"Revit has not finished committing the changes: it returned Pending.\");",
+    "replacement": "            var refused = NotKept(\n                committed,\n                binding,\n                \"Revit did not keep the changes: committing them returned {0}, not Committed, so nothing \"\n                + \"was placed, updated, removed or written.\",\n                \"Revit has not finished committing the changes: it returned Pending.\");\n\n            refused.Placed = outcome.Placed;\n            refused.Updated = outcome.Updated;\n            refused.Removed = outcome.Removed;\n            refused.Warnings = outcome.Warnings;\n            return refused;",
+    "reddens": "indicators placed reported by an apply whose transaction Revit rolled back",
+    "rationale": "Round three, 2026-09-18, and the first of the five the second round named unreachable. The ten zeroed counts are zero because NotKept builds a fresh outcome, so no small edit touches them: the only way to a red is to rewrite the refusal path, which is what this does - it keeps the counts gathered inside the transaction Revit has just declined to keep. That is also the mistake somebody would make while adding a count, since every number above it is already in hand and throwing them away looks wasteful.",
+    "leftUnproven": "the counts after the first non-zero one, and the three assertions after the loop: no indicator added, none of ours standing, carrier references unchanged",
+    "risk": "Needs a run that places something and posts something, which the case already requires by its own skips.",
+    "alsoReddens": [],
+    "hides": []
+  },
+  {
+    "run": 13,
+    "case": "a junction box already in the model is used instead of an indicator, and gets only the circuits through it",
+    "file": "source/Features/MEP.Cabling/BHS.MEP.Cabling.Revit/CablingApply.cs",
+    "anchor": "        foreach (var box in run.Boxes)\n        {\n            if (box.Existing is not { } existing)\n                continue;\n\n            foreach (var circuit in box.Circuits)\n                Note(existing.Id, circuit);\n        }",
+    "replacement": "        foreach (var box in run.Boxes)\n        {\n            if (box.Existing is not { } existing)\n                continue;\n\n            foreach (var circuit in box.Circuits)\n                Note(existing.Id, circuit);\n\n            if (!existing.Id.IsLinked && host.GetElement(new ElementId(existing.Id.Value)) is { } real)\n            {\n                Set(real, CablingParameters.Recommendation, RecommendsJunctionBox);\n                Set(real, CablingParameters.TapCount, box.Entries);\n            }\n        }",
+    "reddens": "box <id>, already in the model, had its recommendation or cable entry count written",
+    "rationale": "The owner's rule that a real box gets the references and nothing else, broken the way it would be broken by somebody making the two writers alike: the box knows its entries, the indicator carries them, so why not write them there too. What the rule protects is that the element is somebody else's, and what we may add to it is a reading of the model rather than a proposal about it.",
+    "leftUnproven": "nothing behind it: this is the last assertion of the case",
+    "risk": "The recommendation and the entry count are bound to the indicator's category alone, so if the box a tap uses on this model is in another category Revit refuses both writes in silence and the case stays green. The case notes the categories of the used boxes beside the indicator's from 2026-09-18, so a green here is readable rather than a mystery.",
+    "alsoReddens": [],
+    "hides": []
+  },
+  {
+    "run": 13,
+    "case": "every box the plan recommends gets one indicator of ours at its place, and nothing else is placed",
+    "file": "source/Features/MEP.Cabling/BHS.MEP.Cabling.Revit/CablingApply.cs",
+    "anchor": "                if (level.Elevation <= z)",
+    "replacement": "                if (level.Elevation >= z)",
+    "reddens": "level of indicator <id>, against the nearest level at or below the box planned at <point> ft",
+    "rationale": "The apply's stated modelling rule - an indicator belongs to the storey it hangs over - inverted by one character, so every indicator goes to the highest level at or above instead. The point Revit keeps does not move, which is the whole reason nothing caught this until the level was asserted: every placement check in the suite reads where the instance stands and none read which storey it was put on.",
+    "leftUnproven": "the references on the carriers, the count of elements told their circuits, and the link clause, all of which stand after it",
+    "risk": "A model with one level, or with every recommended box under its lowest, answers the same both ways. The case notes the number of levels and how many distinct storeys the recommended boxes fall on, so a green says which it was.",
+    "alsoReddens": [],
+    "hides": []
+  },
+  {
+    "run": 14,
+    "case": "an unreadable connection value is posted as a warning against its circuit",
+    "file": "source/Features/MEP.Cabling/BHS.MEP.Cabling.Revit/CablingApply.cs",
+    "anchor": "        foreach (var id in snapshot.Circuits.UnreadableConnectionIds)\n            Post(host, outcome, CablingFeature.ConnectionUnreadable, id);",
+    "replacement": "        foreach (var id in snapshot.Circuits.UnreadableConnectionIds)\n            Post(host, outcome, CablingFeature.ConnectionUnreadable, id);\n\n        outcome.Warnings += snapshot.Circuits.UnreadableConnectionIds.Count;",
+    "reddens": "cabling warnings Revit processed, against warnings the apply reports posting",
+    "rationale": "The guard the second round could not redden with any of its twenty-nine breakages. It exists because this suite's handler subscribes inside the case, so another add-in's handler dismissing warnings first would leave it seeing fewer - and asserted later that reads as the apply posting nothing. The breakage comes at it from the other side, which is the side somebody would actually write: the conditions are counted where they are found as well as where they are posted, and the number on the screen stops describing what Revit was given.",
+    "leftUnproven": "the three assertions after it: one warning against the mistyped circuit, the total against the circuits the read named unreadable, and the severity and address of each",
+    "risk": "Needs one circuit the read calls unreadable, which the case writes itself.",
+    "alsoReddens": [],
+    "hides": []
+  },
+  {
+    "run": 14,
+    "case": "a box-role type whose instances carry a connector that refuses the question is read without throwing, and counted as joined to nothing",
+    "file": "source/Features/MEP.Cabling/BHS.MEP.Cabling.Revit/Connectors.cs",
+    "anchor": "    public static bool IsJoined(this Connector connector) =>\n        connector.IsPhysical() && connector.IsConnected;",
+    "replacement": "    public static bool IsJoined(this Connector connector) =>\n        connector is not null && connector.IsConnected;",
+    "reddens": "reading a model where a type carrying the box role has instances with connectors that refuse the question threw InvalidOperationException",
+    "rationale": "The owner's rule of 2026-09-16 that only a physical connector counts as joined, taken back out. Until the case of 2026-09-18 this changed nothing anywhere: every non-physical connector of the linked set is on a circuit, a panel or a duct system, and the rule is only ever asked of a fitting. The case puts an electrical-equipment family in front of it - the family the rule was written for - by calling its category a carrier, which the catalogue is the user's list precisely in order to allow.",
+    "leftUnproven": "the three assertions after it: that the element is counted as a box joined to nothing, that it is not called a real one, and that recognising it removed no carrier",
+    "risk": "Needs equipment that carries a connector refusing the question and joins nothing the catalogue collects; the case stands down by name without one.",
+    "alsoReddens": [],
+    "hides": []
+  },
+  {
+    "run": 14,
+    "case": "every box the plan recommends gets one indicator of ours at its place, and nothing else is placed",
+    "file": "source/Features/MEP.Cabling/BHS.MEP.Cabling.Revit/CablingApply.cs",
+    "anchor": "            if (Set(element, CablingParameters.CircuitRefs, CircuitRefs(pair.Value)))\n                outcome.CarriersMarked++;",
+    "replacement": "            if (Set(element, CablingParameters.CircuitRefs, CircuitRefs(pair.Value)))\n                outcome.CarriersMarked += pair.Value.Count;",
+    "reddens": "host elements the plan puts a circuit through, against carriers and boxes the apply reports telling their circuits",
+    "rationale": "The count read as references rather than as elements - the obvious reading of a name that says carriers and boxes told their circuits, and the number a screen would then report twice for a tray two circuits share. Nothing in the model changes, so only a count taken from the plan independently can see it.",
+    "leftUnproven": "the link clause, which stands after it",
+    "risk": "A model where every carrier on a found route carries exactly one circuit answers the same both ways. Six routes over shared trays make that unlikely on the linked set, and a green would say it happened.",
+    "alsoReddens": [],
+    "hides": []
+  },
+  {
+    "run": 15,
+    "case": "every circuit that reaches no carrier is posted as one warning",
+    "file": "source/Features/MEP.Cabling/BHS.MEP.Cabling.Revit/CablingApply.cs",
+    "anchor": "        foreach (var route in run.Blocked(RouteStatus.NoCarrierNear))\n            Post(host, outcome, CablingFeature.NoCarrierNear, route.Circuit.Value);",
+    "replacement": "        foreach (var route in run.Blocked(RouteStatus.NoCarrierNear))\n            Post(host, outcome, CablingFeature.NoCarrierNear, route.Circuit.Value);\n\n        if (run.Blocked(RouteStatus.NoCarrierNear).Any())\n        {\n            foreach (var carrier in snapshot.Carriers.Where(one => !one.Id.IsLinked).Take(1))\n                Post(host, outcome, CablingFeature.NoCarrierNear, carrier.Id.Value);\n        }",
+    "reddens": "NoCarrierNear warnings Revit processed, against circuits the run could not bring near a carrier",
+    "rationale": "The total the second round could not redden, because Revit collapses a second post of the same definition against the same element inside one transaction - so adding a warning to a circuit that already has one is invisible. This adds one against an element of another kind instead, a carrier, which is what somebody would write on the thought that a circuit reaching nothing is as much about the structure as about the circuit. Every circuit still has exactly one, so the per-circuit loop passes and only the total sees it.",
+    "leftUnproven": "the severity and address clause, which stands after the total",
+    "risk": "Needs a carrier in the host, which the model has by the hundred; the extra post also lands in every other apply that has a blocked route, where nothing asserts a total.",
+    "alsoReddens": [],
+    "hides": []
+  },
+  {
+    "run": 15,
+    "case": "a junction box joined to nothing is posted as a warning against it",
+    "file": "source/Features/MEP.Cabling/BHS.MEP.Cabling.Declaration/CablingFeature.cs",
+    "anchor": "            FailureDefinition.CreateFailureDefinition(id, FailureSeverity.Warning, message);",
+    "replacement": "            FailureDefinition.CreateFailureDefinition(\n                id,\n                id == JunctionBoxJoinedToNothing ? FailureSeverity.Error : FailureSeverity.Warning,\n                message);",
+    "reddens": "failures worse than a warning while applying, which the handler rolled back",
+    "rationale": "One definition raised to an error - the edit somebody makes on the thought that a box drawn beside the run instead of in it is worse than a warning. It is the only lever production has over severity, because severity belongs to the definition and not to the post. One definition and not all six, so that exactly one case sees it.",
+    "leftUnproven": "everything in the case, which never runs its own assertions: this red lands in the guard every applying case shares",
+    "risk": "Names the definition, so the anchor must stay the only place severity is chosen. The clause inside EachAgainstOneOf that asks the same thing of each processed failure stays unreachable - see the readme.",
+    "alsoReddens": [],
+    "hides": [
+      "a junction box joined to nothing is posted as a warning against it: every assertion of its own"
+    ]
   }
 ]

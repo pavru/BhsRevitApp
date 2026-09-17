@@ -735,6 +735,14 @@ public sealed class CablingApplyTests : IRevitTestSuite
         Note(context, "placement: indicators placed", outcome.Placed);
         Note(context, "placement: indicators found in place", outcome.Updated);
         Note(context, "placement: carriers told their circuits", outcome.CarriersMarked);
+
+        // What the level clause below is worth on this model. One level, or every recommended box under
+        // the lowest, and the nearest level at or below is the lowest for all of them - the clause holds
+        // and distinguishes nothing.
+        context.Note(
+            "placement: levels in the model, and distinct storeys the recommended boxes fall on",
+            Storeys(document).Count.ToString(CultureInfo.InvariantCulture) + ", "
+            + wanted.Select(box => Storey(document, Planned(box).Z)?.Id.Value).Distinct().Count().ToString(CultureInfo.InvariantCulture));
         Note(context, "placement: references that fell in a link", outcome.InLinks);
         context.Note(
             "placement: farthest planned box from its nearest instance of the indicator type, internal feet",
@@ -792,6 +800,21 @@ public sealed class CablingApplyTests : IRevitTestSuite
                 "indicator " + id,
                 box.Circuits.Select(one => one.Value).ToList(),
                 inOrder: true);
+
+            // Which storey it was put on, which no case asked until 2026-09-18 - every one of them read
+            // the point Revit kept and none read the level the instance was given. The apply states the
+            // rule where it places: the nearest level at or below. The cheap answer, the lowest level in
+            // the model, keeps the point exactly and puts every indicator in a tower on the ground floor,
+            // so nothing but this would say it had happened.
+            var storey = Storey(document, Planned(box).Z);
+
+            if (storey is not null && indicator.LevelId != ElementId.InvalidElementId)
+            {
+                Expect.Same(
+                    storey.Id.Value,
+                    indicator.LevelId.Value,
+                    "level of indicator " + id + ", against the nearest level at or below the box planned at " + Describe(Planned(box)) + " ft");
+            }
         }
 
         foreach (var instance in added)
@@ -821,6 +844,17 @@ public sealed class CablingApplyTests : IRevitTestSuite
                 through[id],
                 inOrder: true);
         }
+
+        // The count beside the values, and it is not the same question: the loop above asks what each
+        // element the plan names says, and this asks whether the apply told exactly those and no
+        // others. Taken from the plan rather than from the way the apply gathers it - ThroughEachElement
+        // walks the routes and the used boxes, which is where BHS_Cbl_CircuitRefs comes from for both
+        // of its writers, while the apply counts one pass over one dictionary. A count that dropped the
+        // boxes would agree with the plan on a model where no tap reaches one, and part on every other.
+        Expect.Same(
+            through.Count,
+            outcome.CarriersMarked,
+            "host elements the plan puts a circuit through, against carriers and boxes the apply reports telling their circuits");
 
         // Presence only, not the count: what InLinks counts is an open question for the owner. A
         // reference falls in a link from a found route's path or from a used box standing in one.
@@ -1024,6 +1058,16 @@ public sealed class CablingApplyTests : IRevitTestSuite
 
         Note(context, "existing box: used boxes in a link", used.Count - used.Count(box => !box.Existing!.Id.IsLinked));
         Note(context, "existing box: used boxes in the host already naming a circuit", refsBefore.Count(pair => pair.Value.Length > 0));
+
+        // What the last assertion of this case is worth, and it depends on the model: the recommendation
+        // and the cable entry count are bound to the indicator's category and to nothing else, so an
+        // apply that wrote them onto a box of another category would be refused in silence and the
+        // assertion would pass about nothing. Noted rather than asserted - which category the boxes of a
+        // model are in is the model's to say.
+        context.Note(
+            "existing box: categories of the used boxes in the host, and the indicator's",
+            string.Join(", ", inHost.Select(id => document.GetElement(new ElementId(id))?.Category?.Id.Value ?? 0).Distinct())
+            + " / " + (long)CategoryOf(symbol));
 
         var outcome = ApplyWatched(context, watch, "existing box", plan.Run, plan.Snapshot, project, catalogue);
 
@@ -2894,6 +2938,42 @@ public sealed class CablingApplyTests : IRevitTestSuite
     }
 
     /// <summary>The host carriers the found routes of a run walk, each once.</summary>
+    /// <summary>Every level of the document, lowest first.</summary>
+    private static List<Level> Storeys(Document document) =>
+        new FilteredElementCollector(document)
+            .OfClass(typeof(Level))
+            .Cast<Level>()
+            .OrderBy(one => one.Elevation)
+            .ToList();
+
+    /// <summary>
+    /// The level the apply's stated rule puts something at this height on: the nearest one at or below it.
+    /// </summary>
+    /// <remarks>
+    /// <b>The suite's own copy of the rule, as <see cref="ReaderLadder"/> is of the reader's ladder.</b>
+    /// The rule is a modelling assumption the apply states where it places - a box hanging under a slab
+    /// belongs to the storey it is over - and a copy agrees with the production code about the rule and
+    /// not about the code, which is the only reason the comparison is worth anything. What a copy cannot
+    /// catch is the rule being the wrong rule, and that one is the owner's.
+    /// </remarks>
+    private static Level? Storey(Document document, double z)
+    {
+        var levels = Storeys(document);
+
+        if (levels.Count == 0)
+            return null;
+
+        var chosen = levels[0];
+
+        foreach (var level in levels)
+        {
+            if (level.Elevation <= z)
+                chosen = level;
+        }
+
+        return chosen;
+    }
+
     private static List<long> HostPath(RouteRun run) =>
         run.Results
             .Where(route => route.Status == RouteStatus.Found)
