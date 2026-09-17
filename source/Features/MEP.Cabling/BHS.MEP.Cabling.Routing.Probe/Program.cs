@@ -14,7 +14,7 @@ namespace BHS.MEP.Cabling.Routing.Probe;
 internal static class Program
 {
     private const double Tolerance = 0.1;
-    private const int Floor = 85;
+    private const int Floor = 95;
 
     private static int _run;
     private static int _failed;
@@ -37,6 +37,7 @@ internal static class Program
         ACableCutInBoxesComesDownOnce();
         BoxesAreWhereTheTapsAreAndCountWhatTheyTake();
         WithoutAdditionalBoxesEveryDeviceIsServedFromOneThatStands();
+        TheLengthIsToldByWhereItIsLaid();
 
         Console.WriteLine();
 
@@ -663,6 +664,8 @@ internal static class Program
         Check("along the structure: the trunk P - X - Y once, thirty, and the spurs, twenty-two",
             Near(routed.AlongCarriers, 52));
         Check("drops: the panel once and a foot per device", Near(routed.Approaches, 4));
+        Check("trunk and spurs alike are counted under the class they were walked along",
+            Near(routed.AlongClass("tray"), 52) && routed.AlongByClass.Count == 1);
 
         var planned = BoxPlanner.Plan(new[] { routed }, standing, radius: 1.5);
 
@@ -700,6 +703,72 @@ internal static class Program
             && unserved.BlockedAt == "P-2 - S9");
         Check("and so does a model with no boxes at all",
             Router.Route(network, circuit, Options(), Array.Empty<ExistingBox>()).Status == RouteStatus.NoBoxReachable);
+    }
+
+    /// <summary>
+    /// A conduit into a tray into trunking the project named itself, a panel under the conduit's end and a
+    /// socket under the trunking.
+    /// <code>
+    ///   P                                             S
+    ///   |                                             |
+    ///   +==[conduit]==+---[tray]---+~~[trunking]~~+~~~+
+    ///   0            10           30             38  40
+    /// </code>
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// The cable walks the conduit whole, ten, the tray, twenty, and the trunking to above the socket,
+    /// eight: thirty-eight along. It comes down a foot at each end: two. With a tenth for slack the slack
+    /// is 4 of the 40, and the total 44.
+    /// </para>
+    /// <para>
+    /// Until 2026-09-17 the slack was added into the length along carriers, 42 here, which no breakdown
+    /// by carrier could add up to.
+    /// </para>
+    /// </remarks>
+    private static void TheLengthIsToldByWhereItIsLaid()
+    {
+        Section("the length, told by where it is laid");
+
+        var carriers = new[]
+        {
+            new CarrierNode(new CarrierId(1), CarrierKind.Segment, "conduit", 10, 0.05, P(0, 0, 0), P(10, 0, 0)),
+            Tray(2, 10, 30),
+            new CarrierNode(new CarrierId(3), CarrierKind.Segment, "trunking", 10, 0.05, P(30, 0, 0), P(40, 0, 0)),
+        };
+
+        var options = new RoutingOptions
+        {
+            JoinTolerance = Tolerance,
+            MaxApproach = 6,
+            AxisAlignedApproach = true,
+            LengthExtend = 0.1,
+        };
+
+        var network = NetworkBuilder.Build(1, carriers, options);
+        var circuit = new CircuitSnapshot(
+            new CarrierId(100), "P-1",
+            Terminal(0, 0, -1, "panel"),
+            new[] { Terminal(38, 0, -1, "socket") });
+
+        var routed = Router.Route(network, circuit, options);
+
+        Check("the route is found", routed.Status == RouteStatus.Found);
+        Check("the conduit is walked whole", Near(routed.AlongClass("conduit"), 10));
+        Check("the tray is walked whole", Near(routed.AlongClass("tray"), 20));
+        Check("the trunking is walked to above the socket, under the class the project named",
+            Near(routed.AlongClass("trunking"), 8));
+        Check("a class asked for regardless of case is the same class", Near(routed.AlongClass("CONDUIT"), 10));
+        Check("the parts add up to the length along carriers, and that length holds no slack",
+            Near(routed.AlongByClass.Values.Sum(), routed.AlongCarriers) && Near(routed.AlongCarriers, 38));
+        Check("the slack is a tenth of what is laid, drops included, and stands apart",
+            Near(routed.Approaches, 2) && Near(routed.Slack, 4));
+        Check("and the total is along, drops and slack", Near(routed.TotalLength, 44));
+
+        var none = Router.Route(network, circuit, Options());
+
+        Check("with no slack asked for there is none, and a class the route never walked reads zero",
+            Near(none.Slack, 0) && Near(none.TotalLength, 40) && Near(none.AlongClass("busway"), 0));
     }
 
     /// <summary>A box: a fitting of no length with one connector, where the trays either side of it meet.</summary>

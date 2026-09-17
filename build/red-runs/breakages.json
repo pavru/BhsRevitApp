@@ -453,5 +453,31 @@
     "risk": "None: the writer records IsModifiable at the moment it is called, and after a commit no transaction is open.",
     "alsoReddens": [],
     "hides": []
+  },
+  {
+    "run": 10,
+    "case": "every circuit that routed is told how its length is laid - in trays, in conduits, in no carrier, in other carriers - and its slack, and the five add up to its length",
+    "file": "source/Features/MEP.Cabling/BHS.MEP.Cabling.Revit/CablingApply.cs",
+    "anchor": "            written |= Set(circuit, CablingParameters.LengthInTray, route.AlongClass(CarrierCatalogue.Tray));",
+    "replacement": "            written |= Set(circuit, CablingParameters.LengthInTray, route.AlongClass(CarrierCatalogue.Conduit));",
+    "reddens": "the length in trays stored against what the route walked",
+    "rationale": "Length breakdown, 2026-09-17. The tray parameter is given the conduit length: every part still adds to a sum, the total is untouched, and the count before the loop passes.",
+    "leftUnproven": "the four parts after the length in trays, and the sum",
+    "risk": "Needs a found route whose length in trays differs from its length in conduits - noted by the case as routes with a length in trays.",
+    "alsoReddens": [],
+    "hides": []
+  },
+  {
+    "run": 10,
+    "case": "every circuit that routed is told its length, the connection it was routed with, and the carriers it was measured along",
+    "file": "source/Features/MEP.Cabling/BHS.MEP.Cabling.Revit/CablingApply.cs",
+    "anchor": "            if (route.Status != RouteStatus.Found)\n                continue;\n\n            if (host.GetElement(new ElementId(route.Circuit.Value)) is not { } circuit)\n                continue;\n",
+    "replacement": "            if (host.GetElement(new ElementId(route.Circuit.Value)) is not { } circuit)\n                continue;\n\n            Set(circuit, CablingParameters.LengthSlack, route.Slack);\n\n            if (route.Status != RouteStatus.Found)\n                continue;\n",
+    "reddens": "circuits that did not route whose stored length, connection or carriers changed across the apply",
+    "rationale": "Length breakdown, 2026-09-17. A circuit that did not route is given a slack of zero; every found route is written as before, so the per-route assertions pass and the red lands on the circuits left untouched - which now read the five parts as well.",
+    "leftUnproven": "",
+    "risk": "Needs a circuit that did not route and carries no slack yet: the linked set has seven.",
+    "alsoReddens": [],
+    "hides": []
   }
 ]
