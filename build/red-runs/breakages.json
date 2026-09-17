@@ -486,12 +486,12 @@
     "file": "source/Features/MEP.Cabling/BHS.MEP.Cabling.Revit/StoredRoutes.cs",
     "anchor": "        element.get_Parameter(CablingParameters.CableLength) is { HasValue: true } found\n            ? found.AsDouble()\n            : null;",
     "replacement": "        element.get_Parameter(CablingParameters.CableLength) is { HasValue: false } found\n            ? found.AsDouble()\n            : null;",
-    "reddens": "routes found, against circuits whose stored answer still holds",
-    "rationale": "Stale lengths, 2026-09-18. The stored length is read as absent, so every circuit reads as never written: nothing is reported stale - the first assertion still passes - and the red lands on the count of circuits whose answer still holds.",
-    "leftUnproven": "the two assertions after it: circuits that routed and carry nothing, and circuits that did not route and were read as carrying something",
+    "reddens": "circuits reported stale right after their own answer was stored: seven circuits reported NoRouteNow",
+    "rationale": "Stale lengths, 2026-09-18. The prediction written here before the run was wrong, and the run corrected it: inverting the pattern does not read every stored length as absent, it swaps the two answers. A parameter that carries a length reads as absent, and a parameter that is bound but unset reads as zero - so the circuits that never routed read as carrying a stored answer, and the red lands on the case's first assertion rather than on the count of circuits whose answer still holds. Which is the whole point of running a breakage instead of reasoning about it: the case is red, and it is red for a reason nobody had written down.",
+    "leftUnproven": "the three assertions after it - routes found against circuits whose answer still holds, circuits that routed and carry nothing, and circuits that did not route and were read as carrying something",
     "risk": "Needs one found route on the model the sweep opens; the case stands down by name without one.",
     "alsoReddens": [
-      "a length, a stamp or a connection that no longer matches is reported, and so is one stored where nothing routes"
+      "a length, a stamp or a connection that no longer matches is reported, and so is one stored where nothing routes (expected 4, got 9: the five circuits that do not route are read as carrying a length of zero)"
     ],
     "hides": []
   },
