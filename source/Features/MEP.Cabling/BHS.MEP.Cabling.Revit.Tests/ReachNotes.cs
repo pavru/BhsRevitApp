@@ -99,6 +99,7 @@ internal static class ReachNotes
         "found " + Count(results, RouteStatus.Found)
         + ", no carrier near " + Count(results, RouteStatus.NoCarrierNear)
         + ", no connectivity " + Count(results, RouteStatus.NoConnectivity)
+        + ", no box reachable " + Count(results, RouteStatus.NoBoxReachable)
         + ", nothing to route " + Count(results, RouteStatus.NothingToRoute);
 
     /// <summary>

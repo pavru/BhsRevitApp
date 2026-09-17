@@ -39,6 +39,7 @@
             <RowDefinition Height="Auto" />
             <RowDefinition Height="Auto" />
             <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
         </Grid.RowDefinitions>
 
         <!-- Never a bare bar: a bar says something is happening and nothing about what, and the
@@ -129,7 +130,17 @@
                    TextWrapping="Wrap"
                    Visibility="{Binding HasApplySummary, Converter={StaticResource Shown}}" />
 
-        <StackPanel Grid.Row="9"
+        <!-- A project rule, changed beside the boxes it changes; written into the project on Apply.
+             Changing it runs the search again, so the screen never shows one mode's boxes under the
+             other mode's check box. -->
+        <CheckBox Grid.Row="9"
+                  Margin="0,14,0,0"
+                  Content="Without additional junction boxes: serve every device from a box already in the model"
+                  IsChecked="{Binding ExistingBoxesOnly, Mode=TwoWay}"
+                  IsEnabled="{Binding CanChangeMode}"
+                  Click="OnModeChanged" />
+
+        <StackPanel Grid.Row="10"
                     Orientation="Horizontal"
                     HorizontalAlignment="Right"
                     Margin="0,20,0,0">

@@ -72,4 +72,14 @@ public interface IModelSettingsSource
     /// into the very shape the merge already understands.
     /// </remarks>
     void Write(Document document, IReadOnlyDictionary<string, string?> values);
+
+    /// <summary>
+    /// Changes one key of the document's own layer, keeping every other. On the API thread.
+    /// </summary>
+    /// <remarks>
+    /// <see cref="Write"/> replaces the whole layer; this is what a feature that owns one setting calls.
+    /// A null value clears the key, as in <see cref="Write"/>. Joins a transaction the caller has open
+    /// and opens its own otherwise; refuses, rather than overwrites, a layer that could not be read.
+    /// </remarks>
+    void Set(Document document, string key, string? value);
 }

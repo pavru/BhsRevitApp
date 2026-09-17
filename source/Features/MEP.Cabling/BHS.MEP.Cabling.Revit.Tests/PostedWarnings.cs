@@ -22,6 +22,7 @@ internal sealed class ProcessedFailure
         CablingFeature.ConnectionUnreadable.Guid,
         CablingFeature.JunctionBoxJoinedToNothing.Guid,
         CablingFeature.IndicatorJoinedIntoNetwork.Guid,
+        CablingFeature.NoBoxReachable.Guid,
     };
 
     public ProcessedFailure(string transaction, Guid definition, FailureSeverity severity, IReadOnlyList<long> elements)
@@ -42,7 +43,7 @@ internal sealed class ProcessedFailure
     /// <summary>The failing elements, by id.</summary>
     public IReadOnlyList<long> Elements { get; }
 
-    /// <summary>Whether it is one of the five the cabling feature declares.</summary>
+    /// <summary>Whether it is one of the six the cabling feature declares.</summary>
     public bool IsCabling => Array.IndexOf(Cabling, Definition) >= 0;
 
     public bool Is(FailureDefinitionId id) => Definition == id.Guid;

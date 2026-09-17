@@ -745,6 +745,27 @@ internal sealed class ProbeChannel : RevitSideChannel.RevitSideChannelBase
             answer["model:userScoped"] = after["Probe:Marker"] ?? "(unset)";
             answer["model:clearedAfter"] = after[cleared] ?? "(unset)";
 
+            // One key changed on its own, inside a transaction the caller holds open - the way a
+            // feature that owns one setting writes it alongside its own work. Everything written above
+            // has to survive it: Write replaces the layer, Set must not.
+            const string alone = "Model:Probe:Alone";
+
+            using (var transaction = new Autodesk.Revit.DB.Transaction(document, "BHS probe: one key"))
+            {
+                transaction.Start();
+                _services.ModelSettings.Set(document, alone, "set-inside-a-transaction");
+                answer["model:setCommitted"] = transaction.Commit().ToString();
+            }
+
+            var set = _services.ModelSettings.For(document);
+            answer["model:setAlone"] = set[alone] ?? "(unset)";
+            answer["model:keptBesideIt"] = set[key] ?? "(unset)";
+            answer["model:clearedBesideIt"] = set[cleared] ?? "(unset)";
+
+            // And with no transaction open, where it opens its own.
+            _services.ModelSettings.Set(document, alone, null);
+            answer["model:clearedAlone"] = _services.ModelSettings.For(document)[alone] ?? "(unset)";
+
             group.RollBack();
             answer["model:clean"] = document.IsModified ? "False" : "True";
 

@@ -50,9 +50,10 @@ public enum RoutingPhase
 /// </remarks>
 public sealed class RoutingViewModel : INotifyPropertyChanged
 {
-    private readonly Func<IProgress<RoutingProgress>, CancellationToken, Task<RouteRun>> _compute;
+    private readonly Func<bool, IProgress<RoutingProgress>, CancellationToken, Task<RouteRun>> _compute;
     private readonly Func<double, string> _length;
-    private readonly CancellationTokenSource _cancellation = new();
+    private CancellationTokenSource _cancellation = new();
+    private bool _existingBoxesOnly;
 
     private RoutingPhase _phase = RoutingPhase.Waiting;
     private string _what = string.Empty;
@@ -64,21 +65,27 @@ public sealed class RoutingViewModel : INotifyPropertyChanged
     private ApplyReport? _applied;
     private bool _applying;
 
-    /// <param name="compute">Reads the model and searches it, reporting progress as it goes.</param>
+    /// <param name="compute">
+    /// Reads the model and searches it, reporting progress as it goes; told whether the circuits cut in
+    /// boxes are routed without additional boxes.
+    /// </param>
     /// <param name="length">Turns internal feet into what this document would show for the same value.</param>
     /// <param name="apply">
     /// Writes the finished run into the model. Absent means this window only reports - which is what
     /// a preview, a playground or a host with nothing to write to gets, and the button then never
     /// appears rather than appearing and refusing.
     /// </param>
+    /// <param name="existingBoxesOnly">What the project says today, which is where the check box starts.</param>
     public RoutingViewModel(
-        Func<IProgress<RoutingProgress>, CancellationToken, Task<RouteRun>> compute,
+        Func<bool, IProgress<RoutingProgress>, CancellationToken, Task<RouteRun>> compute,
         Func<double, string> length,
-        Func<CancellationToken, Task<ApplyReport>>? apply = null)
+        Func<CancellationToken, Task<ApplyReport>>? apply = null,
+        bool existingBoxesOnly = false)
     {
         _compute = compute;
         _length = length;
         _apply = apply;
+        _existingBoxesOnly = existingBoxesOnly;
     }
 
     public event PropertyChangedEventHandler? PropertyChanged;
@@ -123,6 +130,27 @@ public sealed class RoutingViewModel : INotifyPropertyChanged
     public bool IsIndeterminate => IsBusy && Total <= 0;
 
     public bool IsBusy => Phase == RoutingPhase.Computing;
+
+    /// <summary>Whether the circuits cut in boxes are served only from boxes already in the model.</summary>
+    /// <remarks>
+    /// <para>
+    /// <b>The owner's decision of 2026-09-17: a check box in this window, starting where the project
+    /// stands, and written into the project when the run is applied.</b> A project rule, so it is not
+    /// kept for the person - but it is changed where its effect is seen, beside the boxes it changes.
+    /// </para>
+    /// <para>
+    /// Changing it asks for a run of its own (<see cref="RecomputeAsync"/>): a screen showing the boxes
+    /// of one mode under a check box saying the other would be two answers on one screen.
+    /// </para>
+    /// </remarks>
+    public bool ExistingBoxesOnly
+    {
+        get => _existingBoxesOnly;
+        set => Set(ref _existingBoxesOnly, value);
+    }
+
+    /// <summary>The mode can be changed only while nothing is running or being written.</summary>
+    public bool CanChangeMode => !IsBusy && !_applying;
 
     public bool CanCancel => IsBusy;
 
@@ -331,6 +359,13 @@ public sealed class RoutingViewModel : INotifyPropertyChanged
 
             var recommended = run.Boxes.Count(box => box.IsRecommendation);
             var existing = run.Boxes.Count - recommended;
+
+            if (run.ExistingBoxesOnly)
+            {
+                return $"{circuits} circuit(s) cut in junction boxes, served from existing boxes only: "
+                       + $"{existing} box(es) used, {run.Boxes.Sum(box => box.Spurs)} device(s) served.";
+            }
+
             var line = $"{circuits} circuit(s) cut in junction boxes: {recommended} box(es) to recommend";
 
             if (existing > 0)
@@ -410,7 +445,7 @@ public sealed class RoutingViewModel : INotifyPropertyChanged
 
         try
         {
-            Run = await _compute(progress, _cancellation.Token).ConfigureAwait(true);
+            Run = await _compute(ExistingBoxesOnly, progress, _cancellation.Token).ConfigureAwait(true);
             Phase = RoutingPhase.Ready;
             What = Run.Found == Run.Results.Count && Run.Found > 0
                 ? "Every circuit was routed"
@@ -477,6 +512,34 @@ public sealed class RoutingViewModel : INotifyPropertyChanged
         }
     }
 
+    /// <summary>Throws the finished run away and computes another, for a mode that was just changed.</summary>
+    /// <remarks>
+    /// <b>What was applied goes with it, and the button comes back.</b> Apply is offered once per run,
+    /// and this is a different run: its boxes are not the ones written, so offering nothing would leave
+    /// the new answer unwritable without reopening the window.
+    /// </remarks>
+    public async Task RecomputeAsync()
+    {
+        if (IsBusy || _applying)
+            return;
+
+        // A stopped run leaves its token cancelled, and a new run on it would stop before it began.
+        if (_cancellation.IsCancellationRequested)
+        {
+            _cancellation.Dispose();
+            _cancellation = new CancellationTokenSource();
+        }
+
+        Run = null;
+        Applied = null;
+        Failure = string.Empty;
+        Done = 0;
+        Total = 0;
+        Phase = RoutingPhase.Waiting;
+
+        await ComputeAsync().ConfigureAwait(true);
+    }
+
     public void Cancel() => _cancellation.Cancel();
 
     /// <summary>How many circuits are named under one cause before the rest are counted.</summary>
@@ -487,6 +550,7 @@ public sealed class RoutingViewModel : INotifyPropertyChanged
         RouteStatus.NoCarrierNear => "No tray or conduit within reach",
         RouteStatus.NoConnectivity => "Both ends reachable, but nothing joins them",
         RouteStatus.NothingToRoute => "Nothing to route",
+        RouteStatus.NoBoxReachable => "No existing junction box reaches a device through the structure",
         _ => status.ToString(),
     };
 
@@ -503,6 +567,7 @@ public sealed class RoutingViewModel : INotifyPropertyChanged
         switch (name)
         {
             case nameof(Phase):
+                Raise(nameof(CanChangeMode));
                 Raise(nameof(IsBusy));
                 Raise(nameof(CanCancel));
                 Raise(nameof(IsIndeterminate));
@@ -513,6 +578,10 @@ public sealed class RoutingViewModel : INotifyPropertyChanged
                 Raise(nameof(ApplySummary));
                 Raise(nameof(HasApplySummary));
                 Raise(nameof(CanApply));
+                break;
+
+            case nameof(IsApplying):
+                Raise(nameof(CanChangeMode));
                 break;
 
             case nameof(Total):

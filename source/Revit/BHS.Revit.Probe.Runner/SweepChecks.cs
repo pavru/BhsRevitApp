@@ -1759,6 +1759,19 @@ internal static class SweepChecks
         report.Check("and a project can clear what the vendor's own file set",
             answer.Values.GetValueOrDefault("model:clearedAfter") == "(unset)");
 
+        // Set changes one key and keeps the rest; Write replaces the layer. A feature that owns one
+        // setting and wrote it through Write would erase every other project rule the model holds.
+        report.Check("one key is set inside a transaction the caller holds open",
+            answer.Values.GetValueOrDefault("model:setAlone") == "set-inside-a-transaction"
+            && answer.Values.GetValueOrDefault("model:setCommitted") == "Committed");
+
+        report.Check("and setting it keeps what the layer already held, a cleared key included",
+            answer.Values.GetValueOrDefault("model:keptBesideIt") == "written-by-the-probe"
+            && answer.Values.GetValueOrDefault("model:clearedBesideIt") == "(unset)");
+
+        report.Check("one key is cleared with no transaction open",
+            answer.Values.GetValueOrDefault("model:clearedAlone") == "(unset)");
+
         // The sweep must leave nothing behind to be asked about. A written document is a modified
         // one, and Revit asks whether to save it on the way out - which nothing outside the process
         // can answer.

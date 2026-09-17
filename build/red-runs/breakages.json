@@ -414,5 +414,44 @@
     "risk": "Needs a circuit that did not route: seven on the linked set on 2026.",
     "alsoReddens": [],
     "hides": []
+  },
+  {
+    "run": 9,
+    "case": "routed without additional boxes, every device is served from a junction box already in the model, and no indicator is placed",
+    "file": "source/Features/MEP.Cabling/BHS.MEP.Cabling.Routing/BoxPlanner.cs",
+    "anchor": "                var box = tap.Box is { } served",
+    "replacement": "                var box = tap.Box is { } served && false",
+    "reddens": "boxes the plan recommends, routed without additional boxes: expected 0",
+    "rationale": "Mode, 2026-09-17. The planner stops honouring the box the router chose and falls back to the radius; every tap assertion before it still passes, because the router is untouched.",
+    "leftUnproven": "",
+    "risk": "Needs a found route whose tap is farther than the box radius from its box - noted by the case as taps farther than the radius. With none, the planner finds the same boxes by radius and the case stays green.",
+    "alsoReddens": [],
+    "hides": []
+  },
+  {
+    "run": 9,
+    "case": "routed without additional boxes, every circuit with a device no existing box reaches is posted as one warning",
+    "file": "source/Features/MEP.Cabling/BHS.MEP.Cabling.Revit/CablingApply.cs",
+    "anchor": "        foreach (var route in run.Blocked(RouteStatus.NoBoxReachable))\n            Post(host, outcome, CablingFeature.NoBoxReachable, route.Circuit.Value);\n",
+    "replacement": "",
+    "reddens": "NoBoxReachable warnings Revit processed against circuit <id>, a device of which no existing box reaches: expected 1, got 0",
+    "rationale": "Mode, 2026-09-17. The apply posts nothing, so the count it reports and the count Revit processed still agree at zero; the red lands on one per circuit.",
+    "leftUnproven": "",
+    "risk": "Needs a circuit whose ends reach the structure: every found route on the linked set is one.",
+    "alsoReddens": [],
+    "hides": []
+  },
+  {
+    "run": 9,
+    "case": "applying writes the mode a run was computed with into the project inside its own transaction, and only when the project said otherwise",
+    "file": "source/Features/MEP.Cabling/BHS.MEP.Cabling.Revit/CablingApply.cs",
+    "anchor": "        // Inside the run's own transaction, the owner's decision of 2026-09-17: a mode kept while the run\n        // it describes was rolled back would describe nothing. Compared with what the project said when\n        // this was called, so a model that never chose keeps inheriting instead of being pinned.\n        if (setProjectSetting is not null && run.ExistingBoxesOnly != project.ExistingBoxesOnly)\n        {\n            setProjectSetting(\n                CablingProjectSettings.ExistingBoxesOnlyKey,\n                run.ExistingBoxesOnly ? \"true\" : \"false\");\n\n            outcome.ModeWritten = run.ExistingBoxesOnly;\n        }\n\n        var committed = transaction.Commit();",
+    "replacement": "        var committed = transaction.Commit();\n\n        // Inside the run's own transaction, the owner's decision of 2026-09-17: a mode kept while the run\n        // it describes was rolled back would describe nothing. Compared with what the project said when\n        // this was called, so a model that never chose keeps inheriting instead of being pinned.\n        if (setProjectSetting is not null && run.ExistingBoxesOnly != project.ExistingBoxesOnly)\n        {\n            setProjectSetting(\n                CablingProjectSettings.ExistingBoxesOnlyKey,\n                run.ExistingBoxesOnly ? \"true\" : \"false\");\n\n            outcome.ModeWritten = run.ExistingBoxesOnly;\n        }",
+    "reddens": "the apply wrote the mode with no transaction open, so it would be kept even when the run's transaction is not",
+    "rationale": "Mode, 2026-09-17. The same write with the same key and value, moved after the commit: the count and the value assertions before it pass.",
+    "leftUnproven": "",
+    "risk": "None: the writer records IsModifiable at the moment it is called, and after a commit no transaction is open.",
+    "alsoReddens": [],
+    "hides": []
   }
 ]

@@ -127,6 +127,13 @@ public sealed class ApplyOutcome
     /// was put in front of whoever pressed Apply, not entries anybody will find in the model later.
     /// </remarks>
     public int Warnings { get; internal set; }
+
+    /// <summary>The mode written into the project - true for without additional boxes - or null when none was.</summary>
+    /// <remarks>
+    /// Only when it differs from what the project said: a model that never chose a mode keeps inheriting
+    /// the product's and the machine's answer, rather than being pinned to it by the first apply.
+    /// </remarks>
+    public bool? ModeWritten { get; internal set; }
 }
 
 /// <summary>
@@ -187,7 +194,8 @@ public static class CablingApply
         RouteRun run,
         CablingSnapshot snapshot,
         CablingProjectSettings project,
-        CarrierCatalogue catalogue)
+        CarrierCatalogue catalogue,
+        Action<string, string?>? setProjectSetting = null)
     {
         if (host is null || application is null || run is null || snapshot is null || project is null)
             return new ApplyOutcome(new[] { "Nothing to apply." });
@@ -290,6 +298,18 @@ public static class CablingApply
         References(host, run, outcome);
         Lengths(host, run, outcome);
         Warn(host, run, snapshot, joined, outcome);
+
+        // Inside the run's own transaction, the owner's decision of 2026-09-17: a mode kept while the run
+        // it describes was rolled back would describe nothing. Compared with what the project said when
+        // this was called, so a model that never chose keeps inheriting instead of being pinned.
+        if (setProjectSetting is not null && run.ExistingBoxesOnly != project.ExistingBoxesOnly)
+        {
+            setProjectSetting(
+                CablingProjectSettings.ExistingBoxesOnlyKey,
+                run.ExistingBoxesOnly ? "true" : "false");
+
+            outcome.ModeWritten = run.ExistingBoxesOnly;
+        }
 
         var committed = transaction.Commit();
 
@@ -674,6 +694,9 @@ public static class CablingApply
 
         foreach (var route in run.Blocked(RouteStatus.NoConnectivity))
             Post(host, outcome, CablingFeature.NoConnectivity, route.Circuit.Value);
+
+        foreach (var route in run.Blocked(RouteStatus.NoBoxReachable))
+            Post(host, outcome, CablingFeature.NoBoxReachable, route.Circuit.Value);
 
         foreach (var id in snapshot.Circuits.UnreadableConnectionIds)
             Post(host, outcome, CablingFeature.ConnectionUnreadable, id);

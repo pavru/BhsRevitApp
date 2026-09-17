@@ -28,6 +28,25 @@ public enum RouteStatus
 
     /// <summary>Nothing to route: a circuit with no devices, or a source that is also its only device.</summary>
     NothingToRoute,
+
+    /// <summary>
+    /// A circuit cut in boxes, routed without additional boxes, has a device that no existing box
+    /// reaches through the structure.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <b>A failure, not a fallback - the owner's decision of 2026-09-17.</b> The mode says "do not
+    /// invent boxes", so a device no existing box can serve has no length this mode can honestly give:
+    /// counting it as cut at the terminal, or recommending a box after all, would write a number
+    /// computed by a method nobody chose, and it would go into a cable schedule looking like the rest.
+    /// </para>
+    /// <para>
+    /// Last in the enumeration, so that every value already stored or compared keeps its number.
+    /// Distinct from <see cref="NoCarrierNear"/>: the device reaches the structure, and there is no box
+    /// on the part of it the device reaches.
+    /// </para>
+    /// </remarks>
+    NoBoxReachable,
 }
 
 /// <summary>Where the cable leaves the structure for one device.</summary>
@@ -65,6 +84,31 @@ public sealed class Tap
 
     /// <summary>How far it then travels to the device, in internal feet.</summary>
     public double Spur { get; }
+
+    /// <summary>
+    /// The existing box this device is served from, when the circuit is routed without additional boxes.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// Null in every other case, and then the planner decides the box by the radius, as it always has.
+    /// When it is set the router has already decided - the box nearest along the structure, however far
+    /// - and the planner must not second-guess it by distance: the whole point of the mode is that a box
+    /// one radius away is not a reason to recommend another.
+    /// </para>
+    /// <para>
+    /// <see cref="Carrier"/> and <see cref="At"/> still say where the cable leaves the structure for the
+    /// device, which in this mode is where the spur ends rather than where a box stands.
+    /// </para>
+    /// </remarks>
+    public CarrierId? Box { get; init; }
+
+    /// <summary>How far the spur runs along the structure, from its box to where it leaves it, in internal feet.</summary>
+    /// <remarks>
+    /// Zero unless <see cref="Box"/> is set. Kept apart from <see cref="Spur"/>, which stays the drop from
+    /// the structure to the device in both modes: the one is carried in a tray, the other is not, and a
+    /// breakdown of length by carrier will need to tell them apart.
+    /// </remarks>
+    public double SpurAlongCarriers { get; init; }
 }
 
 /// <summary>What the search found for one circuit.</summary>

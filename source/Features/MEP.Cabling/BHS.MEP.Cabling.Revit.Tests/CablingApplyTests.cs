@@ -189,6 +189,21 @@ public sealed class CablingApplyTests : IRevitTestSuite
             "a junction box joined to nothing is posted as a warning against it",
             WarnsOfABoxJoinedToNothing,
             writes: true),
+
+        new RevitTestCase(
+            "routed without additional boxes, every device is served from a junction box already in the model, and no indicator is placed",
+            ServesFromExistingBoxesOnly,
+            writes: true),
+
+        new RevitTestCase(
+            "routed without additional boxes, every circuit with a device no existing box reaches is posted as one warning",
+            WarnsOfNoBoxReachable,
+            writes: true),
+
+        new RevitTestCase(
+            "applying writes the mode a run was computed with into the project inside its own transaction, and only when the project said otherwise",
+            WritesTheModeItWasComputedWith,
+            writes: true),
     };
 
     /// <summary>The value this suite writes wherever it wants a circuit's connection to fail to read.</summary>
@@ -979,32 +994,7 @@ public sealed class CablingApplyTests : IRevitTestSuite
         // from the same bindings.
         Bind(watch, document, application, RuntimeFor(symbol, catalogue));
 
-        var joinedTypes = HostFittings(document, symbol)
-            .GroupBy(one => one.GetTypeId().Value)
-            .Where(group => group.All(one => JoinsACarrier(one, catalogue)))
-            .Select(group => group.Key)
-            .ToList();
-
-        Note(context, "existing box: fitting types marked a box", joinedTypes.Count);
-
-        Skip.When(
-            joinedTypes.Count == 0,
-            "the model this sweep opened has no fitting type whose every instance is joined to a carrier, so no box can be marked without making one joined to nothing");
-
-        var mark = watch.Mark;
-        TransactionStatus status;
-
-        using (var transaction = new Transaction(document, "BHS test: every joined fitting type is a box"))
-        {
-            transaction.Start();
-
-            foreach (var type in joinedTypes)
-                SetText(document.GetElement(new ElementId(type)), CablingParameters.ElementRole, CablingParameters.JunctionBoxRole, "role");
-
-            status = transaction.Commit();
-        }
-
-        Committed(watch, mark, status, "marking the joined fitting types a box");
+        MarkJoinedFittingTypesBoxes(context, watch, document, symbol, catalogue, "existing box");
         CutEveryCircuitInBoxes(watch, document, application);
 
         var plan = PlanFound(document, project, catalogue);
@@ -1072,6 +1062,246 @@ public sealed class CablingApplyTests : IRevitTestSuite
                 "box " + id + ", already in the model, had its recommendation or cable entry count written: before "
                 + valuesBefore[id] + ", after " + ValuesOf(element));
         }
+    });
+
+    /// <summary>
+    /// Marks a box every fitting type of the host whose every instance is joined to a carrier, and stands
+    /// the case down when there is none.
+    /// </summary>
+    /// <remarks>
+    /// Every instance, so that marking makes no box joined to nothing. The join is asked by the suite's
+    /// own code, not the reader's, so that a case and the code under test do not agree by construction.
+    /// </remarks>
+    private static void MarkJoinedFittingTypesBoxes(
+        RevitTestContext context,
+        PostedWarnings watch,
+        Document document,
+        FamilySymbol symbol,
+        CarrierCatalogue catalogue,
+        string label)
+    {
+        var joinedTypes = HostFittings(document, symbol)
+            .GroupBy(one => one.GetTypeId().Value)
+            .Where(group => group.All(one => JoinsACarrier(one, catalogue)))
+            .Select(group => group.Key)
+            .ToList();
+
+        Note(context, label + ": fitting types marked a box", joinedTypes.Count);
+
+        Skip.When(
+            joinedTypes.Count == 0,
+            "the model this sweep opened has no fitting type whose every instance is joined to a carrier, so no box can be marked without making one joined to nothing");
+
+        var mark = watch.Mark;
+        TransactionStatus status;
+
+        using (var transaction = new Transaction(document, "BHS test: every joined fitting type is a box"))
+        {
+            transaction.Start();
+
+            foreach (var type in joinedTypes)
+                SetText(document.GetElement(new ElementId(type)), CablingParameters.ElementRole, CablingParameters.JunctionBoxRole, "role");
+
+            status = transaction.Commit();
+        }
+
+        Committed(watch, mark, status, "marking the joined fitting types a box");
+    }
+
+    /// <summary>
+    /// Routed without additional boxes, a device is served from a box that stands, however far, and the
+    /// apply adds nothing to the model.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <b>The owner's rules of 2026-09-17, asserted where the model can show them.</b> Every tap of a found
+    /// route names a box the read found; the plan recommends nothing; the apply places no indicator. How
+    /// far the boxes are from their taps is noted - that some are beyond the box radius is the whole point
+    /// of the mode, and whether this model has such a tap is the model's to say.
+    /// </para>
+    /// <para>
+    /// <b>Routed in memory, cut in boxes by the snapshot rather than by a parameter.</b> What the mode
+    /// changes is the routing; the chain that decides a circuit's connection has its own case. Only the
+    /// found routes go to the apply: the others would post a warning, which the next case proves.
+    /// </para>
+    /// </remarks>
+    private static void ServesFromExistingBoxesOnly(RevitTestContext context) => Watched(context, watch =>
+    {
+        var document = context.Document!;
+        var application = context.Application.Application;
+        var catalogue = new CarrierCatalogue();
+        var project = CablingProjectSettings.Read(new Fixed { [CablingProjectSettings.ExistingBoxesOnlyKey] = "true" });
+        var symbol = NeedsIndicatorFamily(document, project);
+
+        Expect.That(project.ExistingBoxesOnly, "the project setting that asks for no additional boxes did not read back as asked");
+
+        NeedsNoIndicatorsOfOurs(context, document, symbol, "existing only");
+        Bind(watch, document, application, RuntimeFor(symbol, catalogue));
+        MarkJoinedFittingTypesBoxes(context, watch, document, symbol, catalogue, "existing only");
+
+        var snapshot = CablingSnapshot.Build(
+            document, Options, catalogue, version: 1, project.Boxes, project.DefaultConnection);
+
+        var circuits = snapshot.Circuits.Described.Select(circuit => InMode(circuit, CircuitConnection.AtJunctionBox)).ToList();
+        var results = circuits.Select(circuit => Router.Route(snapshot.Network, circuit, Options, snapshot.Boxes)).ToList();
+        var found = results.Where(one => one.Status == RouteStatus.Found).ToList();
+
+        Note(context, "existing only: boxes in the model", snapshot.Boxes.Count);
+        context.Note("existing only: circuits by status", ReachNotes.ByStatus(results));
+
+        Skip.When(
+            snapshot.Boxes.Count == 0 || found.Count == 0,
+            "with every joined fitting type marked a box, no circuit of the model this sweep opened has every device reached by a box through the structure, so nothing is served from one");
+
+        var run = new RouteRun(found, snapshot.Network.Version, TimeSpan.Zero)
+        {
+            Boxes = BoxPlanner.Plan(found, snapshot.Boxes, project.BoxRadius),
+            ExistingBoxesOnly = true,
+        };
+
+        var standing = snapshot.Boxes.ToDictionary(box => box.Id, box => box.At);
+        var taps = found.SelectMany(route => route.Taps).ToList();
+
+        Note(context, "existing only: taps served", taps.Count);
+        Note(context, "existing only: taps farther from their box than the box radius",
+            taps.Count(tap => tap.Box is { } box && standing.TryGetValue(box, out var at) && at.DistanceTo(tap.At) > project.BoxRadius));
+
+        foreach (var route in found)
+        {
+            foreach (var tap in route.Taps)
+            {
+                Expect.That(
+                    tap.Box is { } box && standing.ContainsKey(box),
+                    "circuit " + route.Circuit + ": a tap of a route found without additional boxes names no box the read found - "
+                    + (tap.Box?.ToString() ?? "none"));
+            }
+        }
+
+        Expect.Same(0, run.Boxes.Count(box => box.IsRecommendation), "boxes the plan recommends, routed without additional boxes");
+        Expect.Same(taps.Count, run.Boxes.Sum(box => box.Spurs), "spurs the plan's boxes serve, against the taps of the found routes");
+
+        NeedsDefinitionsFor(document, symbol, run, snapshot);
+
+        var before = IndicatorsOf(document, symbol).Select(one => one.Id.Value).ToList();
+        var outcome = ApplyWatched(context, watch, "existing only", run, snapshot, project, catalogue);
+        var placed = IndicatorsOf(document, symbol).Select(one => one.Id.Value).Except(before).ToList();
+
+        Note(context, "existing only: boxes in the model the apply reports using", outcome.ExistingUsed);
+
+        Expect.Same(0, outcome.Placed, "indicators the apply reports placing, routed without additional boxes");
+        Expect.Same(0, placed.Count, "instances of the indicator type standing after the apply that did not stand before it");
+    });
+
+    /// <summary>
+    /// Routed without additional boxes over a model with none, every circuit whose ends reach the
+    /// structure fails for want of a box, and each is posted once.
+    /// </summary>
+    /// <remarks>
+    /// No box at all, rather than the model's boxes, so that the condition does not depend on which of
+    /// the owner's fittings could be marked: a device that reaches a carrier and no box reaches is the
+    /// exact failure, and with no boxes every circuit whose ends reach the structure is one.
+    /// </remarks>
+    private static void WarnsOfNoBoxReachable(RevitTestContext context) => Watched(context, watch =>
+    {
+        var document = context.Document!;
+        var catalogue = new CarrierCatalogue();
+        var project = CablingProjectSettings.Read(new Fixed { [CablingProjectSettings.ExistingBoxesOnlyKey] = "true" });
+        var symbol = NeedsIndicatorFamily(document, project);
+
+        // See the NoCarrierNear case: the file the apply binds from is written by the case, not inherited.
+        new CablingParameters().Export(context.Application.Application);
+
+        var snapshot = CablingSnapshot.Build(
+            document, Options, catalogue, version: 1, project.Boxes, project.DefaultConnection);
+
+        var results = snapshot.Circuits.Described
+            .Select(circuit => Router.Route(snapshot.Network, InMode(circuit, CircuitConnection.AtJunctionBox), Options, Array.Empty<ExistingBox>()))
+            .ToList();
+
+        var unserved = results.Where(one => one.Status == RouteStatus.NoBoxReachable).ToList();
+        var run = new RouteRun(unserved, snapshot.Network.Version, TimeSpan.Zero) { ExistingBoxesOnly = true };
+        var blocked = unserved.Select(one => one.Circuit.Value).ToList();
+
+        context.Note("no box: circuits by status", ReachNotes.ByStatus(results));
+
+        Expect.Same(0, results.Count(one => one.Status == RouteStatus.Found), "circuits routed without additional boxes over no box at all");
+
+        Skip.When(
+            blocked.Count == 0,
+            "routed without additional boxes over no box at all, no circuit of the model this sweep opened has its ends reach the structure, so none fails for want of a box");
+
+        NeedsDefinitionsFor(document, symbol, run, snapshot);
+
+        var outcome = ApplyWatched(context, watch, "no box", run, snapshot, project, catalogue, out var processed);
+        var mine = processed.Where(one => one.Is(CablingFeature.NoBoxReachable)).ToList();
+
+        Note(context, "no box: cabling warnings posted", outcome.Warnings);
+
+        SawWhatWasPosted(outcome, processed.Where(one => one.IsCabling).ToList());
+        OnePerCircuit(mine, blocked, "NoBoxReachable", "a device of which no existing box reaches", "circuits no existing box could serve");
+    });
+
+    /// <summary>
+    /// The mode travels from the run into the project inside the apply's own transaction, and only when
+    /// the project said otherwise.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <b>What the apply promises, asserted through the writer it is handed.</b> The command hands it the
+    /// framework's one-key write, whose own checks are in the probe; here the writer records what it was
+    /// asked and whether a transaction was open when it was asked - which is the owner's decision of
+    /// 2026-09-17, that a mode is never kept while the run it describes is rolled back.
+    /// </para>
+    /// <para>
+    /// On an empty plan, the next press of a project with nothing to route: the mode is all there is to
+    /// write, and nothing else of the apply stands in the way.
+    /// </para>
+    /// </remarks>
+    private static void WritesTheModeItWasComputedWith(RevitTestContext context) => Watched(context, watch =>
+    {
+        var document = context.Document!;
+        var application = context.Application.Application;
+        var catalogue = new CarrierCatalogue();
+        var ordinary = CablingProjectSettings.Read(new Fixed());
+        var symbol = NeedsIndicatorFamily(document, ordinary);
+
+        NeedsNoIndicatorsOfOurs(context, document, symbol, "mode");
+
+        var snapshot = Prepare(watch, document, application, symbol, ordinary, catalogue);
+        var run = new RouteRun(Array.Empty<RouteResult>(), snapshot.Network.Version, TimeSpan.Zero) { ExistingBoxesOnly = true };
+
+        NeedsDefinitionsFor(document, symbol, run, snapshot);
+
+        var asked = new List<(string Key, string? Value, bool InTransaction)>();
+        var mark = watch.Mark;
+
+        var changed = CablingApply.Apply(
+            document, application, run, snapshot, ordinary, catalogue,
+            (key, value) => asked.Add((key, value, document.IsModifiable)));
+
+        Expect.That(watch.Since(mark).All(one => one.Severity == FailureSeverity.Warning), "failures worse than a warning while applying the mode");
+        Expect.That(!changed.Refused, "applying the mode refused: " + string.Join(" ", changed.Refusals));
+
+        Expect.Same(1, asked.Count, "project settings the apply wrote, for a run computed without additional boxes in a project that said otherwise");
+        Expect.That(
+            asked.Count == 1 && asked[0].Key == CablingProjectSettings.ExistingBoxesOnlyKey && asked[0].Value == "true",
+            "the apply wrote " + string.Join("; ", asked.Select(one => one.Key + " = " + (one.Value ?? "(cleared)")))
+            + ", not " + CablingProjectSettings.ExistingBoxesOnlyKey + " = true");
+        Expect.That(
+            asked.All(one => one.InTransaction),
+            "the apply wrote the mode with no transaction open, so it would be kept even when the run's transaction is not");
+        Expect.That(changed.ModeWritten == true, "the apply does not report writing the mode it wrote");
+
+        asked.Clear();
+
+        var same = CablingProjectSettings.Read(new Fixed { [CablingProjectSettings.ExistingBoxesOnlyKey] = "true" });
+        var unchanged = CablingApply.Apply(
+            document, application, run, snapshot, same, catalogue,
+            (key, value) => asked.Add((key, value, document.IsModifiable)));
+
+        Expect.That(!unchanged.Refused, "applying the mode again refused: " + string.Join(" ", unchanged.Refusals));
+        Expect.Same(0, asked.Count, "project settings the apply wrote, for a run computed in the mode the project already has");
+        Expect.That(unchanged.ModeWritten is null, "the apply reports writing a mode the project already had");
     });
 
     /// <summary>
@@ -2315,6 +2545,9 @@ public sealed class CablingApplyTests : IRevitTestSuite
 
         if (run.Count(RouteStatus.NoConnectivity) > 0)
             posting.Add((CablingFeature.NoConnectivity, nameof(CablingFeature.NoConnectivity)));
+
+        if (run.Count(RouteStatus.NoBoxReachable) > 0)
+            posting.Add((CablingFeature.NoBoxReachable, nameof(CablingFeature.NoBoxReachable)));
 
         if (snapshot.Circuits.UnreadableConnectionIds.Count > 0)
             posting.Add((CablingFeature.ConnectionUnreadable, nameof(CablingFeature.ConnectionUnreadable)));

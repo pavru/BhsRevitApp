@@ -165,6 +165,12 @@ internal sealed class ModelSettingsSource : IModelSettingsSource
         _cache.TryRemove(document, out _);
     }
 
+    public void Set(Document document, string key, string? value)
+    {
+        _store.Set(document, key, value);
+        _cache.TryRemove(document, out _);
+    }
+
     /// <summary>Forgets a document. Called while it still exists, on <c>DocumentClosing</c>.</summary>
     public void Forget(Document document)
     {

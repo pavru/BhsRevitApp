@@ -75,9 +75,11 @@ public sealed class RouteCablingCommand : IFeatureCommand
         var read = new Reading();
 
         var model = new RoutingViewModel(
-            (progress, token) => ComputeAsync(document, options, project, read, progress, token, log),
+            (existingBoxesOnly, progress, token) =>
+                ComputeAsync(document, options, project, existingBoxesOnly, read, progress, token, log),
             CablingLength.Formatter(document),
-            _ => Task.FromResult(ApplyNow(document, application, project, read, log)));
+            _ => Task.FromResult(ApplyNow(document, application, services, read, log)),
+            project.ExistingBoxesOnly);
 
         var window = new RoutingWindow(model);
 
@@ -113,6 +115,7 @@ public sealed class RouteCablingCommand : IFeatureCommand
         Document document,
         RoutingOptions options,
         CablingProjectSettings project,
+        bool existingBoxesOnly,
         Reading reading,
         IProgress<RoutingProgress> progress,
         CancellationToken token,
@@ -137,7 +140,9 @@ public sealed class RouteCablingCommand : IFeatureCommand
         // Awaited rather than returned, so that the run is recorded before the window can offer to
         // write it. Returning the task would leave a window in which Apply is enabled and has
         // nothing to apply.
-        var run = await Task.Run(() => Search(snapshot, options, project.BoxRadius, progress, token), token)
+        var run = await Task.Run(
+                () => Search(snapshot, options, project.BoxRadius, existingBoxesOnly, progress, token),
+                token)
             .ConfigureAwait(true);
 
         reading.Run = run;
@@ -170,12 +175,17 @@ public sealed class RouteCablingCommand : IFeatureCommand
     private static ApplyReport ApplyNow(
         Document document,
         Application application,
-        CablingProjectSettings project,
+        IUiFeatureServices services,
         Reading reading,
         ILog log)
     {
         if (reading.Run is not { } run || reading.Snapshot is not { } snapshot)
             return new ApplyReport("There is nothing to write yet.", refused: true);
+
+        // Read again rather than the copy the window opened with: an earlier apply in this same window
+        // may have written the mode, and comparing with the stale copy would write it back needlessly -
+        // or, toggled back, not write at all.
+        var project = CablingProjectSettings.Read(services.ModelSettings.For(document));
 
         ApplyOutcome outcome;
 
@@ -197,7 +207,14 @@ public sealed class RouteCablingCommand : IFeatureCommand
         // known, the status path says the same thing - see CablingApply.NotKept.
         try
         {
-            outcome = CablingApply.Apply(document, application, run, snapshot, project, new CarrierCatalogue());
+            outcome = CablingApply.Apply(
+                document,
+                application,
+                run,
+                snapshot,
+                project,
+                new CarrierCatalogue(),
+                (key, value) => services.ModelSettings.Set(document, key, value));
         }
         catch (Exception error)
         {
@@ -286,6 +303,9 @@ public sealed class RouteCablingCommand : IFeatureCommand
         if (outcome.Warnings > 0)
             said.Add(outcome.Warnings + " warning(s) posted for Revit to show");
 
+        if (outcome.ModeWritten is { } mode)
+            said.Add("the project now routes " + (mode ? "without additional junction boxes" : "with recommended junction boxes"));
+
         return string.Join(", ", said) + ".";
     }
 
@@ -293,6 +313,7 @@ public sealed class RouteCablingCommand : IFeatureCommand
         CablingSnapshot snapshot,
         RoutingOptions options,
         double boxRadius,
+        bool existingBoxesOnly,
         IProgress<RoutingProgress> progress,
         CancellationToken token)
     {
@@ -310,7 +331,7 @@ public sealed class RouteCablingCommand : IFeatureCommand
             // nothing about where it is, and the one that hangs is the one worth naming.
             progress.Report(new RoutingProgress($"Routing {circuit.Number}", i + 1, circuits.Count));
 
-            results.Add(Router.Route(snapshot.Network, circuit, options));
+            results.Add(Router.Route(snapshot.Network, circuit, options, existingBoxesOnly ? snapshot.Boxes : null));
         }
 
         clock.Stop();
@@ -334,6 +355,7 @@ public sealed class RouteCablingCommand : IFeatureCommand
             // and by whether it is joined to the structure. A tap within the radius of one uses it and
             // asks for nothing to be added.
             Boxes = BoxPlanner.Plan(results, snapshot.Boxes, boxRadius),
+            ExistingBoxesOnly = existingBoxesOnly,
         };
     }
 
