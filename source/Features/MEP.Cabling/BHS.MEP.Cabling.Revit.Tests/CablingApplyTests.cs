@@ -161,6 +161,11 @@ public sealed class CablingApplyTests : IRevitTestSuite
             writes: true),
 
         new RevitTestCase(
+            "where a box is recommended, a joined indicator of ours takes it over a nearer one joined to nothing, which is removed",
+            PrefersAJoinedIndicatorAtABox,
+            writes: true),
+
+        new RevitTestCase(
             "an element of another type carrying our recommendation is never removed",
             LeavesAnotherTypeAlone,
             writes: true),
@@ -1213,7 +1218,8 @@ public sealed class CablingApplyTests : IRevitTestSuite
     /// takes that box's place, with no second indicator beside it, a joined one preferred over one joined
     /// to nothing - first a reading of the decision made while implementing it, confirmed by the owner the
     /// same day. This case pins the first half and the no-second-indicator part of the second; the
-    /// preference between a joined and an unjoined indicator at one box has no case yet.
+    /// preference between a joined and an unjoined indicator at one box is
+    /// <see cref="PrefersAJoinedIndicatorAtABox"/>.
     /// </para>
     /// <para>
     /// <b>The plan is computed first, and the joined indicator stood on one of its boxes afterwards.</b>
@@ -1333,6 +1339,138 @@ public sealed class CablingApplyTests : IRevitTestSuite
             "IndicatorJoinedIntoNetwork warnings Revit processed, on a model whose only indicator of ours is the joined one");
 
         EachAgainstOneOf(mine, new[] { joined }, "IndicatorJoinedIntoNetwork", "indicator " + joined);
+    });
+
+    /// <summary>
+    /// Two indicators of ours stand within the radius of one recommended box, the unjoined one nearer:
+    /// the joined one takes the box, and the unjoined one, left unclaimed, is removed.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <b>The owner's decision of 2026-09-14, the last part of it without a case until now.</b> A box
+    /// asks for a joined indicator first and for one joined to nothing only when there is none.
+    /// Nearest-first over both kinds - what the apply did before - lets the nearer unjoined one take the
+    /// box: it is rewritten in place, the joined one stands unclaimed beside it, and the model is left
+    /// with two marks of ours inside one radius.
+    /// </para>
+    /// <para>
+    /// <b>The unjoined one stands exactly on the box and the joined one inside the radius but off it</b>,
+    /// because only then is the unjoined one nearer, which is the whole question. The joined one is placed
+    /// first, so the conduit drawn out of it exists when the other is placed; if Revit joins the second to
+    /// anything, <c>PlaceLoose</c> stands the case down saying so.
+    /// </para>
+    /// <para>
+    /// <b>The same order as the case before it</b>: the plan first, both indicators after, for the
+    /// reason given there.
+    /// </para>
+    /// </remarks>
+    private static void PrefersAJoinedIndicatorAtABox(RevitTestContext context) => Watched(context, watch =>
+    {
+        const string Label = "joined preferred";
+
+        var document = context.Document!;
+        var application = context.Application.Application;
+        var catalogue = new CarrierCatalogue();
+        var project = CablingProjectSettings.Read(new Fixed());
+        var symbol = NeedsIndicatorFamily(document, project);
+
+        NeedsNoIndicatorsOfOurs(context, document, symbol, Label);
+
+        CutEveryCircuitInBoxes(watch, document, application);
+        Bind(watch, document, application, RuntimeFor(symbol, catalogue));
+
+        var plan = PlanFound(document, project, catalogue);
+        var wanted = plan.Run.Boxes.Where(box => box.IsRecommendation).ToList();
+
+        Note(context, Label + ": boxes recommended", wanted.Count);
+
+        Skip.When(
+            wanted.Count == 0,
+            "with every circuit cut in boxes, " + WhyNothingIsRecommended(plan) + ", so there is no recommended box for two indicators of ours to stand on");
+
+        var box = wanted[0];
+        var at = Planned(box);
+
+        // Inside the radius and clearly off the box; along X, the direction the apply is told nothing about.
+        var aside = at + new XYZ(project.BoxRadius * 0.6, 0, 0);
+
+        var joined = PlaceJoined(
+            context, watch, document, symbol, aside, LevelAtOrBelow(document, aside.Z), Label, "placed inside a recommended box's radius", box.Entries + 1);
+
+        var loose = PlaceLoose(
+            watch,
+            document,
+            symbol,
+            at,
+            LevelAtOrBelow(document, at.Z),
+            "an indicator of ours joined to nothing, placed on a recommended box",
+            instance =>
+            {
+                RecommendJunctionBox(instance);
+                SetInteger(instance, CablingParameters.TapCount, box.Entries + 2, "cable entry count");
+            }).Id.Value;
+
+        var joinedIndicator = (FamilyInstance)document.GetElement(new ElementId(joined));
+        var looseIndicator = (FamilyInstance)document.GetElement(new ElementId(loose));
+        var joinedDistance = PlaceOf(joinedIndicator)?.DistanceTo(at);
+        var looseDistance = PlaceOf(looseIndicator)?.DistanceTo(at);
+
+        context.Note(
+            Label + ": distances from the box, joined and joined to nothing, internal feet",
+            (joinedDistance?.ToString("F4", CultureInfo.InvariantCulture) ?? "no point") + ", "
+            + (looseDistance?.ToString("F4", CultureInfo.InvariantCulture) ?? "no point"));
+
+        Skip.When(
+            !Within(joinedIndicator, at, project.BoxRadius) || !Within(looseIndicator, at, project.BoxRadius),
+            "Revit did not keep both indicators within the radius of the recommended box they were placed at");
+
+        Skip.When(
+            joinedDistance is null || looseDistance is null || looseDistance >= joinedDistance,
+            "Revit did not keep the indicator joined to nothing nearer the box than the joined one, so the case would not ask which one the box prefers");
+
+        NeedsDefinitionsFor(document, symbol, plan.Run, plan.Snapshot);
+
+        var written = WrittenOn(joinedIndicator);
+        var standingBefore = Ids(IndicatorsOf(document, symbol));
+
+        var outcome = ApplyWatched(context, watch, Label, plan.Run, plan.Snapshot, project, catalogue);
+
+        var near = IndicatorsOf(document, symbol)
+            .Where(one => Within(one, at, project.BoxRadius) && (!standingBefore.Contains(one.Id.Value) || one.Id.Value == joined || one.Id.Value == loose))
+            .Select(one => one.Id.Value)
+            .ToList();
+
+        Note(context, Label + ": indicators placed", outcome.Placed);
+        Note(context, Label + ": indicators updated in place", outcome.Updated);
+        Note(context, Label + ": joined indicators standing for a box", outcome.JoinedInPlace);
+        Note(context, Label + ": indicators removed", outcome.Removed);
+
+        Expect.Same(
+            1,
+            outcome.JoinedInPlace,
+            "joined indicators of ours the apply reports standing for a recommended box, where a joined one and a nearer one joined to nothing stand on the same box");
+
+        Expect.That(
+            document.GetElement(new ElementId(joined)) is not null,
+            "indicator " + joined + ", ours and joined, standing inside a recommended box's radius, was removed");
+
+        Expect.That(
+            WrittenOn(document.GetElement(new ElementId(joined))) == written,
+            "indicator " + joined + ", ours and joined, was rewritten: before " + written + ", after " + WrittenOn(document.GetElement(new ElementId(joined))));
+
+        Expect.That(
+            document.GetElement(new ElementId(loose)) is null,
+            "indicator " + loose + ", ours and joined to nothing, nearer the box than the joined one, still stands: the box went to it, not to the joined one");
+
+        Expect.That(
+            near.Count == 1 && near[0] == joined,
+            "instances of the indicator type within the box radius, new or the two the case placed, are ["
+            + string.Join(", ", near) + "], where only the joined indicator " + joined + " should stand");
+
+        Expect.Same(
+            wanted.Count,
+            outcome.Placed + outcome.Updated + outcome.JoinedInPlace,
+            "boxes the plan recommends, against indicators the apply reports placing, finding in place, or finding joined in place");
     });
 
     /// <summary>
@@ -2555,17 +2693,17 @@ public sealed class CablingApplyTests : IRevitTestSuite
             status = transaction.Commit();
         }
 
-        Committed(watch, mark, status, "placing " + what + " outside the model's extents");
+        Committed(watch, mark, status, "placing " + what);
 
         var element = document.GetElement(new ElementId(placed)) as FamilyInstance;
 
-        Skip.When(element is null, what + ", placed outside the model's extents, is not in the model after the commit");
+        Skip.When(element is null, what + " is not in the model after the commit that placed it");
 
         var joint = Joint(element!);
 
         Skip.When(
             joint is not null,
-            what + ", placed 100 ft outside every carrier and circuit end, " + joint + ", so it cannot stand for one joined to nothing");
+            what + " " + joint + " as soon as it is placed, so it cannot stand for one joined to nothing");
 
         return element!;
     }
