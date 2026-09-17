@@ -739,7 +739,7 @@ public static class CablingApply
     /// the stamp.
     /// </para>
     /// <para>
-    /// <b>The three are one write.</b> A length without the connection it was computed with cannot be
+    /// <b>The three are one write, and so are the five parts of the length beside them.</b> A length without the connection it was computed with cannot be
     /// checked by anyone - the two connections differ by about 38 % on the owner's own model - and
     /// without the carriers it was measured along, "has this changed" has no answer but re-running
     /// everything and comparing numbers. So they are counted together, and a circuit counts when
@@ -765,12 +765,39 @@ public static class CablingApply
 
             var written = Set(circuit, CablingParameters.CableLength, route.TotalLength);
 
+            written |= Set(circuit, CablingParameters.LengthInTray, route.AlongClass(CarrierCatalogue.Tray));
+            written |= Set(circuit, CablingParameters.LengthInConduit, route.AlongClass(CarrierCatalogue.Conduit));
+            written |= Set(circuit, CablingParameters.LengthFree, route.Approaches);
+            written |= Set(circuit, CablingParameters.LengthOther, AlongOtherClasses(route));
+            written |= Set(circuit, CablingParameters.LengthSlack, route.Slack);
+
             written |= Set(circuit, CablingParameters.RouteConnection, CircuitConnections.Text(route.Connection));
             written |= Set(circuit, CablingParameters.RouteStamp, RouteStamp(route.Path));
 
             if (written)
                 outcome.CircuitsWritten++;
         }
+    }
+
+    /// <summary>What a route walked along carriers of every class other than tray and conduit.</summary>
+    /// <remarks>
+    /// Summed from the classes rather than taken as the length along carriers less the two, so that it is
+    /// zero when it is zero - a subtraction leaves a remainder in the fifteenth digit that a schedule prints.
+    /// </remarks>
+    private static double AlongOtherClasses(RouteResult route)
+    {
+        var other = 0.0;
+
+        foreach (var part in route.AlongByClass)
+        {
+            if (!string.Equals(part.Key, CarrierCatalogue.Tray, StringComparison.OrdinalIgnoreCase)
+                && !string.Equals(part.Key, CarrierCatalogue.Conduit, StringComparison.OrdinalIgnoreCase))
+            {
+                other += part.Value;
+            }
+        }
+
+        return other;
     }
 
     /// <summary>

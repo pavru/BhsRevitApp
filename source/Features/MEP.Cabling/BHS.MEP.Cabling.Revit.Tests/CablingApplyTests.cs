@@ -141,6 +141,11 @@ public sealed class CablingApplyTests : IRevitTestSuite
             writes: true),
 
         new RevitTestCase(
+            "every circuit that routed is told how its length is laid - in trays, in conduits, in no carrier, in other carriers - and its slack, and the five add up to its length",
+            CircuitsAreToldWhereTheirLengthIsLaid,
+            writes: true),
+
+        new RevitTestCase(
             "a junction box already in the model is used instead of an indicator, and gets only the circuits through it",
             AnExistingBoxIsUsed,
             writes: true),
@@ -2456,19 +2461,145 @@ public sealed class CablingApplyTests : IRevitTestSuite
             + string.Join(", ", changed.Select(one => one.Circuit.ToString(CultureInfo.InvariantCulture))));
     });
 
-    /// <summary>The three values a run writes on a circuit, as one comparable string.</summary>
+    /// <summary>The values a run writes on a circuit, as one comparable string.</summary>
     /// <remarks>
-    /// Round-trip formatting on the length, because this is used to show that nothing changed: a value
-    /// compared after rounding would hide a write that moved the number by less than it prints.
+    /// Round-trip formatting on the lengths, because this is used to show that nothing changed: a value
+    /// compared after rounding would hide a write that moved the number by less than it prints. The five
+    /// parts of the length are here too, since 2026-09-17: a circuit that did not route must not be given a
+    /// breakdown any more than a length.
     /// </remarks>
     private static string Stored(Document document, long circuit)
     {
         var element = document.GetElement(new ElementId(circuit));
-        var length = element?.get_Parameter(CablingParameters.CableLength);
 
-        return (length is { HasValue: true } ? length.AsDouble().ToString("R", CultureInfo.InvariantCulture) : string.Empty)
+        return RoundTrip(element, CablingParameters.CableLength)
             + " | " + Value(element, CablingParameters.RouteConnection)
-            + " | " + Value(element, CablingParameters.RouteStamp);
+            + " | " + Value(element, CablingParameters.RouteStamp)
+            + " | " + RoundTrip(element, CablingParameters.LengthInTray)
+            + " | " + RoundTrip(element, CablingParameters.LengthInConduit)
+            + " | " + RoundTrip(element, CablingParameters.LengthFree)
+            + " | " + RoundTrip(element, CablingParameters.LengthOther)
+            + " | " + RoundTrip(element, CablingParameters.LengthSlack);
+    }
+
+    private static string RoundTrip(Element? element, Guid parameter)
+    {
+        var found = element?.get_Parameter(parameter);
+
+        return found is { HasValue: true } ? found.AsDouble().ToString("R", CultureInfo.InvariantCulture) : string.Empty;
+    }
+
+    /// <summary>
+    /// The case for the length laid by where: every found route's five parts read back out of the model.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <b>Routed with slack, so that the fifth number is not zero by default.</b> The command's own default
+    /// extension is none, and a slack of zero written and a slack never written read the same; a twentieth
+    /// is asked for here, and the case computes what it has to be from the route's own two lengths rather
+    /// than reading <c>Slack</c> back from the result it is checking.
+    /// </para>
+    /// <para>
+    /// <b>The classes are spelled here, "tray" and "conduit"</b>, not taken from <c>CarrierCatalogue</c>,
+    /// so that a catalogue which renamed a class turns this red rather than agreeing with the apply through
+    /// the constant both of them read. The other carriers are what is left of the length along carriers
+    /// once those two are taken, and the five together have to make the stored total.
+    /// </para>
+    /// <para>
+    /// Only the found routes go to the apply, as the placement cases hand it: what a circuit that did not
+    /// route carries is the length case's to guard, and <see cref="Stored"/> reads the five parts there.
+    /// </para>
+    /// </remarks>
+    private static void CircuitsAreToldWhereTheirLengthIsLaid(RevitTestContext context) => Watched(context, watch =>
+    {
+        const double extension = 0.05;
+
+        var document = context.Document!;
+        var application = context.Application.Application;
+        var catalogue = new CarrierCatalogue();
+        var project = CablingProjectSettings.Read(new Fixed());
+        var symbol = NeedsIndicatorFamily(document, project);
+
+        NeedsNoIndicatorsOfOurs(context, document, symbol, "length by where");
+
+        var cut = CutEveryCircuitInBoxes(watch, document, application);
+        var withSlack = new RoutingOptions
+        {
+            JoinTolerance = Options.JoinTolerance,
+            MaxApproach = Options.MaxApproach,
+            AxisAlignedApproach = Options.AxisAlignedApproach,
+            LengthExtend = extension,
+        };
+
+        var snapshot = CablingSnapshot.Build(
+            document, Options, catalogue, version: 1, project.Boxes, project.DefaultConnection);
+
+        var results = snapshot.Circuits.Described.Select(circuit => Router.Route(snapshot.Network, circuit, withSlack)).ToList();
+        var found = results.Where(one => one.Status == RouteStatus.Found).ToList();
+
+        Note(context, "length by where: circuits cut in boxes", cut);
+        Note(context, "length by where: routes found", found.Count);
+
+        Skip.When(found.Count == 0, "no circuit of this model routed, so there is no length to divide");
+
+        var run = new RouteRun(found, snapshot.Network.Version, TimeSpan.Zero)
+        {
+            Boxes = BoxPlanner.Plan(results, snapshot.Boxes, project.BoxRadius),
+        };
+
+        NeedsDefinitionsFor(document, symbol, run, snapshot);
+
+        var outcome = ApplyWatched(context, watch, "length by where", run, snapshot, project, catalogue);
+
+        Expect.Same(found.Count, outcome.CircuitsWritten, "routes found, against circuits the apply reports telling their length");
+
+        Note(context, "length by where: routes with a length in trays", found.Count(one => one.AlongClass("tray") > 0));
+        Note(context, "length by where: routes with a length in conduits", found.Count(one => one.AlongClass("conduit") > 0));
+        Note(context, "length by where: routes with a length in other carriers",
+            found.Count(one => one.AlongCarriers - one.AlongClass("tray") - one.AlongClass("conduit") > 1e-9));
+
+        foreach (var route in found)
+        {
+            var circuit = document.GetElement(new ElementId(route.Circuit.Value));
+            var where = "circuit " + route.Circuit.Value.ToString(CultureInfo.InvariantCulture);
+
+            var tray = route.AlongClass("tray");
+            var conduit = route.AlongClass("conduit");
+            var other = route.AlongCarriers - tray - conduit;
+            var slack = (route.AlongCarriers + route.Approaches) * extension;
+
+            StoredLength(circuit, CablingParameters.LengthInTray, tray, where + ": the length in trays");
+            StoredLength(circuit, CablingParameters.LengthInConduit, conduit, where + ": the length in conduits");
+            StoredLength(circuit, CablingParameters.LengthFree, route.Approaches, where + ": the length in no carrier");
+            StoredLength(circuit, CablingParameters.LengthOther, other, where + ": the length in other carriers");
+            StoredLength(circuit, CablingParameters.LengthSlack, slack, where + ": the slack");
+
+            var parts = new[]
+            {
+                CablingParameters.LengthInTray, CablingParameters.LengthInConduit, CablingParameters.LengthFree,
+                CablingParameters.LengthOther, CablingParameters.LengthSlack,
+            };
+
+            var sum = parts.Sum(one => circuit?.get_Parameter(one) is { HasValue: true } stored ? stored.AsDouble() : double.NaN);
+            var total = circuit?.get_Parameter(CablingParameters.CableLength) is { HasValue: true } length ? length.AsDouble() : double.NaN;
+
+            Expect.That(
+                Math.Abs(sum - total) < 1e-9,
+                where + ": the five parts stored add up to the length stored - parts "
+                + sum.ToString("F6", CultureInfo.InvariantCulture) + ", length " + total.ToString("F6", CultureInfo.InvariantCulture) + " ft");
+        }
+    });
+
+    /// <summary>One part of a circuit's length, read back and compared with what it has to be.</summary>
+    private static void StoredLength(Element? circuit, Guid parameter, double expected, string what)
+    {
+        var found = circuit?.get_Parameter(parameter);
+        var stored = found is { HasValue: true } ? found.AsDouble().ToString("F6", CultureInfo.InvariantCulture) : "nothing";
+
+        Expect.That(
+            found is { HasValue: true } && Math.Abs(found.AsDouble() - expected) < 1e-9,
+            what + " stored against what the route walked - stored " + stored
+            + ", walked " + expected.ToString("F6", CultureInfo.InvariantCulture) + " ft");
     }
 
     /// <summary>The carriers of a route, spelled the way the stamp has to spell them.</summary>

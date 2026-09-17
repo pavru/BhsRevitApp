@@ -8,12 +8,11 @@ namespace BHS.MEP.Cabling.Revit;
 /// </summary>
 /// <remarks>
 /// <para>
-/// <b>Eight, and each one has something that reads it.</b> A parameter declared before something
+/// <b>Thirteen, and each one has something that reads it.</b> A parameter declared before something
 /// reads it is the same mistake as a mechanism with no consumer, and it is worse here: a parameter
 /// that has reached a customer's model cannot be withdrawn, only ignored. The rule has held through
-/// every addition - the three the apply writes arrived with the apply, and the three on the circuit
-/// with the code that computes them. Four more are named in <see cref="CableLength"/> and
-/// deliberately not declared, because nothing reads them yet.
+/// every addition - the three the apply writes arrived with the apply, the three on the circuit with
+/// the code that computes them, and the five that divide the length with the code that divides it.
 /// </para>
 /// <para>
 /// <b>The GUIDs are new rather than the predecessor's</b> - the owner's decision, a clean slate. They
@@ -91,13 +90,11 @@ public sealed class CablingParameters : SharedParameterScheme
     /// <summary>The length of the route the run found for this circuit.</summary>
     /// <remarks>
     /// <para>
-    /// <b>The total, and the breakdown is deliberately not here yet.</b> The owner asked on
-    /// 2026-09-16 for lengths laid in trays and in conduits, for the cable journal and for estimates,
-    /// and that is a family of numbers rather than a second parameter: reserved as
-    /// <c>BHS_Cbl_LengthInTray</c>, <c>BHS_Cbl_LengthInConduit</c>, <c>BHS_Cbl_LengthFree</c> and
-    /// <c>BHS_Cbl_LengthOther</c>, each a length a schedule can sum, together adding up to this one.
-    /// They arrive with the code that writes them, which is the same rule that kept this one out
-    /// until now.
+    /// <b>The total, and five numbers beside it divide it.</b> The owner asked on 2026-09-16 for lengths
+    /// laid in trays and in conduits, for the cable journal and for estimates, and that is a family of
+    /// numbers rather than a second parameter: <see cref="LengthInTray"/>, <see cref="LengthInConduit"/>,
+    /// <see cref="LengthFree"/>, <see cref="LengthOther"/> and <see cref="LengthSlack"/>, each a length a
+    /// schedule can sum, together adding up to this one.
     /// </para>
     /// <para>
     /// <b>Four buckets and not two, because trays and conduits do not cover the cable.</b> The drop
@@ -109,6 +106,30 @@ public sealed class CablingParameters : SharedParameterScheme
     /// </para>
     /// </remarks>
     public static readonly Guid CableLength = new("169b79de-4c42-4632-a173-1c7b86f30ebc");
+
+    /// <summary>The part of the stored length laid along carriers of the class "tray".</summary>
+    public static readonly Guid LengthInTray = new("317295ad-fbee-4df5-b33f-c4764a9412b5");
+
+    /// <summary>The part of the stored length laid along carriers of the class "conduit".</summary>
+    public static readonly Guid LengthInConduit = new("1ae935e9-f5ec-4ceb-802d-af5215db9bed");
+
+    /// <summary>The part of the stored length laid in no carrier: the drops to the panel and the devices.</summary>
+    public static readonly Guid LengthFree = new("6b3eabc9-2dc8-44cc-96ff-69db49c9a82b");
+
+    /// <summary>The part of the stored length laid along carriers of any class the project named itself.</summary>
+    /// <remarks>
+    /// One number for all of them rather than one per class: a class is an open string in the catalogue,
+    /// and a parameter per named class would be a registry that drifts from the projects that name them.
+    /// </remarks>
+    public static readonly Guid LengthOther = new("f4664f6d-85fa-4d29-8d99-a6b9c92a0176");
+
+    /// <summary>The slack in the stored length: <c>Cabling:LengthExtend</c> of what is laid.</summary>
+    /// <remarks>
+    /// <b>A fifth number, not spread over the other four - the owner's decision of 2026-09-17.</b> The slack
+    /// is a fraction of the drops as well as of the carriers and lies nowhere in particular; an estimate
+    /// wants the length in trays as laid, and the slack beside it where it can be seen and changed.
+    /// </remarks>
+    public static readonly Guid LengthSlack = new("fef544f4-2d62-4e45-8482-576b7a7ecaac");
 
     /// <summary>Which of the two connections the stored length was computed with.</summary>
     /// <remarks>
@@ -217,6 +238,17 @@ public sealed class CablingParameters : SharedParameterScheme
         BuiltInCategory.OST_ElectricalCircuit,
     };
 
+    /// <summary>One part of a circuit's cable length: a length on the circuit, written by the tool.</summary>
+    private static SharedParameter Length(Guid id, string english, string englishText, string russian, string russianText) =>
+        new(
+            id,
+            SpecTypeId.Length,
+            GroupTypeId.ElectricalCircuiting,
+            instance: true,
+            Circuits,
+            english: new ParameterText(english, englishText),
+            russian: new ParameterText(russian, russianText));
+
     protected override string GroupName(ParameterLanguage language) => language switch
     {
         ParameterLanguage.Russian => "BHS Кабели",
@@ -307,6 +339,41 @@ public sealed class CablingParameters : SharedParameterScheme
             russian: new ParameterText(
                 "BHS_Cbl_ДлинаКабеля",
                 "Длина кабеля этой цепи, посчитанная прокладкой BHS, включая спуски к устройствам.")),
+
+        Length(
+            LengthInTray,
+            "BHS_Cbl_LengthInTray",
+            "The part of BHS_Cbl_CableLength laid in cable trays.",
+            "BHS_Cbl_ДлинаВЛотках",
+            "Часть BHS_Cbl_ДлинаКабеля, проложенная в лотках."),
+
+        Length(
+            LengthInConduit,
+            "BHS_Cbl_LengthInConduit",
+            "The part of BHS_Cbl_CableLength laid in conduits.",
+            "BHS_Cbl_ДлинаВТрубах",
+            "Часть BHS_Cbl_ДлинаКабеля, проложенная в трубах."),
+
+        Length(
+            LengthFree,
+            "BHS_Cbl_LengthFree",
+            "The part of BHS_Cbl_CableLength laid in no carrier: the drops from the structure to the panel and the devices.",
+            "BHS_Cbl_ДлинаСвободная",
+            "Часть BHS_Cbl_ДлинаКабеля вне носителей: спуски от трассы к щиту и устройствам."),
+
+        Length(
+            LengthOther,
+            "BHS_Cbl_LengthOther",
+            "The part of BHS_Cbl_CableLength laid in carriers the project classes as neither tray nor conduit.",
+            "BHS_Cbl_ДлинаПрочая",
+            "Часть BHS_Cbl_ДлинаКабеля в носителях, которые проект не относит ни к лоткам, ни к трубам."),
+
+        Length(
+            LengthSlack,
+            "BHS_Cbl_LengthSlack",
+            "The slack included in BHS_Cbl_CableLength, as set by Cabling:LengthExtend.",
+            "BHS_Cbl_ДлинаЗапас",
+            "Запас, входящий в BHS_Cbl_ДлинаКабеля, по настройке Cabling:LengthExtend."),
 
         new SharedParameter(
             RouteConnection,

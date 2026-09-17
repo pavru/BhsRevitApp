@@ -67,6 +67,7 @@ public static class Router
         var path = new List<CarrierId>();
         var taps = new List<Tap>();
         var alongCarriers = 0.0;
+        var byClass = new Dictionary<string, double>(StringComparer.OrdinalIgnoreCase);
         var approaches = 0.0;
         var from = circuit.Source;
 
@@ -104,6 +105,7 @@ public static class Router
             }
 
             alongCarriers += leg.AlongCarriers;
+            Add(byClass, leg.AlongByClass);
             approaches += leg.Approaches;
             taps.Add(tap!);
             from = to;
@@ -112,13 +114,13 @@ public static class Router
                 trunk = tap;
         }
 
-        var total = alongCarriers + approaches;
-
         return new RouteResult(circuit.Id, RouteStatus.Found, network.Version)
         {
             Path = path,
-            AlongCarriers = alongCarriers + (total * options.LengthExtend),
+            AlongCarriers = alongCarriers,
+            AlongByClass = byClass,
             Approaches = approaches,
+            Slack = (alongCarriers + approaches) * options.LengthExtend,
             BuiltInLength = circuit.BuiltInLength,
             Connection = circuit.Connection,
             Taps = taps,
@@ -179,6 +181,7 @@ public static class Router
         var path = new List<CarrierId>();
         var taps = new List<Tap>();
         var alongCarriers = 0.0;
+        var byClass = new Dictionary<string, double>(StringComparer.OrdinalIgnoreCase);
         var approaches = 0.0;
         CarrierId? at = null;
 
@@ -197,12 +200,14 @@ public static class Router
 
                 Append(path, trunk.Result.Path);
                 alongCarriers += trunk.Result.AlongCarriers;
+                Add(byClass, trunk.Result.AlongByClass);
                 approaches += trunk.Result.Approaches;
                 at = one.Box;
             }
 
             Append(path, one.Spur.Result.Path);
             alongCarriers += one.Spur.Result.AlongCarriers;
+            Add(byClass, one.Spur.Result.AlongByClass);
             approaches += one.Drop;
 
             taps.Add(new Tap(one.Device, one.Spur.Exit, one.At, one.Drop)
@@ -212,13 +217,13 @@ public static class Router
             });
         }
 
-        var total = alongCarriers + approaches;
-
         return new RouteResult(circuit.Id, RouteStatus.Found, network.Version)
         {
             Path = path,
-            AlongCarriers = alongCarriers + (total * options.LengthExtend),
+            AlongCarriers = alongCarriers,
+            AlongByClass = byClass,
             Approaches = approaches,
+            Slack = (alongCarriers + approaches) * options.LengthExtend,
             BuiltInLength = circuit.BuiltInLength,
             Connection = circuit.Connection,
             Taps = taps,
@@ -233,6 +238,19 @@ public static class Router
             if (path.Count == 0 || path[path.Count - 1] != step)
                 path.Add(step);
         }
+    }
+
+    /// <summary>Adds what one walk measured along each class of carrier to what the route has measured so far.</summary>
+    private static void Add(Dictionary<string, double> byClass, IReadOnlyDictionary<string, double> walked)
+    {
+        foreach (var part in walked)
+            Add(byClass, part.Key, part.Value);
+    }
+
+    private static void Add(Dictionary<string, double> byClass, string carrierClass, double length)
+    {
+        byClass.TryGetValue(carrierClass, out var known);
+        byClass[carrierClass] = known + length;
     }
 
     /// <summary>A circuit that stopped at one of its ends, named the way a leg that stopped is named.</summary>
@@ -416,6 +434,7 @@ public static class Router
         // route and has no business in the number we write into a parameter. Reporting the cost
         // would inflate every tray route by the preference and quietly disagree with a tape measure.
         var length = 0.0;
+        var byClass = new Dictionary<string, double>(StringComparer.OrdinalIgnoreCase);
 
         if (!finishSeeded)
         {
@@ -439,15 +458,21 @@ public static class Router
                 if (network.Node(step.Carrier) is not { } node)
                     continue;
 
+                var walked = Along(node, entered[step], node.Terminals[step.Terminal]);
+
                 carriers.Add(step.Carrier);
-                length += Along(node, entered[step], node.Terminals[step.Terminal]);
+                length += walked;
+                Add(byClass, node.Class, walked);
             }
         }
 
         if (network.Node(finishAt) is { } last)
         {
+            var walked = Along(last, finishEntry, exits[finishAt].At);
+
             carriers.Add(finishAt);
-            length += Along(last, finishEntry, exits[finishAt].At);
+            length += walked;
+            Add(byClass, last.Class, walked);
         }
 
         var seed = carriers.Count > 0 ? carriers[0] : finishAt;
@@ -457,6 +482,7 @@ public static class Router
         {
             Path = carriers,
             AlongCarriers = length,
+            AlongByClass = byClass,
             Approaches = approach + exits[finishAt].Cost,
         };
 

@@ -135,8 +135,49 @@ public sealed class RouteResult
     /// <summary>The carriers walked, in order. Empty unless <see cref="Status"/> is Found.</summary>
     public IReadOnlyList<CarrierId> Path { get; init; } = Array.Empty<CarrierId>();
 
-    /// <summary>Length along the carriers, in internal feet.</summary>
+    /// <summary>Length along the carriers, in internal feet, without the slack.</summary>
     public double AlongCarriers { get; init; }
+
+    /// <summary>
+    /// <see cref="AlongCarriers"/> divided by the class of carrier it was walked along - "tray", "conduit",
+    /// or whatever the project named - in internal feet.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <b>For the cable journal and for estimates, which order cable by where it is laid</b> - the owner's
+    /// request of 2026-09-16. Keyed by the class rather than split into two fixed numbers, because the
+    /// class is an open string: a project may name a third kind, and its length has to land somewhere a
+    /// reader can find rather than inside the conduits.
+    /// </para>
+    /// <para>
+    /// Summed as the walk goes, carrier by carrier, with the same measure the length is summed with - so the
+    /// parts add up to <see cref="AlongCarriers"/> by construction rather than by a subtraction somebody
+    /// could get wrong. A spur walked from an existing box counts under the class it was walked along, like
+    /// any other stretch of carrier. Keys compare without regard to case, as the conduit preference does.
+    /// </para>
+    /// </remarks>
+    public IReadOnlyDictionary<string, double> AlongByClass { get; init; } = NoClasses;
+
+    /// <summary>The slack added for terminations and sag, in internal feet: <c>LengthExtend</c> of the rest.</summary>
+    /// <remarks>
+    /// <para>
+    /// <b>A number of its own rather than folded into the others - the owner's decision of 2026-09-17.</b>
+    /// Until then it was added to <see cref="AlongCarriers"/>, although it was a fraction of the drops as
+    /// well, so a breakdown by carrier could not have added up without deciding where the slack lies. It
+    /// lies nowhere in particular; an estimate wants the length in trays as laid and the slack beside it.
+    /// </para>
+    /// <para>
+    /// The total is unchanged by the move: it was along + drops + slack before, and it is the same sum now.
+    /// </para>
+    /// </remarks>
+    public double Slack { get; init; }
+
+    /// <summary>The length walked along carriers of one class, zero when the route walked none.</summary>
+    public double AlongClass(string carrierClass) =>
+        AlongByClass.TryGetValue(carrierClass, out var length) ? length : 0;
+
+    private static readonly IReadOnlyDictionary<string, double> NoClasses =
+        new Dictionary<string, double>(StringComparer.OrdinalIgnoreCase);
 
     /// <summary>The drops from the structure to the two ends, in internal feet.</summary>
     /// <remarks>
@@ -188,5 +229,5 @@ public sealed class RouteResult
     /// <remarks>Empty unless <see cref="Status"/> is Found.</remarks>
     public IReadOnlyList<Tap> Taps { get; init; } = Array.Empty<Tap>();
 
-    public double TotalLength => AlongCarriers + Approaches;
+    public double TotalLength => AlongCarriers + Approaches + Slack;
 }
