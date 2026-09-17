@@ -1271,7 +1271,7 @@ public sealed class CablingApplyTests : IRevitTestSuite
                 + string.Join(", ", connectors.Select(one => one.Domain.ToString()).Distinct()));
 
             var socket = connectors.FirstOrDefault(one =>
-                one.ConnectorType != ConnectorType.Logical
+                IsPhysical(one)
                 && one.Domain == Domain.DomainCableTrayConduit
                 && !one.IsConnected);
 
@@ -2559,13 +2559,12 @@ public sealed class CablingApplyTests : IRevitTestSuite
             StringComparison.OrdinalIgnoreCase);
 
     /// <summary>
-    /// Indicators of ours in the host that are joined to something, or cannot say they are not - read
+    /// Indicators of ours in the host that are joined to something through a physical connector - read
     /// with this suite's own code, not the apply's.
     /// </summary>
     /// <remarks>
-    /// Each one is owed the warning the apply posts about a joined indicator. "Cannot say" counts, for the
-    /// reason <see cref="Joint"/> gives: the apply asks the same connector and would throw with it, and a
-    /// definition asked for too eagerly costs a skip rather than a wrong answer.
+    /// Each one is owed the warning the apply posts about a joined indicator, so the question has to be
+    /// exactly the apply's; <see cref="Joint"/> says why it is no broader.
     /// </remarks>
     private static List<long> JoinedIndicatorsOfOurs(Document document, FamilySymbol symbol) =>
         IndicatorsOf(document, symbol)
@@ -2604,7 +2603,7 @@ public sealed class CablingApplyTests : IRevitTestSuite
     {
         foreach (var connector in ConnectorsOf(element))
         {
-            if (connector.ConnectorType == ConnectorType.Logical || !connector.IsConnected)
+            if (!IsPhysical(connector) || !connector.IsConnected)
                 continue;
 
             foreach (Connector other in connector.AllRefs)
@@ -2624,10 +2623,13 @@ public sealed class CablingApplyTests : IRevitTestSuite
 
     /// <summary>What joins this element to anything, or nothing when it is joined to nothing.</summary>
     /// <remarks>
-    /// <b>At least as broad as the apply's own question</b>, which asks every connector whether it is
-    /// connected. A logical connector throws when asked; the apply would throw with it, and here it
-    /// counts as a joint that cannot be ruled out, so the case stands down instead of failing for a
-    /// reason of construction.
+    /// <b>The same question the apply asks, no broader</b>: only a physical connector can be joined, the
+    /// owner's decision of 2026-09-16. It was once broader on purpose - every connector asked, a refusal
+    /// counted as a joint that cannot be ruled out - while the apply itself asked every connector. Since
+    /// the apply asks only physical ones, broader here is wrong in the dangerous direction:
+    /// <see cref="JoinedIndicatorsOfOurs"/> would expect a warning for an indicator whose family carries
+    /// a surface or logical connector, and the apply, rightly, would post none. A physical connector
+    /// answering <c>IsConnected</c> is the premise the connector census asserts, so it is not caught.
     /// </remarks>
     private static string? Joint(FamilyInstance element)
     {
@@ -2635,15 +2637,8 @@ public sealed class CablingApplyTests : IRevitTestSuite
 
         foreach (var connector in ConnectorsOf(element))
         {
-            try
-            {
-                if (connector.IsConnected)
-                    return "reports its connector " + index + " connected";
-            }
-            catch (Autodesk.Revit.Exceptions.ApplicationException)
-            {
-                return "has a connector " + index + " that cannot say whether it is connected";
-            }
+            if (IsPhysical(connector) && connector.IsConnected)
+                return "reports its connector " + index + " connected";
 
             index++;
         }
@@ -2658,7 +2653,7 @@ public sealed class CablingApplyTests : IRevitTestSuite
 
         foreach (var connector in ConnectorsOf(element))
         {
-            if (connector.ConnectorType == ConnectorType.Logical || !connector.IsConnected)
+            if (!IsPhysical(connector) || !connector.IsConnected)
                 continue;
 
             foreach (Connector far in connector.AllRefs)
@@ -2670,6 +2665,14 @@ public sealed class CablingApplyTests : IRevitTestSuite
 
         return false;
     }
+
+    /// <summary>
+    /// <c>Connectors.IsPhysical</c>, again: spelled here so a case and the code it checks cannot agree
+    /// through the very rule under test. Not <c>!= Logical</c> - a surface connector (type 32) is not
+    /// logical either, and it refuses <c>IsConnected</c> the same way.
+    /// </summary>
+    private static bool IsPhysical(Connector connector) =>
+        connector is not null && (connector.ConnectorType & ConnectorType.Physical) != 0;
 
     private static List<Connector> ConnectorsOf(Element element)
     {
