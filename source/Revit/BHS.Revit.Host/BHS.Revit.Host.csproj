@@ -1,4 +1,4 @@
-﻿<Project Sdk="BHS.Revit.Sdk/1.5.8">
+﻿<Project Sdk="BHS.Revit.Sdk/1.6.2">
 
     <!--
       The Revit-side host: the entry point an edition derives from, and everything that has to
@@ -44,6 +44,16 @@
     <ItemGroup>
         <ProjectReference Include="..\BHS.Revit.Abstractions\BHS.Revit.Abstractions.csproj"/>
         <ProjectReference Include="..\BHS.Revit.Common\BHS.Revit.Common.csproj"/>
+    </ItemGroup>
+
+    <ItemGroup>
+        <!--
+          The dockable pane shell's theme and controls. Pinned at 4.0.3 in Directory.Packages.props,
+          and the pin is load-bearing - see there and CLAUDE.md. Two assemblies ship with every edition,
+          Wpf.Ui and Wpf.Ui.Abstractions, and neither loads until Revit first asks for a pane: only
+          PaneShell names a WPF-UI type. The probe's normal mode checks that it stays out.
+        -->
+        <PackageReference Include="WPF-UI"/>
     </ItemGroup>
 
 </Project>

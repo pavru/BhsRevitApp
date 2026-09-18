@@ -24,6 +24,7 @@ internal sealed class ProbeChannel : RevitSideChannel.RevitSideChannelBase
     private readonly ExternalEvent _exit;
     private readonly ExternalEvent _press;
     private readonly ExternalEvent _pressGate;
+    private readonly ExternalEvent _pressPane;
     private int _publishCount;
 
     public ProbeChannel(
@@ -32,10 +33,12 @@ internal sealed class ProbeChannel : RevitSideChannel.RevitSideChannelBase
         BHS.Revit.Abstractions.IUiFeatureServices services,
         ExternalEvent exit,
         ExternalEvent press,
-        ExternalEvent pressGate)
+        ExternalEvent pressGate,
+        ExternalEvent pressPane)
     {
         _press = press;
         _pressGate = pressGate;
+        _pressPane = pressPane;
         _settings = new ProbeSettings(layers, services);
         _services = services;
         _facts = facts;
@@ -196,6 +199,35 @@ internal sealed class ProbeChannel : RevitSideChannel.RevitSideChannelBase
                 // created, and events are created only during startup.
                 case "pressgate":
                     _pressGate.Raise();
+                    break;
+
+                // The dockable pane. Every question through the pump: DockablePane is Revit API, and the
+                // live element the pane inspects belongs to Revit's main thread - where the pump runs.
+                case "pane":
+                    foreach (var pair in OnPump("probe: pane facts", session => PaneProbe.Facts(session.Application)))
+                        response.Values.Add(pair.Key, pair.Value);
+
+                    response.Values.Add("pane:press", ProbeApplication.PanePressHandler?.LastOutcome ?? "(no handler)");
+                    break;
+
+                // Its button, on an event of its own. A toggle, so the sweep presses again only when the
+                // previous press demonstrably never ran.
+                case "presspane":
+                    _pressPane.Raise();
+                    break;
+
+                case "hidepane":
+                    response.Values.Add("pane:hide", OnPump("probe: hide the pane", session => PaneProbe.Hide(session.Application)));
+                    break;
+
+                // Changes a setting of the person's Revit, and puts it back: see PaneProbe. The sweep asks
+                // for it only with BHS_PROBE_SHOW_TAB=1, that is, with somebody at the screen.
+                case "switchtheme":
+                    response.Values.Add("pane:themeSwitch", OnPump("probe: switch the theme", session => PaneProbe.SwitchTheme(session.Application)));
+                    break;
+
+                case "restoretheme":
+                    response.Values.Add("pane:themeRestore", OnPump("probe: restore the theme", session => PaneProbe.RestoreTheme(session.Application)));
                     break;
 
                 // The other half of the add-in, which has no channel of its own on purpose: two
@@ -375,6 +407,14 @@ internal sealed class ProbeChannel : RevitSideChannel.RevitSideChannelBase
     /// cannot.
     /// </para>
     /// </remarks>
+    /// <summary>Runs <paramref name="work"/> on the pump and waits for it, as the other questions do.</summary>
+    /// <remarks>
+    /// Waited for on the channel's pool thread, which is never the API thread - so there is no deadlock to
+    /// fear, only a Revit that is busy, and the caller's own deadline covers that.
+    /// </remarks>
+    private T OnPump<T>(string name, Func<BHS.Revit.Abstractions.IRevitSession, T> work) =>
+        _services.Pump.PostAsync(name, work).GetAwaiter().GetResult();
+
     /// <summary>
     /// Opens a modal window on the API thread and reports what still worked from inside it.
     /// </summary>

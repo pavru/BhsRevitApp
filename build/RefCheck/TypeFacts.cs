@@ -55,6 +55,9 @@ internal sealed class TypeFacts : IDisposable
     public const string ExternalCommandAvailability = "Autodesk.Revit.UI.IExternalCommandAvailability";
     public const string TransactionAttribute = "Autodesk.Revit.Attributes.TransactionAttribute";
     public const string FeatureModule = "BHS.Revit.Abstractions.IFeatureModule";
+    public const string PaneContent = "BHS.Revit.Abstractions.IPaneContent";
+    public const string PaneEntryPoint = "BHS.Revit.Abstractions.PaneEntryPoint";
+    public const string Abstractions = "BHS.Revit.Abstractions";
 
     private readonly Dictionary<string, PEReader?> _byName = new(StringComparer.OrdinalIgnoreCase);
     private readonly Dictionary<string, string> _paths = new(StringComparer.OrdinalIgnoreCase);
@@ -112,6 +115,10 @@ internal sealed class TypeFacts : IDisposable
 
     /// <summary>Whether the target assembly declares this type itself.</summary>
     public bool Declares(string fullName) => Find(_target, fullName) is not null;
+
+    /// <summary>The definition of a type the target declares itself, or null.</summary>
+    public TypeDefinition? Definition(string fullName) =>
+        Find(_target, fullName) is { } handle ? _target.GetTypeDefinition(handle) : null;
 
     /// <summary>
     ///     Whether an assembly of this simple name is the target or one of the reference paths it was

@@ -1,4 +1,4 @@
-﻿<Project Sdk="BHS.Revit.Sdk/1.5.8">
+﻿<Project Sdk="BHS.Revit.Sdk/1.6.2">
 
     <!--
       Contracts the rest of the Revit side is written against. Multi-targets the Revit axis
@@ -10,6 +10,14 @@
         <RootNamespace>BHS.Revit.Abstractions</RootNamespace>
         <UseRevitApi>true</UseRevitApi>
         <UseRevitApiUi>true</UseRevitApiUi>
+        <!--
+          For FrameworkElement in IPaneContent, and nothing else. It costs nothing in the AppDomain:
+          PresentationFramework is in the GAC on net48 and in the Windows Desktop shared framework on
+          the .NET axis, and Revit's own interface is WPF, so it is loaded long before we ask. The base
+          SDK's check on projects that merely reference this one is silenced by our SDK for the revit
+          platform, so declarations and Entry assemblies do not need UseWPF for it.
+        -->
+        <UseWPF>true</UseWPF>
     </PropertyGroup>
 
     <ItemGroup>

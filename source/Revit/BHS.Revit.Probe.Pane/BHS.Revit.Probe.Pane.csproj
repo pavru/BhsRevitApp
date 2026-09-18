@@ -1,0 +1,36 @@
+<Project Sdk="BHS.Revit.Sdk/1.6.2">
+
+    <!--
+      The probe's dockable pane content: the class the probe's Entry manifest names as the pane's
+      content, resolved by the host - not by Revit - the first time Revit asks for the pane.
+
+      An assembly of its own, and not a class in BHS.Revit.Probe.Feature, for one reason. Revit
+      restores a pane's visibility from the previous session (DockablePaneProviderData.VisibleByDefault,
+      by its documentation), so a sweep that died with the pane shown starts the next Revit with the pane
+      shown - and the creator called, and this assembly loaded, before anybody pressed anything. With the
+      content in Probe.Feature that would turn "the feature assembly is not loaded while the ribbon
+      stands" red, and the red would read as a ribbon regression. Here it can only make the pane's own
+      laziness check skip, which it does out loud.
+
+      Loaded when Revit first asks for the pane, and not before: that is the normal-mode measurement.
+      Its counters live in BHS.Revit.Probe.Declaration, so that reading them loads nothing.
+
+      The probe's Entry project references this one so that it lands in the probe's folder - the shape
+      a real feature has, where the Entry project references the feature's assembly.
+    -->
+
+    <PropertyGroup>
+        <TargetFrameworks>net48-revit2024;net8.0-revit2025;net8.0-revit2026;net10.0-revit2027</TargetFrameworks>
+        <RootNamespace>BHS.Revit.Probe.Pane</RootNamespace>
+        <UseRevitApi>true</UseRevitApi>
+        <UseRevitApiUi>true</UseRevitApiUi>
+        <UseWPF>true</UseWPF>
+        <IsPackable>false</IsPackable>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="..\BHS.Revit.Abstractions\BHS.Revit.Abstractions.csproj"/>
+        <ProjectReference Include="..\BHS.Revit.Probe.Declaration\BHS.Revit.Probe.Declaration.csproj"/>
+    </ItemGroup>
+
+</Project>

@@ -47,6 +47,7 @@ public sealed class ProbeApplication : RevitAddInApplication
     private ExternalEvent? _exit;
     private ExternalEvent? _press;
     private ExternalEvent? _pressGate;
+    private ExternalEvent? _pressPane;
     private NamedPipeServer? _server;
 
     protected override Guid AddInId => Id;
@@ -100,6 +101,10 @@ public sealed class ProbeApplication : RevitAddInApplication
         FeatureLoadedAtRibbonBuild = IsLoaded(FeatureAssemblyName);
         AppDomain.CurrentDomain.AssemblyLoad += OnAssemblyLoad;
 
+        // Straight after the host registered the panes, for the same reason: whether registering the
+        // probe pane loaded its content assembly, or WPF-UI, is answered only this early.
+        PaneProbe.RecordStartup(application);
+
         // Built by the host before this runs, from the manifests beside the assembly - the probe's own
         // and, since the probe declares its gate feature, BHS.Revit.Probe.Entry.features.json. Nothing
         // here names a button; the project files do, and the SDK wrote them down.
@@ -125,7 +130,18 @@ public sealed class ProbeApplication : RevitAddInApplication
         // Kept, so the channel can say what the last press of it came to.
         GatePressHandler = new PressButtonHandler("BHS.Probe.Gate", PressButtonHandler.Gate);
         _pressGate = ExternalEvent.Create(GatePressHandler);
-        _channel = new ProbeChannel(facts, Layers, services, _exit, _press, _pressGate);
+
+        // The pane's button, on an event of its own like Gate's. A toggle: the sweep presses it again
+        // only when the previous press demonstrably did not run - RegisteredPane.Toggles says so.
+        PanePressHandler = new PressButtonHandler("BHS.Probe.PaneToggle", PressButtonHandler.PaneToggle);
+        _pressPane = ExternalEvent.Create(PanePressHandler);
+
+        _channel = new ProbeChannel(facts, Layers, services, _exit, _press, _pressGate, _pressPane);
+
+        // A theme switch an earlier run could not put back - Revit killed between the switch and the
+        // restore. Through the pump, because UIThemeManager is asked from an API context everywhere else.
+        services.Pump.Post("probe: restore a theme an interrupted run switched",
+            session => PaneProbe.RestoreInterrupted(session.Application));
 
         var server = PipeTransport.CreateServer(facts.PipeName);
         server.Error += (_, error) => ProbeLog.Write("server error", error.Error);
@@ -167,6 +183,10 @@ public sealed class ProbeApplication : RevitAddInApplication
 
     protected override void OnStopping()
     {
+        // First: the last chance inside this session to give the person their theme back.
+        if (_facts is not null)
+            PaneProbe.RestoreThemeOnShutdown(_facts.VersionNumber);
+
         try
         {
             AppDomain.CurrentDomain.AssemblyLoad -= OnAssemblyLoad;
@@ -482,6 +502,9 @@ public sealed class ProbeApplication : RevitAddInApplication
 
     /// <summary>The press handler for the Entry button, kept so the channel can report its last outcome.</summary>
     internal static PressButtonHandler? GatePressHandler;
+
+    /// <summary>The press handler for the pane's button, kept for the same reason.</summary>
+    internal static PressButtonHandler? PanePressHandler;
 
     /// <summary>The tab <see cref="ShowOurTab"/> brought forward, by Id; empty until it ran.</summary>
     internal static volatile string ActivatedTab = string.Empty;

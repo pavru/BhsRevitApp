@@ -41,6 +41,10 @@ public static class LoadedAssemblies
         "System.Numerics.Vectors",
         "System.Runtime.CompilerServices.Unsafe",
         "System.Threading.Tasks.Extensions",
+        // Frozen at AssemblyVersion 4.0.0.0 across 4.0.x, and we are the first on this machine to
+        // ship it - so another vendor's 4.0.x takes our identity on 2024 and 2025, and whoever loads
+        // first wins. Dockable panes load it; which copy they got belongs in the log.
+        "Wpf.Ui",
     };
 
     /// <summary>

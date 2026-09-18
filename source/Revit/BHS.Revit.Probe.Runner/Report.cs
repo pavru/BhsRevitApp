@@ -19,7 +19,7 @@ internal sealed class Report
     /// </param>
     public Report(bool tabShown)
     {
-        Minimum = MinimumPerRelease + (tabShown ? EntryChecksWithTabShown : 0);
+        Minimum = MinimumPerRelease + (tabShown ? EntryChecksWithTabShown + PaneChecksWithTabShown : 0);
     }
 
     /// <summary>The fewest checks a release is expected to contribute in the mode this sweep runs in.</summary>
@@ -133,8 +133,13 @@ internal sealed class Report
     ///
     /// Measured at 53 for a plain single-release sweep, so 45 leaves room for a mode that asks
     /// fewer questions without leaving room for a whole area to disappear.
+    ///
+    /// Raised by three with dockable panes: the probe pane is registered, nothing behind it loaded,
+    /// WPF-UI not loaded - asked in every mode, because none of them needs the pane shown. Two of the
+    /// three are skipped out loud when Revit restored the pane as shown from an earlier run, which a
+    /// plain sweep's margin above the floor absorbs; the base stays a floor, not a figure.
     /// </remarks>
-    public const int MinimumPerRelease = 45;
+    public const int MinimumPerRelease = 48;
 
     /// <summary>
     /// The checks the Entry experiment adds when the tab is shown and its button pressed.
@@ -154,6 +159,19 @@ internal sealed class Report
     /// </para>
     /// </remarks>
     public const int EntryChecksWithTabShown = 5;
+
+    /// <summary>
+    /// The checks the dockable pane adds when the tab is shown and its button pressed.
+    /// </summary>
+    /// <remarks>
+    /// Six: the button shows the pane; Revit asks for the content only then and its assembly loads then;
+    /// the content is created once, told the open model and reads it through the pump; the shell wears
+    /// WPF-UI's theme for Revit's with our accent over it; a live theme switch reaches it; the button
+    /// hides it again. The theme switch is the sixth by the owner's decision, and it is why this mode
+    /// changes - and puts back - a setting of the person's Revit. Only in this mode, for the reason
+    /// given for the Entry checks above.
+    /// </remarks>
+    public const int PaneChecksWithTabShown = 6;
 
     public void Summarise(int releases)
     {

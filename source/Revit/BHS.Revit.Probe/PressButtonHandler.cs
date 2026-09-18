@@ -50,11 +50,29 @@ internal sealed class PressButtonHandler : IExternalEventHandler
         "CustomCtrl_%" + ProbeApplication.OwnTabName + "%" + ProbeApplication.OwnPanelTitle + "%BHS.Probe.Gate",
     };
 
+    /// <summary>
+    /// The pane's toggle, which sits on the Entry button's panel: the same two spellings as Gate. Pressed
+    /// again only when the previous press did not reach PaneEntryPoint - a second press that did would
+    /// hide what the first showed.
+    /// </summary>
+    public static readonly string[] PaneToggle =
+    {
+        "CustomCtrl_%CustomCtrl_%" + ProbeApplication.OwnTabName + "%" + ProbeApplication.OwnPanelTitle + "%BHS.Probe.PaneToggle",
+        "CustomCtrl_%" + ProbeApplication.OwnTabName + "%" + ProbeApplication.OwnPanelTitle + "%BHS.Probe.PaneToggle",
+    };
+
     /// <summary>The outcome of a press for which no spelling named a command id.</summary>
     public const string Unmatched = "unmatched";
 
     /// <summary>The prefix of an outcome that reached <c>PostCommand</c>.</summary>
     public const string Posted = "posted ";
+
+    /// <summary>
+    /// The outcome of a press whose command id was found and which Revit refused to post. Measured on 2024
+    /// and 2025: "Revit does not support more than one command are posted", with the previous button's
+    /// command still queued. A busy Revit, not a missing button - so the runner presses again.
+    /// </summary>
+    public const string Refused = "refused ";
 
     private readonly string _button;
     private readonly string[] _candidates;
@@ -109,6 +127,8 @@ internal sealed class PressButtonHandler : IExternalEventHandler
             catch (Exception error)
             {
                 log.Warn(error, "could not press '{0}'", candidate);
+                Volatile.Write(ref _lastOutcome, Refused + error.GetType().Name);
+                return;
             }
         }
 

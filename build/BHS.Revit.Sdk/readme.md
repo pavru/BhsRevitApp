@@ -6,7 +6,7 @@ package references, `.addin` manifest generation, and publishing.
 
 ## Version Information
 
-**Version:** 1.3.1
+**Version:** 1.6.2
 
 Bump this on every change, and update the `Sdk="BHS.Revit.Sdk/<version>"` attribute in the
 projects under `source/` with it. The package carries an MSBuild task assembly, so any process
@@ -247,6 +247,46 @@ That is the point of the file rather than a list in code: naming a class with `t
 `Panel`, `Text` and `ClassName` are required (`RVTRIB010`), and two buttons cannot share a name (`RVTRIB011`).
 
 **The class named here must carry `[Transaction]`, and an availability class must live in the same assembly.** Neither can be checked without reading the built assembly as metadata, which this SDK deliberately does not do: on .NET Framework a metadata reader arrives with five polyfills, and putting those inside MSBuild is a collision waiting to happen. Those checks (`RVTRIB001`–`RVTRIB005`) belong to a tool run out of process — in this repository, `build/RefCheck`.
+
+#### Dockable panes (1.6.0)
+
+> **1.6.2 fixes the publish of anything in a subfolder of the output.** The copy into `Lib`, `Resources`
+> and `Content` joined the folder and `%(RecursiveDir)` without a separator, so a satellite assembly in
+> `ru-RU\` landed in a sibling folder named `Libru-RU` and was never found. Nothing had a subfolder
+> before the host's own `.resx` satellites; found by the first sweep that asked for a Russian string.
+> 1.6.1 is skipped: it was packed and unpacked into the cache before the fix had reached the file, and
+> a version once unpacked is never refreshed.
+
+`RevitDockablePane` items go into the same manifest, and a button can toggle one with `Pane`. The host registers each pane at startup from these strings and constructs the content class **itself**, by name, the first time the pane is on the screen - so the assembly that holds the content, and WPF-UI with it, stay unloaded until then. Revit asking for the element is not that moment: measured on 2026, it asks while it opens a model, with the pane never shown.
+
+```xml
+<ItemGroup>
+  <RevitDockablePane Include="MyVendor.Inspector">
+    <Id>...a GUID, fixed forever: Revit keeps the dock layout under it...</Id>
+    <Title>Inspector</Title>
+    <ContentAssembly>MyVendor.Feature</ContentAssembly>          <!-- simple name, beside the manifest -->
+    <ContentClassName>MyVendor.Feature.InspectorPane</ContentClassName>
+
+    <!-- Optional -->
+    <DockPosition>Right</DockPosition>             <!-- Left | Right | Top | Bottom; default Right -->
+    <MinimumWidth>320</MinimumWidth>
+    <MinimumHeight>200</MinimumHeight>
+    <EditorInteraction>Dismiss</EditorInteraction> <!-- Dismiss | KeepAlive; default Dismiss -->
+    <VisibleByDefault>false</VisibleByDefault>     <!-- default false -->
+  </RevitDockablePane>
+
+  <RevitRibbonButton Include="MyVendor.ShowInspector">
+    <Panel>My Panel</Panel>
+    <Text>Inspector</Text>
+    <ClassName>MyVendor.Entry.ShowInspectorEntryPoint</ClassName>  <!-- derives from PaneEntryPoint -->
+    <Pane>MyVendor.Inspector</Pane>
+  </RevitRibbonButton>
+</ItemGroup>
+```
+
+Checked here, from the items alone: `RVTPAN010` a required field is missing, `RVTPAN011` the id is not a GUID or is empty, `RVTPAN012` two panes share a name or an id, `RVTPAN013` a value outside its set, `RVTPAN014` a button's `Pane` names no pane in the project. Floating and Tabbed are refused on purpose - the first needs a rectangle, the second another pane's id. What needs the built assemblies - the content class exists, is public, constructible and an `IPaneContent`, the button's class is a `PaneEntryPoint`, no id is used twice across a folder - is RefCheck's `RVTPAN001`-`RVTPAN005`.
+
+The manifest's `version` is `2` from this release. A host from before reads the buttons and ignores the keys it does not know.
 
 ### 9. Publishing and Deployment
 

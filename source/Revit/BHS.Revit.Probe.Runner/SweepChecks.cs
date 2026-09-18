@@ -608,12 +608,13 @@ internal static class SweepChecks
         report.Check("the ribbon panel and button were built", answer.Values.ContainsKey("ribbon:availabilityCalls"));
 
         // From the files the SDK wrote beside the assemblies, not from a list in code: the probe's own
-        // two buttons and the one that arrived beside BHS.Revit.Probe.Entry. All three, or the count is
-        // wrong and something silently skipped one - and the likeliest to go missing is the third,
-        // which the host builds only because the probe's Modules list declares its feature, and which
-        // reaches the folder only as a related file of an assembly nothing in the probe names.
+        // two buttons and the two that arrived beside BHS.Revit.Probe.Entry - Gate and, since dockable
+        // panes, the pane's toggle. All four, or the count is wrong and something silently skipped one -
+        // and the likeliest to go missing are the Entry pair, which the host builds only because the
+        // probe's Modules list declares its feature, and which reach the folder only as a related file
+        // of an assembly nothing in the probe names.
         report.Check("and they came from the generated manifest, not from code",
-            answer.Values.GetValueOrDefault("ribbon:fromManifest") == "3");
+            answer.Values.GetValueOrDefault("ribbon:fromManifest") == "4");
 
 
         // Only when the tab has been brought forward on purpose. Revit asks an availability class
@@ -626,6 +627,9 @@ internal static class SweepChecks
         // rest of the session, including features nobody touched.
         report.Check("the feature assembly is not loaded while the ribbon stands",
             answer.Values.GetValueOrDefault("ribbon:featureLoaded") == "False");
+
+        // Before anything below can show the pane: its laziness can only be asked while nobody has.
+        await CheckPaneRegisteredAsync(client, report);
 
         if (!options.WithModel || Environment.GetEnvironmentVariable("BHS_PROBE_SHOW_TAB") != "1")
         {
@@ -739,6 +743,264 @@ internal static class SweepChecks
         // After Ping, so that Ping stays the control it was: its press is what proves the feature
         // assembly loads on a press, and a Gate press first would have loaded it on Ping's behalf.
         await CheckEntryCommandAsync(client, watcher, report);
+
+        // Last: showing a pane is interface work, and everything above wanted the ribbon undisturbed.
+        await CheckPaneShownAsync(client, report);
+    }
+
+    /// <summary>
+    /// The probe pane as it stands before anybody shows it: registered, and nothing behind it loaded.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <b>The same question the ribbon asks, one level over.</b> A pane is registered at startup from
+    /// strings, and its content assembly - and WPF-UI, which only the host's pane shell names - must stay
+    /// out of the AppDomain until Revit first asks for the element. On Revit 2024 an assembly that loads
+    /// holds its simple name for the rest of the session against every vendor, so a pane nobody opens
+    /// must cost nothing but its registration.
+    /// </para>
+    /// <para>
+    /// <b>Skipped out loud when Revit restored the pane as shown.</b> Revit keeps a pane's visibility from
+    /// the previous session - by the documentation of <c>VisibleByDefault</c>, not measured - so a sweep
+    /// that died with the pane open starts the next Revit with the content already asked for. That is
+    /// not laziness failing; it is a question nobody could ask this time, and saying so is the
+    /// difference between a skip and a pass. The extended mode hides the pane before it leaves.
+    /// </para>
+    /// <para>
+    /// Everything about when Revit calls setup, and on which thread, goes into notes: none of it is
+    /// known, and a check written before its answer agrees with whoever wrote it.
+    /// </para>
+    /// </remarks>
+    private static async Task CheckPaneRegisteredAsync(RevitSideChannel.RevitSideChannelClient client, Report report)
+    {
+        var pane = (await client.AskAsync(new AskRequest { Question = "pane" })).Values;
+
+        report.Check("the probe pane is registered with Revit",
+            pane.GetValueOrDefault("pane:registered") == "True" && pane.GetValueOrDefault("pane:inRegistry") == "True");
+
+        // Asked is not shown: measured on 2026, Revit calls the creator while it opens a model with the
+        // pane never shown. So the creator's calls are a note, and the check is about what matters - the
+        // content assembly and Wpf.Ui stay out until somebody sees the pane. Only a pane Revit restored as
+        // shown makes the question unaskable.
+        var restoredShown = pane.GetValueOrDefault("pane:shown") == "True";
+
+        if (restoredShown)
+        {
+            report.Note("pane laziness",
+                "not asked - Revit restored the pane as shown, most likely because an earlier run left it open; " +
+                "creator calls " + (pane.GetValueOrDefault("pane:creatorCalls") ?? "(missing)"));
+        }
+        else
+        {
+            report.Check("and its content is not loaded while nobody showed it",
+                pane.GetValueOrDefault("pane:contentLoaded") == "False");
+
+            report.Check("and WPF-UI is not loaded while no pane has been shown",
+                pane.GetValueOrDefault("pane:wpfUiLoaded") == "False");
+        }
+
+        foreach (var key in new[]
+                 {
+                     "pane:exists", "pane:shown", "pane:title", "pane:creatorCalls", "pane:setupCalls", "pane:setupDuringRegistration",
+                     "pane:setupThread", "pane:apiThread", "pane:contentLoadedAtStartup", "pane:wpfUiLoadedAtStartup",
+                     "pane:revitLanguage", "pane:shellCulture", "pane:shellNoDocument", "pane:revitTheme",
+                 })
+        {
+            report.Note(key, pane.GetValueOrDefault(key) ?? "(missing)");
+        }
+    }
+
+    /// <summary>
+    /// The probe pane shown by its button, its content created, its theme followed, and hidden again.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <b>Only with the tab shown and a person at the screen</b> - the caller returns early otherwise.
+    /// Showing a pane is interface work of the same kind as bringing a tab forward, which once provoked
+    /// "stop the current operation?" in the middle of a model load; and the theme switch changes a
+    /// setting of that person's Revit, and puts it back.
+    /// </para>
+    /// <para>
+    /// <b>A toggle is pressed again only when the previous press never ran.</b> A press is a request
+    /// Revit may drop - bought twice already - so pressing is repeated; but a second press that did run
+    /// hides what the first showed. <c>RegisteredPane.Toggles</c> counts presses that reached
+    /// <c>PaneEntryPoint</c>, and the press is repeated only while it has not moved.
+    /// </para>
+    /// <para>
+    /// Six checks, each something the pane design rests on and none measured before: the button shows the
+    /// pane; Revit asks for the content only then, and the assembly loads then; the content is created
+    /// once, told the open model, and reads it through the pump; the shell wears WPF-UI's theme for
+    /// Revit's theme and our accent over it; a live theme switch reaches it; and the button hides it again.
+    /// </para>
+    /// </remarks>
+    private static async Task CheckPaneShownAsync(RevitSideChannel.RevitSideChannelClient client, Report report)
+    {
+        // A pane Revit restored as shown - measured: a person's own session left it open - would be hidden
+        // by the first press, and every check below would read the wrong state. Hidden through the API
+        // first, and the one check a restored pane cannot answer becomes a note.
+        var before = Pane(client);
+        var restored = before.GetValueOrDefault("pane:shown") == "True"
+                       || before.GetValueOrDefault("pane:contentLoadedAtStartup") == "True";
+
+        if (before.GetValueOrDefault("pane:shown") == "True")
+            report.Note("pane restored as shown, hidden by the API first", HideByApi(client));
+
+        if (!await ToggleAsync(client, show: true))
+        {
+            report.Check("the pane button shows the probe pane", false);
+            NotePane(client, report);
+            return;
+        }
+
+        report.Check("the pane button shows the probe pane", true);
+
+        // Waited for: the content reads the title through the pump, which runs when Revit is idle.
+        var pane = new Dictionary<string, string>(StringComparer.Ordinal);
+
+        await WorkWatch.WaitForAsync(() =>
+        {
+            pane = Pane(client);
+            return pane.GetValueOrDefault("pane:readTitle") is { Length: > 0 } && pane.ContainsKey("pane:themeSourceLive");
+        }, 30_000);
+
+        if (restored)
+        {
+            report.Note("pane laziness at the press",
+                "not asked - Revit restored the pane as shown, so its content was built before any press");
+        }
+        else
+        {
+            report.Check("and only then does Revit ask for its content, loading the pane assembly",
+                int.TryParse(pane.GetValueOrDefault("pane:creatorCalls"), NumberStyles.Integer, CultureInfo.InvariantCulture, out var creatorCalls)
+                && creatorCalls >= 1
+                && pane.GetValueOrDefault("pane:contentLoaded") == "True"
+                && pane.GetValueOrDefault("pane:contentLoadedAtStartup") == "False");
+        }
+
+        var title = pane.GetValueOrDefault("pane:lastDocument") ?? string.Empty;
+
+        report.Check("the pane content is created once, told the open model, and reads it through the pump",
+            pane.GetValueOrDefault("pane:created") == "1"
+            && title.Length > 0
+            && pane.GetValueOrDefault("pane:readTitle") == title);
+
+        report.Check("the pane wears WPF-UI's theme for Revit's theme, with our accent over it", Themed(pane));
+
+        foreach (var key in new[]
+                 {
+                     "pane:creatorCalls", "pane:creatorThread", "pane:createThread", "pane:apiThread", "pane:documentChanges",
+                     "pane:themeSourceLive", "pane:accentPrimaryLive", "pane:backgroundLive", "pane:revitBackgroundLive",
+                     "pane:inspect",
+                 })
+        {
+            if (pane.TryGetValue(key, out var value))
+                report.Note(key, value);
+        }
+
+        await CheckThemeSwitchAsync(client, report, pane.GetValueOrDefault("pane:revitTheme") ?? string.Empty);
+
+        var hidden = await ToggleAsync(client, show: false);
+        report.Check("the pane button hides it again", hidden);
+
+        // Whatever the button did, the pane does not stay shown: Revit would restore it next time, and the
+        // next sweep's laziness question could not be asked.
+        if (!hidden)
+            report.Note("pane hidden by the API instead", HideByApi(client));
+    }
+
+    /// <summary>Switches Revit's theme, checks the live pane follows, and always puts it back.</summary>
+    private static async Task CheckThemeSwitchAsync(
+        RevitSideChannel.RevitSideChannelClient client,
+        Report report,
+        string before)
+    {
+        try
+        {
+            var outcome = client.Ask(new AskRequest { Question = "switchtheme" }).Values.GetValueOrDefault("pane:themeSwitch") ?? "(missing)";
+            report.Note("theme switch", outcome);
+
+            var pane = new Dictionary<string, string>(StringComparer.Ordinal);
+
+            var followed = await WorkWatch.WaitForAsync(() =>
+            {
+                pane = Pane(client);
+                var now = pane.GetValueOrDefault("pane:revitTheme") ?? string.Empty;
+                return now.Length > 0 && now != before && Themed(pane);
+            }, 30_000);
+
+            report.Check("switching Revit's theme re-themes the live pane", followed);
+            report.Note("theme after the switch",
+                (pane.GetValueOrDefault("pane:revitTheme") ?? "(missing)") + ", pane " +
+                (pane.GetValueOrDefault("pane:themeSourceLive") ?? "(missing)") + ", ThemeChanged seen " +
+                (pane.GetValueOrDefault("pane:themeChanges") ?? "(missing)") + " time(s), last " +
+                (pane.GetValueOrDefault("pane:lastThemeChange") ?? "(missing)"));
+        }
+        finally
+        {
+            // Always, and said out loud: this is a setting of the person's Revit.
+            var restored = client.Ask(new AskRequest { Question = "restoretheme" }).Values.GetValueOrDefault("pane:themeRestore") ?? "(missing)";
+            report.Note("theme restored", restored);
+        }
+    }
+
+    /// <summary>Whether the live pane's theme dictionary and accent match Revit's theme.</summary>
+    private static bool Themed(IReadOnlyDictionary<string, string> pane)
+    {
+        var dark = pane.GetValueOrDefault("pane:revitTheme") == "Dark";
+        var source = pane.GetValueOrDefault("pane:themeSourceLive") ?? string.Empty;
+
+        // The Designer's primary accent for each theme, as WPF prints a colour.
+        var accent = dark ? "#FF3DB8AC" : "#FF0E8C82";
+
+        return source.IndexOf(dark ? "Dark" : "Light", StringComparison.OrdinalIgnoreCase) >= 0
+               && string.Equals(pane.GetValueOrDefault("pane:accentPrimaryLive"), accent, StringComparison.OrdinalIgnoreCase);
+    }
+
+    /// <summary>
+    /// Presses the pane's button until the pane is in the wanted state, pressing again only while the
+    /// previous press has not reached <c>PaneEntryPoint</c>.
+    /// </summary>
+    private static async Task<bool> ToggleAsync(RevitSideChannel.RevitSideChannelClient client, bool show)
+    {
+        var wanted = show ? "True" : "False";
+        var start = Pane(client);
+
+        if (start.GetValueOrDefault("pane:shown") == wanted)
+            return true;
+
+        var toggles = start.GetValueOrDefault("pane:toggles") ?? "0";
+        var attempts = 0;
+
+        client.Ask(new AskRequest { Question = "presspane" });
+
+        return await WorkWatch.WaitForAsync(() =>
+        {
+            var now = Pane(client);
+
+            if (now.GetValueOrDefault("pane:shown") == wanted)
+                return true;
+
+            // Every few polls, and only while no press has run: a dropped request is repeated, a press
+            // that ran is never doubled.
+            if (++attempts % 5 == 0 && now.GetValueOrDefault("pane:toggles") == toggles)
+                client.Ask(new AskRequest { Question = "presspane" });
+
+            return false;
+        }, 60_000);
+    }
+
+    private static string HideByApi(RevitSideChannel.RevitSideChannelClient client) =>
+        client.Ask(new AskRequest { Question = "hidepane" }).Values.GetValueOrDefault("pane:hide") ?? "(missing)";
+
+    private static Dictionary<string, string> Pane(RevitSideChannel.RevitSideChannelClient client) =>
+        new(client.Ask(new AskRequest { Question = "pane" }).Values, StringComparer.Ordinal);
+
+    private static void NotePane(RevitSideChannel.RevitSideChannelClient client, Report report)
+    {
+        var pane = Pane(client);
+
+        foreach (var key in new[] { "pane:shown", "pane:toggles", "pane:press", "pane:creatorCalls", "pane:exists", "pane:title" })
+            report.Note(key, pane.GetValueOrDefault(key) ?? "(missing)");
     }
 
     /// <summary>

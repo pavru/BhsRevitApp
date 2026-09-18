@@ -209,6 +209,11 @@ internal static class Cli
         var entriesChecked = 0;
         var entryPoints = 0;
 
+        // And the dockable panes the same manifests declare: the host, not Revit, resolves a pane's
+        // content class by name, so a name that points nowhere is found by whoever opens the pane.
+        var panes = new List<PaneFinding>();
+        var panesChecked = 0;
+
         foreach (var directory in inputs.Where(Directory.Exists))
         {
             ribbon.AddRange(RibbonCheck.Check(directory, out var tally));
@@ -223,6 +228,9 @@ internal static class Cli
             entries.AddRange(EntryCheck.Check(directory, out var entrySeen, out var classes));
             entriesChecked += entrySeen;
             entryPoints += classes;
+
+            panes.AddRange(PaneCheck.Check(directory, out var paneSeen));
+            panesChecked += paneSeen;
         }
 
         // Counted before the application findings join the same list: the pass line for the Entry
@@ -268,9 +276,10 @@ internal static class Cli
         }
 
         Report(baseline, findings, unwatched, denied, twoCopies, ribbon, ribbonTally, declarations, declarationsChecked,
-            entries, entriesChecked, entryPoints, entryAssemblyFindings, applications, checkedFiles);
+            entries, entriesChecked, entryPoints, entryAssemblyFindings, panes, panesChecked, applications, checkedFiles);
 
         return findings.Count == 0 && denied.Count == 0 && ribbon.Count == 0 && declarations.Count == 0 && entries.Count == 0
+               && panes.Count == 0
             ? 0
             : 1;
     }
@@ -289,6 +298,8 @@ internal static class Cli
         int entriesChecked,
         int entryPoints,
         int entryAssemblyFindings,
+        List<PaneFinding> panes,
+        int panesChecked,
         List<ApplicationResult> applications,
         int checkedFiles)
     {
@@ -302,6 +313,9 @@ internal static class Cli
 
         foreach (var finding in declarations)
             Console.Error.WriteLine($"{finding.File} : error {finding.Code}: {finding.Message}");
+
+        foreach (var finding in panes)
+            Console.Error.WriteLine($"{finding.Manifest} : error {finding.Code}: {finding.Message}");
 
         // Every pass below is said out loud, and only where there was something to check. Each of
         // these guards something that shows no symptom when it goes wrong - an assembly that stays
@@ -337,6 +351,14 @@ internal static class Cli
             Console.WriteLine(
                 $"RefCheck: Application add-in {application.Name} has {application.Manifests} ribbon manifest(s) " +
                 $"beside it and {declared}.");
+        }
+
+        if (panesChecked > 0 && panes.Count == 0)
+        {
+            Console.WriteLine(
+                $"RefCheck: {panesChecked} dockable pane(s) checked - each content class public, constructible, an " +
+                "IPaneContent and outside Entry and declaration assemblies, each pane button a PaneEntryPoint, " +
+                "no pane id used twice (RVTPAN001-005).");
         }
 
         if (declarationsChecked > 0 && declarations.Count == 0)
@@ -389,7 +411,8 @@ internal static class Cli
                 "and re-collect the baselines.");
         }
 
-        if (findings.Count == 0 && denied.Count == 0 && ribbon.Count == 0 && declarations.Count == 0 && entries.Count == 0)
+        if (findings.Count == 0 && denied.Count == 0 && ribbon.Count == 0 && declarations.Count == 0 && entries.Count == 0
+            && panes.Count == 0)
         {
             Console.WriteLine(
                 $"RefCheck: {checkedFiles} assemblies checked against Revit {baseline.RevitVersion}, no conflicts.");

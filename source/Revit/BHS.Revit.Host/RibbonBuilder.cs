@@ -55,6 +55,7 @@ internal static class RibbonBuilder
 
     /// <summary>Builds every button declared beside <paramref name="directory"/>.</summary>
     /// <param name="application">What <c>OnStartup</c> was given; valid for this call only.</param>
+    /// <param name="manifests">Every manifest beside the edition, read once by the caller and shared with the panes.</param>
     /// <param name="directory">The edition's own folder.</param>
     /// <param name="editionTab">
     /// The tab a feature's Entry buttons go on. Null or empty means Revit's own Add-Ins tab - the same
@@ -67,14 +68,12 @@ internal static class RibbonBuilder
     /// <returns>How many buttons were added.</returns>
     public static int Build(
         UIControlledApplication application,
+        IReadOnlyList<FeatureManifest> manifests,
         string directory,
         string? editionTab,
         ICollection<string> declaredAssemblies,
         ILog log)
     {
-        var manifests = FeatureManifest.ReadDirectory(directory,
-            (file, error) => log.Error(error, "ribbon manifest {0} could not be read", file));
-
         if (manifests.Count == 0)
             return 0;
 

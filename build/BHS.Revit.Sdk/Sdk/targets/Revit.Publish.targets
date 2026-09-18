@@ -51,9 +51,9 @@
         <MakeDir Directories="$(_PublishResourcesPath)" Condition="'@(RevitAddInResources)' != ''" />
         <MakeDir Directories="$(_PublishContentPath)" Condition="'@(RevitAddInContent)' != ''" />
 
-        <Copy SourceFiles="@(_LibFilesToPublish)" DestinationFolder="$(_PublishLibPath)%(RecursiveDir)" />
-        <Copy SourceFiles="@(RevitAddInResources)" DestinationFolder="$(_PublishResourcesPath)%(RecursiveDir)" Condition="'@(RevitAddInResources)' != ''"/>
-        <Copy SourceFiles="@(RevitAddInContent)" DestinationFolder="$(_PublishContentPath)%(RecursiveDir)" Condition="'@(RevitAddInContent)' != ''"/>
+        <Copy SourceFiles="@(_LibFilesToPublish)" DestinationFolder="$(_PublishLibPath)\%(RecursiveDir)" />
+        <Copy SourceFiles="@(RevitAddInResources)" DestinationFolder="$(_PublishResourcesPath)\%(RecursiveDir)" Condition="'@(RevitAddInResources)' != ''"/>
+        <Copy SourceFiles="@(RevitAddInContent)" DestinationFolder="$(_PublishContentPath)\%(RecursiveDir)" Condition="'@(RevitAddInContent)' != ''"/>
 
         <Copy SourceFiles="%(RevitAddIn.AddInOutputPath)" DestinationFolder="$(_AddInDestinationFolder)" />
         
@@ -105,9 +105,9 @@
         <MakeDir Directories="$(_PublishResourcesPath)" Condition="'@(RevitAddInResources)' != ''" />
         <MakeDir Directories="$(_PublishContentPath)" Condition="'@(RevitAddInContent)' != ''" />
 
-        <Copy SourceFiles="@(_LibFilesToPublish)" DestinationFolder="$(_PublishLibPath)%(RecursiveDir)" />
-        <Copy SourceFiles="@(RevitAddInResources)" DestinationFolder="$(_PublishResourcesPath)%(RecursiveDir)" Condition="'@(RevitAddInResources)' != ''"/>
-        <Copy SourceFiles="@(RevitAddInContent)" DestinationFolder="$(_PublishContentPath)%(RecursiveDir)" Condition="'@(RevitAddInContent)' != ''"/>
+        <Copy SourceFiles="@(_LibFilesToPublish)" DestinationFolder="$(_PublishLibPath)\%(RecursiveDir)" />
+        <Copy SourceFiles="@(RevitAddInResources)" DestinationFolder="$(_PublishResourcesPath)\%(RecursiveDir)" Condition="'@(RevitAddInResources)' != ''"/>
+        <Copy SourceFiles="@(RevitAddInContent)" DestinationFolder="$(_PublishContentPath)\%(RecursiveDir)" Condition="'@(RevitAddInContent)' != ''"/>
 
         <Message Importance="High" Text="Revit-Common package published to: $(_AddInFolder)" />
     </Target>
