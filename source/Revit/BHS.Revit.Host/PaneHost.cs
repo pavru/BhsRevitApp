@@ -1,6 +1,7 @@
 using System.IO;
 using System.Reflection;
 using Autodesk.Revit.UI;
+using Autodesk.Revit.UI.Events;
 using BHS.Logging;
 using BHS.Revit.Abstractions;
 
@@ -94,6 +95,7 @@ internal sealed class PaneHost
         if (_slots.Count > 0 && !_attached)
         {
             _documents.Attach(application);
+            application.DockableFrameVisibilityChanged += OnFrameVisibilityChanged;
             _attached = true;
         }
 
@@ -121,6 +123,7 @@ internal sealed class PaneHost
         {
             try
             {
+                application.DockableFrameVisibilityChanged -= OnFrameVisibilityChanged;
                 _documents.Detach(application);
             }
             catch (Exception error)
@@ -133,6 +136,23 @@ internal sealed class PaneHost
 
         foreach (var slot in _slots)
             slot.Dispose();
+    }
+
+    // The only signal that a pane is on the screen: the creator is called for panes nobody showed.
+    private void OnFrameVisibilityChanged(object? sender, DockableFrameVisibilityChangedEventArgs args)
+    {
+        try
+        {
+            foreach (var slot in _slots)
+            {
+                if (args.PaneId == new DockablePaneId(slot.Registered.Id))
+                    slot.OnFrameShown(args.DockableFrameShown);
+            }
+        }
+        catch (Exception error)
+        {
+            _log.Error(error, "panes: a frame-visibility change could not be followed");
+        }
     }
 
     private void Register(

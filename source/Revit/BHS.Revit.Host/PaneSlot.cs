@@ -16,9 +16,10 @@ namespace BHS.Revit.Host;
 /// <para>
 /// <b>Strings until the pane is seen.</b> Setup is answered from the manifest alone, and
 /// <see cref="CreateFrameworkElement"/> hands back a plain WPF slot. The content class is resolved, and its
-/// assembly loaded, only when a slot first becomes visible - so a pane nobody opens costs nothing but its
+/// assembly loaded, only when Revit first shows the pane - so a pane nobody opens costs nothing but its
 /// registration, and <c>Wpf.Ui</c> stays out of the AppDomain with it. Asking for the element is not
-/// showing it: measured on 2026, Revit asks while it opens a model, with the pane never shown.
+/// showing it: measured on 2026, Revit asks while it opens a model, with the pane never shown - and the
+/// slot is visible to WPF at once all the same. Shown is what Revit's frame-visibility event says.
 /// </para>
 /// <para>
 /// <b>Revit may ask for the element more than once, and gets one shell every time.</b> The creator's
@@ -42,6 +43,8 @@ internal sealed class PaneSlot : IDockablePaneProvider, IFrameworkElementCreator
     private readonly ILog _log;
 
     private PaneShell? _shell;
+    private Decorator? _latest;
+    private bool _seen;
     private IPaneContent? _content;
 
     public PaneSlot(
@@ -109,27 +112,38 @@ internal sealed class PaneSlot : IDockablePaneProvider, IFrameworkElementCreator
         var call = Registered.RecordCreate();
         _log.Info("panes: Revit asked for {0} (call {1}, thread {2})", _pane.Name, call, Environment.CurrentManagedThreadId);
 
-        // Plain WPF only, until the pane is on the screen. Measured on 2026: Revit asks for the element
+        // Plain WPF only, until Revit says the pane is shown. Measured on 2026: Revit asks for the element
         // while it opens a model, with the pane never shown, so building here would load the content
-        // assembly and Wpf.Ui for every session - the laziness the manifest exists for. The shell is
-        // built the first time a slot becomes visible, and moved into whichever slot that is.
+        // assembly and Wpf.Ui for every session - the laziness the manifest exists for. WPF's own
+        // IsVisible is no signal either: measured on the same run, the slot turned visible at once, with
+        // IsShown false. What decides is DockableFrameVisibilityChanged, which the host forwards to
+        // OnFrameShown; whichever of the two comes second places the shell.
         var slot = new Decorator();
+        _latest = slot;
 
-        if (_shell is not null)
+        if (_shell is not null || _seen)
             Place(slot);
-        else
-            slot.IsVisibleChanged += OnSlotVisible;
 
         return slot;
     }
 
-    private void OnSlotVisible(object sender, DependencyPropertyChangedEventArgs e)
+    /// <summary>Revit showed or hid this pane's frame. On the API thread.</summary>
+    /// <remarks>
+    /// By its documentation the event is raised when the frame "is just about to be shown or hidden", and
+    /// it is not known yet whether the creator has run by then - so the shown state is remembered, and the
+    /// creator places the shell itself when it comes second.
+    /// </remarks>
+    public void OnFrameShown(bool shown)
     {
-        if (e.NewValue is not true || sender is not Decorator slot)
+        _log.Info("panes: {0} {1}", _pane.Name, shown ? "shown" : "hidden");
+
+        if (!shown || _seen)
             return;
 
-        slot.IsVisibleChanged -= OnSlotVisible;
-        Place(slot);
+        _seen = true;
+
+        if (_latest is { } slot)
+            Place(slot);
     }
 
     private void Place(Decorator slot)
