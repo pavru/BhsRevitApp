@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  The sentences the dockable pane shell says itself - the same three for every pane, written once.
+  Neutral is English; ru-RU is the one overlay the host ships. Chosen at run time by Revit's language
+  (ControlledApplication.Language through RevitLanguage), never by Windows'.
+  Wording from the Designer.
+-->
+<root>
+  <resheader name="resmimetype">
+    <value>text/microsoft-resx</value>
+  </resheader>
+  <resheader name="version">
+    <value>2.0</value>
+  </resheader>
+  <resheader name="reader">
+    <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <resheader name="writer">
+    <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <data name="Pane.NoDocument" xml:space="preserve">
+    <value>Open a project to use this panel.</value>
+  </data>
+  <data name="Pane.WaitingForRevit" xml:space="preserve">
+    <value>Waiting for Revit to finish its current operation…</value>
+  </data>
+  <data name="Pane.Failed" xml:space="preserve">
+    <value>The panel stopped: {0}. Details are in the log file: {1}</value>
+    <comment>{0} is the reason, {1} the path of the log file.</comment>
+  </data>
+</root>

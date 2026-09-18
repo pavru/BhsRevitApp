@@ -1,4 +1,4 @@
-<Project Sdk="BHS.Revit.Sdk/1.5.8">
+<Project Sdk="BHS.Revit.Sdk/1.6.0">
 
     <!--
       The probe's Entry assembly: the shape a feature's buttons take, measured before a feature
@@ -14,9 +14,10 @@
           until a press;
         - the command finds the host that declared its feature, not the one its assembly belongs to.
 
-      WHAT IT MAY CONTAIN, AND NOTHING ELSE: empty sealed entry points and the button below. No logic,
+      WHAT IT MAY CONTAIN, AND NOTHING ELSE: empty sealed entry points and the items below - two buttons
+      and, since dockable panes, a pane that the second of them toggles. No logic,
       no fields, no methods, no static constructors - the counters the sweep reads live in GateRule and
-      in the probe, and RVTENT001 checks the built assembly for it.
+      in the probe and PaneFacts, and RVTENT001 checks the built assembly for it.
 
       NO TAB. The probe plays the edition, and names the tab through RibbonTab - the same "BHS" its own
       manifest gives Ping - so this button lands on Ping's panel. If the host ignored the edition's tab,
@@ -49,6 +50,10 @@
         <!-- For GateCommand, named in a type argument. Whether that stays unloaded until the press is
              the measurement. -->
         <ProjectReference Include="..\BHS.Revit.Probe.Feature\BHS.Revit.Probe.Feature.csproj"/>
+        <!-- For nothing it names: the pane's content assembly has to land in the probe's folder, beside
+             the manifest that names it, and a real feature's Entry project references the feature for
+             the same reason. The host loads it by name, the first time Revit asks for the pane. -->
+        <ProjectReference Include="..\BHS.Revit.Probe.Pane\BHS.Revit.Probe.Pane.csproj"/>
     </ItemGroup>
 
     <ItemGroup>
@@ -61,6 +66,25 @@
             <AvailabilityClassName>BHS.Revit.Probe.Entry.GateAvailability</AvailabilityClassName>
             <ToolTip>Runs a feature command through an Entry assembly, whose host is found by the feature it declares.</ToolTip>
             <Order>3</Order>
+        </RevitRibbonButton>
+
+        <!-- The pane and its button: the shape a feature's pane takes, measured before one rests on it.
+             The id is fixed forever, like every pane's - Revit keeps the dock layout under it. Order 4,
+             after Gate, so Ping stays the first button on the panel for the icon measurement. -->
+        <RevitDockablePane Include="BHS.Probe.Pane">
+            <Id>3c0f5d7e-9a41-4f6b-8e2d-6b1a7c94e5f3</Id>
+            <Title>BHS Probe pane</Title>
+            <ContentAssembly>BHS.Revit.Probe.Pane</ContentAssembly>
+            <ContentClassName>BHS.Revit.Probe.Pane.ProbePane</ContentClassName>
+        </RevitDockablePane>
+
+        <RevitRibbonButton Include="BHS.Probe.PaneToggle">
+            <Panel>Probe feature</Panel>
+            <Text>Pane</Text>
+            <ClassName>BHS.Revit.Probe.Entry.ProbePaneEntryPoint</ClassName>
+            <Pane>BHS.Probe.Pane</Pane>
+            <ToolTip>Shows or hides the probe's dockable pane, whose content the host loads on first show.</ToolTip>
+            <Order>4</Order>
         </RevitRibbonButton>
     </ItemGroup>
 

@@ -110,6 +110,9 @@
          that the arrangement a feature's buttons rest on is measured before a feature depends on it. -->
     <Project Path="source/Revit/BHS.Revit.Probe.Declaration/BHS.Revit.Probe.Declaration.csproj" Type="C#" />
     <Project Path="source/Revit/BHS.Revit.Probe.Entry/BHS.Revit.Probe.Entry.csproj" Type="C#" />
+    <!-- The probe's dockable pane content: its own assembly, so that a pane Revit restored as shown
+         can only make the pane's laziness check skip, never the ribbon's. -->
+    <Project Path="source/Revit/BHS.Revit.Probe.Pane/BHS.Revit.Probe.Pane.csproj" Type="C#" />
     <Project Path="source/Revit/BHS.Revit.Probe.Runner/BHS.Revit.Probe.Runner.csproj" Type="C#" />
   </Folder>
 

@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Russian overlay of Shell.resx. Every key here must exist there; wording from the Designer. -->
+<root>
+  <resheader name="resmimetype">
+    <value>text/microsoft-resx</value>
+  </resheader>
+  <resheader name="version">
+    <value>2.0</value>
+  </resheader>
+  <resheader name="reader">
+    <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <resheader name="writer">
+    <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <data name="Pane.NoDocument" xml:space="preserve">
+    <value>Откройте проект, чтобы работать с этой панелью.</value>
+  </data>
+  <data name="Pane.WaitingForRevit" xml:space="preserve">
+    <value>Ожидание Revit: он завершает текущую операцию…</value>
+  </data>
+  <data name="Pane.Failed" xml:space="preserve">
+    <value>Панель остановлена: {0}. Подробности записаны в файл: {1}</value>
+  </data>
+</root>

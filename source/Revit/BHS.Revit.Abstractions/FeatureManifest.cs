@@ -1,4 +1,5 @@
-﻿using BHS.Settings;
+﻿using System.IO;
+using BHS.Settings;
 
 namespace BHS.Revit.Abstractions;
 
@@ -50,6 +51,59 @@ public sealed class FeatureButton
 
     /// <summary>Where it sits on its panel. Absent sorts first, then by this, then by name.</summary>
     public int Order { get; set; }
+
+    /// <summary>
+    /// The name of the pane in the same manifest this button shows and hides, or empty for an ordinary
+    /// command. Its class then derives from <c>PaneEntryPoint</c>; RefCheck's <c>RVTPAN004</c> checks both
+    /// directions.
+    /// </summary>
+    public string Pane { get; set; } = string.Empty;
+}
+
+/// <summary>One dockable pane, as a feature declared it and the SDK wrote it down.</summary>
+/// <remarks>
+/// <para>
+/// Strings for the reason every field of <see cref="FeatureButton"/> is a string: the content class
+/// lives in the feature's assembly, which must stay unloaded until Revit first asks for the pane, and a
+/// <c>Type</c> here would have loaded it to put it here.
+/// </para>
+/// <para>
+/// The defaults are the ones CLAUDE.md gives, each with its reason there: hidden until asked, docked on
+/// the right at the width of Revit's Properties palette, and dismissed inside Revit's editors.
+/// </para>
+/// </remarks>
+public sealed class FeaturePane
+{
+    public const int DefaultMinimumWidth = 320;
+
+    public string Name { get; set; } = string.Empty;
+
+    /// <summary>The GUID Revit keeps the pane's place in the dock layout under. Fixed forever.</summary>
+    public Guid Id { get; set; }
+
+    /// <summary>The caption. Fixed at registration on 2024-2026: <c>DockablePane.SetTitle</c> exists only on 2027.</summary>
+    public string Title { get; set; } = string.Empty;
+
+    /// <summary>The simple name of the assembly the content class lives in, beside the manifest.</summary>
+    public string ContentAssembly { get; set; } = string.Empty;
+
+    /// <summary>The full name of an <c>IPaneContent</c> with a public parameterless constructor.</summary>
+    public string ContentClassName { get; set; } = string.Empty;
+
+    /// <summary>Left, Right, Top or Bottom. Empty means Right.</summary>
+    public string DockPosition { get; set; } = string.Empty;
+
+    /// <summary>In device-independent units; zero means <see cref="DefaultMinimumWidth"/>.</summary>
+    public int MinimumWidth { get; set; }
+
+    /// <summary>In device-independent units; zero means Revit's own default.</summary>
+    public int MinimumHeight { get; set; }
+
+    /// <summary>Dismiss or KeepAlive. Empty means Dismiss.</summary>
+    public string EditorInteraction { get; set; } = string.Empty;
+
+    /// <summary>Whether Revit shows it the very first time it is registered. False unless the manifest says true.</summary>
+    public bool VisibleByDefault { get; set; }
 }
 
 /// <summary>
@@ -89,11 +143,12 @@ public sealed class FeatureManifest
     /// </summary>
     public const string DeclarationSuffix = ".Declaration";
 
-    private FeatureManifest(string path, string assembly, IReadOnlyList<FeatureButton> buttons)
+    private FeatureManifest(string path, string assembly, IReadOnlyList<FeatureButton> buttons, IReadOnlyList<FeaturePane> panes)
     {
         Path = path;
         Assembly = assembly;
         Buttons = buttons;
+        Panes = panes;
         EntryFeature = EntryFeatureOf(path);
     }
 
@@ -103,6 +158,9 @@ public sealed class FeatureManifest
     public string Assembly { get; }
 
     public IReadOnlyList<FeatureButton> Buttons { get; }
+
+    /// <summary>The dockable panes, from manifest version 2. Empty in a version 1 manifest.</summary>
+    public IReadOnlyList<FeaturePane> Panes { get; }
 
     /// <summary>
     /// The <c>P</c> of <c>&lt;P&gt;.Entry.features.json</c>, or empty when this is not a feature's
@@ -181,10 +239,49 @@ public sealed class FeatureManifest
                 ClassName = Text(values, prefix + "className"),
                 AvailabilityClassName = Text(values, prefix + "availabilityClassName"),
                 Order = Number(values, prefix + "order"),
+                Pane = Text(values, prefix + "pane"),
             });
         }
 
-        return new FeatureManifest(path, Text(values, "assembly"), buttons);
+        return new FeatureManifest(path, Text(values, "assembly"), buttons, ReadPanes(values));
+    }
+
+    /// <summary>The panes, walked the same way as the buttons.</summary>
+    /// <remarks>
+    /// An id that does not parse is kept as <see cref="Guid.Empty"/> rather than failing the whole
+    /// manifest: the SDK refuses to write one (<c>RVTPAN011</c>), so this is a hand-edited file, and the
+    /// buttons beside it should still stand. The host refuses that pane by name.
+    /// </remarks>
+    private static IReadOnlyList<FeaturePane> ReadPanes(IDictionary<string, string?> values)
+    {
+        var panes = new List<FeaturePane>();
+
+        for (var index = 0; ; index++)
+        {
+            var prefix = "panes:" + index.ToString(System.Globalization.CultureInfo.InvariantCulture) + ":";
+            var name = Text(values, prefix + "name");
+
+            if (name.Length == 0)
+                break;
+
+            Guid.TryParse(Text(values, prefix + "id"), out var id);
+
+            panes.Add(new FeaturePane
+            {
+                Name = name,
+                Id = id,
+                Title = Text(values, prefix + "title"),
+                ContentAssembly = Text(values, prefix + "contentAssembly"),
+                ContentClassName = Text(values, prefix + "contentClassName"),
+                DockPosition = Text(values, prefix + "dockPosition"),
+                MinimumWidth = Number(values, prefix + "minimumWidth"),
+                MinimumHeight = Number(values, prefix + "minimumHeight"),
+                EditorInteraction = Text(values, prefix + "editorInteraction"),
+                VisibleByDefault = string.Equals(Text(values, prefix + "visibleByDefault"), "true", StringComparison.OrdinalIgnoreCase),
+            });
+        }
+
+        return panes;
     }
 
     private static string Text(IDictionary<string, string?> values, string key) =>

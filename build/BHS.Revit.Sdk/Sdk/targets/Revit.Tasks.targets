@@ -94,6 +94,9 @@
       behind them. It goes next to the assembly, which for a published add-in means Lib - the same
       place the settings files land, and for the same reason: what belongs beside the assembly is
       found relative to the assembly, and everything a level up exists without being read.
+
+      From 1.6.0 it also carries RevitDockablePane items: panes the host registers at startup and
+      whose content class it constructs by name, the first time Revit asks for the pane.
     -->
     <!--
       Written straight into the output directory, and without Inputs/Outputs.
@@ -107,10 +110,11 @@
     -->
     <Target Name="_GenerateFeatureManifest"
             AfterTargets="CopyFilesToOutputDirectory"
-            Condition="'$(RevitVersion)' != '' And '@(RevitRibbonButton)' != ''">
+            Condition="'$(RevitVersion)' != '' And ('@(RevitRibbonButton)' != '' Or '@(RevitDockablePane)' != '')">
 
         <GenerateFeatureManifest
             Buttons="@(RevitRibbonButton)"
+            Panes="@(RevitDockablePane)"
             OutputPath="$(TargetDir)$(AssemblyName)$(RevitFeatureManifestExtension)"
             AssemblyFileName="$(TargetFileName)"/>
 

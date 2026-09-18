@@ -33,8 +33,8 @@ internal readonly record struct EntryFinding(string Code, string File, string Me
 /// </para>
 /// <list type="bullet">
 /// <item><description><b>RVTENT001</b> - an Entry assembly declares something other than empty public
-/// sealed classes deriving directly from <c>CommandEntryPoint`2</c> or <c>AvailabilityEntryPoint`1</c>
-/// in <c>BHS.Revit.Abstractions</c> - an interface on one included.</description></item>
+/// sealed classes deriving directly from <c>CommandEntryPoint`2</c>, <c>AvailabilityEntryPoint`1</c> or
+/// <c>PaneEntryPoint</c> in <c>BHS.Revit.Abstractions</c> - an interface on one included.</description></item>
 /// <item><description><b>RVTENT002</b> - an entry point in <c>&lt;P&gt;.Entry</c> names a rule that is not
 /// in <c>&lt;P&gt;.Declaration</c> or in <c>BHS.Revit.Abstractions</c>, or a feature that is not a module
 /// in <c>&lt;P&gt;.Declaration</c>, or has a type nested in either argument that would load another
@@ -54,6 +54,13 @@ internal static class EntryCheck
     private const string CommandBase = "BHS.Revit.Abstractions.CommandEntryPoint`2";
     private const string AvailabilityBase = "BHS.Revit.Abstractions.AvailabilityEntryPoint`1";
 
+    /// <summary>
+    /// The base of a button that toggles a dockable pane. Non-generic: the class's own name is what finds
+    /// its pane, so it has no type argument that could load anything, and <c>RVTENT002</c> has nothing to
+    /// ask of it. Whether a pane button's class derives from it is <c>RVTPAN004</c>'s question.
+    /// </summary>
+    private const string PaneBase = TypeFacts.PaneEntryPoint;
+
     private const string EmbeddedAttribute = "Microsoft.CodeAnalysis.EmbeddedAttribute";
     private const string CompilerGeneratedAttribute = "System.Runtime.CompilerServices.CompilerGeneratedAttribute";
 
@@ -66,6 +73,7 @@ internal static class EntryCheck
         None,
         Command,
         Availability,
+        Pane,
     }
 
     /// <summary>Checks every Entry assembly in a directory. Never throws.</summary>
@@ -236,7 +244,7 @@ internal static class EntryCheck
                 problems.Add(baseType is null
                     ? "it has no base class"
                     : $"it derives from {baseType.Display} in '{Or(baseType.Assembly, "no assembly")}', not directly " +
-                      $"from CommandEntryPoint<TFeature, TCommand> or AvailabilityEntryPoint<TRule> in '{Abstractions}'");
+                      $"from CommandEntryPoint<TFeature, TCommand>, AvailabilityEntryPoint<TRule> or PaneEntryPoint in '{Abstractions}'");
             }
 
             Members(facts, type, baseType, problems);
@@ -245,15 +253,15 @@ internal static class EntryCheck
             {
                 findings.Add(new EntryFinding(ShapeCode, file,
                     $"'{name}' is not an empty entry point: {string.Join("; ", problems)}. An Entry assembly " +
-                    "holds only empty public sealed classes deriving from CommandEntryPoint<TFeature, TCommand> " +
-                    "or AvailabilityEntryPoint<TRule>, because every class in it is a name Revit resolves and " +
+                    "holds only empty public sealed classes deriving from CommandEntryPoint<TFeature, TCommand>, " +
+                    "AvailabilityEntryPoint<TRule> or PaneEntryPoint, because every class in it is a name Revit resolves and " +
                     "nothing else: Revit loads this assembly as soon as the tab holding its buttons is shown, so " +
                     "whatever runs here runs outside the feature's laziness, and it keeps one availability " +
                     "instance per class for the whole session, so whatever is kept here goes stale. Put the " +
                     "work in the feature's command and the decision in a rule in its declaration."));
             }
 
-            if (baseType is not null && kind != Kind.None)
+            if (baseType is not null && kind is Kind.Command or Kind.Availability)
                 Arguments(file, name, kind, baseType, facts, findings);
         }
 
@@ -338,6 +346,7 @@ internal static class EntryCheck
         {
             CommandBase when baseType.Arguments.Count == 2 => Kind.Command,
             AvailabilityBase when baseType.Arguments.Count == 1 => Kind.Availability,
+            PaneBase when baseType.Arguments.Count == 0 => Kind.Pane,
             _ => Kind.None
         };
     }

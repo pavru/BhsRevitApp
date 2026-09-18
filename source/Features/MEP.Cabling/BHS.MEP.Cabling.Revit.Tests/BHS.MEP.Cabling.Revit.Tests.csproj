@@ -1,4 +1,4 @@
-﻿<Project Sdk="BHS.Revit.Sdk/1.5.8">
+﻿<Project Sdk="BHS.Revit.Sdk/1.6.0">
 
     <!--
       What the reading half of the cabling feature asserts about itself, run inside a real Revit

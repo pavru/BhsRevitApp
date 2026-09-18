@@ -29,8 +29,8 @@ namespace BHS.Revit.Host;
 /// </para>
 /// <para>
 /// This form adds exactly three things to <see cref="RevitAddInHost"/>: the pump, the external event
-/// behind it, and a <c>UIControlledApplication</c> to build a ribbon with. Everything else is in the
-/// base, and is what the <see cref="RevitDbAddInApplication"/> form gets too.
+/// behind it, and a <c>UIControlledApplication</c> to build a ribbon and register dockable panes with.
+/// Everything else is in the base, and is what the <see cref="RevitDbAddInApplication"/> form gets too.
 /// </para>
 /// <para>
 /// <b>Nothing here blocks.</b> No waiting on a channel, no <c>Task.Run(...).Wait(n)</c>, no walking
@@ -46,6 +46,8 @@ public abstract class RevitAddInApplication : RevitAddInHost, IExternalApplicati
     private ExternalEvent? _pumpEvent;
     private UIControlledApplication? _application;
     private bool _watchingDialogs;
+    private PaneHost? _panes;
+    private EventHandler<ThemeChangedEventArgs>? _themeChanged;
 
     public Result OnStartup(UIControlledApplication application)
     {
@@ -63,10 +65,17 @@ public abstract class RevitAddInApplication : RevitAddInHost, IExternalApplicati
         {
             _application = application;
 
+            // Before Start, so that anything the edition builds in its hooks already speaks Revit's
+            // language. Revit's, not Windows': see RevitLanguage.
+            FollowLanguage(application);
+
             Start(application.ControlledApplication);
 
             // After Start, because Start is what decides whether diagnostics were asked for at all.
             WatchDialogs(application);
+
+            // After Start, because Start built the ribbon and the panes that follow the theme.
+            WatchTheme(application);
         }
         catch (Exception error)
         {
@@ -89,6 +98,14 @@ public abstract class RevitAddInApplication : RevitAddInHost, IExternalApplicati
                 application.DialogBoxShowing -= OnDialogBoxShowing;
                 _watchingDialogs = false;
             }
+
+            if (_themeChanged is not null)
+            {
+                application.ThemeChanged -= _themeChanged;
+                _themeChanged = null;
+            }
+
+            _panes?.Stop(application);
 
             Stop(application.ControlledApplication);
         }
@@ -133,6 +150,58 @@ public abstract class RevitAddInApplication : RevitAddInHost, IExternalApplicati
         catch (Exception error)
         {
             Log.For(Name).Warn(error, "diagnostics: dialogs could not be watched");
+        }
+    }
+
+    /// <summary>
+    /// Keeps the ribbon's placeholder icons and every live pane on Revit's theme.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <b>Subscribed here, in <c>OnStartup</c>, and that is a correction.</b> It used to wait for
+    /// <c>ApplicationInitialized</c>, with a comment saying the event lives on <c>UIApplication</c>. It
+    /// lives on <c>UIControlledApplication</c> too, on all four releases - checked against the metadata
+    /// of 2024 and 2027 - so the window between startup and initialisation, in which a theme change
+    /// would have been lost, is closed.
+    /// </para>
+    /// <para>
+    /// Not filtered by <c>ThemeChangedType</c>: the ribbon's repaint is a handful of property sets, and
+    /// the panes compare what they drew with <c>UIThemeManager.CurrentTheme</c> and do nothing when it
+    /// did not change - so a canvas theme change costs next to nothing, and a misreported type could not
+    /// cost a missed repaint. What the type reports is logged; whether the event fires at all when Revit
+    /// follows the system theme is not measured.
+    /// </para>
+    /// </remarks>
+    private void WatchTheme(UIControlledApplication application)
+    {
+        try
+        {
+            _themeChanged = (_, args) =>
+            {
+                var log = Log.For(Name);
+                log.Debug("Revit's theme changed ({0})", args.ThemeChangedType);
+
+                RibbonBuilder.FollowTheme(log);
+                _panes?.FollowTheme();
+            };
+
+            application.ThemeChanged += _themeChanged;
+        }
+        catch (Exception error)
+        {
+            Log.For(Name).Warn(error, "theme changes could not be watched");
+        }
+    }
+
+    private static void FollowLanguage(UIControlledApplication application)
+    {
+        try
+        {
+            RevitLanguage.Current = RevitLanguage.Culture(application.ControlledApplication.Language);
+        }
+        catch (Exception)
+        {
+            // The neutral strings, then. Not worth a failed start, and the log is not up yet.
         }
     }
 
@@ -230,12 +299,42 @@ public abstract class RevitAddInApplication : RevitAddInHost, IExternalApplicati
                     declared.Add(name);
             }
 
-            RibbonButtons = RibbonBuilder.Build(_application!, directory!, RibbonTab, declared, services.Log);
+            // Read once, for the ribbon and the panes both: a manifest that cannot be read is reported
+            // once, and the two can never disagree about what the folder held.
+            var manifests = FeatureManifest.ReadDirectory(directory!,
+                (file, error) => services.Log.Error(error, "ribbon manifest {0} could not be read", file));
+
+            RibbonButtons = RibbonBuilder.Build(_application!, manifests, directory!, RibbonTab, declared, services.Log);
+
+            RegisterPanes(services, manifests, directory!);
         }
         catch (Exception error)
         {
             // A ribbon that could not be built is a missing button, never a failed start.
             services.Log.Error(error, "the ribbon could not be built");
+        }
+    }
+
+    /// <summary>How many dockable panes the manifests contributed and Revit accepted.</summary>
+    protected int PaneCount => _panes?.Count ?? 0;
+
+    /// <summary>Registers the dockable panes the same manifests declare. Never throws.</summary>
+    /// <remarks>
+    /// After the ribbon, so that a pane's button exists before its pane - not that Revit minds the
+    /// order, but a log read top to bottom then tells the story in the order a person meets it. The
+    /// anchor for loading content later is the edition's own assembly, for the load context it is in.
+    /// </remarks>
+    private void RegisterPanes(IFeatureServices services, IReadOnlyList<FeatureManifest> manifests, string directory)
+    {
+        try
+        {
+            var panes = new PaneHost(services.Log);
+            panes.Register(_application!, manifests, directory, Modules, services.Ui(), AddInId, GetType().Assembly);
+            _panes = panes;
+        }
+        catch (Exception error)
+        {
+            services.Log.Error(error, "the dockable panes could not be registered");
         }
     }
 
@@ -267,11 +366,7 @@ public abstract class RevitAddInApplication : RevitAddInHost, IExternalApplicati
         var session = new UIApplication((Application)sender);
         _pump?.Attach(_pumpEvent!);
 
-        // Only now, because the event lives on UIApplication and this is the first legitimate one a
-        // host is handed. Present on all four releases - checked against the metadata. Autodesk's
-        // icon guidelines ask for a light and a dark variant of every icon, and choosing once at
-        // startup would leave every button wrong for anyone who switches theme by daylight.
-        session.ThemeChanged += (_, _) => RibbonBuilder.FollowTheme(Log.For(Name));
+        // The theme is no longer watched from here: see WatchTheme, subscribed in OnStartup.
 
         Log.For(Name).Info("session is ready, document {0}",
             session.ActiveUIDocument?.Document?.Title ?? "(none)");

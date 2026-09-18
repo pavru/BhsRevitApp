@@ -50,6 +50,17 @@ internal sealed class PressButtonHandler : IExternalEventHandler
         "CustomCtrl_%" + ProbeApplication.OwnTabName + "%" + ProbeApplication.OwnPanelTitle + "%BHS.Probe.Gate",
     };
 
+    /// <summary>
+    /// The pane's toggle, which sits on the Entry button's panel: the same two spellings as Gate. Pressed
+    /// again only when the previous press did not reach PaneEntryPoint - a second press that did would
+    /// hide what the first showed.
+    /// </summary>
+    public static readonly string[] PaneToggle =
+    {
+        "CustomCtrl_%CustomCtrl_%" + ProbeApplication.OwnTabName + "%" + ProbeApplication.OwnPanelTitle + "%BHS.Probe.PaneToggle",
+        "CustomCtrl_%" + ProbeApplication.OwnTabName + "%" + ProbeApplication.OwnPanelTitle + "%BHS.Probe.PaneToggle",
+    };
+
     /// <summary>The outcome of a press for which no spelling named a command id.</summary>
     public const string Unmatched = "unmatched";
 
