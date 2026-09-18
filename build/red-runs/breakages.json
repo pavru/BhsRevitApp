@@ -540,11 +540,13 @@
     "file": "source/Features/MEP.Cabling/BHS.MEP.Cabling.Revit/CablingApply.cs",
     "anchor": "                if (level.Elevation <= z)",
     "replacement": "                if (level.Elevation >= z)",
-    "reddens": "level of indicator <id>, against the nearest level at or below the box planned at <point> ft",
-    "rationale": "The apply's stated modelling rule - an indicator belongs to the storey it hangs over - inverted by one character, so every indicator goes to the highest level at or above instead. The point Revit keeps does not move, which is the whole reason nothing caught this until the level was asserted: every placement check in the suite reads where the instance stands and none read which storey it was put on.",
-    "leftUnproven": "the references on the carriers, the count of elements told their circuits, and the link clause, all of which stand after it",
-    "risk": "A model with one level, or with every recommended box under its lowest, answers the same both ways. The case notes the number of levels and how many distinct storeys the recommended boxes fall on, so a green says which it was.",
-    "alsoReddens": [],
+    "reddens": "indicators of ours within the box radius of the box planned at <point> ft: expected 1, got 0 - and NOT the level clause, which the run showed stands behind it",
+    "rationale": "The apply's stated modelling rule - an indicator belongs to the storey it hangs over - inverted by one character, so every indicator goes to the highest level at or above instead. The prediction written here beforehand was that the point Revit keeps would not move, so that only the new level clause could see it. The run said otherwise: the level is not a label on a placement, it carries the placement, and an instance given another storey is somewhere else. So the red lands on the count of indicators within the box radius, three assertions earlier, and the level clause is never reached. What that buys is worth more than the breakage was: a storey chosen wrongly cannot hide behind a point that is right, because there is no such state.",
+    "leftUnproven": "the level clause itself, and everything after the radius count: the entry counts, the references on the indicators and on the carriers, the count of elements told their circuits, and the link clause",
+    "risk": "Measured on the linked set: two levels in the model, and every recommended box falls on one storey - so the clause distinguishes nothing there even when it holds, and the case notes both numbers. On a model with one level the breakage would change nothing at all.",
+    "alsoReddens": [
+      "applying the same run again places nothing and removes nothing (expected 0 placed anew, got 10: the second apply cannot match by place what the first one put on another storey)"
+    ],
     "hides": []
   },
   {
