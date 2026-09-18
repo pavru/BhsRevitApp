@@ -743,7 +743,7 @@ public sealed class CablingApplyTests : IRevitTestSuite
             "placement: levels in the model, and distinct storeys the recommended boxes fall on",
             Storeys(document).Count.ToString(CultureInfo.InvariantCulture) + ", "
             + wanted.Select(box => Storey(document, Planned(box).Z)?.Id.Value).Distinct().Count().ToString(CultureInfo.InvariantCulture));
-        Note(context, "placement: references that fell in a link", outcome.InLinks);
+        Note(context, "placement: elements in a link that could not be told their circuits", outcome.InLinks);
         context.Note(
             "placement: farthest planned box from its nearest instance of the indicator type, internal feet",
             Farthest(wanted, after));
@@ -856,15 +856,25 @@ public sealed class CablingApplyTests : IRevitTestSuite
             outcome.CarriersMarked,
             "host elements the plan puts a circuit through, against carriers and boxes the apply reports telling their circuits");
 
-        // Presence only, not the count: what InLinks counts is an open question for the owner. A
-        // reference falls in a link from a found route's path or from a used box standing in one.
-        var throughALink = plan.Run.Results.Any(route => route.Path.Any(carrier => carrier.IsLinked))
-                           || plan.Run.Boxes.Any(box => box.Existing is { } existing && existing.Id.IsLinked);
+        // The count, since the owner's decision of 2026-09-18 that it counts elements, each once - the
+        // same thing CarriersMarked counts in the host. Taken from the plan as the host count above is:
+        // a linked element comes from a found route's path or is a used box standing in a link. The
+        // pairs are noted beside it, because a count of pairs is exactly what this replaced, and a model
+        // where every linked element carries one circuit cannot tell the two apart.
+        var linked = plan.Run.Results
+            .Where(route => route.Status == RouteStatus.Found)
+            .SelectMany(route => route.Path.Where(carrier => carrier.IsLinked).Select(carrier => (Element: carrier, Circuit: route.Circuit)))
+            .Concat(plan.Run.Boxes
+                .Where(box => box.Existing is { } existing && existing.Id.IsLinked)
+                .SelectMany(box => box.Circuits.Select(circuit => (Element: box.Existing!.Id, Circuit: circuit))))
+            .ToList();
 
-        Expect.That(
-            (outcome.InLinks > 0) == throughALink,
-            "the apply reports " + outcome.InLinks + " reference(s) that fell in a link, while the found routes and used boxes "
-            + (throughALink ? "do" : "do not") + " pass through one");
+        Note(context, "placement: element-circuit pairs the plan puts in a link", linked.Count);
+
+        Expect.Same(
+            linked.Select(one => one.Element).Distinct().Count(),
+            outcome.InLinks,
+            "elements in a link the plan puts a circuit through, against elements the apply reports it could not tell their circuits");
     });
 
     /// <summary>
@@ -2687,7 +2697,7 @@ public sealed class CablingApplyTests : IRevitTestSuite
         ("boxes already in the model used", outcome?.ExistingUsed ?? 0),
         ("carriers and boxes told their circuits", outcome?.CarriersMarked ?? 0),
         ("circuits told their length, connection and route", outcome?.CircuitsWritten ?? 0),
-        ("references that fell in a link", outcome?.InLinks ?? 0),
+        ("elements in a link that could not be told their circuits", outcome?.InLinks ?? 0),
         ("warnings posted", outcome?.Warnings ?? 0),
     };
 

@@ -615,5 +615,18 @@
     "hides": [
       "a junction box joined to nothing is posted as a warning against it: every assertion of its own"
     ]
+  },
+  {
+    "run": 16,
+    "case": "every box the plan recommends gets one indicator of ours at its place, and nothing else is placed",
+    "file": "source/Features/MEP.Cabling/BHS.MEP.Cabling.Revit/CablingApply.cs",
+    "anchor": "        var inLinks = new HashSet<CarrierId>();",
+    "replacement": "        var inLinks = new List<CarrierId>();",
+    "reddens": "elements in a link the plan puts a circuit through, against elements the apply reports it could not tell their circuits",
+    "rationale": "The owner's decision of 2026-09-18 that InLinks counts elements, each once, taken back to exactly what it replaced: a list instead of a set, so every element-circuit pair counts. The last canonical record noted 22 such pairs on the linked set, against 13 carriers the set keeps in a link at all, so the two readings cannot agree there.",
+    "leftUnproven": "nothing behind it: this is the last assertion of the case",
+    "risk": "A model where every linked element carries one circuit answers the same both ways; the case notes the pairs beside the count, so a green would say so.",
+    "alsoReddens": [],
+    "hides": []
   }
 ]
