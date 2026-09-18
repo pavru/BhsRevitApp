@@ -39,6 +39,7 @@ internal sealed class PaneHost
     private readonly ILog _log;
     private readonly PaneDocuments _documents;
     private bool _attached;
+    private UIControlledApplication? _idleSource;
 
     public PaneHost(ILog log)
     {
@@ -96,6 +97,8 @@ internal sealed class PaneHost
         {
             _documents.Attach(application);
             application.DockableFrameVisibilityChanged += OnFrameVisibilityChanged;
+            application.Idling += OnIdling;
+            _idleSource = application;
             _attached = true;
         }
 
@@ -124,6 +127,7 @@ internal sealed class PaneHost
             try
             {
                 application.DockableFrameVisibilityChanged -= OnFrameVisibilityChanged;
+                StopWatchingIdle();
                 _documents.Detach(application);
             }
             catch (Exception error)
@@ -136,6 +140,61 @@ internal sealed class PaneHost
 
         foreach (var slot in _slots)
             slot.Dispose();
+    }
+
+    // A pane Revit restores as shown from the last session raises no frame-visibility event - measured on
+    // 2026: the pane stood open and empty, the creator called once and the content never built. So until
+    // every pane's creator has run and its state is known, each idle asks Revit whether the pane is shown.
+    // GetDockablePane throws for a pane "not created yet", which is an answer too: ask again next time.
+    private void OnIdling(object? sender, Autodesk.Revit.UI.Events.IdlingEventArgs args)
+    {
+        if (sender is not UIApplication application)
+            return;
+
+        var pending = false;
+
+        foreach (var slot in _slots)
+        {
+            if (slot.Seen)
+                continue;
+
+            bool shown;
+
+            try
+            {
+                shown = application.GetDockablePane(new DockablePaneId(slot.Registered.Id)).IsShown();
+            }
+            catch (Exception)
+            {
+                pending = true;
+                continue;
+            }
+
+            if (shown)
+                slot.OnFrameShown(true);
+            else if (slot.Registered.CreatorCalls == 0)
+                pending = true;
+        }
+
+        if (!pending)
+            StopWatchingIdle();
+    }
+
+    private void StopWatchingIdle()
+    {
+        if (_idleSource is not { } source)
+            return;
+
+        _idleSource = null;
+
+        try
+        {
+            source.Idling -= OnIdling;
+        }
+        catch (Exception error)
+        {
+            _log.Warn(error, "panes: could not stop watching Revit's idle");
+        }
     }
 
     // The only signal that a pane is on the screen: the creator is called for panes nobody showed.

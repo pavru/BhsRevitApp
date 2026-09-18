@@ -245,6 +245,9 @@ internal sealed class PaneSlot : IDockablePaneProvider, IFrameworkElementCreator
         });
     }
 
+    /// <summary>Whether Revit has shown this pane's frame at least once this session.</summary>
+    public bool Seen => _seen;
+
     /// <summary>At shutdown: lets the content let go of what it holds.</summary>
     public void Dispose()
     {

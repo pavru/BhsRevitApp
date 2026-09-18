@@ -67,6 +67,13 @@ internal sealed class PressButtonHandler : IExternalEventHandler
     /// <summary>The prefix of an outcome that reached <c>PostCommand</c>.</summary>
     public const string Posted = "posted ";
 
+    /// <summary>
+    /// The outcome of a press whose command id was found and which Revit refused to post. Measured on 2024
+    /// and 2025: "Revit does not support more than one command are posted", with the previous button's
+    /// command still queued. A busy Revit, not a missing button - so the runner presses again.
+    /// </summary>
+    public const string Refused = "refused ";
+
     private readonly string _button;
     private readonly string[] _candidates;
 
@@ -120,6 +127,8 @@ internal sealed class PressButtonHandler : IExternalEventHandler
             catch (Exception error)
             {
                 log.Warn(error, "could not press '{0}'", candidate);
+                Volatile.Write(ref _lastOutcome, Refused + error.GetType().Name);
+                return;
             }
         }
 

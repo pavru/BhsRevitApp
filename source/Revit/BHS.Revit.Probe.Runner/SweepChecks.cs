@@ -835,6 +835,16 @@ internal static class SweepChecks
     /// </remarks>
     private static async Task CheckPaneShownAsync(RevitSideChannel.RevitSideChannelClient client, Report report)
     {
+        // A pane Revit restored as shown - measured: a person's own session left it open - would be hidden
+        // by the first press, and every check below would read the wrong state. Hidden through the API
+        // first, and the one check a restored pane cannot answer becomes a note.
+        var before = Pane(client);
+        var restored = before.GetValueOrDefault("pane:shown") == "True"
+                       || before.GetValueOrDefault("pane:contentLoadedAtStartup") == "True";
+
+        if (before.GetValueOrDefault("pane:shown") == "True")
+            report.Note("pane restored as shown, hidden by the API first", HideByApi(client));
+
         if (!await ToggleAsync(client, show: true))
         {
             report.Check("the pane button shows the probe pane", false);
@@ -853,11 +863,19 @@ internal static class SweepChecks
             return pane.GetValueOrDefault("pane:readTitle") is { Length: > 0 } && pane.ContainsKey("pane:themeSourceLive");
         }, 30_000);
 
-        report.Check("and only then does Revit ask for its content, loading the pane assembly",
-            int.TryParse(pane.GetValueOrDefault("pane:creatorCalls"), NumberStyles.Integer, CultureInfo.InvariantCulture, out var creatorCalls)
-            && creatorCalls >= 1
-            && pane.GetValueOrDefault("pane:contentLoaded") == "True"
-            && pane.GetValueOrDefault("pane:contentLoadedAtStartup") == "False");
+        if (restored)
+        {
+            report.Note("pane laziness at the press",
+                "not asked - Revit restored the pane as shown, so its content was built before any press");
+        }
+        else
+        {
+            report.Check("and only then does Revit ask for its content, loading the pane assembly",
+                int.TryParse(pane.GetValueOrDefault("pane:creatorCalls"), NumberStyles.Integer, CultureInfo.InvariantCulture, out var creatorCalls)
+                && creatorCalls >= 1
+                && pane.GetValueOrDefault("pane:contentLoaded") == "True"
+                && pane.GetValueOrDefault("pane:contentLoadedAtStartup") == "False");
+        }
 
         var title = pane.GetValueOrDefault("pane:lastDocument") ?? string.Empty;
 
