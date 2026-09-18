@@ -296,7 +296,7 @@ public sealed class RouteCablingCommand : IFeatureCommand
         // The difference between "nothing to write" and "nowhere to write it", which is the whole
         // of what somebody needs to know when their trays live in a link.
         if (outcome.InLinks > 0)
-            said.Add(outcome.InLinks + " reference(s) had nowhere to go: those carriers are in a link");
+            said.Add(outcome.InLinks + " carrier(s) or box(es) could not be told their circuits: they are in a link");
 
         // "Posted", not "into the model": Revit shows a warning posted this way and does not store it
         // once it is resolved, by its own reference, so the model is not where anybody will find it.

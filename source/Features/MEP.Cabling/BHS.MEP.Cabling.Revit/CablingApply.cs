@@ -114,9 +114,17 @@ public sealed class ApplyOutcome
 
     /// <summary>Elements that could not be written to because they live in a link.</summary>
     /// <remarks>
+    /// <para>
     /// Said out loud rather than skipped in silence. A model whose trays are all in a link gets no
     /// references written at all, and the difference between "nothing to write" and "nowhere to
     /// write it" is the whole of what somebody needs to know.
+    /// </para>
+    /// <para>
+    /// <b>Elements, each once - the owner's decision of 2026-09-18.</b> Until then this summary said
+    /// elements and the code counted element-circuit pairs, so a linked tray three circuits ran through
+    /// counted three, while <see cref="CarriersMarked"/> beside it on the screen counted a host tray the
+    /// same way once. Two neighbouring numbers now count the same thing.
+    /// </para>
     /// </remarks>
     public int InLinks { get; internal set; }
 
@@ -606,13 +614,13 @@ public static class CablingApply
     private static void References(Document host, RouteRun run, ApplyOutcome outcome)
     {
         var byElement = new Dictionary<long, List<CarrierId>>();
-        var inLinks = 0;
+        var inLinks = new HashSet<CarrierId>();
 
         void Note(CarrierId element, CarrierId circuit)
         {
             if (element.IsLinked)
             {
-                inLinks++;
+                inLinks.Add(element);
                 return;
             }
 
@@ -652,7 +660,7 @@ public static class CablingApply
                 outcome.CarriersMarked++;
         }
 
-        outcome.InLinks = inLinks;
+        outcome.InLinks = inLinks.Count;
     }
 
     /// <summary>
