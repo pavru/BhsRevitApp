@@ -778,22 +778,22 @@ internal static class SweepChecks
         report.Check("the probe pane is registered with Revit",
             pane.GetValueOrDefault("pane:registered") == "True" && pane.GetValueOrDefault("pane:inRegistry") == "True");
 
-        var restoredShown = pane.GetValueOrDefault("pane:shown") == "True"
-                            || (pane.GetValueOrDefault("pane:creatorCalls") is { } calls && calls != "0");
+        // Asked is not shown: measured on 2026, Revit calls the creator while it opens a model with the
+        // pane never shown. So the creator's calls are a note, and the check is about what matters - the
+        // content assembly and Wpf.Ui stay out until somebody sees the pane. Only a pane Revit restored as
+        // shown makes the question unaskable.
+        var restoredShown = pane.GetValueOrDefault("pane:shown") == "True";
 
         if (restoredShown)
         {
             report.Note("pane laziness",
-                "not asked - Revit already asked for the pane's content before anybody pressed its button, " +
-                "most likely because an earlier run left it shown and Revit restored it; creator calls " +
-                (pane.GetValueOrDefault("pane:creatorCalls") ?? "(missing)") + ", shown " +
-                (pane.GetValueOrDefault("pane:shown") ?? "(missing)"));
+                "not asked - Revit restored the pane as shown, most likely because an earlier run left it open; " +
+                "creator calls " + (pane.GetValueOrDefault("pane:creatorCalls") ?? "(missing)"));
         }
         else
         {
-            report.Check("and Revit has not asked for its content while nobody showed it",
-                pane.GetValueOrDefault("pane:creatorCalls") == "0"
-                && pane.GetValueOrDefault("pane:contentLoaded") == "False");
+            report.Check("and its content is not loaded while nobody showed it",
+                pane.GetValueOrDefault("pane:contentLoaded") == "False");
 
             report.Check("and WPF-UI is not loaded while no pane has been shown",
                 pane.GetValueOrDefault("pane:wpfUiLoaded") == "False");
@@ -801,7 +801,7 @@ internal static class SweepChecks
 
         foreach (var key in new[]
                  {
-                     "pane:exists", "pane:shown", "pane:title", "pane:setupCalls", "pane:setupDuringRegistration",
+                     "pane:exists", "pane:shown", "pane:title", "pane:creatorCalls", "pane:setupCalls", "pane:setupDuringRegistration",
                      "pane:setupThread", "pane:apiThread", "pane:contentLoadedAtStartup", "pane:wpfUiLoadedAtStartup",
                      "pane:revitLanguage", "pane:shellCulture", "pane:shellNoDocument", "pane:revitTheme",
                  })

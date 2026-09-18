@@ -1,4 +1,4 @@
-<Project Sdk="BHS.Revit.Sdk/1.6.0">
+<Project Sdk="BHS.Revit.Sdk/1.6.2">
 
     <!--
       An edition: the add-in Revit actually loads, and the thinnest thing this framework allows.

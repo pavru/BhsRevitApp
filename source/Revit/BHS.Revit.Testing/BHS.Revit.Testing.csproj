@@ -1,4 +1,4 @@
-﻿<Project Sdk="BHS.Revit.Sdk/1.6.0">
+﻿<Project Sdk="BHS.Revit.Sdk/1.6.2">
 
     <!--
       What a test written against Revit is, and how a run of them is reported.

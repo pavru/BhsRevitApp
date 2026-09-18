@@ -85,7 +85,7 @@ Revit-side проекты собираются нашим **`BHS.Revit.Sdk`** и
 проекта и берётся из репозиторного фида `artifacts/feed`:
 
 ```xml
-<Project Sdk="BHS.Revit.Sdk/1.6.0">
+<Project Sdk="BHS.Revit.Sdk/1.6.2">
   <PropertyGroup>
     <TargetFrameworks>net48-revit2024;net8.0-revit2025;net8.0-revit2026;net10.0-revit2027</TargetFrameworks>
   </PropertyGroup>

@@ -6,7 +6,7 @@ package references, `.addin` manifest generation, and publishing.
 
 ## Version Information
 
-**Version:** 1.6.0
+**Version:** 1.6.2
 
 Bump this on every change, and update the `Sdk="BHS.Revit.Sdk/<version>"` attribute in the
 projects under `source/` with it. The package carries an MSBuild task assembly, so any process
@@ -250,7 +250,14 @@ That is the point of the file rather than a list in code: naming a class with `t
 
 #### Dockable panes (1.6.0)
 
-`RevitDockablePane` items go into the same manifest, and a button can toggle one with `Pane`. The host registers each pane at startup from these strings and constructs the content class **itself**, by name, the first time Revit asks for the pane - so the assembly that holds the content, and WPF-UI with it, stay unloaded until then.
+> **1.6.2 fixes the publish of anything in a subfolder of the output.** The copy into `Lib`, `Resources`
+> and `Content` joined the folder and `%(RecursiveDir)` without a separator, so a satellite assembly in
+> `ru-RU\` landed in a sibling folder named `Libru-RU` and was never found. Nothing had a subfolder
+> before the host's own `.resx` satellites; found by the first sweep that asked for a Russian string.
+> 1.6.1 is skipped: it was packed and unpacked into the cache before the fix had reached the file, and
+> a version once unpacked is never refreshed.
+
+`RevitDockablePane` items go into the same manifest, and a button can toggle one with `Pane`. The host registers each pane at startup from these strings and constructs the content class **itself**, by name, the first time the pane is on the screen - so the assembly that holds the content, and WPF-UI with it, stay unloaded until then. Revit asking for the element is not that moment: measured on 2026, it asks while it opens a model, with the pane never shown.
 
 ```xml
 <ItemGroup>

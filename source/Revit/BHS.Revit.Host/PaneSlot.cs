@@ -14,9 +14,11 @@ namespace BHS.Revit.Host;
 /// </summary>
 /// <remarks>
 /// <para>
-/// <b>Strings until Revit asks.</b> Setup is answered from the manifest alone. The content class is
-/// resolved, and its assembly loaded, only inside <see cref="CreateFrameworkElement"/> - so a pane nobody
-/// opens costs nothing but its registration, and <c>Wpf.Ui</c> stays out of the AppDomain with it.
+/// <b>Strings until the pane is seen.</b> Setup is answered from the manifest alone, and
+/// <see cref="CreateFrameworkElement"/> hands back a plain WPF slot. The content class is resolved, and its
+/// assembly loaded, only when a slot first becomes visible - so a pane nobody opens costs nothing but its
+/// registration, and <c>Wpf.Ui</c> stays out of the AppDomain with it. Asking for the element is not
+/// showing it: measured on 2026, Revit asks while it opens a model, with the pane never shown.
 /// </para>
 /// <para>
 /// <b>Revit may ask for the element more than once, and gets one shell every time.</b> The creator's
@@ -107,6 +109,31 @@ internal sealed class PaneSlot : IDockablePaneProvider, IFrameworkElementCreator
         var call = Registered.RecordCreate();
         _log.Info("panes: Revit asked for {0} (call {1}, thread {2})", _pane.Name, call, Environment.CurrentManagedThreadId);
 
+        // Plain WPF only, until the pane is on the screen. Measured on 2026: Revit asks for the element
+        // while it opens a model, with the pane never shown, so building here would load the content
+        // assembly and Wpf.Ui for every session - the laziness the manifest exists for. The shell is
+        // built the first time a slot becomes visible, and moved into whichever slot that is.
+        var slot = new Decorator();
+
+        if (_shell is not null)
+            Place(slot);
+        else
+            slot.IsVisibleChanged += OnSlotVisible;
+
+        return slot;
+    }
+
+    private void OnSlotVisible(object sender, DependencyPropertyChangedEventArgs e)
+    {
+        if (e.NewValue is not true || sender is not Decorator slot)
+            return;
+
+        slot.IsVisibleChanged -= OnSlotVisible;
+        Place(slot);
+    }
+
+    private void Place(Decorator slot)
+    {
         try
         {
             var shell = _shell ??= Build();
@@ -114,14 +141,14 @@ internal sealed class PaneSlot : IDockablePaneProvider, IFrameworkElementCreator
             if (shell.Parent is Decorator previous)
                 previous.Child = null;
 
-            return new Decorator { Child = shell };
+            slot.Child = shell;
         }
         catch (Exception error)
         {
             // The shell itself could not be built - WPF-UI missing from the folder, say. The last resort
             // is plain WPF, which Revit is made of.
             _log.Error(error, "panes: {0} could not be built at all", _pane.Name);
-            return new TextBlock { Text = error.Message, TextWrapping = TextWrapping.Wrap, Margin = new Thickness(12) };
+            slot.Child = new TextBlock { Text = error.Message, TextWrapping = TextWrapping.Wrap, Margin = new Thickness(12) };
         }
     }
 
