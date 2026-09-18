@@ -1,16 +1,16 @@
 {
   "Schema": 2,
   "Disclaimer": "Recorded on a developer machine. Revit cannot run on hosted CI, so CI verifies this record rather than reproducing it: no automated check here has ever started a Revit.",
-  "Commit": "737116f016348996ddccd49e7841fe5605c5bdb1",
+  "Commit": "5d6915c4e138a628dfc5e41184925f97f94418fa",
   "CommitClean": true,
   "Content": {
     "source/Revit": "1d83ff6fe0596e24274056be9780903d9ebbe315",
     "source/Shared": "74994abc25e47a4a9233275e831de55cc6dbaabb",
     "source/WinSide": "5b71abdce4cd8186abf36416137a3dfa7f437a28",
-    "source/Features/MEP.Cabling": "b20dcee69d7cc31f1f93e8aa8d3973f226acb0a0",
+    "source/Features/MEP.Cabling": "eb489e0687dc7b993d87eaa5f9d4098bd08639b7",
     "build/BHS.Revit.Sdk": "eb401a3b673fabf6b4ba9ee1286cf8a450e3ed1c"
   },
-  "RecordedUtc": "2026-09-18T00:11:23.1830002Z",
+  "RecordedUtc": "2026-09-18T04:08:23.5744828Z",
   "WithModel": true,
   "ShowTab": false,
   "Linked": true,
@@ -18,7 +18,7 @@
     {
       "Release": 2024,
       "FileVersion": "0.1.0.0",
-      "BuiltUtc": "2026-09-18T00:04:29.0147237Z",
+      "BuiltUtc": "2026-09-18T04:00:09.8080304Z",
       "Signed": true,
       "Checks": [
         {
@@ -594,11 +594,11 @@
         },
         {
           "Name": "launched",
-          "Value": "pid 60824"
+          "Value": "pid 41980"
         },
         {
           "Name": "registered after",
-          "Value": "27.5s"
+          "Value": "34.0s"
         },
         {
           "Name": "recovered by enumeration",
@@ -614,11 +614,11 @@
         },
         {
           "Name": "probe log",
-          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2024-60824-20260918-100520.log"
+          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2024-41980-20260918-140104.log"
         },
         {
           "Name": "threads",
-          "Value": "api 1, call 10"
+          "Value": "api 1, call 17"
         },
         {
           "Name": "appdomain",
@@ -642,7 +642,7 @@
         },
         {
           "Name": "log",
-          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2024-60824-20260918-100520.log"
+          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2024-41980-20260918-140104.log"
         },
         {
           "Name": "sinks",
@@ -654,7 +654,7 @@
         },
         {
           "Name": "opened after registration",
-          "Value": "32.3s"
+          "Value": "36.5s"
         },
         {
           "Name": "availability and the press",
@@ -698,7 +698,7 @@
         },
         {
           "Name": "instance",
-          "Value": "bfbe8440686a4d548d7fe9343f383a17"
+          "Value": "8bae0937993d4c52bd59ffd89644bfb4"
         },
         {
           "Name": "link1:linked",
@@ -742,11 +742,11 @@
         },
         {
           "Name": "log",
-          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2024-60824-20260918-100520.log"
+          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2024-41980-20260918-140104.log"
         },
         {
           "Name": "pid",
-          "Value": "60824"
+          "Value": "41980"
         },
         {
           "Name": "release",
@@ -818,15 +818,15 @@
         },
         {
           "Name": "instance",
-          "Value": "bfbe8440686a4d548d7fe9343f383a17"
+          "Value": "8bae0937993d4c52bd59ffd89644bfb4"
         },
         {
           "Name": "log",
-          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2024-60824-20260918-100520.log"
+          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2024-41980-20260918-140104.log"
         },
         {
           "Name": "pid",
-          "Value": "60824"
+          "Value": "41980"
         },
         {
           "Name": "place:after",
@@ -914,11 +914,11 @@
         },
         {
           "Name": "instance",
-          "Value": "bfbe8440686a4d548d7fe9343f383a17"
+          "Value": "8bae0937993d4c52bd59ffd89644bfb4"
         },
         {
           "Name": "log",
-          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2024-60824-20260918-100520.log"
+          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2024-41980-20260918-140104.log"
         },
         {
           "Name": "modal:apiCallWorked",
@@ -946,7 +946,7 @@
         },
         {
           "Name": "modal:awaitResumedAfter",
-          "Value": "0.56s"
+          "Value": "0.45s"
         },
         {
           "Name": "modal:awaitResumedOnApiThread",
@@ -970,7 +970,7 @@
         },
         {
           "Name": "modal:shownFor",
-          "Value": "2.63s"
+          "Value": "2.53s"
         },
         {
           "Name": "modal:transactionCommit",
@@ -1002,7 +1002,7 @@
         },
         {
           "Name": "pid",
-          "Value": "60824"
+          "Value": "41980"
         },
         {
           "Name": "release",
@@ -1014,11 +1014,11 @@
         },
         {
           "Name": "instance",
-          "Value": "bfbe8440686a4d548d7fe9343f383a17"
+          "Value": "8bae0937993d4c52bd59ffd89644bfb4"
         },
         {
           "Name": "log",
-          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2024-60824-20260918-100520.log"
+          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2024-41980-20260918-140104.log"
         },
         {
           "Name": "modal:measured",
@@ -1030,7 +1030,7 @@
         },
         {
           "Name": "modal:pumpRanAt",
-          "Value": "2.63s"
+          "Value": "2.53s"
         },
         {
           "Name": "modal:windowClosed",
@@ -1038,7 +1038,7 @@
         },
         {
           "Name": "pid",
-          "Value": "60824"
+          "Value": "41980"
         },
         {
           "Name": "release",
@@ -1050,11 +1050,11 @@
         },
         {
           "Name": "instance",
-          "Value": "bfbe8440686a4d548d7fe9343f383a17"
+          "Value": "8bae0937993d4c52bd59ffd89644bfb4"
         },
         {
           "Name": "log",
-          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2024-60824-20260918-100520.log"
+          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2024-41980-20260918-140104.log"
         },
         {
           "Name": "parameters:bound",
@@ -1130,7 +1130,7 @@
         },
         {
           "Name": "pid",
-          "Value": "60824"
+          "Value": "41980"
         },
         {
           "Name": "release",
@@ -1338,7 +1338,7 @@
         },
         {
           "Name": "census: elapsed, ms",
-          "Value": "51"
+          "Value": "54"
         },
         {
           "Name": "circuit ends: electrical systems",
@@ -1378,7 +1378,7 @@
         },
         {
           "Name": "circuit ends: elapsed, ms",
-          "Value": "28"
+          "Value": "36"
         },
         {
           "Name": "circuits on the panel used",
@@ -1585,12 +1585,16 @@
           "Value": "2, 1"
         },
         {
-          "Name": "placement: references that fell in a link",
-          "Value": "22"
+          "Name": "placement: elements in a link that could not be told their circuits",
+          "Value": "7"
         },
         {
           "Name": "placement: farthest planned box from its nearest instance of the indicator type, internal feet",
           "Value": "0.0000"
+        },
+        {
+          "Name": "placement: element-circuit pairs the plan puts in a link",
+          "Value": "22"
         },
         {
           "Name": "second apply: indicators of ours already in the model",
@@ -2278,7 +2282,7 @@
         },
         {
           "Name": "diagnostic events",
-          "Value": "2380 received, 0 dropped by the publisher, longest quiet spell 25.1s during Starting"
+          "Value": "2377 received, 0 dropped by the publisher, longest quiet spell 27.8s during Starting"
         },
         {
           "Name": "phases seen",
@@ -2358,14 +2362,14 @@
         },
         {
           "Name": "closed after",
-          "Value": "22.7s"
+          "Value": "22.3s"
         }
       ]
     },
     {
       "Release": 2025,
       "FileVersion": "0.1.0.0",
-      "BuiltUtc": "2026-09-18T00:04:26.6816040Z",
+      "BuiltUtc": "2026-09-18T04:00:08.3524658Z",
       "Signed": true,
       "Checks": [
         {
@@ -2941,11 +2945,11 @@
         },
         {
           "Name": "launched",
-          "Value": "pid 53220"
+          "Value": "pid 56824"
         },
         {
           "Name": "registered after",
-          "Value": "20.8s"
+          "Value": "29.0s"
         },
         {
           "Name": "recovered by enumeration",
@@ -2961,11 +2965,11 @@
         },
         {
           "Name": "probe log",
-          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2025-53220-20260918-100657.log"
+          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2025-56824-20260918-140255.log"
         },
         {
           "Name": "threads",
-          "Value": "api 1, call 7"
+          "Value": "api 1, call 27"
         },
         {
           "Name": "appdomain",
@@ -2989,7 +2993,7 @@
         },
         {
           "Name": "log",
-          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2025-53220-20260918-100657.log"
+          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2025-56824-20260918-140255.log"
         },
         {
           "Name": "sinks",
@@ -3001,7 +3005,7 @@
         },
         {
           "Name": "opened after registration",
-          "Value": "9.9s"
+          "Value": "13.1s"
         },
         {
           "Name": "availability and the press",
@@ -3045,7 +3049,7 @@
         },
         {
           "Name": "instance",
-          "Value": "0d63bf6828394960909e812fdf468f1a"
+          "Value": "0ee67b18792e4b07a7f141446a2bde46"
         },
         {
           "Name": "link1:linked",
@@ -3089,11 +3093,11 @@
         },
         {
           "Name": "log",
-          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2025-53220-20260918-100657.log"
+          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2025-56824-20260918-140255.log"
         },
         {
           "Name": "pid",
-          "Value": "53220"
+          "Value": "56824"
         },
         {
           "Name": "release",
@@ -3165,15 +3169,15 @@
         },
         {
           "Name": "instance",
-          "Value": "0d63bf6828394960909e812fdf468f1a"
+          "Value": "0ee67b18792e4b07a7f141446a2bde46"
         },
         {
           "Name": "log",
-          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2025-53220-20260918-100657.log"
+          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2025-56824-20260918-140255.log"
         },
         {
           "Name": "pid",
-          "Value": "53220"
+          "Value": "56824"
         },
         {
           "Name": "place:after",
@@ -3261,11 +3265,11 @@
         },
         {
           "Name": "instance",
-          "Value": "0d63bf6828394960909e812fdf468f1a"
+          "Value": "0ee67b18792e4b07a7f141446a2bde46"
         },
         {
           "Name": "log",
-          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2025-53220-20260918-100657.log"
+          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2025-56824-20260918-140255.log"
         },
         {
           "Name": "modal:apiCallWorked",
@@ -3293,7 +3297,7 @@
         },
         {
           "Name": "modal:awaitResumedAfter",
-          "Value": "0.41s"
+          "Value": "0.46s"
         },
         {
           "Name": "modal:awaitResumedOnApiThread",
@@ -3317,7 +3321,7 @@
         },
         {
           "Name": "modal:shownFor",
-          "Value": "2.47s"
+          "Value": "2.54s"
         },
         {
           "Name": "modal:transactionCommit",
@@ -3349,7 +3353,7 @@
         },
         {
           "Name": "pid",
-          "Value": "53220"
+          "Value": "56824"
         },
         {
           "Name": "release",
@@ -3361,11 +3365,11 @@
         },
         {
           "Name": "instance",
-          "Value": "0d63bf6828394960909e812fdf468f1a"
+          "Value": "0ee67b18792e4b07a7f141446a2bde46"
         },
         {
           "Name": "log",
-          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2025-53220-20260918-100657.log"
+          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2025-56824-20260918-140255.log"
         },
         {
           "Name": "modal:measured",
@@ -3377,7 +3381,7 @@
         },
         {
           "Name": "modal:pumpRanAt",
-          "Value": "2.47s"
+          "Value": "2.54s"
         },
         {
           "Name": "modal:windowClosed",
@@ -3385,7 +3389,7 @@
         },
         {
           "Name": "pid",
-          "Value": "53220"
+          "Value": "56824"
         },
         {
           "Name": "release",
@@ -3397,11 +3401,11 @@
         },
         {
           "Name": "instance",
-          "Value": "0d63bf6828394960909e812fdf468f1a"
+          "Value": "0ee67b18792e4b07a7f141446a2bde46"
         },
         {
           "Name": "log",
-          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2025-53220-20260918-100657.log"
+          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2025-56824-20260918-140255.log"
         },
         {
           "Name": "parameters:bound",
@@ -3477,7 +3481,7 @@
         },
         {
           "Name": "pid",
-          "Value": "53220"
+          "Value": "56824"
         },
         {
           "Name": "release",
@@ -3685,7 +3689,7 @@
         },
         {
           "Name": "census: elapsed, ms",
-          "Value": "40"
+          "Value": "42"
         },
         {
           "Name": "circuit ends: electrical systems",
@@ -3725,7 +3729,7 @@
         },
         {
           "Name": "circuit ends: elapsed, ms",
-          "Value": "20"
+          "Value": "18"
         },
         {
           "Name": "circuits on the panel used",
@@ -3932,12 +3936,16 @@
           "Value": "2, 1"
         },
         {
-          "Name": "placement: references that fell in a link",
-          "Value": "22"
+          "Name": "placement: elements in a link that could not be told their circuits",
+          "Value": "7"
         },
         {
           "Name": "placement: farthest planned box from its nearest instance of the indicator type, internal feet",
           "Value": "0.0000"
+        },
+        {
+          "Name": "placement: element-circuit pairs the plan puts in a link",
+          "Value": "22"
         },
         {
           "Name": "second apply: indicators of ours already in the model",
@@ -4657,7 +4665,7 @@
         },
         {
           "Name": "diagnostic events",
-          "Value": "2322 received, 0 dropped by the publisher, longest quiet spell 3.5s during Working"
+          "Value": "2323 received, 0 dropped by the publisher, longest quiet spell 4.2s during Working"
         },
         {
           "Name": "phases seen",
@@ -4733,14 +4741,14 @@
         },
         {
           "Name": "closed after",
-          "Value": "10.6s"
+          "Value": "69.1s"
         }
       ]
     },
     {
       "Release": 2026,
       "FileVersion": "0.1.0.0",
-      "BuiltUtc": "2026-09-18T00:04:27.1486322Z",
+      "BuiltUtc": "2026-09-18T04:00:08.3554619Z",
       "Signed": true,
       "Checks": [
         {
@@ -5316,11 +5324,11 @@
         },
         {
           "Name": "launched",
-          "Value": "pid 43144"
+          "Value": "pid 54236"
         },
         {
           "Name": "registered after",
-          "Value": "24.8s"
+          "Value": "30.0s"
         },
         {
           "Name": "recovered by enumeration",
@@ -5336,11 +5344,11 @@
         },
         {
           "Name": "probe log",
-          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2026-43144-20260918-100742.log"
+          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2026-54236-20260918-140448.log"
         },
         {
           "Name": "threads",
-          "Value": "api 1, call 16"
+          "Value": "api 1, call 7"
         },
         {
           "Name": "appdomain",
@@ -5364,7 +5372,7 @@
         },
         {
           "Name": "log",
-          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2026-43144-20260918-100742.log"
+          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2026-54236-20260918-140448.log"
         },
         {
           "Name": "sinks",
@@ -5376,7 +5384,7 @@
         },
         {
           "Name": "opened after registration",
-          "Value": "64.9s"
+          "Value": "41.5s"
         },
         {
           "Name": "availability and the press",
@@ -5420,7 +5428,7 @@
         },
         {
           "Name": "instance",
-          "Value": "f63f777ca09246f2b89280c8ccbfa211"
+          "Value": "fdea98d6175a414ca000c53bed95d03e"
         },
         {
           "Name": "link1:linked",
@@ -5464,11 +5472,11 @@
         },
         {
           "Name": "log",
-          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2026-43144-20260918-100742.log"
+          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2026-54236-20260918-140448.log"
         },
         {
           "Name": "pid",
-          "Value": "43144"
+          "Value": "54236"
         },
         {
           "Name": "release",
@@ -5540,15 +5548,15 @@
         },
         {
           "Name": "instance",
-          "Value": "f63f777ca09246f2b89280c8ccbfa211"
+          "Value": "fdea98d6175a414ca000c53bed95d03e"
         },
         {
           "Name": "log",
-          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2026-43144-20260918-100742.log"
+          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2026-54236-20260918-140448.log"
         },
         {
           "Name": "pid",
-          "Value": "43144"
+          "Value": "54236"
         },
         {
           "Name": "place:after",
@@ -5636,11 +5644,11 @@
         },
         {
           "Name": "instance",
-          "Value": "f63f777ca09246f2b89280c8ccbfa211"
+          "Value": "fdea98d6175a414ca000c53bed95d03e"
         },
         {
           "Name": "log",
-          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2026-43144-20260918-100742.log"
+          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2026-54236-20260918-140448.log"
         },
         {
           "Name": "modal:apiCallWorked",
@@ -5668,7 +5676,7 @@
         },
         {
           "Name": "modal:awaitResumedAfter",
-          "Value": "0.26s"
+          "Value": "0.30s"
         },
         {
           "Name": "modal:awaitResumedOnApiThread",
@@ -5692,7 +5700,7 @@
         },
         {
           "Name": "modal:shownFor",
-          "Value": "2.32s"
+          "Value": "2.39s"
         },
         {
           "Name": "modal:transactionCommit",
@@ -5724,7 +5732,7 @@
         },
         {
           "Name": "pid",
-          "Value": "43144"
+          "Value": "54236"
         },
         {
           "Name": "release",
@@ -5736,11 +5744,11 @@
         },
         {
           "Name": "instance",
-          "Value": "f63f777ca09246f2b89280c8ccbfa211"
+          "Value": "fdea98d6175a414ca000c53bed95d03e"
         },
         {
           "Name": "log",
-          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2026-43144-20260918-100742.log"
+          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2026-54236-20260918-140448.log"
         },
         {
           "Name": "modal:measured",
@@ -5752,7 +5760,7 @@
         },
         {
           "Name": "modal:pumpRanAt",
-          "Value": "2.32s"
+          "Value": "2.39s"
         },
         {
           "Name": "modal:windowClosed",
@@ -5760,7 +5768,7 @@
         },
         {
           "Name": "pid",
-          "Value": "43144"
+          "Value": "54236"
         },
         {
           "Name": "release",
@@ -5772,11 +5780,11 @@
         },
         {
           "Name": "instance",
-          "Value": "f63f777ca09246f2b89280c8ccbfa211"
+          "Value": "fdea98d6175a414ca000c53bed95d03e"
         },
         {
           "Name": "log",
-          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2026-43144-20260918-100742.log"
+          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2026-54236-20260918-140448.log"
         },
         {
           "Name": "parameters:bound",
@@ -5852,7 +5860,7 @@
         },
         {
           "Name": "pid",
-          "Value": "43144"
+          "Value": "54236"
         },
         {
           "Name": "release",
@@ -6060,7 +6068,7 @@
         },
         {
           "Name": "census: elapsed, ms",
-          "Value": "29"
+          "Value": "43"
         },
         {
           "Name": "circuit ends: electrical systems",
@@ -6100,7 +6108,7 @@
         },
         {
           "Name": "circuit ends: elapsed, ms",
-          "Value": "13"
+          "Value": "17"
         },
         {
           "Name": "circuits on the panel used",
@@ -6307,12 +6315,16 @@
           "Value": "2, 1"
         },
         {
-          "Name": "placement: references that fell in a link",
-          "Value": "22"
+          "Name": "placement: elements in a link that could not be told their circuits",
+          "Value": "7"
         },
         {
           "Name": "placement: farthest planned box from its nearest instance of the indicator type, internal feet",
           "Value": "0.0000"
+        },
+        {
+          "Name": "placement: element-circuit pairs the plan puts in a link",
+          "Value": "22"
         },
         {
           "Name": "second apply: indicators of ours already in the model",
@@ -6996,7 +7008,7 @@
         },
         {
           "Name": "diagnostic events",
-          "Value": "2400 received, 0 dropped by the publisher, longest quiet spell 51.1s during Starting"
+          "Value": "2398 received, 0 dropped by the publisher, longest quiet spell 21.1s during Starting"
         },
         {
           "Name": "phases seen",
@@ -7076,14 +7088,14 @@
         },
         {
           "Name": "closed after",
-          "Value": "11.4s"
+          "Value": "18.5s"
         }
       ]
     },
     {
       "Release": 2027,
       "FileVersion": "0.1.0.0",
-      "BuiltUtc": "2026-09-18T00:04:30.1800966Z",
+      "BuiltUtc": "2026-09-18T04:00:10.1632433Z",
       "Signed": true,
       "Checks": [
         {
@@ -7659,11 +7671,11 @@
         },
         {
           "Name": "launched",
-          "Value": "pid 55748"
+          "Value": "pid 65320"
         },
         {
           "Name": "registered after",
-          "Value": "29.6s"
+          "Value": "47.4s"
         },
         {
           "Name": "recovered by enumeration",
@@ -7679,11 +7691,11 @@
         },
         {
           "Name": "probe log",
-          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2027-55748-20260918-100946.log"
+          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2027-65320-20260918-140658.log"
         },
         {
           "Name": "threads",
-          "Value": "api 2, call 18"
+          "Value": "api 2, call 19"
         },
         {
           "Name": "appdomain",
@@ -7707,7 +7719,7 @@
         },
         {
           "Name": "log",
-          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2027-55748-20260918-100946.log"
+          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2027-65320-20260918-140658.log"
         },
         {
           "Name": "sinks",
@@ -7719,7 +7731,7 @@
         },
         {
           "Name": "opened after registration",
-          "Value": "60.2s"
+          "Value": "51.5s"
         },
         {
           "Name": "availability and the press",
@@ -7763,7 +7775,7 @@
         },
         {
           "Name": "instance",
-          "Value": "917539dd49044237a7d4006d23f594e3"
+          "Value": "f7215c49296f4eca88d87688fe3b1885"
         },
         {
           "Name": "link1:linked",
@@ -7807,11 +7819,11 @@
         },
         {
           "Name": "log",
-          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2027-55748-20260918-100946.log"
+          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2027-65320-20260918-140658.log"
         },
         {
           "Name": "pid",
-          "Value": "55748"
+          "Value": "65320"
         },
         {
           "Name": "release",
@@ -7883,15 +7895,15 @@
         },
         {
           "Name": "instance",
-          "Value": "917539dd49044237a7d4006d23f594e3"
+          "Value": "f7215c49296f4eca88d87688fe3b1885"
         },
         {
           "Name": "log",
-          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2027-55748-20260918-100946.log"
+          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2027-65320-20260918-140658.log"
         },
         {
           "Name": "pid",
-          "Value": "55748"
+          "Value": "65320"
         },
         {
           "Name": "place:after",
@@ -7979,11 +7991,11 @@
         },
         {
           "Name": "instance",
-          "Value": "917539dd49044237a7d4006d23f594e3"
+          "Value": "f7215c49296f4eca88d87688fe3b1885"
         },
         {
           "Name": "log",
-          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2027-55748-20260918-100946.log"
+          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2027-65320-20260918-140658.log"
         },
         {
           "Name": "modal:apiCallWorked",
@@ -8011,7 +8023,7 @@
         },
         {
           "Name": "modal:awaitResumedAfter",
-          "Value": "0.26s"
+          "Value": "0.32s"
         },
         {
           "Name": "modal:awaitResumedOnApiThread",
@@ -8035,7 +8047,7 @@
         },
         {
           "Name": "modal:shownFor",
-          "Value": "2.32s"
+          "Value": "2.40s"
         },
         {
           "Name": "modal:transactionCommit",
@@ -8067,7 +8079,7 @@
         },
         {
           "Name": "pid",
-          "Value": "55748"
+          "Value": "65320"
         },
         {
           "Name": "release",
@@ -8079,11 +8091,11 @@
         },
         {
           "Name": "instance",
-          "Value": "917539dd49044237a7d4006d23f594e3"
+          "Value": "f7215c49296f4eca88d87688fe3b1885"
         },
         {
           "Name": "log",
-          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2027-55748-20260918-100946.log"
+          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2027-65320-20260918-140658.log"
         },
         {
           "Name": "modal:measured",
@@ -8095,7 +8107,7 @@
         },
         {
           "Name": "modal:pumpRanAt",
-          "Value": "2.32s"
+          "Value": "2.40s"
         },
         {
           "Name": "modal:windowClosed",
@@ -8103,7 +8115,7 @@
         },
         {
           "Name": "pid",
-          "Value": "55748"
+          "Value": "65320"
         },
         {
           "Name": "release",
@@ -8115,11 +8127,11 @@
         },
         {
           "Name": "instance",
-          "Value": "917539dd49044237a7d4006d23f594e3"
+          "Value": "f7215c49296f4eca88d87688fe3b1885"
         },
         {
           "Name": "log",
-          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2027-55748-20260918-100946.log"
+          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2027-65320-20260918-140658.log"
         },
         {
           "Name": "parameters:bound",
@@ -8195,7 +8207,7 @@
         },
         {
           "Name": "pid",
-          "Value": "55748"
+          "Value": "65320"
         },
         {
           "Name": "release",
@@ -8403,7 +8415,7 @@
         },
         {
           "Name": "census: elapsed, ms",
-          "Value": "31"
+          "Value": "48"
         },
         {
           "Name": "circuit ends: electrical systems",
@@ -8443,7 +8455,7 @@
         },
         {
           "Name": "circuit ends: elapsed, ms",
-          "Value": "18"
+          "Value": "33"
         },
         {
           "Name": "circuits on the panel used",
@@ -8650,12 +8662,16 @@
           "Value": "2, 1"
         },
         {
-          "Name": "placement: references that fell in a link",
-          "Value": "22"
+          "Name": "placement: elements in a link that could not be told their circuits",
+          "Value": "7"
         },
         {
           "Name": "placement: farthest planned box from its nearest instance of the indicator type, internal feet",
           "Value": "0.0000"
+        },
+        {
+          "Name": "placement: element-circuit pairs the plan puts in a link",
+          "Value": "22"
         },
         {
           "Name": "second apply: indicators of ours already in the model",
@@ -9623,7 +9639,7 @@
         },
         {
           "Name": "diagnostic events",
-          "Value": "2404 received, 0 dropped by the publisher, longest quiet spell 45.2s during Starting"
+          "Value": "2404 received, 0 dropped by the publisher, longest quiet spell 32.1s during Starting"
         },
         {
           "Name": "phases seen",
@@ -9703,7 +9719,7 @@
         },
         {
           "Name": "closed after",
-          "Value": "18.3s"
+          "Value": "13.2s"
         }
       ]
     }
