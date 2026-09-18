@@ -69,6 +69,15 @@ internal static class PaneProbe
         facts["pane:shown"] = Ask(() => application.GetDockablePane(id).IsShown());
         facts["pane:title"] = Ask(() => application.GetDockablePane(id).GetTitle());
 
+        // What the title should be: the probe's Entry manifest read back with the overlay for the culture
+        // the host chose - the host's own reader, on the host's own answer. Equal to what Revit shows means
+        // the host and the manifest agree, on a Revit of any language; which language it was is a note.
+        facts["pane:titleExpected"] = Ask(() => ExpectedTitle(out _));
+        facts["pane:titleCulture"] = Ask(() => ExpectedTitle(out var culture) is { } && culture.Length > 0 ? culture : "(neutral)");
+
+        // What the Gate button reads on this Revit - a note: its answer depends on the language installed.
+        facts["pane:gateText"] = Ask(() => GateText(application));
+
         var registered = PaneRegistry.Find(PaneId);
         facts["pane:inRegistry"] = registered is null ? "False" : "True";
         facts["pane:setupCalls"] = (registered?.SetupCalls ?? -1).ToString(culture);
@@ -120,6 +129,36 @@ internal static class PaneProbe
         }
 
         return facts;
+    }
+
+    /// <summary>The probe's Entry manifest, beside the probe, as the host reads it for Revit's language.</summary>
+    private static string ExpectedTitle(out string culture)
+    {
+        var directory = Path.GetDirectoryName(typeof(PaneProbe).Assembly.Location) ?? string.Empty;
+        var manifest = FeatureManifest.Read(
+            Path.Combine(directory, ProbeApplication.EntryAssemblyName + FeatureManifest.Extension),
+            BHS.Revit.Host.RevitLanguage.Current);
+
+        culture = manifest.OverlayCulture;
+        return manifest.Panes.FirstOrDefault(pane => pane.Id == PaneId)?.Title ?? "(no such pane in the manifest)";
+    }
+
+    /// <summary>The text Revit gave the Gate button, read back from the ribbon through the API.</summary>
+    private static string GateText(UIApplication application)
+    {
+        foreach (var panel in application.GetRibbonPanels(ProbeApplication.OwnTabName))
+        {
+            if (panel.Name != ProbeApplication.OwnPanelTitle)
+                continue;
+
+            foreach (var item in panel.GetItems())
+            {
+                if (item.Name == "BHS.Probe.Gate")
+                    return item.ItemText;
+            }
+        }
+
+        return "(not found on the panel)";
     }
 
     /// <summary>Hides the pane by the API rather than by its button: the sweep's clean-up.</summary>

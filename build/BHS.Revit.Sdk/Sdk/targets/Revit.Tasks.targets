@@ -13,6 +13,9 @@
     <PropertyGroup>
         <PublishRevitAddIn Condition="'$(PublishRevitAddIn)' == ''">false</PublishRevitAddIn>
         <RevitFeatureManifestExtension Condition="'$(RevitFeatureManifestExtension)' == ''">.features.json</RevitFeatureManifestExtension>
+        <!-- The cultures a declaration overlay may be written for. Empty accepts any; a repository that
+             delivers overlays by related file extension should set it, and derive the extensions from it. -->
+        <RevitDeclarationCultures Condition="'$(RevitDeclarationCultures)' == ''"></RevitDeclarationCultures>
         <DeployRevitAddIn Condition="'$(DeployRevitAddIn)' == ''">false</DeployRevitAddIn>
 
         <RevitVendorId Condition="'$(RevitVendorId)' == ''">UnknownVendor</RevitVendorId>
@@ -115,12 +118,47 @@
         <GenerateFeatureManifest
             Buttons="@(RevitRibbonButton)"
             Panes="@(RevitDockablePane)"
+            Strings="@(RevitDeclarationStrings)"
+            Cultures="$(RevitDeclarationCultures)"
             OutputPath="$(TargetDir)$(AssemblyName)$(RevitFeatureManifestExtension)"
-            AssemblyFileName="$(TargetFileName)"/>
+            AssemblyFileName="$(TargetFileName)">
+
+            <Output TaskParameter="CultureFiles" ItemName="_RevitFeatureManifestOverlay"/>
+        </GenerateFeatureManifest>
 
         <ItemGroup>
-            <!-- So that a clean removes it, like anything else the build produced. -->
+            <!-- So that a clean removes them, like anything else the build produced. -->
             <FileWrites Include="$(TargetDir)$(AssemblyName)$(RevitFeatureManifestExtension)"/>
+            <FileWrites Include="@(_RevitFeatureManifestOverlay)"/>
+        </ItemGroup>
+    </Target>
+
+    <!--
+      Declaration strings, from 1.6.5: the .resx a RevitDeclarationStrings item names, and the culture
+      files beside it, are the source of the manifest's text and must not ALSO become resources.
+
+      The base SDK globs every .resx into EmbeddedResource, and a culture file there becomes a satellite
+      assembly - a folder of files beside an Entry assembly that is supposed to hold empty classes and
+      nothing else, delivered to every edition for strings nobody reads through a ResourceManager: the
+      manifest carries them already. So both are taken out, before the resource targets look.
+
+      In a target rather than at evaluation, because the culture files are found by a wildcard beside the
+      neutral one, and a wildcard is expanded only inside a target. Removed by full path, the one spelling
+      both lists agree on whatever the project wrote - MatchOnMetadata, because a plain Remove compares
+      item specs, and 'Strings\Declaration.resx' is not its own full path: 1.6.3 shipped that way and the
+      culture file still became a satellite.
+    -->
+    <Target Name="_RemoveRevitDeclarationStringsFromResources"
+            BeforeTargets="PrepareResourceNames;AssignTargetPaths"
+            Condition="'@(RevitDeclarationStrings)' != ''">
+
+        <ItemGroup>
+            <_RevitDeclarationStringFile Include="@(RevitDeclarationStrings->'%(FullPath)')"/>
+            <_RevitDeclarationStringFile Include="%(RevitDeclarationStrings.RootDir)%(RevitDeclarationStrings.Directory)%(RevitDeclarationStrings.Filename).*.resx"/>
+        </ItemGroup>
+
+        <ItemGroup>
+            <EmbeddedResource Remove="@(_RevitDeclarationStringFile)" MatchOnMetadata="FullPath" MatchOnMetadataOptions="PathLike"/>
         </ItemGroup>
     </Target>
 

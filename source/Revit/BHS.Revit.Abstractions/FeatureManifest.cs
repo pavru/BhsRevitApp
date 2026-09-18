@@ -162,6 +162,12 @@ public sealed class FeatureManifest
     /// <summary>The dockable panes, from manifest version 2. Empty in a version 1 manifest.</summary>
     public IReadOnlyList<FeaturePane> Panes { get; }
 
+    /// <summary>The culture whose overlay was laid over the neutral text, or empty for none.</summary>
+    public string OverlayCulture { get; private set; } = string.Empty;
+
+    /// <summary>How many strings the overlay replaced. Zero when there was none, or it translated nothing here.</summary>
+    public int OverlaidStrings { get; private set; }
+
     /// <summary>
     /// The <c>P</c> of <c>&lt;P&gt;.Entry.features.json</c>, or empty when this is not a feature's
     /// Entry manifest - an edition's own, or the probe's.
@@ -188,21 +194,36 @@ public sealed class FeatureManifest
     /// Panels appear in the order Revit is first asked for them, and "whatever the file system said
     /// today" is not an order.
     /// </remarks>
-    public static IReadOnlyList<FeatureManifest> ReadDirectory(string directory, Action<string, Exception>? onError = null)
+    /// <param name="directory">The folder to read.</param>
+    /// <param name="onError">Told about a manifest that could not be read, which is then skipped.</param>
+    /// <param name="culture">
+    /// Revit's language as the host maps it - <c>RevitLanguage.Current</c> - or null for the neutral text.
+    /// </param>
+    public static IReadOnlyList<FeatureManifest> ReadDirectory(
+        string directory,
+        Action<string, Exception>? onError = null,
+        System.Globalization.CultureInfo? culture = null)
     {
         var manifests = new List<FeatureManifest>();
 
         if (!Directory.Exists(directory))
             return manifests;
 
-        var files = Directory.GetFiles(directory, "*" + Extension);
+        // Filtered by the ending as well as globbed. A culture overlay, <P>.features.ru-RU.json, does not
+        // end in .features.json and the glob already leaves it out; the second test is there so that a
+        // change to the pattern cannot quietly start reading overlays as manifests of their own, with
+        // no assembly and nothing but text.
+        var files = Directory.GetFiles(directory, "*" + Extension)
+            .Where(file => file.EndsWith(Extension, StringComparison.OrdinalIgnoreCase))
+            .ToArray();
+
         Array.Sort(files, StringComparer.OrdinalIgnoreCase);
 
         foreach (var file in files)
         {
             try
             {
-                manifests.Add(Read(file));
+                manifests.Add(Read(file, culture));
             }
             catch (Exception error)
             {
@@ -213,7 +234,8 @@ public sealed class FeatureManifest
         return manifests;
     }
 
-    public static FeatureManifest Read(string path)
+    /// <summary>Reads one manifest, and lays the overlay for <paramref name="culture"/> over it if there is one.</summary>
+    public static FeatureManifest Read(string path, System.Globalization.CultureInfo? culture = null)
     {
         var values = JsonSettings.Read(path);
         var buttons = new List<FeatureButton>();
@@ -243,7 +265,81 @@ public sealed class FeatureManifest
             });
         }
 
-        return new FeatureManifest(path, Text(values, "assembly"), buttons, ReadPanes(values));
+        var manifest = new FeatureManifest(path, Text(values, "assembly"), buttons, ReadPanes(values));
+
+        if (culture is not null)
+            manifest.Overlay(culture);
+
+        return manifest;
+    }
+
+    /// <summary>The overlay for a culture: <c>&lt;P&gt;.features.&lt;culture&gt;.json</c> beside <c>&lt;P&gt;.features.json</c>.</summary>
+    public static string OverlayPath(string manifestPath, string culture) =>
+        manifestPath.Substring(0, manifestPath.Length - ".json".Length) + "." + culture + ".json";
+
+    /// <summary>
+    /// Replaces the neutral text with the culture's, item by item and field by field, where it has one.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <b>By item name, never by position.</b> The SDK writes an overlay as objects keyed by name for this
+    /// reason: the reader flattens arrays by ordinal, and a sparse overlay matched by position would put one
+    /// button's text on another the day an item is added in the middle.
+    /// </para>
+    /// <para>
+    /// <b>An overlay that cannot be read costs the translation, not the manifest.</b> It is text laid over
+    /// text; the neutral strings are complete by construction, so the buttons still stand, in English, and
+    /// the manifest reports no overlay culture - which the host logs.
+    /// </para>
+    /// <para>
+    /// Only the culture's own file: <c>ru-RU</c> does not fall back to <c>ru</c>. The SDK writes exactly the
+    /// cultures in <c>RevitDeclarationCultures</c>, and the host asks exactly the ones <c>RevitLanguage</c>
+    /// maps, both full names - a parent chain would be a second source of truth about which exist.
+    /// </para>
+    /// </remarks>
+    private void Overlay(System.Globalization.CultureInfo culture)
+    {
+        var overlay = OverlayPath(Path, culture.Name);
+
+        if (!File.Exists(overlay))
+            return;
+
+        IDictionary<string, string?> values;
+
+        try
+        {
+            values = JsonSettings.Read(overlay);
+        }
+        catch (Exception)
+        {
+            return;
+        }
+
+        var count = 0;
+
+        foreach (var button in Buttons)
+        {
+            var prefix = "buttons:" + button.Name + ":";
+
+            button.Text = Over(values, prefix + "text", button.Text, ref count);
+            button.ToolTip = Over(values, prefix + "toolTip", button.ToolTip, ref count);
+            button.LongDescription = Over(values, prefix + "longDescription", button.LongDescription, ref count);
+        }
+
+        foreach (var pane in Panes)
+            pane.Title = Over(values, "panes:" + pane.Name + ":title", pane.Title, ref count);
+
+        OverlayCulture = culture.Name;
+        OverlaidStrings = count;
+    }
+
+    private static string Over(IDictionary<string, string?> values, string key, string neutral, ref int count)
+    {
+        if (!values.TryGetValue(key, out var value) || value is null)
+            return neutral;
+
+        count++;
+        return value;
     }
 
     /// <summary>The panes, walked the same way as the buttons.</summary>

@@ -52,6 +52,20 @@
     </PropertyGroup>
 
     <!--
+      And each culture overlay of it, <P>.Entry.features.<culture>.json, the same way - one extension per
+      culture in RevitDeclarationCultures, derived rather than listed, so that the list the SDK checks
+      culture files against and the list that delivers them cannot disagree. en-GB;ru-RU becomes
+      .features.en-GB.json;.features.ru-RU.json.
+
+      Unescaped, and that is bought: a property function's result comes back escaped, so its semicolons
+      are %3B, and without Unescape the two extensions reached ResolveAssemblyReference as ONE - the
+      English overlay found nothing, the Russian one was never looked for, and the build said nothing.
+    -->
+    <PropertyGroup Condition="'$(RevitVersion)' != '' And '$(RevitDeclarationCultures)' != ''">
+        <AllowedReferenceRelatedFileExtensions>$(AllowedReferenceRelatedFileExtensions);$([MSBuild]::Unescape('.features.$(RevitDeclarationCultures.Trim().Trim(';').Replace(';', '.json;.features.')).json'))</AllowedReferenceRelatedFileExtensions>
+    </PropertyGroup>
+
+    <!--
       Assembly versions, derived here rather than in Directory.Build.props because $(Version) does
       not exist yet at that point - the SDK computes it from VersionPrefix later. Reading
       VersionPrefix directly would make `-p:Version=1.2.3` produce a package that says 1.2.3 and

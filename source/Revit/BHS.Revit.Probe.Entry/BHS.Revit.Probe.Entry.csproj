@@ -1,4 +1,4 @@
-<Project Sdk="BHS.Revit.Sdk/1.6.2">
+<Project Sdk="BHS.Revit.Sdk/1.6.5">
 
     <!--
       The probe's Entry assembly: the shape a feature's buttons take, measured before a feature
@@ -57,14 +57,19 @@
     </ItemGroup>
 
     <ItemGroup>
+        <!-- The texts below are keys into this file, exactly as a feature's are: the probe measures the
+             overlay the host lays over them in Revit's language. Item names unchanged - the press
+             spellings in PressButtonHandler are built from them. -->
+        <RevitDeclarationStrings Include="Strings\Declaration.resx"/>
+
         <!-- Order 3, after Ping's 2, so Ping stays the first button on the panel: the icon measurement
              reads the first one, and the control should not move because an experiment arrived. -->
         <RevitRibbonButton Include="BHS.Probe.Gate">
             <Panel>Probe feature</Panel>
-            <Text>Gate</Text>
+            <Text>Gate.Text</Text>
             <ClassName>BHS.Revit.Probe.Entry.GateCommandEntryPoint</ClassName>
             <AvailabilityClassName>BHS.Revit.Probe.Entry.GateAvailability</AvailabilityClassName>
-            <ToolTip>Runs a feature command through an Entry assembly, whose host is found by the feature it declares.</ToolTip>
+            <ToolTip>Gate.ToolTip</ToolTip>
             <Order>3</Order>
         </RevitRibbonButton>
 
@@ -73,17 +78,17 @@
              after Gate, so Ping stays the first button on the panel for the icon measurement. -->
         <RevitDockablePane Include="BHS.Probe.Pane">
             <Id>3c0f5d7e-9a41-4f6b-8e2d-6b1a7c94e5f3</Id>
-            <Title>BHS Probe pane</Title>
+            <Title>Pane.Title</Title>
             <ContentAssembly>BHS.Revit.Probe.Pane</ContentAssembly>
             <ContentClassName>BHS.Revit.Probe.Pane.ProbePane</ContentClassName>
         </RevitDockablePane>
 
         <RevitRibbonButton Include="BHS.Probe.PaneToggle">
             <Panel>Probe feature</Panel>
-            <Text>Pane</Text>
+            <Text>PaneToggle.Text</Text>
             <ClassName>BHS.Revit.Probe.Entry.ProbePaneEntryPoint</ClassName>
             <Pane>BHS.Probe.Pane</Pane>
-            <ToolTip>Shows or hides the probe's dockable pane, whose content the host loads on first show.</ToolTip>
+            <ToolTip>PaneToggle.ToolTip</ToolTip>
             <Order>4</Order>
         </RevitRibbonButton>
     </ItemGroup>

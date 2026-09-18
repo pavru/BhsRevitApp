@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Russian overlay of Declaration.resx. Sparse by design: a key left out shows in English, on its own place.
+  Every key here must exist in Declaration.resx - RVTRIB012 fails the build for an orphan.
+-->
+<root>
+  <resheader name="resmimetype">
+    <value>text/microsoft-resx</value>
+  </resheader>
+  <resheader name="version">
+    <value>2.0</value>
+  </resheader>
+  <resheader name="reader">
+    <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <resheader name="writer">
+    <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <data name="Collect.Text" xml:space="preserve">
+    <value>Прочитать структуру</value>
+  </data>
+  <data name="Collect.ToolTip" xml:space="preserve">
+    <value>Читает кабельные лотки, трубы и цепи этой модели и её связей и сообщает, что найдено.</value>
+  </data>
+  <data name="Route.Text" xml:space="preserve">
+    <value>Проложить кабели</value>
+  </data>
+  <data name="Route.ToolTip" xml:space="preserve">
+    <value>Прокладывает каждую цепь по лоткам и трубам этой модели и сравнивает рассчитанную длину с той, которую сообщает Revit.</value>
+  </data>
+  <data name="Parameters.Text" xml:space="preserve">
+    <value>Общие параметры</value>
+  </data>
+  <data name="Parameters.ToolTip" xml:space="preserve">
+    <value>Записывает файл общих параметров для авторов семейств и привязывает параметры, которых не хватает в этой модели.</value>
+  </data>
+  <data name="CheckLengths.Text" xml:space="preserve">
+    <value>Проверить длины</value>
+  </data>
+  <data name="CheckLengths.ToolTip" xml:space="preserve">
+    <value>Прокладывает каждую цепь заново и называет те, у которых сохранённая длина больше не описывает эту модель.</value>
+  </data>
+</root>
