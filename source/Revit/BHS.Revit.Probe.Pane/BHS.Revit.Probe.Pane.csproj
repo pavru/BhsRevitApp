@@ -31,6 +31,10 @@
     <ItemGroup>
         <ProjectReference Include="..\BHS.Revit.Abstractions\BHS.Revit.Abstractions.csproj"/>
         <ProjectReference Include="..\BHS.Revit.Probe.Declaration\BHS.Revit.Probe.Declaration.csproj"/>
+        <!-- The one assembly this content needs that nothing else in the probe's deployment names, and
+             the reason the question "does a pane's content find what sits beside it" can be asked at
+             all. Its project file says why it must stay unreferenced everywhere else. -->
+        <ProjectReference Include="..\BHS.Revit.Probe.Pane.Support\BHS.Revit.Probe.Pane.Support.csproj"/>
     </ItemGroup>
 
 </Project>

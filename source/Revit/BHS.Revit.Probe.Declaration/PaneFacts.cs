@@ -29,6 +29,9 @@ public static class PaneFacts
     private static int _selectionChanges;
     private static string _lastSelection = string.Empty;
     private static int _selectionThread;
+    private static string _support = string.Empty;
+    private static string _supportLocalised = string.Empty;
+    private static string _supportFrom = string.Empty;
 
     /// <summary>How many times the host called the content's <c>Create</c>.</summary>
     public static int Created => Volatile.Read(ref _created);
@@ -55,6 +58,23 @@ public static class PaneFacts
     public static int SelectionThread => Volatile.Read(ref _selectionThread);
 
     /// <summary>
+    /// What the assembly beside the pane's content answered when the content asked it, or how asking
+    /// failed. Empty until the content has been created.
+    /// </summary>
+    /// <remarks>
+    /// The one thing a pane's content does that nothing else in the probe's deployment does: reach an
+    /// assembly nobody had loaded. Whether that works is a property of how the host loaded the content,
+    /// which is why the answer is read here and compared by the sweep.
+    /// </remarks>
+    public static string Support => Volatile.Read(ref _support);
+
+    /// <summary>The same sentence out of that assembly's ru-RU satellite; empty for none.</summary>
+    public static string SupportLocalised => Volatile.Read(ref _supportLocalised);
+
+    /// <summary>Where that assembly was loaded from; empty for none.</summary>
+    public static string SupportFrom => Volatile.Read(ref _supportFrom);
+
+    /// <summary>
     /// Set by the content when it is created: answers the theme questions about the live element. Null
     /// until the pane has been created. Called on the element's own thread.
     /// </summary>
@@ -73,6 +93,13 @@ public static class PaneFacts
     }
 
     public static void RecordRead(string? title) => Volatile.Write(ref _readTitle, title ?? string.Empty);
+
+    public static void RecordSupport(string? answer, string? localised, string? from)
+    {
+        Volatile.Write(ref _supportLocalised, localised ?? string.Empty);
+        Volatile.Write(ref _supportFrom, from ?? string.Empty);
+        Volatile.Write(ref _support, answer ?? string.Empty);
+    }
 
     public static void RecordSelection(string ids)
     {

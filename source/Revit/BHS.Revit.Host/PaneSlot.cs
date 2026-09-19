@@ -305,7 +305,7 @@ internal sealed class PaneSlot : IDockablePaneProvider, IFrameworkElementCreator
 
         try
         {
-            var type = PaneContentLoader.Resolve(_directory, _pane.ContentAssembly, _pane.ContentClassName, _anchor);
+            var type = PaneContentLoader.Resolve(_directory, _pane.ContentAssembly, _pane.ContentClassName, _anchor, _log);
 
             if (Activator.CreateInstance(type) is not IPaneContent content)
             {

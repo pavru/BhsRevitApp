@@ -1,4 +1,5 @@
 using System.Globalization;
+using System.Runtime.CompilerServices;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
@@ -33,6 +34,24 @@ public sealed class ProbePane : IPaneContent
         PaneFacts.RecordCreate();
         _context = context;
 
+        // Here, and first: a content's dependency is bound while the content's own code runs, and this is
+        // where the cabling pane fell over on 2026-09-20 - the host had loaded this assembly in a way that
+        // left the assemblies beside it unfindable. Recorded rather than asserted here; the sweep compares.
+        //
+        // In its own method, called inside a try, and that is not tidiness. A missing assembly is reported
+        // when the method that names it is prepared, not when the call is reached - the cabling stack said
+        // "at CablingInspectorPane.Create" for a bind its first line had not got to. Named here, this
+        // failure is one red check that says which assembly; written straight into Create, it would take
+        // the whole pane down with it and read as the pane stopping, which is what the defect already said.
+        try
+        {
+            RecordSupport();
+        }
+        catch (Exception error)
+        {
+            PaneFacts.RecordSupport("(failed: " + error.GetType().Name + ": " + error.Message + ")", string.Empty, string.Empty);
+        }
+
         var title = new TextBlock { Text = "BHS probe pane", TextWrapping = TextWrapping.Wrap };
         title.SetResourceReference(TextBlock.ForegroundProperty, "TextFillColorPrimaryBrush");
 
@@ -62,6 +81,12 @@ public sealed class ProbePane : IPaneContent
         if (document is not null && PaneFacts.ReadTitle.Length == 0 && _context is not null)
             ReadTitle(_context);
     }
+
+    /// <summary>Asks the assembly beside this one, and its satellite. Never inlined, so that a failure to
+    /// find either is reported at the call above rather than at whatever method the runtime inlined it into.</summary>
+    [MethodImpl(MethodImplOptions.NoInlining)]
+    private static void RecordSupport() =>
+        PaneFacts.RecordSupport(Support.PaneSupport.Say(), Support.PaneSupport.Localised(), Support.PaneSupport.From());
 
     /// <summary>The door a pane has to the model: the pump, handed the shell's current document.</summary>
     private static async void ReadTitle(IPaneContext context)

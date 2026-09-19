@@ -37,6 +37,13 @@ internal static class PaneProbe
 
     public const string WpfUiName = "Wpf.Ui";
 
+    /// <summary>
+    /// The assembly the pane's content needs and nothing else in this deployment names. Text again, and
+    /// for a second reason: naming a type from it would load it, and the whole question is that nobody
+    /// else does.
+    /// </summary>
+    public const string SupportAssemblyName = "BHS.Revit.Probe.Pane.Support";
+
     private static int _themeChanges;
     private static string _lastThemeChange = string.Empty;
     private static string _switch = string.Empty;
@@ -47,11 +54,21 @@ internal static class PaneProbe
     /// <summary>The same question about WPF-UI, which only the pane shell names.</summary>
     public static bool WpfUiLoadedAtStartup { get; private set; }
 
+    /// <summary>The same question about the assembly the pane's content needs beside it.</summary>
+    /// <remarks>
+    /// False is what makes the answer below worth anything: an assembly something else had already
+    /// brought in would be found by a pane whether or not the host loaded the content properly, and the
+    /// check would pass while measuring nothing. That is how this defect stayed hidden until a person
+    /// met it.
+    /// </remarks>
+    public static bool SupportLoadedAtStartup { get; private set; }
+
     /// <summary>The first line of the probe's own startup, straight after the host registered the panes.</summary>
     public static void RecordStartup(UIControlledApplication application)
     {
         PaneLoadedAtStartup = ProbeApplication.IsLoaded(PaneAssemblyName);
         WpfUiLoadedAtStartup = ProbeApplication.IsLoaded(WpfUiName);
+        SupportLoadedAtStartup = ProbeApplication.IsLoaded(SupportAssemblyName);
 
         // Counted by the probe itself, beside the host's own subscription: whether Revit raises the
         // event for a switch made through UIThemeManager is part of what the switch measures.
@@ -93,6 +110,15 @@ internal static class PaneProbe
         facts["pane:contentLoadedAtStartup"] = PaneLoadedAtStartup ? "True" : "False";
         facts["pane:wpfUiLoaded"] = ProbeApplication.IsLoaded(WpfUiName) ? "True" : "False";
         facts["pane:wpfUiLoadedAtStartup"] = WpfUiLoadedAtStartup ? "True" : "False";
+
+        // Whether a pane's content finds what sits beside it: the half of loading that was missing until
+        // 2026-09-20, and that the sweep could not see because nothing the probe pane needed was ever
+        // unloaded. The answer itself is the content's; these two say the question was worth asking.
+        facts["pane:supportLoaded"] = ProbeApplication.IsLoaded(SupportAssemblyName) ? "True" : "False";
+        facts["pane:supportLoadedAtStartup"] = SupportLoadedAtStartup ? "True" : "False";
+        facts["pane:supportAnswer"] = PaneFacts.Support;
+        facts["pane:supportLocalised"] = PaneFacts.SupportLocalised;
+        facts["pane:supportFrom"] = PaneFacts.SupportFrom;
 
         facts["pane:created"] = PaneFacts.Created.ToString(culture);
         facts["pane:createThread"] = PaneFacts.CreateThread.ToString(culture);

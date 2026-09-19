@@ -141,8 +141,13 @@ internal sealed class Report
     ///
     /// And by one more with the declaration strings: the pane's title is the one its manifest gives for
     /// Revit's language. Asked in every mode, and skipped out loud only when Revit gives no title at all.
+    ///
+    /// And by one more after 2026-09-20: the assembly the pane's content needs beside it is not loaded
+    /// either, while nobody has shown the pane. That one is not about laziness at all - it is what keeps
+    /// the check in the shown mode from measuring nothing, and it is in the same skipped-out-loud group
+    /// as its two neighbours.
     /// </remarks>
-    public const int MinimumPerRelease = 49;
+    public const int MinimumPerRelease = 50;
 
     /// <summary>
     /// The checks the Entry experiment adds when the tab is shown and its button pressed.
@@ -167,15 +172,20 @@ internal sealed class Report
     /// The checks the dockable pane adds when the tab is shown and its button pressed.
     /// </summary>
     /// <remarks>
-    /// Seven: the button shows the pane; Revit asks for the content only then and its assembly loads then;
-    /// the content is created once, told the open model and reads it through the pump; the shell wears
+    /// Eight: the button shows the pane; Revit asks for the content only then and its assembly loads then;
+    /// the content is created once, told the open model and reads it through the pump; it reaches the
+    /// assembly beside it that nothing had loaded; the shell wears
     /// WPF-UI's theme for Revit's with our accent over it; a selection made through the API reaches the
     /// content, and so does putting it back (since the cabling inspector, 2026-09-20); a live theme switch
-    /// reaches it; the button hides it again. The theme switch is the sixth by the owner's decision, and it is why this mode
+    /// reaches it; the button hides it again. The theme switch is there by the owner's decision, and it is why this mode
     /// changes - and puts back - a setting of the person's Revit. Only in this mode, for the reason
     /// given for the Entry checks above.
+    ///
+    /// The fourth is the one bought by a defect: until 2026-09-20 the host loaded a pane's content in a
+    /// way that left the assemblies beside it unfindable on the .NET axis, and the sweep said nothing
+    /// because everything the probe pane needed was already in the process by the time it was shown.
     /// </remarks>
-    public const int PaneChecksWithTabShown = 7;
+    public const int PaneChecksWithTabShown = 8;
 
     public void Summarise(int releases)
     {

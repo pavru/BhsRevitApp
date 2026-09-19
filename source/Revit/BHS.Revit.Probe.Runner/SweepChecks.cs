@@ -31,6 +31,16 @@ namespace BHS.Revit.Probe.Runner;
 internal static class SweepChecks
 {
     /// <summary>
+    /// What <c>BHS.Revit.Probe.Pane.Support.PaneSupport.Say</c> returns, written out rather than named.
+    /// </summary>
+    /// <remarks>
+    /// The runner is a process of its own and could reference that assembly without harm - but the two
+    /// copies would then agree by construction, and the sweep would be comparing the constant with
+    /// itself. A literal is what makes a change on one side show up as a red check on the other.
+    /// </remarks>
+    private const string SupportAnswer = "the assembly beside the pane answered";
+
+    /// <summary>
     /// How long Revit is entitled to say nothing before a wait calls it a hang.
     /// </summary>
     /// <remarks>
@@ -817,6 +827,14 @@ internal static class SweepChecks
 
             report.Check("and WPF-UI is not loaded while no pane has been shown",
                 pane.GetValueOrDefault("pane:wpfUiLoaded") == "False");
+
+            // The one that keeps the check below it honest. BHS.Revit.Probe.Pane.Support is referenced by
+            // the pane's content and by nothing else in the deployment, so a True here means something has
+            // started naming it - and from that moment "the content found what sits beside it" would pass
+            // on a host that cannot load a dependency at all. That is exactly how the defect of
+            // 2026-09-20 lived through every green sweep before it.
+            report.Check("and neither is the assembly its content needs beside it",
+                pane.GetValueOrDefault("pane:supportLoaded") == "False");
         }
 
         foreach (var key in new[]
@@ -825,6 +843,7 @@ internal static class SweepChecks
                      "pane:setupThread", "pane:apiThread", "pane:contentLoadedAtStartup", "pane:wpfUiLoadedAtStartup",
                      "pane:revitLanguage", "pane:shellCulture", "pane:shellNoDocument", "pane:revitTheme",
                      "pane:titleExpected", "pane:titleCulture", "pane:gateText", "pane:hostSelectionChanges",
+                     "pane:supportLoadedAtStartup",
                  })
         {
             report.Note(key, pane.GetValueOrDefault(key) ?? "(missing)");
@@ -905,6 +924,13 @@ internal static class SweepChecks
             && title.Length > 0
             && pane.GetValueOrDefault("pane:readTitle") == title);
 
+        // The half of loading that nothing asked about until the owner met it by hand on 2026-09-20: the
+        // content is loaded, and then it reaches the assembly sitting beside it that nobody had brought in.
+        // Compared against a literal, not against the constant in that assembly - this process is not the
+        // one being measured, and the runner must not need what it is asking about.
+        report.Check("and reaches the assembly beside it that nothing had loaded",
+            pane.GetValueOrDefault("pane:supportAnswer") == SupportAnswer);
+
         report.Check("the pane wears WPF-UI's theme for Revit's theme, with our accent over it", Themed(pane));
 
         foreach (var key in new[]
@@ -912,6 +938,13 @@ internal static class SweepChecks
                      "pane:creatorCalls", "pane:creatorThread", "pane:createThread", "pane:apiThread", "pane:documentChanges",
                      "pane:themeSourceLive", "pane:accentPrimaryLive", "pane:backgroundLive", "pane:revitBackgroundLive",
                      "pane:inspect",
+                     // Where that assembly came from, and what its ru-RU satellite said. The satellite is a
+                     // note and not a check on purpose: that a .resources assembly is found in <culture>
+                     // beside its parent is measured outside Revit, on both kinds of load context, and
+                     // never inside one - and a check written before its answer agrees with whoever wrote
+                     // it. It becomes a check once a record says what Revit does, and what it should say
+                     // is the Russian sentence in the overlay, on a Revit of any language.
+                     "pane:supportFrom", "pane:supportLocalised",
                  })
         {
             if (pane.TryGetValue(key, out var value))
