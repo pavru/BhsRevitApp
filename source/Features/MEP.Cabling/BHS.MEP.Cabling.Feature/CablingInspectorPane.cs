@@ -42,9 +42,12 @@ namespace BHS.MEP.Cabling.Feature;
 /// element invisible to WPF is not measured, and if it does not, the cost is reads nobody sees.
 /// </para>
 /// <para>
-/// <b>No waiting state of its own.</b> <see cref="IPaneContext.ReadAsync{T}"/> already shows the shell's
-/// "waiting for Revit" until the pump takes the work, and the read itself runs on the thread that would have
-/// to paint a caption - so a caption of ours could never be seen.
+/// <b>No waiting state of its own, and no clearing of its own either.</b>
+/// <see cref="IPaneContext.ReadAsync{T}"/> already shows the shell's "waiting for Revit" until the pump takes
+/// the work, and the read itself runs on the thread that would have to paint a caption - so a caption of ours
+/// could never be seen. The shell's waiting layer also hides whatever was shown before it, so the answer about
+/// the element selected a moment ago cannot be read as the answer about this one; clearing here as well would
+/// be a second mechanism doing the first one's job, and the first one is the one every future pane gets.
 /// </para>
 /// </remarks>
 public sealed class CablingInspectorPane : IPaneContent
