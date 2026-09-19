@@ -824,7 +824,7 @@ internal static class SweepChecks
                      "pane:exists", "pane:shown", "pane:title", "pane:creatorCalls", "pane:setupCalls", "pane:setupDuringRegistration",
                      "pane:setupThread", "pane:apiThread", "pane:contentLoadedAtStartup", "pane:wpfUiLoadedAtStartup",
                      "pane:revitLanguage", "pane:shellCulture", "pane:shellNoDocument", "pane:revitTheme",
-                     "pane:titleExpected", "pane:titleCulture", "pane:gateText",
+                     "pane:titleExpected", "pane:titleCulture", "pane:gateText", "pane:hostSelectionChanges",
                  })
         {
             report.Note(key, pane.GetValueOrDefault(key) ?? "(missing)");
@@ -918,6 +918,8 @@ internal static class SweepChecks
                 report.Note(key, value);
         }
 
+        await CheckPaneSelectionAsync(client, report);
+
         await CheckThemeSwitchAsync(client, report, pane.GetValueOrDefault("pane:revitTheme") ?? string.Empty);
 
         var hidden = await ToggleAsync(client, show: false);
@@ -927,6 +929,72 @@ internal static class SweepChecks
         // next sweep's laziness question could not be asked.
         if (!hidden)
             report.Note("pane hidden by the API instead", HideByApi(client));
+    }
+
+    /// <summary>
+    /// Selects an element through the API and waits for the live pane to be told which, then puts the
+    /// person's selection back and waits for the pane to be told that too.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <b>The host's selection is a contract two panes rest on</b> - the cabling inspector and the probe's -
+    /// and the probe is the one the sweep can read. What it asserts is the whole path: Revit raises
+    /// <c>SelectionChanged</c>, the host passes the ids on, and the content hears them on its own thread.
+    /// </para>
+    /// <para>
+    /// <b>Written before its answer, and that is named rather than hidden.</b> Whether a selection set
+    /// through <c>Selection.SetElementIds</c> raises <c>SelectionChanged</c> at all is not measured; its
+    /// reference says only "after the selection was changed". A red here with the ids in the notes answers
+    /// that question, and does not by itself say the host is wrong - a selection by hand would settle it.
+    /// </para>
+    /// <para>
+    /// Only in the mode with the pane shown, because the content hears nothing before it exists. The count
+    /// the host keeps without a content is a note in every mode.
+    /// </para>
+    /// </remarks>
+    private static async Task CheckPaneSelectionAsync(RevitSideChannel.RevitSideChannelClient client, Report report)
+    {
+        var selected = string.Empty;
+        var told = false;
+        var restoredTold = false;
+        var restored = string.Empty;
+
+        try
+        {
+            selected = (await client.AskAsync(new AskRequest { Question = "selectforpane" })).Values.GetValueOrDefault("pane:selected") ?? "(missing)";
+
+            // An id list is digits and separators; anything else is the probe saying why it selected nothing.
+            var usable = selected.Length > 0 && selected.All(one => char.IsDigit(one) || one == ';' || one == ' ');
+
+            if (usable)
+            {
+                told = await WorkWatch.WaitForAsync(
+                    () => Pane(client).GetValueOrDefault("pane:lastSelection") == selected, 30_000);
+            }
+        }
+        finally
+        {
+            // Always, whatever happened above: the selection is the person's.
+            restored = client.Ask(new AskRequest { Question = "restoreselection" }).Values.GetValueOrDefault("pane:selectionRestored") ?? "(missing)";
+        }
+
+        if (told)
+        {
+            restoredTold = await WorkWatch.WaitForAsync(
+                () => Pane(client).GetValueOrDefault("pane:lastSelection") == restored, 30_000);
+        }
+
+        report.Check("selecting an element through the API tells the probe pane which one, and putting the selection back tells it again",
+            told && restoredTold);
+
+        var pane = Pane(client);
+
+        report.Note("pane selection",
+            "selected [" + selected + "], restored to [" + restored + "], pane last told ["
+            + (pane.GetValueOrDefault("pane:lastSelection") ?? "(missing)") + "] after "
+            + (pane.GetValueOrDefault("pane:selectionChanges") ?? "(missing)") + " change(s) on thread "
+            + (pane.GetValueOrDefault("pane:selectionThread") ?? "(missing)") + ", host passed on "
+            + (pane.GetValueOrDefault("pane:hostSelectionChanges") ?? "(missing)"));
     }
 
     /// <summary>Switches Revit's theme, checks the live pane follows, and always puts it back.</summary>

@@ -26,6 +26,9 @@ public static class PaneFacts
     private static int _documentChanges;
     private static string _lastDocument = string.Empty;
     private static string _readTitle = string.Empty;
+    private static int _selectionChanges;
+    private static string _lastSelection = string.Empty;
+    private static int _selectionThread;
 
     /// <summary>How many times the host called the content's <c>Create</c>.</summary>
     public static int Created => Volatile.Read(ref _created);
@@ -41,6 +44,15 @@ public static class PaneFacts
 
     /// <summary>The title the content read through the pump, the first time it had a document.</summary>
     public static string ReadTitle => Volatile.Read(ref _readTitle);
+
+    /// <summary>How many times the content was told the selection changed, through the context's event.</summary>
+    public static int SelectionChanges => Volatile.Read(ref _selectionChanges);
+
+    /// <summary>The ids in the last selection the content was told, "; "-joined; empty for none.</summary>
+    public static string LastSelection => Volatile.Read(ref _lastSelection);
+
+    /// <summary>The managed thread the last selection change arrived on; zero before one.</summary>
+    public static int SelectionThread => Volatile.Read(ref _selectionThread);
 
     /// <summary>
     /// Set by the content when it is created: answers the theme questions about the live element. Null
@@ -61,4 +73,11 @@ public static class PaneFacts
     }
 
     public static void RecordRead(string? title) => Volatile.Write(ref _readTitle, title ?? string.Empty);
+
+    public static void RecordSelection(string ids)
+    {
+        Volatile.Write(ref _lastSelection, ids ?? string.Empty);
+        Volatile.Write(ref _selectionThread, Environment.CurrentManagedThreadId);
+        Interlocked.Increment(ref _selectionChanges);
+    }
 }

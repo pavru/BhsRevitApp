@@ -1,5 +1,6 @@
 using System.Globalization;
 using System.IO;
+using Autodesk.Revit.DB;
 using Autodesk.Revit.UI;
 using Autodesk.Revit.UI.Events;
 using BHS.Revit.Abstractions;
@@ -98,6 +99,10 @@ internal static class PaneProbe
         facts["pane:documentChanges"] = PaneFacts.DocumentChanges.ToString(culture);
         facts["pane:lastDocument"] = PaneFacts.LastDocument;
         facts["pane:readTitle"] = PaneFacts.ReadTitle;
+        facts["pane:selectionChanges"] = PaneFacts.SelectionChanges.ToString(culture);
+        facts["pane:lastSelection"] = PaneFacts.LastSelection;
+        facts["pane:selectionThread"] = PaneFacts.SelectionThread.ToString(culture);
+        facts["pane:hostSelectionChanges"] = (registered?.SelectionChanges ?? -1).ToString(culture);
 
         facts["pane:revitTheme"] = Ask(() => UIThemeManager.CurrentTheme);
         facts["pane:themeChanges"] = Volatile.Read(ref _themeChanges).ToString(culture);
@@ -159,6 +164,79 @@ internal static class PaneProbe
         }
 
         return "(not found on the panel)";
+    }
+
+    private static List<ElementId>? _selectionBefore;
+
+    /// <summary>
+    /// Selects one element of the active view through the API, remembering what was selected, and says which.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <b>The selection is the person's</b>, so what stood before is kept and put back by
+    /// <see cref="RestoreSelection"/> - the same discipline as the theme, without a marker: a selection does
+    /// not outlive the session, so a Revit killed in between loses nothing of the person's.
+    /// </para>
+    /// <para>
+    /// Any element the active view shows that has a category and is neither a view nor a type: the question
+    /// is whether the pane is told, not what the element is. Chosen to differ from what is selected already,
+    /// so that "told" cannot be the ids it had before.
+    /// </para>
+    /// </remarks>
+    public static string SelectOne(UIApplication application)
+    {
+        try
+        {
+            var view = application.ActiveUIDocument;
+
+            if (view?.Document is not { } document || document.ActiveView is not { } active)
+                return "no active view";
+
+            var before = view.Selection.GetElementIds().ToList();
+            _selectionBefore ??= before;
+
+            var chosen = new FilteredElementCollector(document, active.Id)
+                .WhereElementIsNotElementType()
+                .Where(element => element.Category is not null && element is not View)
+                .Select(element => element.Id)
+                .FirstOrDefault(id => before.All(one => one.Value != id.Value));
+
+            if (chosen is null)
+                return "nothing selectable in the active view";
+
+            view.Selection.SetElementIds(new List<ElementId> { chosen });
+
+            var now = string.Join("; ", view.Selection.GetElementIds().Select(id => id.Value).OrderBy(id => id)
+                .Select(id => id.ToString(CultureInfo.InvariantCulture)));
+
+            return now;
+        }
+        catch (Exception error)
+        {
+            return "failed: " + error.GetType().Name + ": " + error.Message;
+        }
+    }
+
+    /// <summary>Puts back what was selected before <see cref="SelectOne"/>, and says what is selected now.</summary>
+    public static string RestoreSelection(UIApplication application)
+    {
+        try
+        {
+            var view = application.ActiveUIDocument;
+
+            if (view is null)
+                return "no active view";
+
+            view.Selection.SetElementIds(_selectionBefore ?? new List<ElementId>());
+            _selectionBefore = null;
+
+            return string.Join("; ", view.Selection.GetElementIds().Select(id => id.Value).OrderBy(id => id)
+                .Select(id => id.ToString(CultureInfo.InvariantCulture)));
+        }
+        catch (Exception error)
+        {
+            return "failed: " + error.GetType().Name + ": " + error.Message;
+        }
     }
 
     /// <summary>Hides the pane by the API rather than by its button: the sweep's clean-up.</summary>

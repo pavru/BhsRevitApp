@@ -40,4 +40,13 @@
   <data name="CheckLengths.ToolTip" xml:space="preserve">
     <value>Прокладывает каждую цепь заново и называет те, у которых сохранённая длина больше не описывает эту модель.</value>
   </data>
+  <data name="Inspector.Title" xml:space="preserve">
+    <value>Инспектор кабелей</value>
+  </data>
+  <data name="Inspector.Text" xml:space="preserve">
+    <value>Инспектор</value>
+  </data>
+  <data name="Inspector.ToolTip" xml:space="preserve">
+    <value>Показывает и скрывает панель с тем, что расчёт кабелей записал на выбранный элемент: длину и маршрут цепи, цепи в лотке, трубе или коробке, рекомендацию индикатора.</value>
+  </data>
 </root>

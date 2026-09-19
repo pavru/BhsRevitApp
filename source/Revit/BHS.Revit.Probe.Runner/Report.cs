@@ -167,14 +167,15 @@ internal sealed class Report
     /// The checks the dockable pane adds when the tab is shown and its button pressed.
     /// </summary>
     /// <remarks>
-    /// Six: the button shows the pane; Revit asks for the content only then and its assembly loads then;
+    /// Seven: the button shows the pane; Revit asks for the content only then and its assembly loads then;
     /// the content is created once, told the open model and reads it through the pump; the shell wears
-    /// WPF-UI's theme for Revit's with our accent over it; a live theme switch reaches it; the button
-    /// hides it again. The theme switch is the sixth by the owner's decision, and it is why this mode
+    /// WPF-UI's theme for Revit's with our accent over it; a selection made through the API reaches the
+    /// content, and so does putting it back (since the cabling inspector, 2026-09-20); a live theme switch
+    /// reaches it; the button hides it again. The theme switch is the sixth by the owner's decision, and it is why this mode
     /// changes - and puts back - a setting of the person's Revit. Only in this mode, for the reason
     /// given for the Entry checks above.
     /// </remarks>
-    public const int PaneChecksWithTabShown = 6;
+    public const int PaneChecksWithTabShown = 7;
 
     public void Summarise(int releases)
     {

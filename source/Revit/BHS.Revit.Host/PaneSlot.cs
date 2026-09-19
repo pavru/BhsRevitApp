@@ -1,3 +1,4 @@
+using System.Globalization;
 using System.Reflection;
 using System.Windows;
 using System.Windows.Controls;
@@ -70,6 +71,12 @@ internal sealed class PaneSlot : IDockablePaneProvider, IFrameworkElementCreator
     public IUiFeatureServices Services { get; }
 
     public PaneDocument? Document => _documents.Descriptor;
+
+    public PaneSelection Selection => _documents.Selection;
+
+    public event EventHandler<PaneSelection>? SelectionChanged;
+
+    public CultureInfo? Culture => RevitLanguage.Current;
 
     /// <summary>Called by Revit to learn how the pane starts. When, and on which thread, is not measured.</summary>
     public void SetupDockablePane(DockablePaneProviderData data)
@@ -223,6 +230,33 @@ internal sealed class PaneSlot : IDockablePaneProvider, IFrameworkElementCreator
             catch (Exception error)
             {
                 _log.Error(error, "panes: {0} failed on a document change", _pane.Name);
+            }
+        });
+    }
+
+    /// <summary>The selection in the current document changed, or the document did. On the API thread.</summary>
+    /// <remarks>
+    /// Counted whether or not the pane was ever shown - the count is what the probe reads in a sweep that
+    /// shows nothing - and passed on only once there is a shell, because until then nobody has subscribed.
+    /// </remarks>
+    public void OnSelectionChanged(PaneSelection selection)
+    {
+        Registered.RecordSelection();
+
+        var shell = _shell;
+
+        if (shell is null)
+            return;
+
+        OnShellThread(shell, () =>
+        {
+            try
+            {
+                SelectionChanged?.Invoke(this, selection);
+            }
+            catch (Exception error)
+            {
+                _log.Error(error, "panes: {0} failed on a selection change", _pane.Name);
             }
         });
     }
