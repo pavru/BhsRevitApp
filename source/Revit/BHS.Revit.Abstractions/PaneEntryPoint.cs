@@ -111,6 +111,7 @@ public sealed class RegisteredPane
     private int _toggles;
     private int _firstSetupThread;
     private int _firstCreatorThread;
+    private int _selectionChanges;
 
     /// <summary>How many times Revit called <c>SetupDockablePane</c>.</summary>
     public int SetupCalls => Volatile.Read(ref _setupCalls);
@@ -124,6 +125,9 @@ public sealed class RegisteredPane
     /// presses again has to know whether the first one ran. This is how.
     /// </remarks>
     public int Toggles => Volatile.Read(ref _toggles);
+
+    /// <summary>How many selection changes the host passed on to this pane, created or not.</summary>
+    public int SelectionChanges => Volatile.Read(ref _selectionChanges);
 
     /// <summary>The managed thread of the first setup call; zero before it.</summary>
     public int FirstSetupThread => Volatile.Read(ref _firstSetupThread);
@@ -149,6 +153,8 @@ public sealed class RegisteredPane
     }
 
     public void RecordToggle() => Interlocked.Increment(ref _toggles);
+
+    public void RecordSelection() => Interlocked.Increment(ref _selectionChanges);
 }
 
 /// <summary>

@@ -1,3 +1,4 @@
+using System.Globalization;
 using System.Windows;
 using Autodesk.Revit.DB;
 
@@ -81,6 +82,72 @@ public interface IPaneContext
     /// no current document any more. The shell has shown that state already; the caller need not.
     /// </returns>
     Task<T?> ReadAsync<T>(string name, Func<Document, T> read, CancellationToken cancellationToken = default);
+
+    /// <summary>What is selected in the pane's current document, as the shell last saw it. Never null.</summary>
+    PaneSelection Selection { get; }
+
+    /// <summary>The selection in the pane's document changed, or the document did. On the pane's own thread.</summary>
+    /// <remarks>
+    /// <para>
+    /// <b>Once for all panes, the host's subscription.</b> The host listens to
+    /// <c>UIControlledApplication.SelectionChanged</c> - declared on all four supported releases, read from
+    /// the metadata of the reference assemblies for 2024, 2025, 2026 and 2027 - and a pane is told the ids,
+    /// never the elements: what the elements hold it reads through <see cref="ReadAsync{T}"/>, inside the
+    /// pump, the same door as every other read.
+    /// </para>
+    /// <para>
+    /// <b>Raised on every change of document as well</b>, even when the ids happen to be equal: the same id
+    /// in another document is another element, and a pane that compared ids would keep showing the old one.
+    /// </para>
+    /// <para>
+    /// An event rather than a member of <see cref="IPaneContent"/>, so that a pane with no use for the
+    /// selection writes nothing at all. Subscribe in <see cref="IPaneContent.Create"/>.
+    /// </para>
+    /// </remarks>
+    event EventHandler<PaneSelection>? SelectionChanged;
+
+    /// <summary>The language Revit's interface speaks, as the host's own strings use it; null for the neutral one.</summary>
+    /// <remarks>
+    /// One mapping from Revit's <c>LanguageType</c> to a culture, the host's, so that a pane's strings and
+    /// the shell's around them cannot end up in two languages. <c>CurrentUICulture</c> is the wrong source:
+    /// Revit's language is chosen at installation and has nothing to do with Windows'.
+    /// </remarks>
+    CultureInfo? Culture { get; }
+}
+
+/// <summary>What is selected, as a pane is told it - element ids, not elements.</summary>
+/// <remarks>
+/// <para>
+/// A description for the same reason <see cref="PaneDocument"/> is one: an element held by a pane is an
+/// element read from a click handler. The ids are the values of <c>ElementId.Value</c>, ascending - Revit
+/// hands them over as a set, and a set has no order worth keeping.
+/// </para>
+/// <para>
+/// Ids of the pane's current document, the host document only: selecting inside a link selects the link
+/// instance, whose id is the one that arrives.
+/// </para>
+/// </remarks>
+public sealed class PaneSelection
+{
+    /// <summary>Nothing selected.</summary>
+    public static readonly PaneSelection Empty = new(Array.Empty<long>());
+
+    public PaneSelection(IEnumerable<long> ids)
+    {
+        ElementIds = (ids ?? Array.Empty<long>()).Distinct().OrderBy(id => id).ToArray();
+    }
+
+    /// <summary>The selected elements' ids, ascending, each once.</summary>
+    public IReadOnlyList<long> ElementIds { get; }
+
+    /// <summary>How many elements are selected.</summary>
+    public int Count => ElementIds.Count;
+
+    /// <summary>Whether <paramref name="other"/> names the same ids.</summary>
+    public bool SameIds(PaneSelection? other) => other is not null && ElementIds.SequenceEqual(other.ElementIds);
+
+    public override string ToString() =>
+        string.Join("; ", ElementIds.Select(id => id.ToString(CultureInfo.InvariantCulture)));
 }
 
 /// <summary>What a pane is told about the document it is about - a description, not the document.</summary>

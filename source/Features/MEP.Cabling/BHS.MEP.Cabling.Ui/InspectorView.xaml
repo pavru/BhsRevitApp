@@ -1,0 +1,123 @@
+<UserControl x:Class="BHS.MEP.Cabling.Ui.InspectorView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:ui="clr-namespace:BHS.MEP.Cabling.Ui"
+             mc:Ignorable="d"
+             d:DataContext="{d:DesignInstance ui:InspectorViewModel}"
+             d:DesignWidth="320">
+
+    <!--
+      The cabling inspector: what the calculation wrote on the selected element.
+
+      Plain WPF controls, dressed by the dictionaries the host's pane shell merges above this element -
+      WPF-UI's theme and controls dictionaries and our accent. Every colour is a DynamicResource to one of
+      their keys, so a live theme switch repaints this without it knowing, and this assembly names no WPF-UI
+      type: whether Wpf.Ui loads is the shell's to decide. And none of the controls the shell forbids -
+      FontIcon, SymbolIcon, InfoBar, anything with an Icon - which read Revit's application resources in
+      their constructors.
+
+      The shell already owns the padding of its states (12, 24 from the top); this content keeps to the same
+      grid so that a sentence here stands where the shell's own "open a model" stood.
+    -->
+
+    <UserControl.Resources>
+        <BooleanToVisibilityConverter x:Key="Shown" />
+
+        <Style x:Key="Secondary" TargetType="TextBlock">
+            <Setter Property="TextWrapping" Value="Wrap" />
+            <Setter Property="Foreground" Value="{DynamicResource TextFillColorSecondaryBrush}" />
+        </Style>
+
+        <!-- A value that stands, and one that does not: the second is quieter and in italics, so "never
+             written" is never read as a value and a written zero never as an absence. -->
+        <Style x:Key="Value" TargetType="TextBlock">
+            <Setter Property="TextWrapping" Value="Wrap" />
+            <Setter Property="Foreground" Value="{DynamicResource TextFillColorPrimaryBrush}" />
+            <Style.Triggers>
+                <DataTrigger Binding="{Binding Written}" Value="False">
+                    <Setter Property="Foreground" Value="{DynamicResource TextFillColorTertiaryBrush}" />
+                    <Setter Property="FontStyle" Value="Italic" />
+                </DataTrigger>
+            </Style.Triggers>
+        </Style>
+    </UserControl.Resources>
+
+    <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+        <StackPanel Margin="12,24,12,12">
+
+            <TextBlock Text="{Binding Message}"
+                       TextWrapping="Wrap"
+                       Foreground="{DynamicResource TextFillColorPrimaryBrush}"
+                       Visibility="{Binding HasMessage, Converter={StaticResource Shown}}" />
+
+            <StackPanel Visibility="{Binding HasElement, Converter={StaticResource Shown}}">
+
+                <!-- The id in brackets is the one Revit's Select by ID accepts; selectable text, so it can be copied. -->
+                <TextBox Text="{Binding Title, Mode=OneWay}"
+                         IsReadOnly="True"
+                         BorderThickness="0"
+                         Background="Transparent"
+                         Padding="0"
+                         FontSize="14"
+                         FontWeight="SemiBold"
+                         TextWrapping="Wrap"
+                         Foreground="{DynamicResource TextFillColorPrimaryBrush}" />
+
+                <TextBlock Text="{Binding Kind}" Margin="0,2,0,0" Style="{StaticResource Secondary}" />
+
+                <ItemsControl ItemsSource="{Binding Sections}" Focusable="False">
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate DataType="{x:Type ui:InspectorSection}">
+                            <StackPanel Margin="0,16,0,0">
+                                <TextBlock Text="{Binding Heading}"
+                                           FontWeight="SemiBold"
+                                           Foreground="{DynamicResource TextFillColorPrimaryBrush}" />
+
+                                <TextBlock Text="{Binding Note}"
+                                           Margin="0,2,0,0"
+                                           Style="{StaticResource Secondary}"
+                                           Visibility="{Binding HasNote, Converter={StaticResource Shown}}" />
+
+                                <!-- A hairline under the heading, in the colour WPF-UI draws dividers with. -->
+                                <Border Height="1"
+                                        Margin="0,6,0,4"
+                                        Background="{DynamicResource DividerStrokeColorDefaultBrush}" />
+
+                                <ItemsControl ItemsSource="{Binding Rows}" Focusable="False">
+                                    <ItemsControl.ItemTemplate>
+                                        <DataTemplate DataType="{x:Type ui:InspectorRow}">
+                                            <Grid Margin="0,4,0,0">
+                                                <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition Width="2*" MinWidth="96" />
+                                                    <ColumnDefinition Width="3*" />
+                                                </Grid.ColumnDefinitions>
+
+                                                <TextBlock Grid.Column="0"
+                                                           Text="{Binding Label}"
+                                                           Margin="0,0,12,0"
+                                                           Style="{StaticResource Secondary}" />
+
+                                                <TextBlock Grid.Column="1"
+                                                           Text="{Binding Value}"
+                                                           Style="{StaticResource Value}" />
+                                            </Grid>
+                                        </DataTemplate>
+                                    </ItemsControl.ItemTemplate>
+                                </ItemsControl>
+                            </StackPanel>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+
+                <!-- The pane shows what was read when the element was selected; a run applied since then
+                     is read by this, without selecting again. -->
+                <Button Content="{Binding ReadAgainText}"
+                        Command="{Binding ReadAgain}"
+                        HorizontalAlignment="Left"
+                        Margin="0,20,0,0" />
+            </StackPanel>
+        </StackPanel>
+    </ScrollViewer>
+</UserControl>

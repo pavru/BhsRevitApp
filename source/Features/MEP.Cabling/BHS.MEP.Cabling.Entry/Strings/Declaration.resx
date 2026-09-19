@@ -44,4 +44,13 @@
   <data name="CheckLengths.ToolTip" xml:space="preserve">
     <value>Routes every circuit again and says which ones carry a stored length that no longer describes this model.</value>
   </data>
+  <data name="Inspector.Title" xml:space="preserve">
+    <value>Cabling inspector</value>
+  </data>
+  <data name="Inspector.Text" xml:space="preserve">
+    <value>Inspector</value>
+  </data>
+  <data name="Inspector.ToolTip" xml:space="preserve">
+    <value>Shows and hides the pane with what the cable calculation wrote on the selected element: a circuit's length and route, the circuits through a tray, conduit or box, an indicator's recommendation.</value>
+  </data>
 </root>

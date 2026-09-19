@@ -44,6 +44,11 @@ public sealed class ProbePane : IPaneContent
         root.Children.Add(_document);
 
         PaneFacts.Inspect = () => Inspect(root);
+
+        // The second consumer of the host's selection, beside the cabling inspector: it writes down what it
+        // was told, and the sweep compares that with what it selected through the API.
+        context.SelectionChanged += (_, selection) => PaneFacts.RecordSelection(selection.ToString());
+
         return root;
     }
 

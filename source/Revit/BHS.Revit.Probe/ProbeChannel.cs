@@ -216,6 +216,16 @@ internal sealed class ProbeChannel : RevitSideChannel.RevitSideChannelBase
                     _pressPane.Raise();
                     break;
 
+                // Selects through the API and puts it back: the question is whether the pane is told. The
+                // selection is the person's, so the sweep asks for both, the second in a finally.
+                case "selectforpane":
+                    response.Values.Add("pane:selected", OnPump("probe: select for the pane", session => PaneProbe.SelectOne(session.Application)));
+                    break;
+
+                case "restoreselection":
+                    response.Values.Add("pane:selectionRestored", OnPump("probe: restore the selection", session => PaneProbe.RestoreSelection(session.Application)));
+                    break;
+
                 case "hidepane":
                     response.Values.Add("pane:hide", OnPump("probe: hide the pane", session => PaneProbe.Hide(session.Application)));
                     break;

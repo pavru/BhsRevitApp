@@ -1,0 +1,115 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- The cabling inspector pane: content strings, read at run time in Revit's language. Neutral English. -->
+<root>
+  <resheader name="resmimetype">
+    <value>text/microsoft-resx</value>
+  </resheader>
+  <resheader name="version">
+    <value>2.0</value>
+  </resheader>
+  <resheader name="reader">
+    <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <resheader name="writer">
+    <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <data name="Inspector.NothingSelected" xml:space="preserve">
+    <value>Select an element to see what the cable calculation wrote on it.</value>
+  </data>
+  <data name="Inspector.SeveralSelected" xml:space="preserve">
+    <value>{0} elements are selected. Select one to see what the cable calculation wrote on it.</value>
+  </data>
+  <data name="Inspector.NotOurs" xml:space="preserve">
+    <value>The cable calculation writes nothing on this element.</value>
+  </data>
+  <data name="Inspector.Link" xml:space="preserve">
+    <value>This is a linked model. The cable calculation writes nothing into links; open that model itself to see what is written on its elements.</value>
+  </data>
+  <data name="Inspector.Gone" xml:space="preserve">
+    <value>The selected element is no longer in the model.</value>
+  </data>
+  <data name="Inspector.Family" xml:space="preserve">
+    <value>Open a project: the cable calculation keeps nothing in families.</value>
+  </data>
+  <data name="Inspector.Failed" xml:space="preserve">
+    <value>This element could not be read: {0}</value>
+  </data>
+  <data name="Inspector.ReadAgain" xml:space="preserve">
+    <value>Read again</value>
+  </data>
+  <data name="Kind.Circuit" xml:space="preserve">
+    <value>Electrical circuit</value>
+  </data>
+  <data name="Kind.Indicator" xml:space="preserve">
+    <value>Junction box indicator placed by the calculation</value>
+  </data>
+  <data name="Kind.JunctionBox" xml:space="preserve">
+    <value>Junction box</value>
+  </data>
+  <data name="Section.Result" xml:space="preserve">
+    <value>Written by the calculation</value>
+  </data>
+  <data name="Section.Input" xml:space="preserve">
+    <value>Set by the designer</value>
+  </data>
+  <data name="Section.InputNote" xml:space="preserve">
+    <value>What the circuit asks for. When it says nothing, its panel's value or the project's default is used.</value>
+  </data>
+  <data name="Section.NotBoundNote" xml:space="preserve">
+    <value>The cabling parameters are not in this model yet: Shared parameters or Apply in Route cables brings them.</value>
+  </data>
+  <data name="Label.CableLength" xml:space="preserve">
+    <value>Cable length</value>
+  </data>
+  <data name="Label.InTray" xml:space="preserve">
+    <value>In trays</value>
+  </data>
+  <data name="Label.InConduit" xml:space="preserve">
+    <value>In conduits</value>
+  </data>
+  <data name="Label.Free" xml:space="preserve">
+    <value>Outside carriers</value>
+  </data>
+  <data name="Label.Other" xml:space="preserve">
+    <value>In other carriers</value>
+  </data>
+  <data name="Label.Slack" xml:space="preserve">
+    <value>Slack</value>
+  </data>
+  <data name="Label.RouteConnection" xml:space="preserve">
+    <value>Routed</value>
+  </data>
+  <data name="Label.RouteStamp" xml:space="preserve">
+    <value>Carriers</value>
+  </data>
+  <data name="Label.CircuitConnection" xml:space="preserve">
+    <value>Connection</value>
+  </data>
+  <data name="Label.CircuitRefs" xml:space="preserve">
+    <value>Circuits</value>
+  </data>
+  <data name="Label.Recommendation" xml:space="preserve">
+    <value>Recommends</value>
+  </data>
+  <data name="Label.TapCount" xml:space="preserve">
+    <value>Cable entries</value>
+  </data>
+  <data name="Value.NeverWritten" xml:space="preserve">
+    <value>never written</value>
+  </data>
+  <data name="Value.NotSet" xml:space="preserve">
+    <value>not set on the circuit</value>
+  </data>
+  <data name="Value.NotBound" xml:space="preserve">
+    <value>not in this model</value>
+  </data>
+  <data name="Value.Terminal" xml:space="preserve">
+    <value>cut at the terminal (Terminal)</value>
+  </data>
+  <data name="Value.JunctionBox" xml:space="preserve">
+    <value>through junction boxes (JunctionBox)</value>
+  </data>
+  <data name="Value.RecommendsBox" xml:space="preserve">
+    <value>a junction box (JunctionBox)</value>
+  </data>
+</root>

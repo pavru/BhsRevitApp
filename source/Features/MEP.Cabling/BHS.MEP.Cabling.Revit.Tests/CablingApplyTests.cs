@@ -91,7 +91,7 @@ namespace BHS.MEP.Cabling.Revit.Tests;
 /// run with somebody at the machine.</item>
 /// </list>
 /// </remarks>
-public sealed class CablingApplyTests : IRevitTestSuite
+public sealed partial class CablingApplyTests : IRevitTestSuite
 {
     public string Name => "Cabling apply";
 
@@ -143,6 +143,11 @@ public sealed class CablingApplyTests : IRevitTestSuite
         new RevitTestCase(
             "every circuit that routed is told how its length is laid - in trays, in conduits, in no carrier, in other carriers - and its slack, and the five add up to its length",
             CircuitsAreToldWhereTheirLengthIsLaid,
+            writes: true),
+
+        new RevitTestCase(
+            "what an apply wrote reads back through the inspector pane's reader as it stands - on circuits, indicators and a carrier - and a circuit it did not route reads as never written, not as zero",
+            TheInspectorReadsWhatWasWritten,
             writes: true),
 
         new RevitTestCase(
