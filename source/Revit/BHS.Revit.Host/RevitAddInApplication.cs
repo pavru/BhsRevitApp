@@ -300,9 +300,14 @@ public abstract class RevitAddInApplication : RevitAddInHost, IExternalApplicati
             }
 
             // Read once, for the ribbon and the panes both: a manifest that cannot be read is reported
-            // once, and the two can never disagree about what the folder held.
+            // once, and the two can never disagree about what the folder held. In Revit's language: the
+            // overlay for RevitLanguage.Current, if the SDK baked one, replaces the neutral text by item
+            // name - the pane title is fixed at registration on 2024-2026, so this is the only moment.
             var manifests = FeatureManifest.ReadDirectory(directory!,
-                (file, error) => services.Log.Error(error, "ribbon manifest {0} could not be read", file));
+                (file, error) => services.Log.Error(error, "ribbon manifest {0} could not be read", file),
+                RevitLanguage.Current);
+
+            ReportOverlays(manifests, services.Log);
 
             RibbonButtons = RibbonBuilder.Build(_application!, manifests, directory!, RibbonTab, declared, services.Log);
 
@@ -312,6 +317,31 @@ public abstract class RevitAddInApplication : RevitAddInHost, IExternalApplicati
         {
             // A ribbon that could not be built is a missing button, never a failed start.
             services.Log.Error(error, "the ribbon could not be built");
+        }
+    }
+
+    /// <summary>Says, once per manifest, which language its text is in - and why, when it is not Revit's.</summary>
+    /// <remarks>
+    /// A missing overlay shows itself only as English on a Russian ribbon, which reads as "not translated"
+    /// whether the file was never made, never delivered or would not parse. The line tells the three apart
+    /// from the neutral case: no overlay culture asked, overlay found and laid, overlay asked and absent.
+    /// </remarks>
+    private static void ReportOverlays(IReadOnlyList<FeatureManifest> manifests, ILog log)
+    {
+        var culture = RevitLanguage.Current;
+
+        foreach (var manifest in manifests)
+        {
+            var file = System.IO.Path.GetFileName(manifest.Path);
+
+            if (culture is null)
+                log.Debug("ribbon: {0} in its neutral text - Revit's language has no overlay of ours", file);
+            else if (manifest.OverlayCulture.Length > 0)
+                log.Info("ribbon: {0} in {1}, {2} string(s) from its overlay", file, manifest.OverlayCulture, manifest.OverlaidStrings);
+            else if (System.IO.File.Exists(FeatureManifest.OverlayPath(manifest.Path, culture.Name)))
+                log.Warn("ribbon: {0} has a {1} overlay that could not be read, so its text stays neutral", file, culture.Name);
+            else
+                log.Info("ribbon: {0} has no {1} overlay beside it, so its text stays neutral", file, culture.Name);
         }
     }
 

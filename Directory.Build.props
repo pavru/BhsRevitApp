@@ -53,6 +53,20 @@
         <SatelliteResourceLanguages>en-US;en-GB;ru-RU</SatelliteResourceLanguages>
     </PropertyGroup>
 
+    <!--
+      The cultures OUR declaration strings are translated into - a different question from the list above,
+      which filters the satellites of packages we ship. Our neutral strings are American English, so en-US
+      is not here: a file for it would be empty or a copy, and either invites filling with copies.
+
+      One property, two readers. BHS.Revit.Sdk refuses a culture file outside it (RVTRIB014), and
+      Directory.Build.targets derives from it the related file extensions that carry each overlay into an
+      edition's folder. A culture added in one place and not the other would be an overlay written and
+      never delivered, with nothing to say so.
+    -->
+    <PropertyGroup>
+        <RevitDeclarationCultures>en-GB;ru-RU</RevitDeclarationCultures>
+    </PropertyGroup>
+
     <PropertyGroup>
         <ManagePackageVersionsCentrally>true</ManagePackageVersionsCentrally>
         <CentralPackageVersionOverrideEnabled>false</CentralPackageVersionOverrideEnabled>

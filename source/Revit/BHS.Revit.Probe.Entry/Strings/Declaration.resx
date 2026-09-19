@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  What Revit shows about the probe's Entry experiment before anything behind it loads: button texts,
+  tooltips and the probe pane's title. The project file's RevitRibbonButton and RevitDockablePane items
+  hold keys into this file, not text; BHS.Revit.Sdk bakes it into the neutral
+  BHS.Revit.Probe.Entry.features.json, and each culture file beside it into an overlay the host lays
+  over that in Revit's language. Not a resource: the SDK takes it out of EmbeddedResource, so no
+  satellite is built from it. Neutral is American English. RVTRIB013 fails the build for a key the
+  project names and this file lacks.
+-->
+<root>
+  <resheader name="resmimetype">
+    <value>text/microsoft-resx</value>
+  </resheader>
+  <resheader name="version">
+    <value>2.0</value>
+  </resheader>
+  <resheader name="reader">
+    <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <resheader name="writer">
+    <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <data name="Gate.Text" xml:space="preserve">
+    <value>Gate</value>
+  </data>
+  <data name="Gate.ToolTip" xml:space="preserve">
+    <value>Runs a feature command through an Entry assembly, whose host is found by the feature it declares.</value>
+  </data>
+  <data name="PaneToggle.Text" xml:space="preserve">
+    <value>Pane</value>
+  </data>
+  <data name="PaneToggle.ToolTip" xml:space="preserve">
+    <value>Shows or hides the probe's dockable pane, whose content the host loads on first show.</value>
+  </data>
+  <data name="Pane.Title" xml:space="preserve">
+    <value>BHS Probe pane</value>
+  </data>
+</root>

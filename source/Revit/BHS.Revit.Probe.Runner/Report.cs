@@ -138,8 +138,11 @@ internal sealed class Report
     /// WPF-UI not loaded - asked in every mode, because none of them needs the pane shown. Two of the
     /// three are skipped out loud when Revit restored the pane as shown from an earlier run, which a
     /// plain sweep's margin above the floor absorbs; the base stays a floor, not a figure.
+    ///
+    /// And by one more with the declaration strings: the pane's title is the one its manifest gives for
+    /// Revit's language. Asked in every mode, and skipped out loud only when Revit gives no title at all.
     /// </remarks>
-    public const int MinimumPerRelease = 48;
+    public const int MinimumPerRelease = 49;
 
     /// <summary>
     /// The checks the Entry experiment adds when the tab is shown and its button pressed.

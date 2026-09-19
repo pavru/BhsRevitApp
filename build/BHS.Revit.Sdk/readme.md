@@ -6,7 +6,7 @@ package references, `.addin` manifest generation, and publishing.
 
 ## Version Information
 
-**Version:** 1.6.2
+**Version:** 1.6.5
 
 Bump this on every change, and update the `Sdk="BHS.Revit.Sdk/<version>"` attribute in the
 projects under `source/` with it. The package carries an MSBuild task assembly, so any process
@@ -287,6 +287,33 @@ That is the point of the file rather than a list in code: naming a class with `t
 Checked here, from the items alone: `RVTPAN010` a required field is missing, `RVTPAN011` the id is not a GUID or is empty, `RVTPAN012` two panes share a name or an id, `RVTPAN013` a value outside its set, `RVTPAN014` a button's `Pane` names no pane in the project. Floating and Tabbed are refused on purpose - the first needs a rectangle, the second another pane's id. What needs the built assemblies - the content class exists, is public, constructible and an `IPaneContent`, the button's class is a `PaneEntryPoint`, no id is used twice across a folder - is RefCheck's `RVTPAN001`-`RVTPAN005`.
 
 The manifest's `version` is `2` from this release. A host from before reads the buttons and ignores the keys it does not know.
+
+#### Declaration strings (1.6.5)
+
+The text Revit shows before a feature loads - button texts and tooltips, pane titles - lives in a `.resx`, like every other interface string, and is **baked into the manifest** at build time. Read from resources at run time instead, it would load the feature's assembly while the ribbon is built: the same failure a `typeof` on a button is.
+
+```xml
+<ItemGroup>
+  <RevitDeclarationStrings Include="Strings\Declaration.resx"/>
+
+  <RevitRibbonButton Include="MyVendor.DoTheThing">
+    <Panel>My Panel</Panel>
+    <Text>DoTheThing.Text</Text>          <!-- a key, not text -->
+    <ToolTip>DoTheThing.ToolTip</ToolTip>
+    <ClassName>MyVendor.DoTheThingEntryPoint</ClassName>
+  </RevitRibbonButton>
+</ItemGroup>
+```
+
+- **Once a project declares one `RevitDeclarationStrings` item,** `Text`, `ToolTip` and `LongDescription` on its buttons and `Title` on its panes are keys into that file. The neutral `$(AssemblyName).features.json` carries the resolved text, in the same shape as without strings.
+- **Each `Declaration.<culture>.resx` beside it** becomes `$(AssemblyName).features.<culture>.json` - an overlay keyed by **item name, never by position**, holding only what that culture translates. The host lays the overlay for Revit's language over the neutral manifest, item by item; anything absent stays neutral.
+- **Neither file becomes a resource.** Both are taken out of `EmbeddedResource`, matched by full path, so no satellite assembly appears beside the Entry assembly for them.
+- **`RevitDeclarationCultures`** (semicolon-separated) is the list an overlay may be written for; empty accepts any. A repository that delivers overlays as related files should derive the extensions from the same property - this one does, in its root `Directory.Build.targets` - so that a culture cannot be written and never delivered.
+- An overlay this build no longer makes is removed from the output: an edition copies every related file it finds, and a withdrawn translation must not keep showing there.
+
+Checks: `RVTRIB012` a culture file has a key the neutral file lacks (one direction only: an overlay is sparse by design); `RVTRIB013` an item names a key the neutral file lacks; `RVTRIB014` more than one strings file, an unreadable one, or a culture file outside `RevitDeclarationCultures`. A passing build says so in one line, with how many used keys each culture translates.
+
+> **1.6.3 and 1.6.4 are skipped.** 1.6.3 reached the package cache with the `EmbeddedResource` removal matching by item spec - which never matches a full path, so the culture file still became a satellite; 1.6.4, with that fixed, reached the cache before its comments and this readme were final. A version once unpacked is never refreshed.
 
 ### 9. Publishing and Deployment
 

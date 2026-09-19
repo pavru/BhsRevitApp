@@ -50,6 +50,19 @@ namespace BHS.Revit.Sdk;
 ///     is it an <c>IPaneContent</c>, does the button's class show panes - is RefCheck's <c>RVTPAN001</c>
 ///     to <c>RVTPAN005</c>.
 ///     </para>
+///     <para>
+///     <b>Declaration strings, from 1.6.5.</b> A project that declares one <c>RevitDeclarationStrings</c>
+///     item - a neutral <c>.resx</c> - turns the values of <c>Text</c>, <c>ToolTip</c> and
+///     <c>LongDescription</c> on its buttons and <c>Title</c> on its panes into keys of that file. The
+///     neutral manifest carries the resolved text, in the same shape as before; each
+///     <c>&lt;name&gt;.&lt;culture&gt;.resx</c> beside it becomes <c>&lt;assembly&gt;.features.&lt;culture&gt;.json</c>,
+///     keyed by item name and never by position, holding only what that culture translates. The host
+///     overlays the file for Revit's language on the neutral one. <c>RVTRIB012</c>: a key in a culture file
+///     that the neutral file lacks - the orphan an edit of the neutral file leaves behind, which nothing
+///     would ever ask for. <c>RVTRIB013</c>: an item names a key the neutral file lacks. <c>RVTRIB014</c>:
+///     the strings file itself is wrong - more than one, unreadable, or a culture outside
+///     <c>RevitDeclarationCultures</c>, whose overlay would be written and never reach an edition.
+///     </para>
 /// </remarks>
 [PublicAPI]
 public class GenerateFeatureManifest : Task
@@ -78,6 +91,24 @@ public class GenerateFeatureManifest : Task
     /// <summary>The file name of the assembly the buttons live in, as the ribbon will name it.</summary>
     [Required]
     public string AssemblyFileName { get; set; } = string.Empty;
+
+    /// <summary>The neutral declaration strings file, at most one. Optional.</summary>
+    public ITaskItem[]? Strings { get; set; }
+
+    /// <summary>
+    /// The cultures an overlay may be written for, separated by semicolons - <c>RevitDeclarationCultures</c>.
+    /// Empty accepts every culture file.
+    /// </summary>
+    public string Cultures { get; set; } = string.Empty;
+
+    /// <summary>The overlays written, so that a clean removes them.</summary>
+    [Output]
+    public ITaskItem[] CultureFiles { get; private set; } = Array.Empty<ITaskItem>();
+
+    /// <summary>The metadata that hold interface text, and so become keys when strings are declared.</summary>
+    private static readonly string[] ButtonTexts = { "Text", "ToolTip", "LongDescription" };
+
+    private static readonly string[] PaneTexts = { "Title" };
 
     public override bool Execute()
     {
@@ -113,7 +144,13 @@ public class GenerateFeatureManifest : Task
             if (!ok)
                 return false;
 
-            Write(buttons, panes);
+            var strings = LoadStrings(buttons, panes, out var overlays);
+
+            if (strings is null)
+                return false;
+
+            Write(buttons, panes, strings.Resolve);
+            WriteOverlays(buttons, panes, overlays);
 
             // Said loudly when there are panes: a check that passes and leaves no trace in a minimal log
             // is indistinguishable from one that stopped running, which RefCheck taught this repository.
@@ -244,67 +281,342 @@ public class GenerateFeatureManifest : Task
         return false;
     }
 
-    private void Write(ITaskItem[] buttons, ITaskItem[] panes)
+    /// <summary>What the strings file resolves to, and the overlays to write beside the manifest.</summary>
+    private sealed class StringSet
     {
-        var text = new StringBuilder();
+        public StringSet(DeclarationStrings? neutral) => Neutral = neutral;
+
+        public DeclarationStrings? Neutral { get; }
+
+        /// <summary>The text for one metadata value: itself without a strings file, its key's text with one.</summary>
+        /// <remarks>Only called after <c>RVTRIB013</c> has passed, so a key here is always there.</remarks>
+        public string Resolve(ITaskItem item, string metadata)
+        {
+            var value = item.GetMetadata(metadata);
+
+            return Neutral is null || value.Length == 0 ? value : Neutral.Values[value];
+        }
+    }
+
+    /// <summary>One overlay: a culture, its strings, and where its json goes.</summary>
+    private sealed class Overlay
+    {
+        public Overlay(string culture, DeclarationStrings strings, string outputPath)
+        {
+            Culture = culture;
+            Strings = strings;
+            OutputPath = outputPath;
+        }
+
+        public string Culture { get; }
+
+        public DeclarationStrings Strings { get; }
+
+        public string OutputPath { get; }
+    }
+
+    /// <summary>
+    /// Reads the strings file and its cultures and checks them against the items. Null when a check failed,
+    /// every failure already logged.
+    /// </summary>
+    private StringSet? LoadStrings(ITaskItem[] buttons, ITaskItem[] panes, out List<Overlay> overlays)
+    {
+        overlays = new List<Overlay>();
+        var files = Strings ?? Array.Empty<ITaskItem>();
+
+        if (files.Length == 0)
+            return new StringSet(null);
+
+        if (files.Length > 1)
+        {
+            Log.LogError($"RVTRIB014: {files.Length} RevitDeclarationStrings items are declared, and a project has one " +
+                         "neutral strings file - the keys of its buttons and panes are looked up in exactly one place.");
+            return null;
+        }
+
+        var path = files[0].GetMetadata("FullPath");
+        DeclarationStrings neutral;
+
+        try
+        {
+            neutral = DeclarationStrings.Read(path);
+        }
+        catch (Exception error)
+        {
+            Log.LogError($"RVTRIB014: the declaration strings file '{path}' could not be read: {error.Message}");
+            return null;
+        }
+
+        var fileName = Path.GetFileName(path);
+        var ok = true;
+        var used = new HashSet<string>(StringComparer.Ordinal);
+
+        foreach (var (item, kind, metadata) in Texts(buttons, panes))
+        {
+            var key = item.GetMetadata(metadata);
+
+            if (key.Length == 0)
+                continue;
+
+            used.Add(key);
+
+            if (neutral.Values.ContainsKey(key))
+                continue;
+
+            Log.LogError($"RVTRIB013: {kind} '{item.ItemSpec}' has {metadata} '{key}', and '{fileName}' has no such " +
+                         "key. With a RevitDeclarationStrings file declared, every Text, ToolTip, LongDescription and " +
+                         $"Title is a key into it; add '{key}' to '{fileName}', or correct the key.");
+            ok = false;
+        }
+
+        var allowed = new HashSet<string>(
+            Cultures.Split(new[] { ';' }, StringSplitOptions.RemoveEmptyEntries), StringComparer.OrdinalIgnoreCase);
+
+        var stem = OutputPath.EndsWith(".json", StringComparison.OrdinalIgnoreCase)
+            ? OutputPath.Substring(0, OutputPath.Length - ".json".Length)
+            : OutputPath;
+
+        foreach (var pair in DeclarationStrings.CulturesBeside(path))
+        {
+            var culture = CultureInfo.GetCultureInfo(pair.Key).Name;
+            var cultureFile = Path.GetFileName(pair.Value);
+
+            if (allowed.Count > 0 && !allowed.Contains(culture))
+            {
+                Log.LogError($"RVTRIB014: '{cultureFile}' translates the declaration into {culture}, which is not in " +
+                             $"RevitDeclarationCultures ({Cultures.Trim()}). Its overlay would be written beside this " +
+                             "assembly and never reach an edition's folder - the related file extensions an edition " +
+                             "copies are derived from that list. Add the culture there, or remove the file.");
+                ok = false;
+                continue;
+            }
+
+            DeclarationStrings strings;
+
+            try
+            {
+                strings = DeclarationStrings.Read(pair.Value);
+            }
+            catch (Exception error)
+            {
+                Log.LogError($"RVTRIB014: the declaration strings file '{pair.Value}' could not be read: {error.Message}");
+                ok = false;
+                continue;
+            }
+
+            // One direction only. A culture file is an overlay, and en-GB differs from the neutral file by a
+            // handful of words, so demanding equal key sets would make a correct sparse file a build error -
+            // fixed by copying neutral strings, which then look translated and never were. What this side
+            // catches is the orphan: a key renamed in the neutral file and left behind here, silently
+            // never asked for again.
+            foreach (var key in strings.Values.Keys)
+            {
+                if (neutral.Values.ContainsKey(key))
+                    continue;
+
+                Log.LogError($"RVTRIB012: '{cultureFile}' has the key '{key}', and '{fileName}' does not. A culture file " +
+                             "only overlays the neutral one, so this string can never be shown - most likely the key " +
+                             $"was renamed in '{fileName}' and left behind here. Rename or remove it.");
+                ok = false;
+            }
+
+            overlays.Add(new Overlay(culture, strings, stem + "." + culture + ".json"));
+        }
+
+        if (!ok)
+            return null;
+
+        // Said when it passes, and with what it counted: a check that leaves no trace is indistinguishable
+        // from one that stopped running. The untranslated count is a line, not a failure - an overlay is
+        // sparse by design, and a missing translation shows itself in English, on its own place.
+        var cultures = overlays.Count == 0
+            ? "no culture file beside it"
+            : string.Join(", ", overlays.ConvertAll(overlay =>
+                $"{overlay.Culture} translates {Translated(overlay, used)} of {used.Count} used key(s)"));
+
+        Log.LogMessage(MessageImportance.High,
+            $"Declaration strings: {used.Count} key(s) from '{fileName}' resolved for {buttons.Length} button(s) and " +
+            $"{panes.Length} pane(s) - RVTRIB013 passed; {cultures} - RVTRIB012 passed.");
+
+        return new StringSet(neutral);
+    }
+
+    private static int Translated(Overlay overlay, HashSet<string> used)
+    {
+        var count = 0;
+
+        foreach (var key in used)
+        {
+            if (overlay.Strings.Values.ContainsKey(key))
+                count++;
+        }
+
+        return count;
+    }
+
+    /// <summary>Every metadata value that holds interface text, with what kind of item it is on.</summary>
+    private static IEnumerable<(ITaskItem Item, string Kind, string Metadata)> Texts(ITaskItem[] buttons, ITaskItem[] panes)
+    {
+        foreach (var button in buttons)
+        {
+            foreach (var metadata in ButtonTexts)
+                yield return (button, "ribbon button", metadata);
+        }
+
+        foreach (var pane in panes)
+        {
+            foreach (var metadata in PaneTexts)
+                yield return (pane, "dockable pane", metadata);
+        }
+    }
+
+    /// <summary>
+    /// Writes one overlay per culture, keyed by item name, and removes overlays this build no longer makes.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <b>By name, never by position.</b> The reader on the other side flattens arrays by ordinal, and a
+    /// sparse overlay laid over the neutral array by position would put one button's text on another the
+    /// first time an item is added in the middle. Names are what the host builds by anyway.
+    /// </para>
+    /// <para>
+    /// Only what the culture translates is written: an item with nothing translated is left out, and so is
+    /// each field that has no translation. The host falls back to the neutral text for everything absent.
+    /// </para>
+    /// <para>
+    /// A stale overlay is removed because it would be delivered: an edition copies every related file it
+    /// finds beside the Entry assembly, and a translation withdrawn here must not keep showing there.
+    /// </para>
+    /// </remarks>
+    private void WriteOverlays(ITaskItem[] buttons, ITaskItem[] panes, List<Overlay> overlays)
+    {
+        var written = new List<ITaskItem>();
+
+        foreach (var overlay in overlays)
+        {
+            var json = new StringBuilder();
+
+            json.Append("{\n");
+            json.Append("  // Generated by BHS.Revit.Sdk from the declaration strings. Edit the .resx instead.\n");
+            json.Append("  \"version\": \"2\",\n");
+            json.Append("  \"culture\": ").Append(Quote(overlay.Culture)).Append(",\n");
+            json.Append("  \"buttons\": {\n");
+            Items(json, buttons, ButtonTexts, overlay);
+            json.Append("  },\n");
+            json.Append("  \"panes\": {\n");
+            Items(json, panes, PaneTexts, overlay);
+            json.Append("  }\n");
+            json.Append("}\n");
+
+            File.WriteAllText(overlay.OutputPath, json.ToString(), new UTF8Encoding(false));
+            written.Add(new Microsoft.Build.Utilities.TaskItem(overlay.OutputPath));
+        }
+
+        CultureFiles = written.ToArray();
+
+        var directory = Path.GetDirectoryName(Path.GetFullPath(OutputPath)) ?? ".";
+        var pattern = Path.GetFileNameWithoutExtension(OutputPath) + ".*.json";
+
+        foreach (var file in Directory.GetFiles(directory, pattern))
+        {
+            if (written.Exists(item => string.Equals(Path.GetFullPath(item.ItemSpec), Path.GetFullPath(file), StringComparison.OrdinalIgnoreCase)))
+                continue;
+
+            File.Delete(file);
+            Log.LogMessage(MessageImportance.Normal, $"Removed the overlay {file}, which this build no longer makes.");
+        }
+
+    }
+
+    private static void Items(StringBuilder json, ITaskItem[] items, string[] fields, Overlay overlay)
+    {
+        var entries = new List<string>();
+
+        foreach (var item in items)
+        {
+            var translated = new List<string>();
+
+            foreach (var metadata in fields)
+            {
+                var key = item.GetMetadata(metadata);
+
+                if (key.Length > 0 && overlay.Strings.Values.TryGetValue(key, out var value))
+                    translated.Add("      " + Quote(JsonName(metadata)) + ": " + Quote(value));
+            }
+
+            if (translated.Count > 0)
+                entries.Add("    " + Quote(item.ItemSpec) + ": {\n" + string.Join(",\n", translated) + "\n    }");
+        }
+
+        if (entries.Count > 0)
+            json.Append(string.Join(",\n", entries)).Append('\n');
+    }
+
+    /// <summary>The name a field has in the json: the metadata name with a lower-case first letter.</summary>
+    private static string JsonName(string metadata) =>
+        char.ToLowerInvariant(metadata[0]) + metadata.Substring(1);
+
+    private void Write(ITaskItem[] buttons, ITaskItem[] panes, Func<ITaskItem, string, string> text)
+    {
+        var json = new StringBuilder();
 
         // Version 2 adds "panes" and a button's "pane". The host reads both; a host from before reading
         // this file ignores the keys it does not know, which is what a flat key -> string reader does.
-        text.Append("{\n");
-        text.Append("  // Generated by BHS.Revit.Sdk. Edit the RevitRibbonButton and RevitDockablePane items instead.\n");
-        text.Append("  \"version\": \"2\",\n");
-        text.Append("  \"assembly\": ").Append(Quote(AssemblyFileName)).Append(",\n");
-        text.Append("  \"buttons\": [\n");
+        json.Append("{\n");
+        json.Append("  // Generated by BHS.Revit.Sdk. Edit the RevitRibbonButton and RevitDockablePane items instead.\n");
+        json.Append("  \"version\": \"2\",\n");
+        json.Append("  \"assembly\": ").Append(Quote(AssemblyFileName)).Append(",\n");
+        json.Append("  \"buttons\": [\n");
 
         for (var index = 0; index < buttons.Length; index++)
         {
             var button = buttons[index];
 
-            text.Append("    {\n");
-            Field(text, "name", button.ItemSpec, last: false);
-            Field(text, "tab", button.GetMetadata("Tab"), last: false);
-            Field(text, "panel", button.GetMetadata("Panel"), last: false);
-            Field(text, "text", button.GetMetadata("Text"), last: false);
-            Field(text, "toolTip", button.GetMetadata("ToolTip"), last: false);
-            Field(text, "longDescription", button.GetMetadata("LongDescription"), last: false);
-            Field(text, "availabilityClassName", button.GetMetadata("AvailabilityClassName"), last: false);
-            Field(text, "order", button.GetMetadata("Order"), last: false);
-            Field(text, "pane", button.GetMetadata("Pane"), last: false);
-            Field(text, "className", button.GetMetadata("ClassName"), last: true);
-            text.Append(index == buttons.Length - 1 ? "    }\n" : "    },\n");
+            json.Append("    {\n");
+            Field(json, "name", button.ItemSpec, last: false);
+            Field(json, "tab", button.GetMetadata("Tab"), last: false);
+            Field(json, "panel", button.GetMetadata("Panel"), last: false);
+            Field(json, "text", text(button, "Text"), last: false);
+            Field(json, "toolTip", text(button, "ToolTip"), last: false);
+            Field(json, "longDescription", text(button, "LongDescription"), last: false);
+            Field(json, "availabilityClassName", button.GetMetadata("AvailabilityClassName"), last: false);
+            Field(json, "order", button.GetMetadata("Order"), last: false);
+            Field(json, "pane", button.GetMetadata("Pane"), last: false);
+            Field(json, "className", button.GetMetadata("ClassName"), last: true);
+            json.Append(index == buttons.Length - 1 ? "    }\n" : "    },\n");
         }
 
-        text.Append("  ],\n");
-        text.Append("  \"panes\": [\n");
+        json.Append("  ],\n");
+        json.Append("  \"panes\": [\n");
 
         for (var index = 0; index < panes.Length; index++)
         {
             var pane = panes[index];
 
-            text.Append("    {\n");
-            Field(text, "name", pane.ItemSpec, last: false);
+            json.Append("    {\n");
+            Field(json, "name", pane.ItemSpec, last: false);
             // Normalised, so that the host and RefCheck compare one spelling of one id.
-            Field(text, "id", Guid.Parse(pane.GetMetadata("Id")).ToString("D"), last: false);
-            Field(text, "title", pane.GetMetadata("Title"), last: false);
-            Field(text, "contentAssembly", pane.GetMetadata("ContentAssembly"), last: false);
-            Field(text, "contentClassName", pane.GetMetadata("ContentClassName"), last: false);
-            Field(text, "dockPosition", pane.GetMetadata("DockPosition"), last: false);
-            Field(text, "minimumWidth", pane.GetMetadata("MinimumWidth"), last: false);
-            Field(text, "minimumHeight", pane.GetMetadata("MinimumHeight"), last: false);
-            Field(text, "editorInteraction", pane.GetMetadata("EditorInteraction"), last: false);
-            Field(text, "visibleByDefault", pane.GetMetadata("VisibleByDefault"), last: true);
-            text.Append(index == panes.Length - 1 ? "    }\n" : "    },\n");
+            Field(json, "id", Guid.Parse(pane.GetMetadata("Id")).ToString("D"), last: false);
+            Field(json, "title", text(pane, "Title"), last: false);
+            Field(json, "contentAssembly", pane.GetMetadata("ContentAssembly"), last: false);
+            Field(json, "contentClassName", pane.GetMetadata("ContentClassName"), last: false);
+            Field(json, "dockPosition", pane.GetMetadata("DockPosition"), last: false);
+            Field(json, "minimumWidth", pane.GetMetadata("MinimumWidth"), last: false);
+            Field(json, "minimumHeight", pane.GetMetadata("MinimumHeight"), last: false);
+            Field(json, "editorInteraction", pane.GetMetadata("EditorInteraction"), last: false);
+            Field(json, "visibleByDefault", pane.GetMetadata("VisibleByDefault"), last: true);
+            json.Append(index == panes.Length - 1 ? "    }\n" : "    },\n");
         }
 
-        text.Append("  ]\n");
-        text.Append("}\n");
+        json.Append("  ]\n");
+        json.Append("}\n");
 
         var directory = Path.GetDirectoryName(OutputPath);
 
         if (!string.IsNullOrEmpty(directory) && !Directory.Exists(directory))
             Directory.CreateDirectory(directory);
 
-        File.WriteAllText(OutputPath, text.ToString(), new UTF8Encoding(false));
+        File.WriteAllText(OutputPath, json.ToString(), new UTF8Encoding(false));
     }
 
     private static void Field(StringBuilder text, string name, string value, bool last)

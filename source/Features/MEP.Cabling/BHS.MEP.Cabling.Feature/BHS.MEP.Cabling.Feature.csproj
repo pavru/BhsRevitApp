@@ -1,4 +1,4 @@
-﻿<Project Sdk="BHS.Revit.Sdk/1.6.2">
+﻿<Project Sdk="BHS.Revit.Sdk/1.6.5">
 
     <!--
       The cabling feature itself: what an edition loads when somebody presses its button.

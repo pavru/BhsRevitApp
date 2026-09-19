@@ -778,6 +778,26 @@ internal static class SweepChecks
         report.Check("the probe pane is registered with Revit",
             pane.GetValueOrDefault("pane:registered") == "True" && pane.GetValueOrDefault("pane:inRegistry") == "True");
 
+        // The declaration strings, end to end, on a Revit of any language: the title Revit shows is the one
+        // the probe reads back from its own manifest with the overlay for the culture the host chose. Which
+        // language that was, and what the Gate button reads, are notes - an assertion on the Russian text
+        // would pass only on a Russian Revit. The title is registered once, at startup, so this is also the
+        // only place the overlay is visible for panes on 2024-2026.
+        var title = pane.GetValueOrDefault("pane:title") ?? string.Empty;
+        var expected = pane.GetValueOrDefault("pane:titleExpected") ?? string.Empty;
+
+        if (title.Length == 0 || title.StartsWith("threw ", StringComparison.Ordinal)
+            || expected.Length == 0 || expected.StartsWith("threw ", StringComparison.Ordinal))
+        {
+            report.Note("pane title in Revit's language",
+                "not asked - Revit gave no title (" + (title.Length > 0 ? title : "(missing)") + ") or the manifest none (" +
+                (expected.Length > 0 ? expected : "(missing)") + ")");
+        }
+        else
+        {
+            report.Check("the pane's title is the one its manifest gives for Revit's language", title == expected);
+        }
+
         // Asked is not shown: measured on 2026, Revit calls the creator while it opens a model with the
         // pane never shown. So the creator's calls are a note, and the check is about what matters - the
         // content assembly and Wpf.Ui stay out until somebody sees the pane. Only a pane Revit restored as
@@ -804,6 +824,7 @@ internal static class SweepChecks
                      "pane:exists", "pane:shown", "pane:title", "pane:creatorCalls", "pane:setupCalls", "pane:setupDuringRegistration",
                      "pane:setupThread", "pane:apiThread", "pane:contentLoadedAtStartup", "pane:wpfUiLoadedAtStartup",
                      "pane:revitLanguage", "pane:shellCulture", "pane:shellNoDocument", "pane:revitTheme",
+                     "pane:titleExpected", "pane:titleCulture", "pane:gateText",
                  })
         {
             report.Note(key, pane.GetValueOrDefault(key) ?? "(missing)");

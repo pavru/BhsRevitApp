@@ -1,4 +1,4 @@
-<Project Sdk="BHS.Revit.Sdk/1.6.2">
+<Project Sdk="BHS.Revit.Sdk/1.6.5">
 
     <!--
       Where Revit enters the cabling feature: the classes its buttons name, and the buttons.
@@ -59,43 +59,47 @@
           changed id when it changed tab, see PressButtonHandler there - so with the edition still
           naming the tab these sat on, the ids of these commands stay what they were.
 
-          Text and ToolTip are English literals in the neutral position - the one that becomes a
-          resource key when declaration strings move into .resx. A Russian literal here could not
-          become a key, and would have to be translated back first.
+          Text and ToolTip are keys into Strings\Declaration.resx, not text - since declaration strings
+          moved into resources (SDK 1.6.3). The SDK bakes the neutral file into this assembly's manifest
+          and Declaration.ru-RU.resx into an overlay beside it; the host lays the overlay for Revit's
+          language over the manifest. The item names stay exactly as they were: Revit's command id for a
+          button is built from its tab, its panel and this name, so a renamed item is a different button.
         -->
+        <RevitDeclarationStrings Include="Strings\Declaration.resx"/>
+
         <RevitRibbonButton Include="BHS.Cabling.Collect">
             <Panel>Cabling</Panel>
-            <Text>Read structure</Text>
+            <Text>Collect.Text</Text>
             <ClassName>BHS.MEP.Cabling.Entry.CollectCablingEntryPoint</ClassName>
             <AvailabilityClassName>BHS.MEP.Cabling.Entry.CablingNeedsProjectDocument</AvailabilityClassName>
-            <ToolTip>Reads the cable trays, conduits and circuits of this model and its links, and reports what was found.</ToolTip>
+            <ToolTip>Collect.ToolTip</ToolTip>
             <Order>1</Order>
         </RevitRibbonButton>
 
         <RevitRibbonButton Include="BHS.Cabling.Route">
             <Panel>Cabling</Panel>
-            <Text>Route cables</Text>
+            <Text>Route.Text</Text>
             <ClassName>BHS.MEP.Cabling.Entry.RouteCablingEntryPoint</ClassName>
             <AvailabilityClassName>BHS.MEP.Cabling.Entry.CablingNeedsProjectDocument</AvailabilityClassName>
-            <ToolTip>Routes every circuit through the trays and conduits of this model, and compares the computed length with the one Revit reports.</ToolTip>
+            <ToolTip>Route.ToolTip</ToolTip>
             <Order>2</Order>
         </RevitRibbonButton>
 
         <RevitRibbonButton Include="BHS.Cabling.Parameters">
             <Panel>Cabling</Panel>
-            <Text>Shared parameters</Text>
+            <Text>Parameters.Text</Text>
             <ClassName>BHS.MEP.Cabling.Entry.InstallParametersEntryPoint</ClassName>
             <AvailabilityClassName>BHS.MEP.Cabling.Entry.CablingNeedsProjectDocument</AvailabilityClassName>
-            <ToolTip>Writes the shared parameter file for family authors and binds the parameters this model is missing.</ToolTip>
+            <ToolTip>Parameters.ToolTip</ToolTip>
             <Order>3</Order>
         </RevitRibbonButton>
 
         <RevitRibbonButton Include="BHS.Cabling.CheckLengths">
             <Panel>Cabling</Panel>
-            <Text>Check lengths</Text>
+            <Text>CheckLengths.Text</Text>
             <ClassName>BHS.MEP.Cabling.Entry.CheckLengthsEntryPoint</ClassName>
             <AvailabilityClassName>BHS.MEP.Cabling.Entry.CablingNeedsProjectDocument</AvailabilityClassName>
-            <ToolTip>Routes every circuit again and says which ones carry a stored length that no longer describes this model.</ToolTip>
+            <ToolTip>CheckLengths.ToolTip</ToolTip>
             <Order>4</Order>
         </RevitRibbonButton>
     </ItemGroup>
