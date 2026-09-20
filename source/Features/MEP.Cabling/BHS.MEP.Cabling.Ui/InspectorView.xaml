@@ -20,6 +20,10 @@
 
       The shell already owns the padding of its states (12, 24 from the top); this content keeps to the same
       grid so that a sentence here stands where the shell's own "open a model" stood.
+
+      Nothing here is pressed. A "read again" button stood at the bottom until 2026-09-20 and was removed by
+      the owner: measured by hand, pressing it cleared Revit's selection, so it destroyed the one thing it
+      was meant to re-read. Before a control is added here, that is the question to answer for it.
     -->
 
     <UserControl.Resources>
@@ -110,13 +114,6 @@
                         </DataTemplate>
                     </ItemsControl.ItemTemplate>
                 </ItemsControl>
-
-                <!-- The pane shows what was read when the element was selected; a run applied since then
-                     is read by this, without selecting again. -->
-                <Button Content="{Binding ReadAgainText}"
-                        Command="{Binding ReadAgain}"
-                        HorizontalAlignment="Left"
-                        Margin="0,20,0,0" />
             </StackPanel>
         </StackPanel>
     </ScrollViewer>

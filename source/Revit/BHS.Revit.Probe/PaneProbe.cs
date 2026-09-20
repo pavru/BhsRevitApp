@@ -130,6 +130,16 @@ internal static class PaneProbe
         facts["pane:selectionThread"] = PaneFacts.SelectionThread.ToString(culture);
         facts["pane:hostSelectionChanges"] = (registered?.SelectionChanges ?? -1).ToString(culture);
 
+        // What Revit itself has selected at this moment - asked of the active view, not of what any pane was
+        // told, because the question is whether a press of the pane's button costs the person their selection.
+        facts["pane:selectionNow"] = Ask(() => Spell(application));
+
+        // And what the press made of it. Which side of the command's return Revit clears the selection on is
+        // not known, so PaneSelectionKeeper reads it twice and says what it did; these three are that record.
+        facts["pane:selectionAtPress"] = registered?.SelectionAtPress ?? "(unregistered)";
+        facts["pane:selectionAfterPress"] = registered?.SelectionAfterPress ?? "(unregistered)";
+        facts["pane:selectionRestore"] = registered?.SelectionRestore ?? "(unregistered)";
+
         facts["pane:revitTheme"] = Ask(() => UIThemeManager.CurrentTheme);
         facts["pane:themeChanges"] = Volatile.Read(ref _themeChanges).ToString(culture);
         facts["pane:lastThemeChange"] = Volatile.Read(ref _lastThemeChange);
@@ -232,10 +242,7 @@ internal static class PaneProbe
 
             view.Selection.SetElementIds(new List<ElementId> { chosen });
 
-            var now = string.Join("; ", view.Selection.GetElementIds().Select(id => id.Value).OrderBy(id => id)
-                .Select(id => id.ToString(CultureInfo.InvariantCulture)));
-
-            return now;
+            return Spell(application);
         }
         catch (Exception error)
         {
@@ -256,13 +263,26 @@ internal static class PaneProbe
             view.Selection.SetElementIds(_selectionBefore ?? new List<ElementId>());
             _selectionBefore = null;
 
-            return string.Join("; ", view.Selection.GetElementIds().Select(id => id.Value).OrderBy(id => id)
-                .Select(id => id.ToString(CultureInfo.InvariantCulture)));
+            return Spell(application);
         }
         catch (Exception error)
         {
             return "failed: " + error.GetType().Name + ": " + error.Message;
         }
+    }
+
+    /// <summary>
+    /// What the active view has selected, ids ascending - the spelling <c>PaneSelection</c> and
+    /// <c>PaneSelectionKeeper</c> both use, so that the sweep can compare two answers as strings.
+    /// </summary>
+    private static string Spell(UIApplication application)
+    {
+        var view = application.ActiveUIDocument;
+
+        return view is null
+            ? string.Empty
+            : string.Join("; ", view.Selection.GetElementIds().Select(id => id.Value).OrderBy(id => id)
+                .Select(id => id.ToString(CultureInfo.InvariantCulture)));
     }
 
     /// <summary>Hides the pane by the API rather than by its button: the sweep's clean-up.</summary>

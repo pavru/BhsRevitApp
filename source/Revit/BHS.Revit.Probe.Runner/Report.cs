@@ -172,7 +172,8 @@ internal sealed class Report
     /// The checks the dockable pane adds when the tab is shown and its button pressed.
     /// </summary>
     /// <remarks>
-    /// Eight: the button shows the pane; Revit asks for the content only then and its assembly loads then;
+    /// Nine: the button shows the pane; the press leaves the selection it found; Revit asks for the content
+    /// only then and its assembly loads then;
     /// the content is created once, told the open model and reads it through the pump; it reaches the
     /// assembly beside it that nothing had loaded; the shell wears
     /// WPF-UI's theme for Revit's with our accent over it; a selection made through the API reaches the
@@ -181,11 +182,14 @@ internal sealed class Report
     /// changes - and puts back - a setting of the person's Revit. Only in this mode, for the reason
     /// given for the Entry checks above.
     ///
-    /// The fourth is the one bought by a defect: until 2026-09-20 the host loaded a pane's content in a
-    /// way that left the assemblies beside it unfindable on the .NET axis, and the sweep said nothing
-    /// because everything the probe pane needed was already in the process by the time it was shown.
+    /// Two of the nine were bought by defects a person met and no sweep could. Until 2026-09-20 the host
+    /// loaded a pane's content in a way that left the assemblies beside it unfindable on the .NET axis, and
+    /// the sweep said nothing because everything the probe pane needed was already in the process by the
+    /// time it was shown. And on the same day the owner found that pressing the button cleared Revit's
+    /// selection - which the sweep could not see either, because it pressed with nothing selected. That one
+    /// is skipped out loud when the model offers nothing to select.
     /// </remarks>
-    public const int PaneChecksWithTabShown = 8;
+    public const int PaneChecksWithTabShown = 9;
 
     public void Summarise(int releases)
     {

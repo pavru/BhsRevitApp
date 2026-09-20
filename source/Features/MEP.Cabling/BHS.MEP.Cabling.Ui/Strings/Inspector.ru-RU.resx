@@ -34,9 +34,6 @@
   <data name="Inspector.Failed" xml:space="preserve">
     <value>Не удалось прочитать этот элемент: {0}</value>
   </data>
-  <data name="Inspector.ReadAgain" xml:space="preserve">
-    <value>Прочитать заново</value>
-  </data>
   <data name="Kind.Circuit" xml:space="preserve">
     <value>Электрическая цепь</value>
   </data>

@@ -1,5 +1,4 @@
 using System.ComponentModel;
-using System.Windows.Input;
 
 namespace BHS.MEP.Cabling.Ui;
 
@@ -14,16 +13,17 @@ namespace BHS.MEP.Cabling.Ui;
 /// <b>Two states, never both.</b> An element and its sections, or a sentence - nothing selected, several
 /// selected, not ours, gone. None of them is an error, so none of them looks like one.
 /// </para>
+/// <para>
+/// <b>Nothing to press.</b> The pane reads and shows; every read it does is started by a selection, by the
+/// document changing or by the pane becoming visible. A "read again" button stood here until 2026-09-20 and
+/// was removed by the owner: measured by hand, pressing it cleared Revit's selection - so the one thing it
+/// could refresh was the thing it destroyed.
+/// </para>
 /// </remarks>
 public sealed class InspectorViewModel : INotifyPropertyChanged
 {
     private string _message = string.Empty;
     private InspectorContent? _content;
-
-    public InspectorViewModel(Action readAgain)
-    {
-        ReadAgain = new Command(readAgain ?? throw new ArgumentNullException(nameof(readAgain)));
-    }
 
     public event PropertyChangedEventHandler? PropertyChanged;
 
@@ -39,10 +39,6 @@ public sealed class InspectorViewModel : INotifyPropertyChanged
     public string Kind => _content?.Kind ?? string.Empty;
 
     public IReadOnlyList<InspectorSection> Sections => _content?.Sections ?? Array.Empty<InspectorSection>();
-
-    public ICommand ReadAgain { get; }
-
-    public string ReadAgainText => InspectorStrings.Get(InspectorStrings.ReadAgain);
 
     /// <summary>Shows an element. On the UI thread.</summary>
     public void Show(InspectorContent content)
@@ -62,26 +58,8 @@ public sealed class InspectorViewModel : INotifyPropertyChanged
 
     private void Changed()
     {
-        foreach (var name in new[] { nameof(Message), nameof(HasMessage), nameof(HasElement), nameof(Title), nameof(Kind), nameof(Sections), nameof(ReadAgainText) })
+        foreach (var name in new[] { nameof(Message), nameof(HasMessage), nameof(HasElement), nameof(Title), nameof(Kind), nameof(Sections) })
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(name));
-    }
-
-    private sealed class Command : ICommand
-    {
-        private readonly Action _run;
-
-        public Command(Action run) => _run = run;
-
-        // Never changes, so never raised; the add and remove are there because the interface asks.
-        public event EventHandler? CanExecuteChanged
-        {
-            add { }
-            remove { }
-        }
-
-        public bool CanExecute(object? parameter) => true;
-
-        public void Execute(object? parameter) => _run();
     }
 }
 

@@ -35,6 +35,14 @@ namespace BHS.MEP.Cabling.Feature;
 /// the first of them, which would be a guess about which one was meant, or a merge, which would be computing.
 /// </para>
 /// <para>
+/// <b>Three things start a read, and none of them is a press.</b> A selection change, a change of document,
+/// and the pane becoming visible with a selection change missed behind it. A "read again" button stood at the
+/// bottom of the screen until 2026-09-20 and the owner removed it: measured by hand on a live Revit 2026,
+/// pressing it left Revit's selection empty and the pane back at "select an element" - it destroyed the one
+/// thing it existed to re-read. Why a press costs the selection is the pane mechanism's question, answered in
+/// <c>PaneEntryPoint</c>; what this pane keeps from it is that it asks for nothing.
+/// </para>
+/// <para>
 /// <b>Reads the latest selection only, and only while the pane is visible.</b> A click fires a selection
 /// change, a drag-select several; each read is a trip through the pump, and a read that comes back after a
 /// newer selection is dropped by its generation rather than shown. A selection that changes while the pane is
@@ -66,7 +74,7 @@ public sealed class CablingInspectorPane : IPaneContent
 
         InspectorStrings.Culture = context.Culture;
 
-        _model = new InspectorViewModel(Refresh);
+        _model = new InspectorViewModel();
         _view = new InspectorView(_model);
 
         _view.IsVisibleChanged += (_, _) =>

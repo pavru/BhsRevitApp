@@ -26,7 +26,6 @@ public static class InspectorStrings
     public const string Gone = "Inspector.Gone";
     public const string Family = "Inspector.Family";
     public const string Failed = "Inspector.Failed";
-    public const string ReadAgain = "Inspector.ReadAgain";
 
     public const string KindCircuit = "Kind.Circuit";
     public const string KindIndicator = "Kind.Indicator";

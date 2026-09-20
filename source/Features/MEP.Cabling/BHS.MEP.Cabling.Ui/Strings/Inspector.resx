@@ -34,9 +34,6 @@
   <data name="Inspector.Failed" xml:space="preserve">
     <value>This element could not be read: {0}</value>
   </data>
-  <data name="Inspector.ReadAgain" xml:space="preserve">
-    <value>Read again</value>
-  </data>
   <data name="Kind.Circuit" xml:space="preserve">
     <value>Electrical circuit</value>
   </data>

@@ -867,10 +867,18 @@ internal static class SweepChecks
     /// <c>PaneEntryPoint</c>, and the press is repeated only while it has not moved.
     /// </para>
     /// <para>
-    /// Six checks, each something the pane design rests on and none measured before: the button shows the
-    /// pane; Revit asks for the content only then, and the assembly loads then; the content is created
-    /// once, told the open model, and reads it through the pump; the shell wears WPF-UI's theme for
-    /// Revit's theme and our accent over it; a live theme switch reaches it; and the button hides it again.
+    /// Each check here is something the pane design rests on and none was measured before: the button shows
+    /// the pane; the press leaves the selection it found; Revit asks for the content only then, and the
+    /// assembly loads then; the content is created once, told the open model, and reads it through the pump;
+    /// it reaches the assembly beside it that nothing had loaded; the shell wears WPF-UI's theme for Revit's
+    /// theme and our accent over it; a selection made through the API reaches the content and so does
+    /// putting it back; a live theme switch reaches it; and the button hides it again.
+    /// </para>
+    /// <para>
+    /// <b>The first press is armed with a selection</b>, so that it is the gesture a person makes - select
+    /// something, open the pane to look at it - rather than a press with nothing to lose. That is the one
+    /// the owner found costing the selection on 2026-09-20, and the sweep could not have found it: it
+    /// pressed with an empty selection. Whatever happens, the person's selection is put back in a finally.
     /// </para>
     /// </remarks>
     private static async Task CheckPaneShownAsync(RevitSideChannel.RevitSideChannelClient client, Report report)
@@ -885,14 +893,31 @@ internal static class SweepChecks
         if (before.GetValueOrDefault("pane:shown") == "True")
             report.Note("pane restored as shown, hidden by the API first", HideByApi(client));
 
-        if (!await ToggleAsync(client, show: true))
+        // Armed with a selection before the press, so that the press below is the owner's own gesture -
+        // an element selected, the pane opened to look at it - and what it costs can be asked.
+        var armed = client.Ask(new AskRequest { Question = "selectforpane" }).Values.GetValueOrDefault("pane:selected") ?? "(missing)";
+        bool shown;
+
+        try
         {
-            report.Check("the pane button shows the probe pane", false);
+            shown = await ToggleAsync(client, show: true);
+            report.Check("the pane button shows the probe pane", shown);
+
+            if (shown)
+                await CheckPressKeepsSelectionAsync(client, report, armed);
+        }
+        finally
+        {
+            // Always, whatever happened above: the selection is the person's.
+            report.Note("the selection the press was armed with, put back",
+                client.Ask(new AskRequest { Question = "restoreselection" }).Values.GetValueOrDefault("pane:selectionRestored") ?? "(missing)");
+        }
+
+        if (!shown)
+        {
             NotePane(client, report);
             return;
         }
-
-        report.Check("the pane button shows the probe pane", true);
 
         // Waited for: the content reads the title through the pump, which runs when Revit is idle.
         var pane = new Dictionary<string, string>(StringComparer.Ordinal);
@@ -962,6 +987,66 @@ internal static class SweepChecks
         // next sweep's laziness question could not be asked.
         if (!hidden)
             report.Note("pane hidden by the API instead", HideByApi(client));
+    }
+
+    /// <summary>
+    /// Whether a press of the pane's button leaves the selection as it found it.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <b>Bought by a person, not by a sweep.</b> The owner selected an element on a live Revit 2026 on
+    /// 2026-09-20, pressed the pane's button, and the pane opened onto an empty selection. Opening a pane
+    /// to look at what is in front of you is the most ordinary gesture there is, and until that day this
+    /// mechanism destroyed the thing it was opened for. Nothing here could have found it: the sweep pressed
+    /// the button with nothing selected, so there was nothing to lose.
+    /// </para>
+    /// <para>
+    /// <b>Two clauses, and the first is what makes the second able to go red.</b> That the command saw the
+    /// selection the sweep armed it with - a deterministic assertion, red the moment the arming or the
+    /// reading at entry stops working - and that the selection still stands once the press is over. The
+    /// second alone would pass in a world where Revit never cleared anything, measuring nothing; paired
+    /// with the notes below, it says which world this is.
+    /// </para>
+    /// <para>
+    /// <b>The mechanism is notes, deliberately.</b> Which side of the command's return Revit clears the
+    /// selection on is not measured, and a check written before its answer agrees with whoever wrote it.
+    /// So <c>PaneSelectionKeeper</c> reads the selection twice and records what it did, and those three
+    /// strings go into the record as notes. The check asserts only the invariant the owner asked for.
+    /// </para>
+    /// <para>
+    /// Waited for rather than read once: the restore may happen inside the command or on the first idle
+    /// after it, and both are right. The question the wait cannot answer - which of them acted - is the
+    /// one the notes answer.
+    /// </para>
+    /// </remarks>
+    private static async Task CheckPressKeepsSelectionAsync(
+        RevitSideChannel.RevitSideChannelClient client,
+        Report report,
+        string armed)
+    {
+        // An id list is digits and separators; anything else is the probe saying why it selected nothing.
+        var usable = armed.Length > 0 && armed.All(one => char.IsDigit(one) || one == ';' || one == ' ');
+
+        if (!usable)
+        {
+            report.Note("pressing the pane's button keeps what was selected",
+                "not asked - nothing in this model could be selected to press with: " + armed);
+            return;
+        }
+
+        var kept = await WorkWatch.WaitForAsync(
+            () => Pane(client).GetValueOrDefault("pane:selectionNow") == armed, 30_000);
+
+        var pane = Pane(client);
+
+        report.Check("pressing the pane's button leaves the selection it found",
+            pane.GetValueOrDefault("pane:selectionAtPress") == armed && kept);
+
+        report.Note("selection across the press",
+            "armed with [" + armed + "], Revit now has [" + (pane.GetValueOrDefault("pane:selectionNow") ?? "(missing)")
+            + "]; the press found [" + (pane.GetValueOrDefault("pane:selectionAtPress") ?? "(missing)")
+            + "], saw [" + (pane.GetValueOrDefault("pane:selectionAfterPress") ?? "(missing)")
+            + "] as the command returned, and " + (pane.GetValueOrDefault("pane:selectionRestore") ?? "(missing)"));
     }
 
     /// <summary>
