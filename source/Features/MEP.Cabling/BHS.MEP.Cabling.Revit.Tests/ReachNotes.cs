@@ -1,4 +1,4 @@
-using System.Globalization;
+﻿using System.Globalization;
 using Autodesk.Revit.DB;
 using Autodesk.Revit.DB.Electrical;
 using BHS.MEP.Cabling.Routing;
@@ -491,7 +491,7 @@ internal static class ReachNotes
         var reach = Millimetres(options.MaxApproach);
 
         return "join " + Decimal(join) + " mm, reach " + Decimal(reach) + " mm, axis-aligned " + YesNo(options.AxisAlignedApproach)
-               + ", conduit preference " + Decimal(options.PreferConduitUntil) + ", length extension " + Decimal(options.LengthExtend)
+               + ", conduit preference " + Decimal(options.PreferConduitUntil)
                + ", single-device circuits " + (options.SkipSingleDeviceCircuits ? "skipped" : "routed")
                + "; the command's defaults: join " + Decimal(CommandJoinToleranceMm) + " mm, reach " + Decimal(CommandMaxApproachMm)
                + " mm, axis-aligned yes, conduit preference 0, length extension 0, single-device circuits routed"

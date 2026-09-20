@@ -174,20 +174,6 @@ public sealed class RouteResult
     /// </remarks>
     public IReadOnlyDictionary<string, double> AlongByClass { get; init; } = NoClasses;
 
-    /// <summary>The slack added for terminations and sag, in internal feet: <c>LengthExtend</c> of the rest.</summary>
-    /// <remarks>
-    /// <para>
-    /// <b>A number of its own rather than folded into the others - the owner's decision of 2026-09-17.</b>
-    /// Until then it was added to <see cref="AlongCarriers"/>, although it was a fraction of the drops as
-    /// well, so a breakdown by carrier could not have added up without deciding where the slack lies. It
-    /// lies nowhere in particular; an estimate wants the length in trays as laid and the slack beside it.
-    /// </para>
-    /// <para>
-    /// The total is unchanged by the move: it was along + drops + slack before, and it is the same sum now.
-    /// </para>
-    /// </remarks>
-    public double Slack { get; init; }
-
     /// <summary>The length walked along carriers of one class, zero when the route walked none.</summary>
     public double AlongClass(string carrierClass) =>
         AlongByClass.TryGetValue(carrierClass, out var length) ? length : 0;
@@ -245,5 +231,22 @@ public sealed class RouteResult
     /// <remarks>Empty unless <see cref="Status"/> is Found.</remarks>
     public IReadOnlyList<Tap> Taps { get; init; } = Array.Empty<Tap>();
 
-    public double TotalLength => AlongCarriers + Approaches + Slack;
+    /// <summary>What the route measures: along the carriers and down to the two ends.</summary>
+    /// <remarks>
+    /// <para>
+    /// <b>Not the cable's length, and since 2026-09-21 it no longer pretends to be.</b> Slack used to
+    /// live here too, as a fraction of this number, and the total was the sum of the three. The
+    /// owner's model of slack counts the places the cable is cut - the panel, each device, each
+    /// junction box, each splice in a carrier - and how many boxes a circuit's cable is cut in is
+    /// decided by <see cref="BoxPlanner"/>, after every circuit has been routed: taps closer than the
+    /// box radius share a box, and an existing box may take two of them.
+    /// </para>
+    /// <para>
+    /// So a route cannot state a cable length, and does not. <see cref="RouteRun"/> knows both the
+    /// routes and the plan, and it is the one that adds slack and answers for the total. Leaving
+    /// <c>Slack</c> here to be filled in afterwards would have been cheaper by a refactor and would
+    /// have meant a route straight from the router silently reporting a total short by its slack.
+    /// </para>
+    /// </remarks>
+    public double Measured => AlongCarriers + Approaches;
 }

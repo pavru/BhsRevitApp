@@ -1,4 +1,4 @@
-namespace BHS.MEP.Cabling.Routing;
+﻿namespace BHS.MEP.Cabling.Routing;
 
 /// <summary>The spelling of the carriers a length was measured along.</summary>
 /// <remarks>
@@ -211,7 +211,15 @@ public sealed class LengthReview
     /// <summary>
     /// Compares what the model holds with what the search found.
     /// </summary>
-    /// <param name="results">This run's results, one per circuit.</param>
+    /// <param name="run">
+    /// This run: its results, one per circuit, and the plan that says where each cable is cut.
+    /// </param>
+    /// <remarks>
+    /// <b>A run rather than a list of results, since 2026-09-21.</b> What makes a stored length stale
+    /// is that it differs from the length computed today, and that length now includes slack counted
+    /// per place the cable is cut - which the plan decides, not the route. Given only the routes, this
+    /// would compare a stored total against a number missing its slack and call every circuit stale.
+    /// </remarks>
     /// <param name="stored">What each circuit carries, by circuit; a circuit missing from it carries nothing.</param>
     /// <param name="tolerance">
     /// How far the two lengths may differ and still count as the same, in internal feet. A length is
@@ -224,11 +232,12 @@ public sealed class LengthReview
     /// that read the model does know, and passes it here rather than joining the two lists later.
     /// </param>
     public static LengthReview Of(
-        IReadOnlyList<RouteResult> results,
+        RouteRun run,
         IReadOnlyDictionary<CarrierId, StoredRoute> stored,
         double tolerance,
         Func<CarrierId, string>? name = null)
     {
+        var results = run.Results;
         var stale = new List<StaleCircuit>();
         var current = 0;
         var neverWritten = 0;
@@ -263,7 +272,7 @@ public sealed class LengthReview
             if (!string.Equals(was.Stamp, walked, StringComparison.Ordinal))
                 reasons |= StaleReason.CarriersDiffer;
 
-            if (was.Length is { } length && Math.Abs(length - route.TotalLength) > tolerance)
+            if (was.Length is { } length && Math.Abs(length - run.TotalLengthOf(route.Circuit)) > tolerance)
                 reasons |= StaleReason.LengthDiffers;
 
             if (was.Connection is { } connection && connection != route.Connection)
@@ -282,7 +291,7 @@ public sealed class LengthReview
             {
                 Number = name?.Invoke(route.Circuit) ?? string.Empty,
                 StoredLength = was.Length ?? 0,
-                ComputedLength = route.TotalLength,
+                ComputedLength = run.TotalLengthOf(route.Circuit),
                 StoredConnection = was.Connection,
                 ComputedConnection = route.Connection,
                 Left = Missing(before, now),

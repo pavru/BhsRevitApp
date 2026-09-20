@@ -8,11 +8,12 @@ namespace BHS.MEP.Cabling.Revit;
 /// </summary>
 /// <remarks>
 /// <para>
-/// <b>Thirteen, and each one has something that reads it.</b> A parameter declared before something
+/// <b>Fourteen, and each one has something that reads it.</b> A parameter declared before something
 /// reads it is the same mistake as a mechanism with no consumer, and it is worse here: a parameter
 /// that has reached a customer's model cannot be withdrawn, only ignored. The rule has held through
 /// every addition - the three the apply writes arrived with the apply, the three on the circuit with
-/// the code that computes them, and the five that divide the length with the code that divides it.
+/// the code that computes them, the five that divide the length with the code that divides it, and
+/// splicing with the planner that stops recommending a box where it is allowed.
 /// </para>
 /// <para>
 /// <b>The GUIDs are new rather than the predecessor's</b> - the owner's decision, a clean slate. They
@@ -153,7 +154,7 @@ public sealed class CablingParameters : SharedParameterScheme
     /// </remarks>
     public static readonly Guid LengthOther = new("f4664f6d-85fa-4d29-8d99-a6b9c92a0176");
 
-    /// <summary>The slack in the stored length: <c>Cabling:LengthExtend</c> of what is laid.</summary>
+    /// <summary>The slack in the stored length, by the project's <c>Model:Cabling:Slack</c> settings.</summary>
     /// <remarks>
     /// <b>A fifth number, not spread over the other four - the owner's decision of 2026-09-17.</b> The slack
     /// is a fraction of the drops as well as of the carriers and lies nowhere in particular; an estimate
@@ -439,9 +440,9 @@ public sealed class CablingParameters : SharedParameterScheme
         Length(
             LengthSlack,
             "BHS_Cbl_LengthSlack",
-            "The slack included in BHS_Cbl_CableLength, as set by Cabling:LengthExtend.",
+            "The slack included in BHS_Cbl_CableLength, as the project's Model:Cabling:Slack settings ask.",
             "BHS_Cbl_ДлинаЗапас",
-            "Запас, входящий в BHS_Cbl_ДлинаКабеля, по настройке Cabling:LengthExtend."),
+            "Запас, входящий в BHS_Cbl_ДлинаКабеля, по настройкам проекта Model:Cabling:Slack."),
 
         new SharedParameter(
             RouteConnection,

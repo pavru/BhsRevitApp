@@ -64,10 +64,7 @@ public sealed partial class CablingApplyTests
         Skip.When(found.Count == 0, "no circuit of this model routed, so the apply writes nothing to read back");
         Skip.When(blank.Count == 0, "every circuit of this model either routed or carries a stored length already, so \"never written\" cannot be asked");
 
-        var run = new RouteRun(found, snapshot.Network.Version, TimeSpan.Zero)
-        {
-            Plan = BoxPlanner.Plan(results, snapshot.Boxes, project.BoxRadius),
-        };
+        var run = new RouteRun(found, snapshot.Network.Version, TimeSpan.Zero, BoxPlanner.Plan(results, snapshot.Boxes, project.BoxRadius));
 
         NeedsDefinitionsFor(document, symbol, run, snapshot);
 
@@ -96,10 +93,10 @@ public sealed partial class CablingApplyTests
             SameLength(read.LengthSlack, element, CablingParameters.LengthSlack, where + ": the slack");
 
             Expect.That(
-                read.CableLength.Written && Math.Abs(read.CableLength.Value - route.TotalLength) < 1e-9,
+                read.CableLength.Written && Math.Abs(read.CableLength.Value - run.TotalLengthOf(route.Circuit)) < 1e-9,
                 where + ": the length the reader returns against the one the run computed - read "
                 + read.CableLength.Value.ToString("F6", CultureInfo.InvariantCulture) + ", computed "
-                + route.TotalLength.ToString("F6", CultureInfo.InvariantCulture) + " ft");
+                + run.TotalLengthOf(route.Circuit).ToString("F6", CultureInfo.InvariantCulture) + " ft");
 
             SameText(read.RouteConnection, element, CablingParameters.RouteConnection, where + ": the connection it was routed with");
             SameText(read.RouteStamp, element, CablingParameters.RouteStamp, where + ": the carriers it was measured along");

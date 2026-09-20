@@ -1,4 +1,4 @@
-namespace BHS.MEP.Cabling.Routing;
+﻿namespace BHS.MEP.Cabling.Routing;
 
 /// <summary>
 /// What the search is allowed to do, in internal feet throughout.
@@ -45,8 +45,6 @@ public sealed class RoutingOptions
     /// </remarks>
     public double PreferConduitUntil { get; init; }
 
-    /// <summary>Added to every computed length, as a fraction, for slack and terminations.</summary>
-    public double LengthExtend { get; init; }
 
     /// <summary>
     /// Whether the drop from the structure to a device is measured along axes rather than straight.

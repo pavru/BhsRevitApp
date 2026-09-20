@@ -1,16 +1,16 @@
 {
   "Schema": 2,
   "Disclaimer": "Recorded on a developer machine. Revit cannot run on hosted CI, so CI verifies this record rather than reproducing it: no automated check here has ever started a Revit.",
-  "Commit": "be55e957ecf0223e57ca0018af1c30f7875e763a",
+  "Commit": "ab7bdaabf060fe1e04753044943bfe64da94bcf5",
   "CommitClean": true,
   "Content": {
-    "source/Revit": "34e0082277c6bb8094da8ed709bd319a9325b06a",
-    "source/Shared": "77b1941b89ff49046593d5929950bf603e7f2eaf",
+    "source/Revit": "aabd41b14e44c2d1a2854a81d52c2a5c0d34c7f0",
+    "source/Shared": "b24cf47b52c82b7083b389e7161f5ecf3e45aa1c",
     "source/WinSide": "5b71abdce4cd8186abf36416137a3dfa7f437a28",
-    "source/Features/MEP.Cabling": "db6448336e4b9255af5049b3cf4b6e5dc8b13565",
+    "source/Features/MEP.Cabling": "545318a39487fc172946e6b20dcb8144314004cc",
     "build/BHS.Revit.Sdk": "a8575677c417aaaef872bfda5c751f2858df4a0c"
   },
-  "RecordedUtc": "2026-09-20T07:27:36.0011408Z",
+  "RecordedUtc": "2026-09-20T22:21:54.6745090Z",
   "WithModel": true,
   "ShowTab": false,
   "Linked": true,
@@ -18,7 +18,7 @@
     {
       "Release": 2024,
       "FileVersion": "0.1.0.0",
-      "BuiltUtc": "2026-09-20T07:20:59.6815032Z",
+      "BuiltUtc": "2026-09-20T22:13:59.0223188Z",
       "Signed": true,
       "Checks": [
         {
@@ -626,11 +626,11 @@
         },
         {
           "Name": "launched",
-          "Value": "pid 60872"
+          "Value": "pid 70136"
         },
         {
           "Name": "registered after",
-          "Value": "24.8s"
+          "Value": "39.9s"
         },
         {
           "Name": "recovered by enumeration",
@@ -646,11 +646,11 @@
         },
         {
           "Name": "probe log",
-          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2024-60872-20260920-172135.log"
+          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2024-70136-20260921-081450.log"
         },
         {
           "Name": "threads",
-          "Value": "api 1, call 27"
+          "Value": "api 1, call 16"
         },
         {
           "Name": "appdomain",
@@ -674,7 +674,7 @@
         },
         {
           "Name": "log",
-          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2024-60872-20260920-172135.log"
+          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2024-70136-20260921-081450.log"
         },
         {
           "Name": "sinks",
@@ -686,7 +686,7 @@
         },
         {
           "Name": "opened after registration",
-          "Value": "25.2s"
+          "Value": "46.2s"
         },
         {
           "Name": "pane:exists",
@@ -806,7 +806,7 @@
         },
         {
           "Name": "instance",
-          "Value": "b100d6eb9cb44688aacc3c8bd78ab299"
+          "Value": "61390a7d9f634f53808f8c8b1a7efe08"
         },
         {
           "Name": "link1:linked",
@@ -850,11 +850,11 @@
         },
         {
           "Name": "log",
-          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2024-60872-20260920-172135.log"
+          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2024-70136-20260921-081450.log"
         },
         {
           "Name": "pid",
-          "Value": "60872"
+          "Value": "70136"
         },
         {
           "Name": "release",
@@ -926,15 +926,15 @@
         },
         {
           "Name": "instance",
-          "Value": "b100d6eb9cb44688aacc3c8bd78ab299"
+          "Value": "61390a7d9f634f53808f8c8b1a7efe08"
         },
         {
           "Name": "log",
-          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2024-60872-20260920-172135.log"
+          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2024-70136-20260921-081450.log"
         },
         {
           "Name": "pid",
-          "Value": "60872"
+          "Value": "70136"
         },
         {
           "Name": "place:after",
@@ -1022,11 +1022,11 @@
         },
         {
           "Name": "instance",
-          "Value": "b100d6eb9cb44688aacc3c8bd78ab299"
+          "Value": "61390a7d9f634f53808f8c8b1a7efe08"
         },
         {
           "Name": "log",
-          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2024-60872-20260920-172135.log"
+          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2024-70136-20260921-081450.log"
         },
         {
           "Name": "modal:apiCallWorked",
@@ -1054,7 +1054,7 @@
         },
         {
           "Name": "modal:awaitResumedAfter",
-          "Value": "0.52s"
+          "Value": "0.43s"
         },
         {
           "Name": "modal:awaitResumedOnApiThread",
@@ -1078,7 +1078,7 @@
         },
         {
           "Name": "modal:shownFor",
-          "Value": "2.59s"
+          "Value": "2.50s"
         },
         {
           "Name": "modal:transactionCommit",
@@ -1110,7 +1110,7 @@
         },
         {
           "Name": "pid",
-          "Value": "60872"
+          "Value": "70136"
         },
         {
           "Name": "release",
@@ -1122,11 +1122,11 @@
         },
         {
           "Name": "instance",
-          "Value": "b100d6eb9cb44688aacc3c8bd78ab299"
+          "Value": "61390a7d9f634f53808f8c8b1a7efe08"
         },
         {
           "Name": "log",
-          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2024-60872-20260920-172135.log"
+          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2024-70136-20260921-081450.log"
         },
         {
           "Name": "modal:measured",
@@ -1138,7 +1138,7 @@
         },
         {
           "Name": "modal:pumpRanAt",
-          "Value": "2.59s"
+          "Value": "2.51s"
         },
         {
           "Name": "modal:windowClosed",
@@ -1146,7 +1146,7 @@
         },
         {
           "Name": "pid",
-          "Value": "60872"
+          "Value": "70136"
         },
         {
           "Name": "release",
@@ -1158,11 +1158,11 @@
         },
         {
           "Name": "instance",
-          "Value": "b100d6eb9cb44688aacc3c8bd78ab299"
+          "Value": "61390a7d9f634f53808f8c8b1a7efe08"
         },
         {
           "Name": "log",
-          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2024-60872-20260920-172135.log"
+          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2024-70136-20260921-081450.log"
         },
         {
           "Name": "parameters:bound",
@@ -1238,7 +1238,7 @@
         },
         {
           "Name": "pid",
-          "Value": "60872"
+          "Value": "70136"
         },
         {
           "Name": "release",
@@ -1446,7 +1446,7 @@
         },
         {
           "Name": "census: elapsed, ms",
-          "Value": "73"
+          "Value": "42"
         },
         {
           "Name": "circuit ends: electrical systems",
@@ -1486,7 +1486,7 @@
         },
         {
           "Name": "circuit ends: elapsed, ms",
-          "Value": "32"
+          "Value": "26"
         },
         {
           "Name": "circuits on the panel used",
@@ -1598,7 +1598,7 @@
         },
         {
           "Name": "placement reach: options passed, against the command\u0027s defaults",
-          "Value": "join 152.4 mm, reach 3048 mm, axis-aligned yes, conduit preference 0, length extension 0, single-device circuits routed; the command\u0027s defaults: join 50 mm, reach 3000 mm, axis-aligned yes, conduit preference 0, length extension 0, single-device circuits routed - so reach \u002B48 mm and join \u002B102.4 mm against them"
+          "Value": "join 152.4 mm, reach 3048 mm, axis-aligned yes, conduit preference 0, single-device circuits routed; the command\u0027s defaults: join 50 mm, reach 3000 mm, axis-aligned yes, conduit preference 0, length extension 0, single-device circuits routed - so reach \u002B48 mm and join \u002B102.4 mm against them"
         },
         {
           "Name": "placement reach: routes by status",
@@ -1803,6 +1803,14 @@
         {
           "Name": "length by where: routes found",
           "Value": "6"
+        },
+        {
+          "Name": "length by where: boxes the plan cuts cables in",
+          "Value": "10"
+        },
+        {
+          "Name": "length by where: splices the plan makes in carriers",
+          "Value": "0"
         },
         {
           "Name": "length by where: other failures while applying",
@@ -2066,7 +2074,7 @@
         },
         {
           "Name": "no carrier reach, at terminals: options passed, against the command\u0027s defaults",
-          "Value": "join 152.4 mm, reach 3048 mm, axis-aligned yes, conduit preference 0, length extension 0, single-device circuits routed; the command\u0027s defaults: join 50 mm, reach 3000 mm, axis-aligned yes, conduit preference 0, length extension 0, single-device circuits routed - so reach \u002B48 mm and join \u002B102.4 mm against them"
+          "Value": "join 152.4 mm, reach 3048 mm, axis-aligned yes, conduit preference 0, single-device circuits routed; the command\u0027s defaults: join 50 mm, reach 3000 mm, axis-aligned yes, conduit preference 0, length extension 0, single-device circuits routed - so reach \u002B48 mm and join \u002B102.4 mm against them"
         },
         {
           "Name": "no carrier reach, at terminals: routes by status",
@@ -2450,7 +2458,7 @@
         },
         {
           "Name": "assemblies loaded",
-          "Value": "685"
+          "Value": "687"
         },
         {
           "Name": "Revit\u0027s copy won",
@@ -2474,7 +2482,7 @@
         },
         {
           "Name": "diagnostic events",
-          "Value": "2607 received, 0 dropped by the publisher, longest quiet spell 15.3s during Starting"
+          "Value": "2607 received, 0 dropped by the publisher, longest quiet spell 32.4s during Starting"
         },
         {
           "Name": "phases seen",
@@ -2558,14 +2566,14 @@
         },
         {
           "Name": "closed after",
-          "Value": "22.1s"
+          "Value": "21.5s"
         }
       ]
     },
     {
       "Release": 2025,
       "FileVersion": "0.1.0.0",
-      "BuiltUtc": "2026-09-20T07:21:01.8016127Z",
+      "BuiltUtc": "2026-09-20T22:14:01.2917743Z",
       "Signed": true,
       "Checks": [
         {
@@ -3173,11 +3181,11 @@
         },
         {
           "Name": "launched",
-          "Value": "pid 47624"
+          "Value": "pid 75072"
         },
         {
           "Name": "registered after",
-          "Value": "17.9s"
+          "Value": "29.4s"
         },
         {
           "Name": "recovered by enumeration",
@@ -3193,11 +3201,11 @@
         },
         {
           "Name": "probe log",
-          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2025-47624-20260920-172312.log"
+          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2025-75072-20260921-081650.log"
         },
         {
           "Name": "threads",
-          "Value": "api 1, call 25"
+          "Value": "api 1, call 7"
         },
         {
           "Name": "appdomain",
@@ -3221,7 +3229,7 @@
         },
         {
           "Name": "log",
-          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2025-47624-20260920-172312.log"
+          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2025-75072-20260921-081650.log"
         },
         {
           "Name": "sinks",
@@ -3233,7 +3241,7 @@
         },
         {
           "Name": "opened after registration",
-          "Value": "13.3s"
+          "Value": "12.5s"
         },
         {
           "Name": "pane:exists",
@@ -3353,7 +3361,7 @@
         },
         {
           "Name": "instance",
-          "Value": "414fad2b95af42828402eeaaa7ef6542"
+          "Value": "49d176abadfa48fe99c572397f5c1b7e"
         },
         {
           "Name": "link1:linked",
@@ -3397,11 +3405,11 @@
         },
         {
           "Name": "log",
-          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2025-47624-20260920-172312.log"
+          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2025-75072-20260921-081650.log"
         },
         {
           "Name": "pid",
-          "Value": "47624"
+          "Value": "75072"
         },
         {
           "Name": "release",
@@ -3473,15 +3481,15 @@
         },
         {
           "Name": "instance",
-          "Value": "414fad2b95af42828402eeaaa7ef6542"
+          "Value": "49d176abadfa48fe99c572397f5c1b7e"
         },
         {
           "Name": "log",
-          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2025-47624-20260920-172312.log"
+          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2025-75072-20260921-081650.log"
         },
         {
           "Name": "pid",
-          "Value": "47624"
+          "Value": "75072"
         },
         {
           "Name": "place:after",
@@ -3569,11 +3577,11 @@
         },
         {
           "Name": "instance",
-          "Value": "414fad2b95af42828402eeaaa7ef6542"
+          "Value": "49d176abadfa48fe99c572397f5c1b7e"
         },
         {
           "Name": "log",
-          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2025-47624-20260920-172312.log"
+          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2025-75072-20260921-081650.log"
         },
         {
           "Name": "modal:apiCallWorked",
@@ -3601,7 +3609,7 @@
         },
         {
           "Name": "modal:awaitResumedAfter",
-          "Value": "0.45s"
+          "Value": "0.44s"
         },
         {
           "Name": "modal:awaitResumedOnApiThread",
@@ -3657,7 +3665,7 @@
         },
         {
           "Name": "pid",
-          "Value": "47624"
+          "Value": "75072"
         },
         {
           "Name": "release",
@@ -3669,11 +3677,11 @@
         },
         {
           "Name": "instance",
-          "Value": "414fad2b95af42828402eeaaa7ef6542"
+          "Value": "49d176abadfa48fe99c572397f5c1b7e"
         },
         {
           "Name": "log",
-          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2025-47624-20260920-172312.log"
+          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2025-75072-20260921-081650.log"
         },
         {
           "Name": "modal:measured",
@@ -3693,7 +3701,7 @@
         },
         {
           "Name": "pid",
-          "Value": "47624"
+          "Value": "75072"
         },
         {
           "Name": "release",
@@ -3705,11 +3713,11 @@
         },
         {
           "Name": "instance",
-          "Value": "414fad2b95af42828402eeaaa7ef6542"
+          "Value": "49d176abadfa48fe99c572397f5c1b7e"
         },
         {
           "Name": "log",
-          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2025-47624-20260920-172312.log"
+          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2025-75072-20260921-081650.log"
         },
         {
           "Name": "parameters:bound",
@@ -3785,7 +3793,7 @@
         },
         {
           "Name": "pid",
-          "Value": "47624"
+          "Value": "75072"
         },
         {
           "Name": "release",
@@ -3993,7 +4001,7 @@
         },
         {
           "Name": "census: elapsed, ms",
-          "Value": "80"
+          "Value": "35"
         },
         {
           "Name": "circuit ends: electrical systems",
@@ -4033,7 +4041,7 @@
         },
         {
           "Name": "circuit ends: elapsed, ms",
-          "Value": "29"
+          "Value": "15"
         },
         {
           "Name": "circuits on the panel used",
@@ -4145,7 +4153,7 @@
         },
         {
           "Name": "placement reach: options passed, against the command\u0027s defaults",
-          "Value": "join 152.4 mm, reach 3048 mm, axis-aligned yes, conduit preference 0, length extension 0, single-device circuits routed; the command\u0027s defaults: join 50 mm, reach 3000 mm, axis-aligned yes, conduit preference 0, length extension 0, single-device circuits routed - so reach \u002B48 mm and join \u002B102.4 mm against them"
+          "Value": "join 152.4 mm, reach 3048 mm, axis-aligned yes, conduit preference 0, single-device circuits routed; the command\u0027s defaults: join 50 mm, reach 3000 mm, axis-aligned yes, conduit preference 0, length extension 0, single-device circuits routed - so reach \u002B48 mm and join \u002B102.4 mm against them"
         },
         {
           "Name": "placement reach: routes by status",
@@ -4350,6 +4358,14 @@
         {
           "Name": "length by where: routes found",
           "Value": "6"
+        },
+        {
+          "Name": "length by where: boxes the plan cuts cables in",
+          "Value": "10"
+        },
+        {
+          "Name": "length by where: splices the plan makes in carriers",
+          "Value": "0"
         },
         {
           "Name": "length by where: other failures while applying",
@@ -4613,7 +4629,7 @@
         },
         {
           "Name": "no carrier reach, at terminals: options passed, against the command\u0027s defaults",
-          "Value": "join 152.4 mm, reach 3048 mm, axis-aligned yes, conduit preference 0, length extension 0, single-device circuits routed; the command\u0027s defaults: join 50 mm, reach 3000 mm, axis-aligned yes, conduit preference 0, length extension 0, single-device circuits routed - so reach \u002B48 mm and join \u002B102.4 mm against them"
+          "Value": "join 152.4 mm, reach 3048 mm, axis-aligned yes, conduit preference 0, single-device circuits routed; the command\u0027s defaults: join 50 mm, reach 3000 mm, axis-aligned yes, conduit preference 0, length extension 0, single-device circuits routed - so reach \u002B48 mm and join \u002B102.4 mm against them"
         },
         {
           "Name": "no carrier reach, at terminals: routes by status",
@@ -5053,7 +5069,7 @@
         },
         {
           "Name": "diagnostic events",
-          "Value": "2552 received, 0 dropped by the publisher, longest quiet spell 4.1s during Working"
+          "Value": "2552 received, 0 dropped by the publisher, longest quiet spell 3.8s during Working"
         },
         {
           "Name": "phases seen",
@@ -5133,14 +5149,14 @@
         },
         {
           "Name": "closed after",
-          "Value": "4.0s"
+          "Value": "5.5s"
         }
       ]
     },
     {
       "Release": 2026,
       "FileVersion": "0.1.0.0",
-      "BuiltUtc": "2026-09-20T07:21:00.9001674Z",
+      "BuiltUtc": "2026-09-20T22:14:01.5194028Z",
       "Signed": true,
       "Checks": [
         {
@@ -5748,11 +5764,11 @@
         },
         {
           "Name": "launched",
-          "Value": "pid 65228"
+          "Value": "pid 46828"
         },
         {
           "Name": "registered after",
-          "Value": "33.1s"
+          "Value": "50.4s"
         },
         {
           "Name": "recovered by enumeration",
@@ -5768,11 +5784,11 @@
         },
         {
           "Name": "probe log",
-          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2026-65228-20260920-172404.log"
+          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2026-46828-20260921-081757.log"
         },
         {
           "Name": "threads",
-          "Value": "api 1, call 23"
+          "Value": "api 1, call 21"
         },
         {
           "Name": "appdomain",
@@ -5796,7 +5812,7 @@
         },
         {
           "Name": "log",
-          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2026-65228-20260920-172404.log"
+          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2026-46828-20260921-081757.log"
         },
         {
           "Name": "sinks",
@@ -5808,7 +5824,7 @@
         },
         {
           "Name": "opened after registration",
-          "Value": "71.5s"
+          "Value": "79.0s"
         },
         {
           "Name": "pane:exists",
@@ -5928,7 +5944,7 @@
         },
         {
           "Name": "instance",
-          "Value": "9b2bef9472e84f16b79e9d4259f0c1d0"
+          "Value": "231a1dd313fd44809b0db18edbf067c6"
         },
         {
           "Name": "link1:linked",
@@ -5972,11 +5988,11 @@
         },
         {
           "Name": "log",
-          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2026-65228-20260920-172404.log"
+          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2026-46828-20260921-081757.log"
         },
         {
           "Name": "pid",
-          "Value": "65228"
+          "Value": "46828"
         },
         {
           "Name": "release",
@@ -6048,15 +6064,15 @@
         },
         {
           "Name": "instance",
-          "Value": "9b2bef9472e84f16b79e9d4259f0c1d0"
+          "Value": "231a1dd313fd44809b0db18edbf067c6"
         },
         {
           "Name": "log",
-          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2026-65228-20260920-172404.log"
+          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2026-46828-20260921-081757.log"
         },
         {
           "Name": "pid",
-          "Value": "65228"
+          "Value": "46828"
         },
         {
           "Name": "place:after",
@@ -6144,11 +6160,11 @@
         },
         {
           "Name": "instance",
-          "Value": "9b2bef9472e84f16b79e9d4259f0c1d0"
+          "Value": "231a1dd313fd44809b0db18edbf067c6"
         },
         {
           "Name": "log",
-          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2026-65228-20260920-172404.log"
+          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2026-46828-20260921-081757.log"
         },
         {
           "Name": "modal:apiCallWorked",
@@ -6200,7 +6216,7 @@
         },
         {
           "Name": "modal:shownFor",
-          "Value": "2.35s"
+          "Value": "2.33s"
         },
         {
           "Name": "modal:transactionCommit",
@@ -6232,7 +6248,7 @@
         },
         {
           "Name": "pid",
-          "Value": "65228"
+          "Value": "46828"
         },
         {
           "Name": "release",
@@ -6244,11 +6260,11 @@
         },
         {
           "Name": "instance",
-          "Value": "9b2bef9472e84f16b79e9d4259f0c1d0"
+          "Value": "231a1dd313fd44809b0db18edbf067c6"
         },
         {
           "Name": "log",
-          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2026-65228-20260920-172404.log"
+          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2026-46828-20260921-081757.log"
         },
         {
           "Name": "modal:measured",
@@ -6260,7 +6276,7 @@
         },
         {
           "Name": "modal:pumpRanAt",
-          "Value": "2.35s"
+          "Value": "2.33s"
         },
         {
           "Name": "modal:windowClosed",
@@ -6268,7 +6284,7 @@
         },
         {
           "Name": "pid",
-          "Value": "65228"
+          "Value": "46828"
         },
         {
           "Name": "release",
@@ -6280,11 +6296,11 @@
         },
         {
           "Name": "instance",
-          "Value": "9b2bef9472e84f16b79e9d4259f0c1d0"
+          "Value": "231a1dd313fd44809b0db18edbf067c6"
         },
         {
           "Name": "log",
-          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2026-65228-20260920-172404.log"
+          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2026-46828-20260921-081757.log"
         },
         {
           "Name": "parameters:bound",
@@ -6360,7 +6376,7 @@
         },
         {
           "Name": "pid",
-          "Value": "65228"
+          "Value": "46828"
         },
         {
           "Name": "release",
@@ -6568,7 +6584,7 @@
         },
         {
           "Name": "census: elapsed, ms",
-          "Value": "55"
+          "Value": "32"
         },
         {
           "Name": "circuit ends: electrical systems",
@@ -6608,7 +6624,7 @@
         },
         {
           "Name": "circuit ends: elapsed, ms",
-          "Value": "26"
+          "Value": "19"
         },
         {
           "Name": "circuits on the panel used",
@@ -6720,7 +6736,7 @@
         },
         {
           "Name": "placement reach: options passed, against the command\u0027s defaults",
-          "Value": "join 152.4 mm, reach 3048 mm, axis-aligned yes, conduit preference 0, length extension 0, single-device circuits routed; the command\u0027s defaults: join 50 mm, reach 3000 mm, axis-aligned yes, conduit preference 0, length extension 0, single-device circuits routed - so reach \u002B48 mm and join \u002B102.4 mm against them"
+          "Value": "join 152.4 mm, reach 3048 mm, axis-aligned yes, conduit preference 0, single-device circuits routed; the command\u0027s defaults: join 50 mm, reach 3000 mm, axis-aligned yes, conduit preference 0, length extension 0, single-device circuits routed - so reach \u002B48 mm and join \u002B102.4 mm against them"
         },
         {
           "Name": "placement reach: routes by status",
@@ -6925,6 +6941,14 @@
         {
           "Name": "length by where: routes found",
           "Value": "6"
+        },
+        {
+          "Name": "length by where: boxes the plan cuts cables in",
+          "Value": "10"
+        },
+        {
+          "Name": "length by where: splices the plan makes in carriers",
+          "Value": "0"
         },
         {
           "Name": "length by where: other failures while applying",
@@ -7188,7 +7212,7 @@
         },
         {
           "Name": "no carrier reach, at terminals: options passed, against the command\u0027s defaults",
-          "Value": "join 152.4 mm, reach 3048 mm, axis-aligned yes, conduit preference 0, length extension 0, single-device circuits routed; the command\u0027s defaults: join 50 mm, reach 3000 mm, axis-aligned yes, conduit preference 0, length extension 0, single-device circuits routed - so reach \u002B48 mm and join \u002B102.4 mm against them"
+          "Value": "join 152.4 mm, reach 3048 mm, axis-aligned yes, conduit preference 0, single-device circuits routed; the command\u0027s defaults: join 50 mm, reach 3000 mm, axis-aligned yes, conduit preference 0, length extension 0, single-device circuits routed - so reach \u002B48 mm and join \u002B102.4 mm against them"
         },
         {
           "Name": "no carrier reach, at terminals: routes by status",
@@ -7592,7 +7616,7 @@
         },
         {
           "Name": "diagnostic events",
-          "Value": "2550 received, 0 dropped by the publisher, longest quiet spell 53.1s during Starting"
+          "Value": "2586 received, 0 dropped by the publisher, longest quiet spell 62.5s during Starting"
         },
         {
           "Name": "phases seen",
@@ -7676,14 +7700,14 @@
         },
         {
           "Name": "closed after",
-          "Value": "17.7s"
+          "Value": "18.0s"
         }
       ]
     },
     {
       "Release": 2027,
       "FileVersion": "0.1.0.0",
-      "BuiltUtc": "2026-09-20T07:21:01.7758652Z",
+      "BuiltUtc": "2026-09-20T22:14:02.0373832Z",
       "Signed": true,
       "Checks": [
         {
@@ -8291,11 +8315,11 @@
         },
         {
           "Name": "launched",
-          "Value": "pid 75188"
+          "Value": "pid 65108"
         },
         {
           "Name": "registered after",
-          "Value": "23.5s"
+          "Value": "34.2s"
         },
         {
           "Name": "recovered by enumeration",
@@ -8311,11 +8335,11 @@
         },
         {
           "Name": "probe log",
-          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2027-75188-20260920-172623.log"
+          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2027-65108-20260921-082034.log"
         },
         {
           "Name": "threads",
-          "Value": "api 2, call 7"
+          "Value": "api 2, call 17"
         },
         {
           "Name": "appdomain",
@@ -8339,7 +8363,7 @@
         },
         {
           "Name": "log",
-          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2027-75188-20260920-172623.log"
+          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2027-65108-20260921-082034.log"
         },
         {
           "Name": "sinks",
@@ -8351,7 +8375,7 @@
         },
         {
           "Name": "opened after registration",
-          "Value": "35.3s"
+          "Value": "44.6s"
         },
         {
           "Name": "pane:exists",
@@ -8471,7 +8495,7 @@
         },
         {
           "Name": "instance",
-          "Value": "3fa66c20c2b34f46999cd33d39792b16"
+          "Value": "69ebf34b193b46c28a8b93e2bff520db"
         },
         {
           "Name": "link1:linked",
@@ -8515,11 +8539,11 @@
         },
         {
           "Name": "log",
-          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2027-75188-20260920-172623.log"
+          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2027-65108-20260921-082034.log"
         },
         {
           "Name": "pid",
-          "Value": "75188"
+          "Value": "65108"
         },
         {
           "Name": "release",
@@ -8591,15 +8615,15 @@
         },
         {
           "Name": "instance",
-          "Value": "3fa66c20c2b34f46999cd33d39792b16"
+          "Value": "69ebf34b193b46c28a8b93e2bff520db"
         },
         {
           "Name": "log",
-          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2027-75188-20260920-172623.log"
+          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2027-65108-20260921-082034.log"
         },
         {
           "Name": "pid",
-          "Value": "75188"
+          "Value": "65108"
         },
         {
           "Name": "place:after",
@@ -8687,11 +8711,11 @@
         },
         {
           "Name": "instance",
-          "Value": "3fa66c20c2b34f46999cd33d39792b16"
+          "Value": "69ebf34b193b46c28a8b93e2bff520db"
         },
         {
           "Name": "log",
-          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2027-75188-20260920-172623.log"
+          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2027-65108-20260921-082034.log"
         },
         {
           "Name": "modal:apiCallWorked",
@@ -8719,7 +8743,7 @@
         },
         {
           "Name": "modal:awaitResumedAfter",
-          "Value": "0.32s"
+          "Value": "0.28s"
         },
         {
           "Name": "modal:awaitResumedOnApiThread",
@@ -8743,7 +8767,7 @@
         },
         {
           "Name": "modal:shownFor",
-          "Value": "2.40s"
+          "Value": "2.36s"
         },
         {
           "Name": "modal:transactionCommit",
@@ -8775,7 +8799,7 @@
         },
         {
           "Name": "pid",
-          "Value": "75188"
+          "Value": "65108"
         },
         {
           "Name": "release",
@@ -8787,11 +8811,11 @@
         },
         {
           "Name": "instance",
-          "Value": "3fa66c20c2b34f46999cd33d39792b16"
+          "Value": "69ebf34b193b46c28a8b93e2bff520db"
         },
         {
           "Name": "log",
-          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2027-75188-20260920-172623.log"
+          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2027-65108-20260921-082034.log"
         },
         {
           "Name": "modal:measured",
@@ -8803,7 +8827,7 @@
         },
         {
           "Name": "modal:pumpRanAt",
-          "Value": "2.40s"
+          "Value": "2.36s"
         },
         {
           "Name": "modal:windowClosed",
@@ -8811,7 +8835,7 @@
         },
         {
           "Name": "pid",
-          "Value": "75188"
+          "Value": "65108"
         },
         {
           "Name": "release",
@@ -8823,11 +8847,11 @@
         },
         {
           "Name": "instance",
-          "Value": "3fa66c20c2b34f46999cd33d39792b16"
+          "Value": "69ebf34b193b46c28a8b93e2bff520db"
         },
         {
           "Name": "log",
-          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2027-75188-20260920-172623.log"
+          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2027-65108-20260921-082034.log"
         },
         {
           "Name": "parameters:bound",
@@ -8903,7 +8927,7 @@
         },
         {
           "Name": "pid",
-          "Value": "75188"
+          "Value": "65108"
         },
         {
           "Name": "release",
@@ -9111,7 +9135,7 @@
         },
         {
           "Name": "census: elapsed, ms",
-          "Value": "41"
+          "Value": "52"
         },
         {
           "Name": "circuit ends: electrical systems",
@@ -9151,7 +9175,7 @@
         },
         {
           "Name": "circuit ends: elapsed, ms",
-          "Value": "22"
+          "Value": "28"
         },
         {
           "Name": "circuits on the panel used",
@@ -9263,7 +9287,7 @@
         },
         {
           "Name": "placement reach: options passed, against the command\u0027s defaults",
-          "Value": "join 152.4 mm, reach 3048 mm, axis-aligned yes, conduit preference 0, length extension 0, single-device circuits routed; the command\u0027s defaults: join 50 mm, reach 3000 mm, axis-aligned yes, conduit preference 0, length extension 0, single-device circuits routed - so reach \u002B48 mm and join \u002B102.4 mm against them"
+          "Value": "join 152.4 mm, reach 3048 mm, axis-aligned yes, conduit preference 0, single-device circuits routed; the command\u0027s defaults: join 50 mm, reach 3000 mm, axis-aligned yes, conduit preference 0, length extension 0, single-device circuits routed - so reach \u002B48 mm and join \u002B102.4 mm against them"
         },
         {
           "Name": "placement reach: routes by status",
@@ -9468,6 +9492,14 @@
         {
           "Name": "length by where: routes found",
           "Value": "6"
+        },
+        {
+          "Name": "length by where: boxes the plan cuts cables in",
+          "Value": "10"
+        },
+        {
+          "Name": "length by where: splices the plan makes in carriers",
+          "Value": "0"
         },
         {
           "Name": "length by where: other failures while applying",
@@ -9731,7 +9763,7 @@
         },
         {
           "Name": "no carrier reach, at terminals: options passed, against the command\u0027s defaults",
-          "Value": "join 152.4 mm, reach 3048 mm, axis-aligned yes, conduit preference 0, length extension 0, single-device circuits routed; the command\u0027s defaults: join 50 mm, reach 3000 mm, axis-aligned yes, conduit preference 0, length extension 0, single-device circuits routed - so reach \u002B48 mm and join \u002B102.4 mm against them"
+          "Value": "join 152.4 mm, reach 3048 mm, axis-aligned yes, conduit preference 0, single-device circuits routed; the command\u0027s defaults: join 50 mm, reach 3000 mm, axis-aligned yes, conduit preference 0, length extension 0, single-device circuits routed - so reach \u002B48 mm and join \u002B102.4 mm against them"
         },
         {
           "Name": "no carrier reach, at terminals: routes by status",
@@ -10371,7 +10403,7 @@
         },
         {
           "Name": "assemblies loaded",
-          "Value": "782"
+          "Value": "783"
         },
         {
           "Name": "Revit\u0027s copy won",
@@ -10419,7 +10451,7 @@
         },
         {
           "Name": "diagnostic events",
-          "Value": "2596 received, 0 dropped by the publisher, longest quiet spell 16.1s during Starting"
+          "Value": "2520 received, 0 dropped by the publisher, longest quiet spell 25.6s during Starting"
         },
         {
           "Name": "phases seen",
@@ -10471,15 +10503,15 @@
         },
         {
           "Name": "progress caption",
+          "Value": "\u0424\u043E\u0440\u043C\u0438\u0440\u043E\u0432\u0430\u043D\u0438\u0435 \u0433\u0440\u0430\u0444\u0438\u043A\u0438 \u0434\u043B\u044F \u0414\u0438\u0441\u043F\u0435\u0442\u0447\u0435\u0440 \u043F\u0440\u043E\u0435\u043A\u0442\u0430"
+        },
+        {
+          "Name": "progress caption",
           "Value": "\u0424\u043E\u0440\u043C\u0438\u0440\u043E\u0432\u0430\u043D\u0438\u0435 \u0433\u0440\u0430\u0444\u0438\u043A\u0438 \u0434\u043B\u044F 3D \u0432\u0438\u0434: {3D}"
         },
         {
           "Name": "progress caption",
           "Value": "\u0424\u043E\u0440\u043C\u0438\u0440\u043E\u0432\u0430\u043D\u0438\u0435 \u0433\u0440\u0430\u0444\u0438\u043A\u0438 \u0434\u043B\u044F 3D \u0432\u0438\u0434: Proxy of {3D}"
-        },
-        {
-          "Name": "progress caption",
-          "Value": "\u0424\u043E\u0440\u043C\u0438\u0440\u043E\u0432\u0430\u043D\u0438\u0435 \u0433\u0440\u0430\u0444\u0438\u043A\u0438 \u0434\u043B\u044F \u0414\u0438\u0441\u043F\u0435\u0442\u0447\u0435\u0440 \u043F\u0440\u043E\u0435\u043A\u0442\u0430"
         },
         {
           "Name": "progress caption",
@@ -10503,7 +10535,7 @@
         },
         {
           "Name": "closed after",
-          "Value": "13.3s"
+          "Value": "12.8s"
         }
       ]
     }

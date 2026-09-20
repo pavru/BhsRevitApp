@@ -1,4 +1,4 @@
-using System.Diagnostics;
+﻿using System.Diagnostics;
 using Autodesk.Revit.DB;
 using Autodesk.Revit.UI;
 using BHS.Logging;
@@ -141,8 +141,14 @@ public sealed class CheckLengthsCommand : IFeatureCommand
                             project.ExistingBoxesOnly ? snapshot.Boxes : null));
                     }
 
+                    // Planned here too, and for the same reason the routing command plans: a stored
+                    // length is stale when it differs from the length computed today, and that length
+                    // includes slack counted per place the cable is cut - which the plan decides.
+                    var plan = BoxPlanner.Plan(results, snapshot.Boxes, project.BoxRadius);
+                    var run = new RouteRun(results, snapshot.Network.Version, TimeSpan.Zero, plan, project.Slack);
+
                     return LengthReview.Of(
-                        results,
+                        run,
                         stored,
                         StoredRoutes.Tolerance,
                         id => numbers.TryGetValue(id, out var number) ? number : string.Empty);

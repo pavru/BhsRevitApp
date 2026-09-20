@@ -1,4 +1,4 @@
-using System.Globalization;
+﻿using System.Globalization;
 using Autodesk.Revit.ApplicationServices;
 using Autodesk.Revit.DB;
 using Autodesk.Revit.DB.Structure;
@@ -771,13 +771,13 @@ public static class CablingApply
             if (host.GetElement(new ElementId(route.Circuit.Value)) is not { } circuit)
                 continue;
 
-            var written = Set(circuit, CablingParameters.CableLength, route.TotalLength);
+            var written = Set(circuit, CablingParameters.CableLength, run.TotalLengthOf(route.Circuit));
 
             written |= Set(circuit, CablingParameters.LengthInTray, route.AlongClass(CarrierCatalogue.Tray));
             written |= Set(circuit, CablingParameters.LengthInConduit, route.AlongClass(CarrierCatalogue.Conduit));
             written |= Set(circuit, CablingParameters.LengthFree, route.Approaches);
             written |= Set(circuit, CablingParameters.LengthOther, AlongOtherClasses(route));
-            written |= Set(circuit, CablingParameters.LengthSlack, route.Slack);
+            written |= Set(circuit, CablingParameters.LengthSlack, run.SlackOf(route.Circuit));
 
             written |= Set(circuit, CablingParameters.RouteConnection, CircuitConnections.Text(route.Connection));
             written |= Set(circuit, CablingParameters.RouteStamp, RouteStamp(route.Path));

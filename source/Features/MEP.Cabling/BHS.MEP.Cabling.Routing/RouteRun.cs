@@ -25,12 +25,48 @@
 public sealed class RouteRun
 {
     private readonly int[] _byStatus;
+    private readonly Dictionary<CarrierId, double> _slack = new();
 
-    public RouteRun(IReadOnlyList<RouteResult> results, long networkVersion, TimeSpan took)
+    /// <param name="plan">
+    /// Where each circuit's cable is cut: the boxes it needs and the splices that need none. Slack is
+    /// counted per place, so this is what decides it - see <see cref="RouteResult.Measured"/>.
+    /// </param>
+    /// <param name="slack">What the project adds, per place and as a fraction.</param>
+    public RouteRun(
+        IReadOnlyList<RouteResult> results,
+        long networkVersion,
+        TimeSpan took,
+        BoxPlan? plan = null,
+        SlackRule? slack = null)
     {
         Results = results;
         NetworkVersion = networkVersion;
         Took = took;
+        Plan = plan ?? BoxPlan.Empty;
+        Slack = slack ?? SlackRule.None;
+
+        // How many places each circuit's cable is cut, from the plan: boxes it is served from, and
+        // splices made in a carrier. A box shared by two circuits counts once for each of them - both
+        // cables are cut in it - and two taps merged into one box count once, because the cable is cut
+        // there once. That last part is the reason this is counted here and not in the router: it is
+        // the planner's radius that merges them.
+        var boxes = new Dictionary<CarrierId, int>();
+        var splices = new Dictionary<CarrierId, int>();
+
+        foreach (var box in Plan.Boxes)
+        {
+            foreach (var circuit in box.Circuits)
+            {
+                boxes.TryGetValue(circuit, out var seen);
+                boxes[circuit] = seen + 1;
+            }
+        }
+
+        foreach (var splice in Plan.Splices)
+        {
+            splices.TryGetValue(splice.Circuit, out var seen);
+            splices[splice.Circuit] = seen + 1;
+        }
 
         var failures = new List<RouteResult>();
         var statuses = new int[Enum.GetValues(typeof(RouteStatus)).Length];
@@ -44,21 +80,55 @@ public sealed class RouteRun
             if (status >= 0 && status < statuses.Length)
                 statuses[status]++;
 
-            if (one.Status == RouteStatus.Found)
-            {
-                length += one.TotalLength;
-                builtIn += one.BuiltInLength;
-            }
-            else
+            if (one.Status != RouteStatus.Found)
             {
                 failures.Add(one);
+                continue;
             }
+
+            boxes.TryGetValue(one.Circuit, out var cut);
+            splices.TryGetValue(one.Circuit, out var spliced);
+
+            // The cable factor is one until a cable says otherwise; reading it is its own piece of
+            // work, and until it lands every circuit gets what the project decided.
+            _slack[one.Circuit] = Slack.For(one.Measured, one.Taps.Count, cut, spliced);
+
+            length += one.Measured + _slack[one.Circuit];
+            builtIn += one.BuiltInLength;
         }
 
         _byStatus = statuses;
         Failures = failures;
         TotalLength = length;
         BuiltInLength = builtIn;
+    }
+
+    /// <summary>What the project adds beyond what the routes measure.</summary>
+    public SlackRule Slack { get; }
+
+    /// <summary>The slack this circuit's cable gets, in internal feet; zero if it did not route.</summary>
+    public double SlackOf(CarrierId circuit) => _slack.TryGetValue(circuit, out var slack) ? slack : 0;
+
+    /// <summary>
+    /// What this circuit's cable measures with its slack, in internal feet; zero if it did not route.
+    /// </summary>
+    /// <remarks>
+    /// The one number a cable schedule wants, and the reason it is asked of the run rather than of the
+    /// route: slack is counted per place the cable is cut, and how many boxes that is was decided by
+    /// the plan, after every circuit had been routed.
+    /// </remarks>
+    public double TotalLengthOf(CarrierId circuit) =>
+        _slack.ContainsKey(circuit) ? Measured(circuit) + _slack[circuit] : 0;
+
+    private double Measured(CarrierId circuit)
+    {
+        foreach (var one in Results)
+        {
+            if (one.Circuit == circuit && one.Status == RouteStatus.Found)
+                return one.Measured;
+        }
+
+        return 0;
     }
 
     public IReadOnlyList<RouteResult> Results { get; }
@@ -115,7 +185,7 @@ public sealed class RouteRun
     /// need none - and a run that carried only the first would answer "no splices" about a model full
     /// of them, silently. One property, filled from one call, cannot disagree with itself.
     /// </remarks>
-    public BoxPlan Plan { get; init; } = BoxPlan.Empty;
+    public BoxPlan Plan { get; }
 
     /// <summary>The boxes the circuits cut in boxes need: existing ones used, and places recommended.</summary>
     public IReadOnlyList<PlannedBox> Boxes => Plan.Boxes;

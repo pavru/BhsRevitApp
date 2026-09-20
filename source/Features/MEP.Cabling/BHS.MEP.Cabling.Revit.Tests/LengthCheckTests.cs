@@ -1,4 +1,4 @@
-using System.Globalization;
+﻿using System.Globalization;
 using Autodesk.Revit.DB;
 using BHS.MEP.Cabling.Routing;
 using BHS.Revit.Testing;
@@ -66,10 +66,10 @@ public sealed class LengthCheckTests : IRevitTestSuite
         Skip.When(plan.Found.Count == 0, "no circuit of the model this sweep opened routed, so there is nothing to store");
 
         Bind(context, document);
-        Write(document, plan.Found, "storing what the search found");
+        Write(document, plan.Run, plan.Found, "storing what the search found");
 
         var stored = StoredRoutes.Read(document, plan.Results.Select(one => one.Circuit));
-        var review = LengthReview.Of(plan.Results, stored, StoredRoutes.Tolerance);
+        var review = LengthReview.Of(plan.Run, stored, StoredRoutes.Tolerance);
 
         context.Note("current: circuits with a stored answer", Count(stored.Values.Count(one => one.Written)));
         context.Note("current: circuits reported stale", Count(review.Stale.Count));
@@ -107,7 +107,7 @@ public sealed class LengthCheckTests : IRevitTestSuite
         Skip.When(blocked is null, "every circuit of this model routes, so nothing can be stored where no route is found");
 
         Bind(context, document);
-        Write(document, plan.Found, "storing what the search found");
+        Write(document, plan.Run, plan.Found, "storing what the search found");
 
         var longer = plan.Found[0];
         var elsewhere = plan.Found[1];
@@ -117,7 +117,7 @@ public sealed class LengthCheckTests : IRevitTestSuite
         // than in four. Each is a value somebody's model could hold after a change nobody told us about.
         Change(document, "making four stored answers stale", () =>
         {
-            Set(document, longer.Circuit, CablingParameters.CableLength, longer.TotalLength + 1);
+            Set(document, longer.Circuit, CablingParameters.CableLength, plan.Run.TotalLengthOf(longer.Circuit) + 1);
             Set(document, elsewhere.Circuit, CablingParameters.RouteStamp, Stamp(elsewhere.Path) + "; 999999999");
             Set(document, otherWay.Circuit, CablingParameters.RouteConnection, Other(otherWay.Connection));
 
@@ -127,7 +127,7 @@ public sealed class LengthCheckTests : IRevitTestSuite
         });
 
         var stored = StoredRoutes.Read(document, plan.Results.Select(one => one.Circuit));
-        var review = LengthReview.Of(plan.Results, stored, StoredRoutes.Tolerance);
+        var review = LengthReview.Of(plan.Run, stored, StoredRoutes.Tolerance);
         var reasons = review.Stale.ToDictionary(one => one.Circuit, one => one);
 
         context.Note("stale: circuits reported", Count(review.Stale.Count));
@@ -214,7 +214,12 @@ public sealed class LengthCheckTests : IRevitTestSuite
     }
 
     /// <summary>What the search finds on this model, with the circuits it describes.</summary>
-    private static (IReadOnlyList<RouteResult> Results, IReadOnlyList<RouteResult> Found) Route(
+    /// <remarks>
+    /// The run rather than the results alone, and it carries the plan: a circuit's length is what its
+    /// route measured plus slack counted per place the cable is cut, and the places are the plan's to
+    /// say. The command under test plans for the same reason.
+    /// </remarks>
+    private static (IReadOnlyList<RouteResult> Results, IReadOnlyList<RouteResult> Found, RouteRun Run) Route(
         RevitTestContext context,
         Document document,
         string where)
@@ -228,11 +233,17 @@ public sealed class LengthCheckTests : IRevitTestSuite
             .ToList();
 
         var found = results.Where(one => one.Status == RouteStatus.Found).ToList();
+        var run = new RouteRun(
+            results,
+            snapshot.Network.Version,
+            TimeSpan.Zero,
+            BoxPlanner.Plan(results, snapshot.Boxes, project.BoxRadius),
+            project.Slack);
 
         context.Note(where + ": circuits described", Count(results.Count));
         context.Note(where + ": routes found", Count(found.Count));
 
-        return (results, found);
+        return (results, found, run);
     }
 
     private static void Bind(RevitTestContext context, Document document)
@@ -260,12 +271,12 @@ public sealed class LengthCheckTests : IRevitTestSuite
     /// a stored answer reads back as current, and taking the spelling from the code that also reads it
     /// would make the two agree through the one thing being checked.
     /// </remarks>
-    private static void Write(Document document, IReadOnlyList<RouteResult> found, string what) =>
+    private static void Write(Document document, RouteRun run, IReadOnlyList<RouteResult> found, string what) =>
         Change(document, what, () =>
         {
             foreach (var route in found)
             {
-                Set(document, route.Circuit, CablingParameters.CableLength, route.TotalLength);
+                Set(document, route.Circuit, CablingParameters.CableLength, run.TotalLengthOf(route.Circuit));
                 Set(document, route.Circuit, CablingParameters.RouteConnection, Word(route.Connection));
                 Set(document, route.Circuit, CablingParameters.RouteStamp, Stamp(route.Path));
             }

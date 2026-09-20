@@ -1,4 +1,4 @@
-using Autodesk.Revit.DB;
+﻿using Autodesk.Revit.DB;
 using BHS.MEP.Cabling.Routing;
 using BHS.Settings;
 
@@ -36,6 +36,33 @@ public sealed class CablingProjectSettings
     /// </remarks>
     public const string ExistingBoxesOnlyKey = "Model:Cabling:ExistingBoxesOnly";
 
+    /// <summary>The fraction of the measured length added for sag and detours.</summary>
+    /// <remarks>
+    /// <b>A project rule since 2026-09-21, and it was a personal preference by oversight.</b> It was
+    /// read as <c>Cabling:LengthExtend</c>, the only cabling key without the <c>Model:</c> prefix,
+    /// while its neighbours - the connection, the box radius, the mode, the indicator family - were
+    /// all project rules. Two people opening one model got different lengths out of it. The old key
+    /// is not read any more: a key that quietly kept working in the wrong chain would be worse than
+    /// one that stopped.
+    /// </remarks>
+    public const string SlackFractionKey = "Model:Cabling:Slack:Fraction";
+
+    /// <summary>Millimetres added where the cable enters the panel.</summary>
+    public const string SlackAtPanelKey = "Model:Cabling:Slack:AtPanelMm";
+
+    /// <summary>Millimetres added at each device.</summary>
+    public const string SlackAtTerminalKey = "Model:Cabling:Slack:AtTerminalMm";
+
+    /// <summary>Millimetres added at each junction box the cable is cut in.</summary>
+    public const string SlackAtBoxKey = "Model:Cabling:Slack:AtBoxMm";
+
+    /// <summary>Millimetres added at each splice made in a carrier, where no box stands.</summary>
+    /// <remarks>
+    /// Its own number rather than the box's - the owner's decision. The cable is cut there just the
+    /// same, and there is nothing to coil it in.
+    /// </remarks>
+    public const string SlackAtSpliceKey = "Model:Cabling:Slack:AtSpliceMm";
+
     /// <summary>A hundred and fifty millimetres - the owner's value, 2026-09-13.</summary>
     /// <remarks>
     /// <b>It replaces a guess of mine, and the difference is the point.</b> Half a metre was written
@@ -51,10 +78,12 @@ public sealed class CablingProjectSettings
         CircuitConnection connection,
         double boxRadius,
         bool existingBoxesOnly,
+        SlackRule slack,
         string unreadable)
     {
         Boxes = boxes;
         DefaultConnection = connection;
+        Slack = slack;
         BoxRadius = boxRadius;
         ExistingBoxesOnly = existingBoxesOnly;
         Unreadable = unreadable;
@@ -68,6 +97,9 @@ public sealed class CablingProjectSettings
 
     /// <summary>The box radius, in internal feet.</summary>
     public double BoxRadius { get; }
+
+    /// <summary>What the project adds beyond what a route measures.</summary>
+    public SlackRule Slack { get; }
 
     /// <summary>Whether circuits cut in boxes are served only from boxes already in the model.</summary>
     public bool ExistingBoxesOnly { get; }
@@ -112,7 +144,28 @@ public sealed class CablingProjectSettings
             unreadable = unreadable.Length == 0 ? said : unreadable + "; " + said;
         }
 
-        return new CablingProjectSettings(RecommendedBoxes.Read(model), connection, radius, existingBoxesOnly, unreadable);
+        // Four lengths in millimetres and one ratio. The ratio is never converted, for the reason the
+        // routing options already carry: it is a number between two lengths, and a unit error in it
+        // would give a plausible figure nobody could trace.
+        var slack = new SlackRule
+        {
+            Fraction = model.Real(SlackFractionKey, 0),
+            AtPanel = Millimetres(model, SlackAtPanelKey),
+            AtTerminal = Millimetres(model, SlackAtTerminalKey),
+            AtBox = Millimetres(model, SlackAtBoxKey),
+            AtSplice = Millimetres(model, SlackAtSpliceKey),
+        };
+
+        return new CablingProjectSettings(
+            RecommendedBoxes.Read(model), connection, radius, existingBoxesOnly, slack, unreadable);
+    }
+
+    /// <summary>A length the project states in millimetres, in internal feet; zero when it says nothing.</summary>
+    private static double Millimetres(ISettings model, string key)
+    {
+        var value = model.Real(key, 0);
+
+        return value == 0 ? 0 : UnitUtils.ConvertToInternalUnits(value, UnitTypeId.Millimeters);
     }
 }
 
