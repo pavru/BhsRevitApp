@@ -39,6 +39,36 @@ public sealed class CablingParameters : SharedParameterScheme
     /// </remarks>
     public static readonly Guid ElementRole = new("37076c5b-ba7c-4f51-b05a-86734af4a0e7");
 
+    /// <summary>Whether cable may be spliced in this element, branched or joined, without a box.</summary>
+    /// <remarks>
+    /// <para>
+    /// <b>The owner's answers of 2026-09-20.</b> A cable cannot be spliced inside a pipe, and an
+    /// open splice is not made in a tray - which is why the calculation offers a junction box. But a
+    /// trunking with a removable cover is a place cable is spliced, and so is a fitting or an access
+    /// hatch a designer says so about. Where it is allowed, that is where the cable graph branches,
+    /// and no box is recommended.
+    /// </para>
+    /// <para>
+    /// <b>On the type, and that is what forces it to be a parameter rather than a class in the
+    /// catalogue.</b> A plain tray and a trunking with a cover are both <c>OST_CableTray</c> in a
+    /// model, so one category holds both answers, and the catalogue maps categories. The designer is
+    /// the one who knows, and they already say what an element is here - see
+    /// <see cref="ElementRole"/>.
+    /// </para>
+    /// <para>
+    /// <b>Yes/No rather than a named value, unlike the role.</b> The role picks one of many things an
+    /// element may be, so it is a word; this is one question with two answers, and a checkbox on the
+    /// type cannot be misspelled. Unset reads as no, which is the answer that costs a visible
+    /// recommendation rather than a silent omission.
+    /// </para>
+    /// <para>
+    /// It is not the same question as whether a carrier is open along its length - a tray is open and
+    /// is still no place for a splice. That one is a property of the class and lives in
+    /// <see cref="CarrierCatalogue.IsOpenAlongItsLength"/>.
+    /// </para>
+    /// </remarks>
+    public static readonly Guid Splicing = new("0b6a3f7e-5c42-4f18-9a6d-3e21c8b4d905");
+
     /// <summary>How a circuit's devices are connected to the trunk.</summary>
     /// <remarks>
     /// Read from the circuit, and from its panel when the circuit says nothing - a power panel wires
@@ -193,6 +223,29 @@ public sealed class CablingParameters : SharedParameterScheme
         BuiltInCategory.OST_ConduitFitting,
     };
 
+    /// <summary>Categories whose types may say cable is spliced in them.</summary>
+    /// <remarks>
+    /// <para>
+    /// <b>The fittings, and not the runs, as the owner listed them on 2026-09-20:</b> the connecting
+    /// elements of conduit and tray. A straight tray and a straight conduit are left out because
+    /// neither is a place a splice is made, and a parameter bound to them would be a column that is
+    /// always empty - the same reason <see cref="Circuits"/> excludes the panel.
+    /// </para>
+    /// <para>
+    /// <b>The owner's list is longer than this one, and the rest waits on something else.</b> It also
+    /// names duct fittings, ducts themselves - which is how a trunking gets modelled - and whatever
+    /// other category a project points at, an access hatch for instance. Ducts cannot be carriers
+    /// until the catalogue can be narrowed by parameter, because a model's ventilation is ducts too,
+    /// and collecting the category whole would route cable through the air handling. The filter is
+    /// its own piece of work; this list grows with it.
+    /// </para>
+    /// </remarks>
+    private static readonly BuiltInCategory[] SplicingPlaces =
+    {
+        BuiltInCategory.OST_CableTrayFitting,
+        BuiltInCategory.OST_ConduitFitting,
+    };
+
     /// <summary>Every category a carrier may be, as <c>CarrierCatalogue</c> ships it.</summary>
     /// <remarks>
     /// The shipped defaults, not the whole answer: the catalogue is the user's to configure, so a
@@ -270,6 +323,21 @@ public sealed class CablingParameters : SharedParameterScheme
                 "BHS_Cbl_РольЭлемента",
                 "Чем этот элемент является для инструментов BHS - например JunctionBox. "
                 + "Задаётся у типа.")),
+
+        new SharedParameter(
+            Splicing,
+            SpecTypeId.Boolean.YesNo,
+            GroupTypeId.Data,
+            instance: false,
+            SplicingPlaces,
+            english: new ParameterText(
+                "BHS_Cbl_Splicing",
+                "Whether cable may be spliced in elements of this type - branched or joined - "
+                + "so that no junction box is needed. Set on the type."),
+            russian: new ParameterText(
+                "BHS_Cbl_Коммутация",
+                "Можно ли коммутировать кабель в элементах этого типа - разветвлять или "
+                + "соединять - так, что распределительная коробка не нужна. Задаётся у типа.")),
 
         new SharedParameter(
             CircuitConnection,

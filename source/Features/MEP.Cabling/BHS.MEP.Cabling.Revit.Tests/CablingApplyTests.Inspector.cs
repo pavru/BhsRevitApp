@@ -1,4 +1,4 @@
-using System.Globalization;
+﻿using System.Globalization;
 using Autodesk.Revit.DB;
 using BHS.MEP.Cabling.Routing;
 using BHS.Revit.Testing;
@@ -66,7 +66,7 @@ public sealed partial class CablingApplyTests
 
         var run = new RouteRun(found, snapshot.Network.Version, TimeSpan.Zero)
         {
-            Boxes = BoxPlanner.Plan(results, snapshot.Boxes, project.BoxRadius),
+            Plan = BoxPlanner.Plan(results, snapshot.Boxes, project.BoxRadius),
         };
 
         NeedsDefinitionsFor(document, symbol, run, snapshot);

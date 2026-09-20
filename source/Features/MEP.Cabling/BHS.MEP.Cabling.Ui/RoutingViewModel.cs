@@ -363,7 +363,7 @@ public sealed class RoutingViewModel : INotifyPropertyChanged
             if (run.ExistingBoxesOnly)
             {
                 return $"{circuits} circuit(s) cut in junction boxes, served from existing boxes only: "
-                       + $"{existing} box(es) used, {run.Boxes.Sum(box => box.Spurs)} device(s) served.";
+                       + $"{existing} box(es) used, {run.Plan.Served} device(s) served.";
             }
 
             var line = $"{circuits} circuit(s) cut in junction boxes: {recommended} box(es) to recommend";
@@ -371,7 +371,13 @@ public sealed class RoutingViewModel : INotifyPropertyChanged
             if (existing > 0)
                 line += $", {existing} existing box(es) used";
 
-            return line + $", {run.Boxes.Sum(box => box.Spurs)} device(s) served.";
+            // Devices served by a splice in the carrier are named, not folded into the total: they
+            // are the ones the designer will not find an indicator for, and a count that included
+            // them silently would read as boxes that failed to appear.
+            if (run.Splices.Count > 0)
+                line += $", {run.Splices.Count} spliced in the carrier";
+
+            return line + $", {run.Plan.Served} device(s) served.";
         }
     }
 

@@ -77,6 +77,83 @@ public sealed class PlannedBox
     internal void Trunk() => Entries++;
 }
 
+/// <summary>A device served by a splice made in the carrier itself, with no junction box.</summary>
+/// <remarks>
+/// <para>
+/// <b>The owner's rule of 2026-09-20: where the carrier allows splicing, that is where the cable
+/// graph branches</b> - inside a trunking with a removable cover, inside a tee somebody declared a
+/// splicing place. Nothing is recommended there and nothing is placed; the element is already in the
+/// model and already on the route.
+/// </para>
+/// <para>
+/// Reported rather than dropped, and that is the whole reason this type exists: the devices a plan
+/// serves used to be the spurs of its boxes, and a device served by a splice would simply have gone
+/// missing from that count. A screen that says "8 devices served" about a circuit with ten is worse
+/// than one that says nothing.
+/// </para>
+/// </remarks>
+public sealed class PlannedSplice
+{
+    internal PlannedSplice(CarrierId circuit, Tap tap)
+    {
+        Circuit = circuit;
+        Tap = tap;
+    }
+
+    /// <summary>The circuit whose cable is cut here.</summary>
+    public CarrierId Circuit { get; }
+
+    /// <summary>The tap it serves.</summary>
+    public Tap Tap { get; }
+
+    /// <summary>The carrier the splice is made in.</summary>
+    public CarrierId Carrier => Tap.Carrier;
+
+    /// <summary>Where on it, in internal feet, host coordinates.</summary>
+    public Point3 At => Tap.At;
+}
+
+/// <summary>Every place a circuit's cable is cut: the boxes it needs, and the splices it does not.</summary>
+/// <remarks>
+/// Two lists rather than one with a flag, because the two are used by different code for different
+/// things and only one of them is ours to place: the apply phase puts an indicator at a recommended
+/// box and writes parameters on it, and has nothing at all to do at a splice. A single list would
+/// make every consumer filter, and the day one forgot, the tool would offer to put a box where the
+/// project already said none is needed.
+/// </remarks>
+public sealed class BoxPlan
+{
+    internal BoxPlan(IReadOnlyList<PlannedBox> boxes, IReadOnlyList<PlannedSplice> splices)
+    {
+        Boxes = boxes;
+        Splices = splices;
+    }
+
+    /// <summary>Nothing planned - what a run that routed no circuit cut in boxes carries.</summary>
+    public static BoxPlan Empty { get; } =
+        new(Array.Empty<PlannedBox>(), Array.Empty<PlannedSplice>());
+
+    /// <summary>The boxes, existing ones used and places recommended.</summary>
+    public IReadOnlyList<PlannedBox> Boxes { get; }
+
+    /// <summary>The devices served by a splice in the carrier, in the order they were planned.</summary>
+    public IReadOnlyList<PlannedSplice> Splices { get; }
+
+    /// <summary>How many devices the plan serves, by a box or by a splice.</summary>
+    public int Served
+    {
+        get
+        {
+            var served = Splices.Count;
+
+            foreach (var box in Boxes)
+                served += box.Spurs;
+
+            return served;
+        }
+    }
+}
+
 /// <summary>
 /// Turns the taps of circuits cut in boxes into the boxes they need.
 /// </summary>
@@ -107,12 +184,13 @@ public static class BoxPlanner
     /// <param name="routes">Every route; only those cut in boxes and found are planned.</param>
     /// <param name="existing">Boxes already in the model and joined to the structure.</param>
     /// <param name="radius">The box radius, in internal feet.</param>
-    public static IReadOnlyList<PlannedBox> Plan(
+    public static BoxPlan Plan(
         IEnumerable<RouteResult> routes,
         IEnumerable<ExistingBox> existing,
         double radius)
     {
         var boxes = new List<PlannedBox>();
+        var splices = new List<PlannedSplice>();
 
         foreach (var box in existing ?? Array.Empty<ExistingBox>())
         {
@@ -143,6 +221,25 @@ public static class BoxPlanner
 
                 box ??= Nearest(boxes, tap.At, radius);
 
+                // Nothing near, and the carrier allows a splice: the cable branches here and no box
+                // is recommended. Asked after nearness on purpose - the owner's answer is that a box
+                // already in the model wins, and a recommendation already made for a neighbouring tap
+                // is the same kind of answer: one place instead of two, which is what the radius is
+                // for.
+                //
+                // The trunk still leaves the box before this one, and that is why the previous box is
+                // told so here rather than when the next box arrives: a splice that is the last stop
+                // of a circuit would otherwise leave the box before it counting an entry it does not
+                // have - the cable goes on, and there is no later box to notice. After it the trunk
+                // stands at the splice, which counts nothing because there is nothing to count it on.
+                if (box is null && tap.AllowsSplicing)
+                {
+                    splices.Add(new PlannedSplice(route.Circuit, tap));
+                    previous?.Trunk();
+                    previous = null;
+                    continue;
+                }
+
                 if (box is null)
                 {
                     box = new PlannedBox(tap.At, null);
@@ -164,7 +261,7 @@ public static class BoxPlanner
         }
 
         // Existing boxes nobody used are not part of the answer; they were only offered.
-        return boxes.FindAll(box => box.Spurs > 0);
+        return new BoxPlan(boxes.FindAll(box => box.Spurs > 0), splices);
     }
 
     private static PlannedBox? Nearest(List<PlannedBox> boxes, Point3 at, double radius)

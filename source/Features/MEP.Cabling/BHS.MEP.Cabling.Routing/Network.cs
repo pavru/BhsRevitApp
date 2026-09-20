@@ -151,6 +151,7 @@ public sealed class CarrierNode
         CarrierId id,
         CarrierKind kind,
         string carrierClass,
+        bool openAlongItsLength,
         double length,
         double crossSectionArea,
         Point3 start,
@@ -160,6 +161,7 @@ public sealed class CarrierNode
         Id = id;
         Kind = kind;
         Class = carrierClass;
+        OpenAlongItsLength = openAlongItsLength;
         Length = length;
         CrossSectionArea = crossSectionArea;
         Start = start;
@@ -256,13 +258,44 @@ public sealed class CarrierNode
     /// a fitting.
     /// </para>
     /// <para>
-    /// Keyed on the class rather than a flag on the node, because the class is what the user
-    /// configures. Somebody adding a category says which of the two it behaves like, and that answer
-    /// has to reach here without a second list to keep in step.
+    /// <b>Told to the node rather than derived from its class name here, since 2026-09-20.</b> It
+    /// used to be <c>Class != "conduit"</c>, which put a rule about how carriers behave inside the
+    /// core, spelled as a string, where the user could not reach it - while the class itself is
+    /// exactly what the user configures. It is a property of the class still, and the catalogue is
+    /// where that table now lives; the core is only told the answer.
+    /// </para>
+    /// <para>
+    /// <b>A constructor parameter and not an <c>init</c> with a default</b>, because the two wrong
+    /// answers are not equally wrong: a carrier wrongly called open is tapped mid-run, and the length
+    /// that comes out is a number nobody can tell from a right one. A required parameter makes the
+    /// compiler ask every caller; a default would answer for the ones that forgot.
     /// </para>
     /// </remarks>
-    public bool OpenAlongItsLength =>
-        !string.Equals(Class, "conduit", StringComparison.OrdinalIgnoreCase);
+    public bool OpenAlongItsLength { get; }
+
+    /// <summary>Whether cable may be spliced in this element - branched or joined - without a box.</summary>
+    /// <remarks>
+    /// <para>
+    /// <b>The owner's answers of 2026-09-20, and the two halves are deliberately on different
+    /// things.</b> Being open along its length is a property of the <i>class</i>: a tray is open, a
+    /// conduit is a pipe. Whether cable may be <i>spliced</i> here is a property of the Revit
+    /// <i>type</i>, because two tray types in one category differ - a plain tray is no place for a
+    /// splice, and a trunking with a removable cover is. So the designer sets it on the type, as they
+    /// already set the junction-box role, and the reader carries it here.
+    /// </para>
+    /// <para>
+    /// It covers both cases the owner named: a branch, where one cable arrives and two leave, and a
+    /// through joint between two drum lengths of the same cable. And it does not depend on what runs
+    /// through: permission belongs to the carrier alone, for any kind of cable.
+    /// </para>
+    /// <para>
+    /// <b>An <c>init</c> with a default of false, unlike its neighbour, and for the reason that makes
+    /// them different.</b> A forgotten "no" costs a recommended junction box - a visible suggestion a
+    /// designer can reject - while a forgotten "yes" would silently drop one. Absence has to mean the
+    /// loud answer.
+    /// </para>
+    /// </remarks>
+    public bool AllowsSplicing { get; init; }
 
     /// <summary>The name a person would recognise, carried because <c>Element.Name</c> is an API call.</summary>
     public string Label { get; init; } = string.Empty;

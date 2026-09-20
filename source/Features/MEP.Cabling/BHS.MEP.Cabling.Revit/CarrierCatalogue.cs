@@ -29,8 +29,30 @@ public sealed class CarrierCatalogue
 
     private readonly Dictionary<BuiltInCategory, string> _classes;
 
-    public CarrierCatalogue(IReadOnlyDictionary<BuiltInCategory, string>? classes = null)
+    /// <summary>Which classes a cable may leave anywhere along, by class name.</summary>
+    /// <remarks>
+    /// A class not named here is open, and that is the shipped answer rather than an oversight: a
+    /// pipe is the exception among carriers, and a project that invents a class - trunking, say -
+    /// means something a cable comes out of.
+    /// </remarks>
+    private readonly Dictionary<string, bool> _open;
+
+    public CarrierCatalogue(
+        IReadOnlyDictionary<BuiltInCategory, string>? classes = null,
+        IReadOnlyDictionary<string, bool>? openAlongTheirLength = null)
     {
+        _open = new Dictionary<string, bool>(StringComparer.OrdinalIgnoreCase)
+        {
+            [Tray] = true,
+            [Conduit] = false,
+        };
+
+        if (openAlongTheirLength is not null)
+        {
+            foreach (var pair in openAlongTheirLength)
+                _open[pair.Key] = pair.Value;
+        }
+
         if (classes is null)
         {
             _classes = new Dictionary<BuiltInCategory, string>
@@ -60,4 +82,23 @@ public sealed class CarrierCatalogue
     /// <summary>What class a category counts as, or empty when it is not a carrier at all.</summary>
     public string ClassOf(BuiltInCategory category) =>
         _classes.TryGetValue(category, out var found) ? found : string.Empty;
+
+    /// <summary>Whether a cable may leave carriers of this class anywhere along them.</summary>
+    /// <remarks>
+    /// <para>
+    /// <b>Moved here from the routing core on 2026-09-20, and the move is the point.</b> The core
+    /// used to answer it itself, as <c>Class != "conduit"</c> - a rule about how carriers behave,
+    /// written as a string comparison, in the one assembly the user cannot configure. The class is
+    /// what a project configures, so a project naming a third class had no way to say what it
+    /// behaves like; now it says so here, beside the categories, and the core is told the answer.
+    /// </para>
+    /// <para>
+    /// This is not the same question as whether cable may be <i>spliced</i> in a carrier. A tray is
+    /// open along its length and is still no place for a splice; a trunking with a removable cover is
+    /// both. The first is a property of the class and lives here; the second is a property of the
+    /// Revit type and lives on the element - see <c>CablingParameters.Splicing</c>.
+    /// </para>
+    /// </remarks>
+    public bool IsOpenAlongItsLength(string carrierClass) =>
+        !_open.TryGetValue(carrierClass ?? string.Empty, out var open) || open;
 }

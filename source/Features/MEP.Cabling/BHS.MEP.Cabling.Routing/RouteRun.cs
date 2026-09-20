@@ -109,7 +109,19 @@ public sealed class RouteRun
     /// count before anything is written, and a count computed twice - once to show, once to place -
     /// is two answers that will one day disagree.
     /// </remarks>
-    public IReadOnlyList<PlannedBox> Boxes { get; init; } = Array.Empty<PlannedBox>();
+    /// <remarks>
+    /// <b>The whole plan rather than its boxes, since 2026-09-20, and that is what makes the pair
+    /// impossible to half-set.</b> A plan has two halves - the boxes it needs and the splices that
+    /// need none - and a run that carried only the first would answer "no splices" about a model full
+    /// of them, silently. One property, filled from one call, cannot disagree with itself.
+    /// </remarks>
+    public BoxPlan Plan { get; init; } = BoxPlan.Empty;
+
+    /// <summary>The boxes the circuits cut in boxes need: existing ones used, and places recommended.</summary>
+    public IReadOnlyList<PlannedBox> Boxes => Plan.Boxes;
+
+    /// <summary>The devices served by a splice in the carrier itself, where no box is needed.</summary>
+    public IReadOnlyList<PlannedSplice> Splices => Plan.Splices;
 
     /// <summary>Whether the circuits cut in boxes were routed without additional boxes.</summary>
     /// <remarks>
