@@ -1,4 +1,4 @@
-using Autodesk.Revit.DB;
+﻿using Autodesk.Revit.DB;
 using BHS.MEP.Cabling.Routing;
 using BHS.Revit.Testing;
 
@@ -13,10 +13,10 @@ public sealed partial class CablingApplyTests
     /// </summary>
     /// <remarks>
     /// <para>
-    /// <b>The mechanism, asserted where it does not depend on the model's geometry.</b> Whether any
-    /// device of this model happens to hang under a fitting is the model's business, and the next case
-    /// stands down when none does - but the parameter reaching the network is not: it holds for every
-    /// carrier of a marked type, and fails loudly if the binding, the read or the catalogue drops it.
+    /// <b>The mechanism, asserted on the categories the parameter actually ships bound to.</b> The next
+    /// case is about what the planner does with the answer and has to declare a category of its own to
+    /// ask; this one asks nothing of the geometry - a marked type reads back marked for every carrier of
+    /// it, and the assertion fails loudly if the binding, the read or the catalogue drops the parameter.
     /// </para>
     /// <para>
     /// <b>Half the types, never all of them.</b> Marking everything would make "and an unmarked type
@@ -118,24 +118,34 @@ public sealed partial class CablingApplyTests
 
     /// <summary>
     /// Where a tap lands on a carrier cable may be spliced in, the plan branches there and recommends no
-    /// box; the same circuits with the permission withdrawn ask for one.
+    /// box; the same circuits without the permission ask for one.
     /// </summary>
     /// <remarks>
     /// <para>
-    /// <b>The owner's rule of 2026-09-20, asserted against the same model twice.</b> Once with every
-    /// fitting type told that cable may be spliced in it, once with none told - the difference between
-    /// the two plans is the rule, and reading one plan alone would leave "no box here" indistinguishable
-    /// from "no box was ever wanted here".
+    /// <b>The owner's rule of 2026-09-20, asserted against the same model twice.</b> Once with the
+    /// carriers the taps land on told that cable may be spliced in them, once with none told - the
+    /// difference between the two plans is the rule, and reading one plan alone would leave "no box
+    /// here" indistinguishable from "no box was ever wanted here".
     /// </para>
     /// <para>
-    /// <b>The unmarked plan is taken first and from an unmarked model</b>, not by asking the marked plan
-    /// what it would have done: the two runs go through the whole production path, read included, so a
-    /// parameter that never reached the network would show as two identical plans rather than as a
-    /// passing comparison.
+    /// <b>The case declares the carrier categories itself, at run time, and that is the point rather
+    /// than a convenience.</b> The shipped binding puts the parameter on fittings only, because a
+    /// straight tray is no place for a splice - and a tap almost never lands on a fitting: a tap sits
+    /// where the cable leaves the structure, which on an open run is the point nearest the device, and
+    /// any tray touching a tee is at least as near as the tee itself. Measured: on the sweep's linked
+    /// set, none of the ten taps of six found routes leaves at a fitting. A case that waited for one
+    /// would be a case that never asserts.
     /// </para>
     /// <para>
-    /// Nothing is applied. A splice places nothing and writes nothing, so the assertion is about the plan;
-    /// what the apply does with a plan has its own cases.
+    /// Declaring them is exactly the mechanism the owner described for the finished catalogue - the
+    /// user picks the categories cable may be spliced in - and it goes through the production binding
+    /// path, <c>RuntimeCategories</c>, the same one the indicator's own category travels by. What this
+    /// case does not claim is that a project should say this of its trays; what it asserts is that when
+    /// something says it, the planner branches there instead of asking for a box.
+    /// </para>
+    /// <para>
+    /// Nothing is applied. A splice places nothing and writes nothing, so the assertion is about the
+    /// plan; what the apply does with a plan has its own cases.
     /// </para>
     /// </remarks>
     private static void ATapOnASpliceableCarrierAsksForNoBox(RevitTestContext context) => Watched(context, watch =>
@@ -146,7 +156,12 @@ public sealed partial class CablingApplyTests
         var project = CablingProjectSettings.Read(new FixedSettings());
         var symbol = NeedsIndicatorFamily(document, project);
 
-        Bind(watch, document, application, RuntimeFor(symbol, catalogue));
+        var runtime = RuntimeFor(symbol, catalogue);
+
+        foreach (var category in catalogue.Categories)
+            runtime.Add(CablingParameters.Splicing, category);
+
+        Bind(watch, document, application, runtime);
         CutEveryCircuitInBoxes(watch, document, application);
 
         var before = PlanFound(document, project, catalogue);
@@ -160,33 +175,35 @@ public sealed partial class CablingApplyTests
             before.Run.Splices.Count,
             "splices planned in a model where no type says cable may be spliced anywhere");
 
-        Skip.When(before.Run.Found == 0, "no circuit of this model routed, so no tap can land on anything");
-
-        // The taps of the found routes that sit on a fitting of the host - the only ones the shipped
-        // binding can be told about, since a straight tray is no place for a splice.
-        var fittings = HostFittings(document, symbol).Select(one => one.Id.Value).ToHashSet();
-
-        var onFittings = before.Run.Boxes
+        // The carriers of the host the taps of the found routes leave at. A link's types belong to the
+        // link, and this case writes into the host.
+        var carriers = before.Run.Boxes
             .SelectMany(box => box.Taps)
-            .Where(tap => !tap.Carrier.IsLinked && fittings.Contains(tap.Carrier.Value))
-            .ToList();
-
-        Note(context, "splicing plan: taps of found routes landing on a host fitting", onFittings.Count);
-
-        Skip.When(
-            onFittings.Count == 0,
-            "no tap of the routes this model found leaves the structure at a fitting of the host, so no carrier this binding can reach is one a splice would be made in");
-
-        var types = onFittings.Select(tap => document.GetElement(new ElementId(tap.Carrier.Value)).GetTypeId().Value)
+            .Select(tap => tap.Carrier)
+            .Where(one => !one.IsLinked)
+            .Select(one => one.Value)
             .Distinct()
             .ToList();
 
-        Note(context, "splicing plan: types of the fittings those taps land on", types.Count);
+        Note(context, "splicing plan: taps of found routes", before.Run.Boxes.Sum(box => box.Spurs));
+        Note(context, "splicing plan: carriers of the host those taps leave at", carriers.Count);
+
+        Skip.When(
+            carriers.Count == 0,
+            "no tap of the routes this model found leaves the structure at a carrier of the host, so there is nothing this case can tell a splice may be made in");
+
+        var types = carriers
+            .Select(one => document.GetElement(new ElementId(one))?.GetTypeId().Value ?? 0)
+            .Where(one => one != 0)
+            .Distinct()
+            .ToList();
+
+        Note(context, "splicing plan: types of those carriers", types.Count);
 
         var mark = watch.Mark;
         TransactionStatus status;
 
-        using (var transaction = new Transaction(document, "BHS test: the fittings taps land on allow splicing"))
+        using (var transaction = new Transaction(document, "BHS test: the carriers the taps leave at allow splicing"))
         {
             transaction.Start();
 
@@ -196,7 +213,7 @@ public sealed partial class CablingApplyTests
             status = transaction.Commit();
         }
 
-        Committed(watch, mark, status, "telling the fittings the taps land on that cable may be spliced in them");
+        Committed(watch, mark, status, "telling the carriers the taps leave at that cable may be spliced in them");
 
         var after = PlanFound(document, project, catalogue);
 
@@ -205,8 +222,8 @@ public sealed partial class CablingApplyTests
 
         Expect.That(
             after.Run.Splices.Count > 0,
-            "the plan splices nowhere although " + onFittings.Count
-            + " tap(s) of the found routes land on fittings whose types were told cable may be spliced in them");
+            "the plan splices nowhere although the " + types.Count
+            + " carrier type(s) its taps leave at were told cable may be spliced in them");
 
         // Every splice sits on a carrier the read says allows one. Asked of the network rather than of
         // the marked set, so that a planner splicing on the wrong carrier is caught rather than assumed.
@@ -218,8 +235,8 @@ public sealed partial class CablingApplyTests
                 + ", which the read does not say cable may be spliced in");
         }
 
-        // Nothing is placed where the cable branches in the carrier: no box of the plan stands at a
-        // splice. The box radius is the one distance that decides nearness, here as everywhere.
+        // Nothing stands where the cable branches in the carrier. The box radius is the one distance
+        // that decides nearness, here as everywhere.
         foreach (var splice in after.Run.Splices)
         {
             var near = after.Run.Boxes.Count(box => box.At.DistanceTo(splice.At) <= project.BoxRadius);
@@ -231,7 +248,7 @@ public sealed partial class CablingApplyTests
         }
 
         // Every device is still served, by a box or by a splice: the permission moves work, it does not
-        // lose it. Compared against the taps of the found routes, counted by this suite.
+        // lose it. Counted against the taps of the found routes, by this suite rather than by the plan.
         var taps = after.Results.Where(one => one.Status == RouteStatus.Found).Sum(one => one.Taps.Count);
 
         Expect.Same(
