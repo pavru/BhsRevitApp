@@ -50,7 +50,6 @@ internal static class CablingOptions
     {
         var join = settings.Real("Cabling:JoinToleranceMm", DefaultJoinToleranceMm);
         var approach = settings.Real("Cabling:MaxApproachMm", DefaultMaxApproachMm);
-        var extend = settings.Real("Cabling:LengthExtend", 0);
         var preferConduit = settings.Real("Cabling:PreferConduitUntil", 0);
 
         return new RoutingOptions
@@ -58,10 +57,6 @@ internal static class CablingOptions
             JoinTolerance = ToFeet(join),
             MaxApproach = ToFeet(approach),
 
-            // Not a distance: a fraction of the computed length, and a ratio between two lengths.
-            // Converting either of them would be the kind of unit error that produces a plausible
-            // number nobody can trace.
-            LengthExtend = extend,
             PreferConduitUntil = preferConduit,
 
             AxisAlignedApproach = settings.Flag("Cabling:AxisAlignedApproach", true),

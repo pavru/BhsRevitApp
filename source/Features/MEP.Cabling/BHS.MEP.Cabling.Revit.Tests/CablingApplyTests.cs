@@ -1229,9 +1229,8 @@ public sealed partial class CablingApplyTests : IRevitTestSuite
             snapshot.Boxes.Count == 0 || found.Count == 0,
             "with every joined fitting type marked a box, no circuit of the model this sweep opened has every device reached by a box through the structure, so nothing is served from one");
 
-        var run = new RouteRun(found, snapshot.Network.Version, TimeSpan.Zero)
+        var run = new RouteRun(found, snapshot.Network.Version, TimeSpan.Zero, BoxPlanner.Plan(found, snapshot.Boxes, project.BoxRadius))
         {
-            Plan = BoxPlanner.Plan(found, snapshot.Boxes, project.BoxRadius),
             ExistingBoxesOnly = true,
         };
 
@@ -2067,10 +2066,7 @@ public sealed partial class CablingApplyTests : IRevitTestSuite
         var bare = NetworkBuilder.Build(snapshot.Network.Version, Array.Empty<CarrierNode>(), Options);
         var results = snapshot.Circuits.Described.Select(circuit => Router.Route(bare, circuit, Options)).ToList();
 
-        var run = new RouteRun(results, bare.Version, TimeSpan.Zero)
-        {
-            Plan = BoxPlanner.Plan(results, snapshot.Boxes, project.BoxRadius),
-        };
+        var run = new RouteRun(results, bare.Version, TimeSpan.Zero, BoxPlanner.Plan(results, snapshot.Boxes, project.BoxRadius));
 
         var blocked = run.Blocked(RouteStatus.NoCarrierNear).Select(one => one.Circuit.Value).ToList();
 
@@ -2465,10 +2461,7 @@ public sealed partial class CablingApplyTests : IRevitTestSuite
             "no circuit of this model routed, so there is no length, connection or set of carriers to write");
 
         // Every route, the blocked ones too, and the plan's own boxes: see the remarks.
-        var run = new RouteRun(plan.Results, plan.Snapshot.Network.Version, TimeSpan.Zero)
-        {
-            Plan = plan.Run.Plan,
-        };
+        var run = new RouteRun(plan.Results, plan.Snapshot.Network.Version, TimeSpan.Zero, plan.Run.Plan);
 
         // Read before the apply, so that a value already standing on a circuit answers for itself
         // rather than for something this apply wrote.
@@ -2499,9 +2492,9 @@ public sealed partial class CablingApplyTests : IRevitTestSuite
                 : "nothing";
 
             Expect.That(
-                length is { HasValue: true } && Math.Abs(length.AsDouble() - route.TotalLength) < 1e-9,
+                length is { HasValue: true } && Math.Abs(length.AsDouble() - run.TotalLengthOf(route.Circuit)) < 1e-9,
                 where + ": the length stored against the length the run computed - stored " + stored
-                + ", computed " + route.TotalLength.ToString("F6", CultureInfo.InvariantCulture) + " ft");
+                + ", computed " + run.TotalLengthOf(route.Circuit).ToString("F6", CultureInfo.InvariantCulture) + " ft");
 
             var connection = Value(circuit, CablingParameters.RouteConnection);
             var routedWith = route.Connection == CircuitConnection.AtJunctionBox
@@ -2594,18 +2587,23 @@ public sealed partial class CablingApplyTests : IRevitTestSuite
         NeedsNoIndicatorsOfOurs(context, document, symbol, "length by where");
 
         var cut = CutEveryCircuitInBoxes(watch, document, application);
-        var withSlack = new RoutingOptions
+
+        // Every part of the owner's slack, none of them zero, so that a term dropped from the sum is
+        // a term whose absence shows. The four lengths are in internal feet and deliberately unequal:
+        // equal ones would let a box counted as a terminal pass.
+        var rule = new SlackRule
         {
-            JoinTolerance = Options.JoinTolerance,
-            MaxApproach = Options.MaxApproach,
-            AxisAlignedApproach = Options.AxisAlignedApproach,
-            LengthExtend = extension,
+            Fraction = extension,
+            AtPanel = 1.5,
+            AtTerminal = 0.25,
+            AtBox = 0.75,
+            AtSplice = 0.4,
         };
 
         var snapshot = CablingSnapshot.Build(
             document, Options, catalogue, version: 1, project.Boxes, project.DefaultConnection);
 
-        var results = snapshot.Circuits.Described.Select(circuit => Router.Route(snapshot.Network, circuit, withSlack)).ToList();
+        var results = snapshot.Circuits.Described.Select(circuit => Router.Route(snapshot.Network, circuit, Options)).ToList();
         var found = results.Where(one => one.Status == RouteStatus.Found).ToList();
 
         Note(context, "length by where: circuits cut in boxes", cut);
@@ -2613,10 +2611,32 @@ public sealed partial class CablingApplyTests : IRevitTestSuite
 
         Skip.When(found.Count == 0, "no circuit of this model routed, so there is no length to divide");
 
-        var run = new RouteRun(found, snapshot.Network.Version, TimeSpan.Zero)
+        var plan = BoxPlanner.Plan(results, snapshot.Boxes, project.BoxRadius);
+        var run = new RouteRun(found, snapshot.Network.Version, TimeSpan.Zero, plan, rule);
+
+        // How many places each circuit's cable is cut, counted by this suite from the plan rather than
+        // asked of the run: a case that took the count from the code it checks would agree with it
+        // whatever that code counted.
+        var boxesOf = new Dictionary<long, int>();
+        var splicesOf = new Dictionary<long, int>();
+
+        foreach (var box in plan.Boxes)
         {
-            Plan = BoxPlanner.Plan(results, snapshot.Boxes, project.BoxRadius),
-        };
+            foreach (var one in box.Circuits)
+            {
+                boxesOf.TryGetValue(one.Value, out var seen);
+                boxesOf[one.Value] = seen + 1;
+            }
+        }
+
+        foreach (var splice in plan.Splices)
+        {
+            splicesOf.TryGetValue(splice.Circuit.Value, out var seen);
+            splicesOf[splice.Circuit.Value] = seen + 1;
+        }
+
+        Note(context, "length by where: boxes the plan cuts cables in", plan.Boxes.Count);
+        Note(context, "length by where: splices the plan makes in carriers", plan.Splices.Count);
 
         NeedsDefinitionsFor(document, symbol, run, snapshot);
 
@@ -2637,7 +2657,16 @@ public sealed partial class CablingApplyTests : IRevitTestSuite
             var tray = route.AlongClass("tray");
             var conduit = route.AlongClass("conduit");
             var other = route.AlongCarriers - tray - conduit;
-            var slack = (route.AlongCarriers + route.Approaches) * extension;
+            boxesOf.TryGetValue(route.Circuit.Value, out var boxes);
+            splicesOf.TryGetValue(route.Circuit.Value, out var splices);
+
+            // The owner's arithmetic of 2026-09-21, written out here rather than asked of the rule:
+            // the rule is what this asserts.
+            var slack = ((route.AlongCarriers + route.Approaches) * extension)
+                + 1.5
+                + (0.25 * route.Taps.Count)
+                + (0.75 * boxes)
+                + (0.4 * splices);
 
             StoredLength(circuit, CablingParameters.LengthInTray, tray, where + ": the length in trays");
             StoredLength(circuit, CablingParameters.LengthInConduit, conduit, where + ": the length in conduits");
@@ -2925,10 +2954,7 @@ public sealed partial class CablingApplyTests : IRevitTestSuite
         var results = snapshot.Circuits.Described.Select(circuit => Router.Route(snapshot.Network, circuit, Options)).ToList();
         var found = results.Where(one => one.Status == RouteStatus.Found).ToList();
 
-        var run = new RouteRun(found, snapshot.Network.Version, TimeSpan.Zero)
-        {
-            Plan = BoxPlanner.Plan(results, snapshot.Boxes, project.BoxRadius),
-        };
+        var run = new RouteRun(found, snapshot.Network.Version, TimeSpan.Zero, BoxPlanner.Plan(results, snapshot.Boxes, project.BoxRadius));
 
         return (snapshot, results, run);
     }

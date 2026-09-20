@@ -141,7 +141,7 @@ public sealed class RouteCablingCommand : IFeatureCommand
         // write it. Returning the task would leave a window in which Apply is enabled and has
         // nothing to apply.
         var run = await Task.Run(
-                () => Search(snapshot, options, project.BoxRadius, existingBoxesOnly, progress, token),
+                () => Search(snapshot, options, project.BoxRadius, project.Slack, existingBoxesOnly, progress, token),
                 token)
             .ConfigureAwait(true);
 
@@ -313,6 +313,7 @@ public sealed class RouteCablingCommand : IFeatureCommand
         CablingSnapshot snapshot,
         RoutingOptions options,
         double boxRadius,
+        SlackRule slack,
         bool existingBoxesOnly,
         IProgress<RoutingProgress> progress,
         CancellationToken token)
@@ -344,17 +345,19 @@ public sealed class RouteCablingCommand : IFeatureCommand
         token.ThrowIfCancellationRequested();
         var approach = ApproachStudy.Compare(snapshot.Network, circuits, options);
 
-        return new RouteRun(results, snapshot.Network.Version, clock.Elapsed)
+        // The plan and the slack rule travel into the run rather than being set on it afterwards: a
+        // circuit's length is its route plus slack counted per place the cable is cut, and the places
+        // are what the plan decides. The boxes the model already has come from the read, by the role
+        // on the fitting's type and by whether it is joined to the structure; a tap within the radius
+        // of one uses it and asks for nothing to be added.
+        var plan = BoxPlanner.Plan(results, snapshot.Boxes, boxRadius);
+
+        return new RouteRun(results, snapshot.Network.Version, clock.Elapsed, plan, slack)
         {
             Approach = approach,
             Shape = shape,
             Reading = CablingGaps.Describe(snapshot),
             Tolerances = failedToCross ? Tolerances(snapshot, options, token) : Array.Empty<ToleranceReading>(),
-
-            // The boxes the model already has, which the read found by the role on the fitting's type
-            // and by whether it is joined to the structure. A tap within the radius of one uses it and
-            // asks for nothing to be added.
-            Plan = BoxPlanner.Plan(results, snapshot.Boxes, boxRadius),
             ExistingBoxesOnly = existingBoxesOnly,
         };
     }

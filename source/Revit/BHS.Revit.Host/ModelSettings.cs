@@ -1,4 +1,4 @@
-using System.Collections.Concurrent;
+﻿using System.Collections.Concurrent;
 using Autodesk.Revit.DB;
 using BHS.Logging;
 using BHS.Revit.Abstractions;
@@ -12,14 +12,28 @@ namespace BHS.Revit.Host;
 /// <remarks>
 /// Two chains, chosen per key by its prefix:
 /// <list type="bullet">
-/// <item><c>Model:…</c> is a project rule - product file, machine file, the model, then the
-/// environment. The user's own file is not consulted, which is what "a person cannot work around
-/// the project's rules" actually means;</item>
+/// <item><c>Model:…</c> is a project rule - product file, machine file, <b>the user's own file</b>,
+/// the model, then the environment. What the model says beats the person; what the person says is
+/// the default the model may leave alone;</item>
 /// <item>everything else is a preference and reads the ordinary chain, in which the model has no
 /// say at all.</item>
 /// </list>
 /// The prefix is deliberate and not a table of declarations: a table is a register somebody has to
 /// keep, and it drifts from the code the first inattentive day. A prefix is visible in the file.
+/// <para>
+/// <b>The user's layer joined the project chain on 2026-09-21, by the owner's decision, and the
+/// paragraph it replaces said the opposite.</b> It read: a project rule must not be overridable by
+/// the person using the model, so in the project chain the user's layer does not lose the argument -
+/// it never joins it. That is still true of the <i>argument</i>: the model beats the user, always.
+/// What changed is what happens when the model says nothing. It used to fall through to the machine
+/// file, so a <c>Model:</c> key written in a user's own file did nothing at all - silently, which is
+/// the failure this repository dislikes most. Now it is the default, and the model overrides it.
+/// </para>
+/// <para>
+/// The owner asked for it about slack, which is a project rule with a sensible personal default.
+/// Applied to the prefix rather than to that one key on purpose: a third scope would need a third
+/// prefix, and one more way to spell a scope is one more thing to get wrong.
+/// </para>
 /// </remarks>
 internal sealed class ModelSettings : IModelSettings
 {
@@ -60,7 +74,10 @@ internal sealed class ModelSettings : IModelSettings
             if (_model.TryGetValue(key, out var declared))
                 return declared;
 
-            return _process.BelowUser.TryGetValue(key, out var below) ? below : null;
+            // Everything below the process layer, the user's own file included. The indexer walks the
+            // whole chain, and the process layer was asked above and did not answer, so what is left
+            // is product, machine and user - in that order.
+            return _process[key];
         }
     }
 

@@ -14,7 +14,7 @@ namespace BHS.MEP.Cabling.Routing.Probe;
 internal static class Program
 {
     private const double Tolerance = 0.1;
-    private const int Floor = 120;
+    private const int Floor = 133;
 
     private static int _run;
     private static int _failed;
@@ -38,6 +38,7 @@ internal static class Program
         BoxesAreWhereTheTapsAreAndCountWhatTheyTake();
         WithoutAdditionalBoxesEveryDeviceIsServedFromOneThatStands();
         WhereTheCarrierAllowsASpliceNoBoxIsAskedFor();
+        SlackIsCountedWhereTheCableIsCut();
         TheLengthIsToldByWhereItIsLaid();
         AStoredLengthIsToldFromAStaleOne();
 
@@ -83,7 +84,7 @@ internal static class Program
         Check("it walks all three trays", result.Path.Count == 3);
         Check("its length is the run", Near(result.AlongCarriers, 30));
         Check("the drops are counted apart", Near(result.Approaches, 10));
-        Check("and the total adds them", Near(result.TotalLength, 40));
+        Check("and the two together are what the route measures", Near(result.Measured, 40));
     }
 
     /// <summary>
@@ -744,8 +745,11 @@ internal static class Program
             JoinTolerance = Tolerance,
             MaxApproach = 6,
             AxisAlignedApproach = true,
-            LengthExtend = 0.1,
         };
+
+        // A tenth of what is measured and nothing per place: the old rule, expressed in the new one,
+        // so that the numbers below stay the numbers this section has always asserted.
+        var tenth = new SlackRule { Fraction = 0.1 };
 
         var network = NetworkBuilder.Build(1, carriers, options);
         var circuit = new CircuitSnapshot(
@@ -763,14 +767,18 @@ internal static class Program
         Check("a class asked for regardless of case is the same class", Near(routed.AlongClass("CONDUIT"), 10));
         Check("the parts add up to the length along carriers, and that length holds no slack",
             Near(routed.AlongByClass.Values.Sum(), routed.AlongCarriers) && Near(routed.AlongCarriers, 38));
+        var run = new RouteRun(new[] { routed }, 1, TimeSpan.Zero, BoxPlan.Empty, tenth);
+
         Check("the slack is a tenth of what is laid, drops included, and stands apart",
-            Near(routed.Approaches, 2) && Near(routed.Slack, 4));
-        Check("and the total is along, drops and slack", Near(routed.TotalLength, 44));
+            Near(routed.Approaches, 2) && Near(run.SlackOf(circuit.Id), 4));
+        Check("and the total is what the route measured plus it", Near(run.TotalLengthOf(circuit.Id), 44));
 
         var none = Router.Route(network, circuit, Options());
+        var bare = new RouteRun(new[] { none }, 1, TimeSpan.Zero);
 
         Check("with no slack asked for there is none, and a class the route never walked reads zero",
-            Near(none.Slack, 0) && Near(none.TotalLength, 40) && Near(none.AlongClass("busway"), 0));
+            Near(bare.SlackOf(circuit.Id), 0) && Near(bare.TotalLengthOf(circuit.Id), 40)
+            && Near(none.AlongClass("busway"), 0));
     }
 
     /// <summary>
@@ -799,7 +807,7 @@ internal static class Program
         var routed = Router.Route(network, circuit, Options());
         var walked = RouteStamp.Of(routed.Path);
 
-        Check("the route walks both trays", routed.Status == RouteStatus.Found && Near(routed.TotalLength, 22));
+        Check("the route walks both trays", routed.Status == RouteStatus.Found && Near(routed.Measured, 22));
         Check("the stamp names them in order, each once, as ids", walked == "1; 2");
         Check("and a stamp reads back into the carriers it names",
             RouteStamp.Parse(walked).SequenceEqual(new[] { new CarrierId(1), new CarrierId(2) }));
@@ -845,20 +853,26 @@ internal static class Program
         Check("and it still names the carriers the stored length was measured along",
             gone.Stale[0].Left.SequenceEqual(new[] { new CarrierId(1), new CarrierId(2) }));
 
-        var nothing = LengthReview.Of(results, new Dictionary<CarrierId, StoredRoute>(), Millimetre);
+        var nothing = LengthReview.Of(
+            new RouteRun(results, 7, TimeSpan.Zero), new Dictionary<CarrierId, StoredRoute>(), Millimetre);
 
         Check("a circuit nobody ever wrote is counted apart, not reported as stale",
             !nothing.Any && nothing.NeverWritten == 1 && nothing.Current == 0 && nothing.Examined == 1);
         Check("and a circuit that neither routes nor carries anything is neither",
-            LengthReview.Of(blocked, new Dictionary<CarrierId, StoredRoute>(), Millimetre) is
-            { Stale.Count: 0, NeverWritten: 0, Current: 0, Examined: 1 });
+            LengthReview.Of(
+                new RouteRun(blocked, 7, TimeSpan.Zero),
+                new Dictionary<CarrierId, StoredRoute>(),
+                Millimetre) is { Stale.Count: 0, NeverWritten: 0, Current: 0, Examined: 1 });
     }
 
     /// <summary>A millimetre in internal feet, the tolerance the command uses.</summary>
     private const double Millimetre = 1 / 304.8;
 
     private static LengthReview Review(IReadOnlyList<RouteResult> results, StoredRoute stored) =>
-        LengthReview.Of(results, new Dictionary<CarrierId, StoredRoute> { [stored.Circuit] = stored }, Millimetre);
+        LengthReview.Of(
+            new RouteRun(results, 7, TimeSpan.Zero),
+            new Dictionary<CarrierId, StoredRoute> { [stored.Circuit] = stored },
+            Millimetre);
 
     private static StoredRoute Stored(CarrierId circuit, double length, CircuitConnection connection, string stamp) =>
         new(circuit, length, connection, stamp);
@@ -1005,6 +1019,93 @@ internal static class Program
 
         Check("an existing box within the radius is used instead of splicing in the carrier",
             withBox.Splices.Count == 0 && withBox.Boxes.Count(box => !box.IsRecommendation) == 1);
+    }
+
+    /// <summary>
+    /// Slack is a fraction of what is measured plus a length at every place the cable is cut, and the
+    /// places are the plan's to say.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <b>The owner's model of 2026-09-21.</b> It replaces a single fraction of the whole, which said
+    /// that a circuit with one device and a circuit with nine need slack in proportion to how far they
+    /// run. Most of it is spent where the cable is cut and dressed, and that happens a fixed number of
+    /// times.
+    /// </para>
+    /// <para>
+    /// <b>And that is why it is counted on the run and not in the router.</b> Two taps closer than the
+    /// box radius share a box - one place, cut once - and the router cannot know that, because the
+    /// radius is the planner's and the planner runs after every circuit has been routed. The second
+    /// half of this section is exactly that case: the same circuit, the same route, two taps that merge
+    /// and two that do not, and a slack that differs by one box.
+    /// </para>
+    /// </remarks>
+    private static void SlackIsCountedWhereTheCableIsCut()
+    {
+        Section("slack is counted where the cable is cut");
+
+        var rule = new SlackRule
+        {
+            Fraction = 0.1,
+            AtPanel = 1.5,
+            AtTerminal = 0.25,
+            AtBox = 0.75,
+            AtSplice = 0.4,
+        };
+
+        Check("a rule that adds nothing says so", SlackRule.None.IsNothing && !rule.IsNothing);
+        Check("and one that adds nothing adds nothing", Near(SlackRule.None.For(100, 9, 9, 9), 0));
+
+        // Written out rather than called on the rule: 10 + 1.5 + 0.5 + 1.5 + 0.4.
+        Check("every term is counted, each by its own count",
+            Near(rule.For(100, terminals: 2, boxes: 2, splices: 1), 13.9));
+        Check("the cable's factor multiplies all of it, the fraction included",
+            Near(rule.For(100, 2, 2, 1, cableFactor: 2), 27.8));
+        Check("and a factor of one changes nothing", Near(rule.For(100, 2, 2, 1, 1), 13.9));
+
+        // A tray with three sockets under it, cut in boxes. The first two are a foot apart and merge
+        // into one box; the third is far away and opens its own.
+        var network = NetworkBuilder.Build(1, new[] { Tray(0, 0, 40) }, Options());
+
+        var circuit = new CircuitSnapshot(
+            new CarrierId(1), "P-1",
+            Terminal(0, 0, -1, "panel"),
+            new[] { Terminal(10, 0, -1, "S1"), Terminal(11, 0, -1, "S2"), Terminal(30, 0, -1, "S3") })
+        {
+            Connection = CircuitConnection.AtJunctionBox,
+        };
+
+        var routed = Router.Route(network, circuit, Options());
+
+        Check("the circuit routes to three devices", routed.Status == RouteStatus.Found && routed.Taps.Count == 3);
+
+        var merged = BoxPlanner.Plan(new[] { routed }, Array.Empty<ExistingBox>(), radius: 1.5);
+        var apart = BoxPlanner.Plan(new[] { routed }, Array.Empty<ExistingBox>(), radius: 0.5);
+
+        Check("a radius that reaches merges the near pair into one box", merged.Boxes.Count == 2);
+        Check("and one that does not leaves three", apart.Boxes.Count == 3);
+
+        var withMerge = new RouteRun(new[] { routed }, 1, TimeSpan.Zero, merged, rule);
+        var without = new RouteRun(new[] { routed }, 1, TimeSpan.Zero, apart, rule);
+
+        var measured = routed.Measured;
+
+        Check("slack is the fraction, the panel, a terminal each and a box per place",
+            Near(withMerge.SlackOf(circuit.Id), (measured * 0.1) + 1.5 + (0.25 * 3) + (0.75 * 2)));
+        Check("the same route with nothing merged pays for one box more",
+            Near(without.SlackOf(circuit.Id) - withMerge.SlackOf(circuit.Id), 0.75));
+        Check("the total is what the route measured plus its slack",
+            Near(withMerge.TotalLengthOf(circuit.Id), measured + withMerge.SlackOf(circuit.Id)));
+        Check("and the run sums that total, not the bare measurement",
+            Near(withMerge.TotalLength, withMerge.TotalLengthOf(circuit.Id)));
+
+        // A circuit that did not route has no length and no slack: there is nothing to add it to.
+        var nowhere = Router.Route(NetworkBuilder.Build(2, Array.Empty<CarrierNode>(), Options()), circuit, Options());
+        var barren = new RouteRun(new[] { nowhere }, 2, TimeSpan.Zero, BoxPlan.Empty, rule);
+
+        Check("a circuit that did not route is given no slack",
+            nowhere.Status != RouteStatus.Found
+            && Near(barren.SlackOf(circuit.Id), 0) && Near(barren.TotalLengthOf(circuit.Id), 0));
     }
 
     private static void TheStructureSaysHowManyPiecesItIsIn()
