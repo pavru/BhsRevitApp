@@ -1,16 +1,16 @@
 {
   "Schema": 2,
   "Disclaimer": "Recorded on a developer machine. Revit cannot run on hosted CI, so CI verifies this record rather than reproducing it: no automated check here has ever started a Revit.",
-  "Commit": "d51f52bb20592cd389f19786d2bb04dd6c06acdd",
+  "Commit": "be55e957ecf0223e57ca0018af1c30f7875e763a",
   "CommitClean": true,
   "Content": {
     "source/Revit": "34e0082277c6bb8094da8ed709bd319a9325b06a",
     "source/Shared": "77b1941b89ff49046593d5929950bf603e7f2eaf",
     "source/WinSide": "5b71abdce4cd8186abf36416137a3dfa7f437a28",
-    "source/Features/MEP.Cabling": "0dad5303c759b44d9591df0b49dd4857928f4308",
+    "source/Features/MEP.Cabling": "db6448336e4b9255af5049b3cf4b6e5dc8b13565",
     "build/BHS.Revit.Sdk": "a8575677c417aaaef872bfda5c751f2858df4a0c"
   },
-  "RecordedUtc": "2026-09-20T05:52:07.7413353Z",
+  "RecordedUtc": "2026-09-20T07:27:36.0011408Z",
   "WithModel": true,
   "ShowTab": false,
   "Linked": true,
@@ -18,7 +18,7 @@
     {
       "Release": 2024,
       "FileVersion": "0.1.0.0",
-      "BuiltUtc": "2026-09-20T05:21:40.5696003Z",
+      "BuiltUtc": "2026-09-20T07:20:59.6815032Z",
       "Signed": true,
       "Checks": [
         {
@@ -550,6 +550,14 @@
           "Ok": true
         },
         {
+          "Name": "Cabling apply: a fitting type told that cable may be spliced in it reads back that way, and a type not told does not",
+          "Ok": true
+        },
+        {
+          "Name": "Cabling apply: where a tap lands on a carrier cable may be spliced in, the plan branches there and recommends no box",
+          "Ok": true
+        },
+        {
           "Name": "Cabling lengths: what the search found, written onto its circuits, reads back as a current answer",
           "Ok": true
         },
@@ -618,11 +626,11 @@
         },
         {
           "Name": "launched",
-          "Value": "pid 41648"
+          "Value": "pid 60872"
         },
         {
           "Name": "registered after",
-          "Value": "19.1s"
+          "Value": "24.8s"
         },
         {
           "Name": "recovered by enumeration",
@@ -638,11 +646,11 @@
         },
         {
           "Name": "probe log",
-          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2024-41648-20260920-154524.log"
+          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2024-60872-20260920-172135.log"
         },
         {
           "Name": "threads",
-          "Value": "api 1, call 20"
+          "Value": "api 1, call 27"
         },
         {
           "Name": "appdomain",
@@ -666,7 +674,7 @@
         },
         {
           "Name": "log",
-          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2024-41648-20260920-154524.log"
+          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2024-60872-20260920-172135.log"
         },
         {
           "Name": "sinks",
@@ -678,7 +686,7 @@
         },
         {
           "Name": "opened after registration",
-          "Value": "22.9s"
+          "Value": "25.2s"
         },
         {
           "Name": "pane:exists",
@@ -798,7 +806,7 @@
         },
         {
           "Name": "instance",
-          "Value": "936ef7b19ba7498883bf10c63cea6c0a"
+          "Value": "b100d6eb9cb44688aacc3c8bd78ab299"
         },
         {
           "Name": "link1:linked",
@@ -842,11 +850,11 @@
         },
         {
           "Name": "log",
-          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2024-41648-20260920-154524.log"
+          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2024-60872-20260920-172135.log"
         },
         {
           "Name": "pid",
-          "Value": "41648"
+          "Value": "60872"
         },
         {
           "Name": "release",
@@ -918,15 +926,15 @@
         },
         {
           "Name": "instance",
-          "Value": "936ef7b19ba7498883bf10c63cea6c0a"
+          "Value": "b100d6eb9cb44688aacc3c8bd78ab299"
         },
         {
           "Name": "log",
-          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2024-41648-20260920-154524.log"
+          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2024-60872-20260920-172135.log"
         },
         {
           "Name": "pid",
-          "Value": "41648"
+          "Value": "60872"
         },
         {
           "Name": "place:after",
@@ -1014,11 +1022,11 @@
         },
         {
           "Name": "instance",
-          "Value": "936ef7b19ba7498883bf10c63cea6c0a"
+          "Value": "b100d6eb9cb44688aacc3c8bd78ab299"
         },
         {
           "Name": "log",
-          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2024-41648-20260920-154524.log"
+          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2024-60872-20260920-172135.log"
         },
         {
           "Name": "modal:apiCallWorked",
@@ -1046,7 +1054,7 @@
         },
         {
           "Name": "modal:awaitResumedAfter",
-          "Value": "0.48s"
+          "Value": "0.52s"
         },
         {
           "Name": "modal:awaitResumedOnApiThread",
@@ -1070,7 +1078,7 @@
         },
         {
           "Name": "modal:shownFor",
-          "Value": "2.55s"
+          "Value": "2.59s"
         },
         {
           "Name": "modal:transactionCommit",
@@ -1102,7 +1110,7 @@
         },
         {
           "Name": "pid",
-          "Value": "41648"
+          "Value": "60872"
         },
         {
           "Name": "release",
@@ -1114,11 +1122,11 @@
         },
         {
           "Name": "instance",
-          "Value": "936ef7b19ba7498883bf10c63cea6c0a"
+          "Value": "b100d6eb9cb44688aacc3c8bd78ab299"
         },
         {
           "Name": "log",
-          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2024-41648-20260920-154524.log"
+          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2024-60872-20260920-172135.log"
         },
         {
           "Name": "modal:measured",
@@ -1130,7 +1138,7 @@
         },
         {
           "Name": "modal:pumpRanAt",
-          "Value": "2.55s"
+          "Value": "2.59s"
         },
         {
           "Name": "modal:windowClosed",
@@ -1138,7 +1146,7 @@
         },
         {
           "Name": "pid",
-          "Value": "41648"
+          "Value": "60872"
         },
         {
           "Name": "release",
@@ -1150,11 +1158,11 @@
         },
         {
           "Name": "instance",
-          "Value": "936ef7b19ba7498883bf10c63cea6c0a"
+          "Value": "b100d6eb9cb44688aacc3c8bd78ab299"
         },
         {
           "Name": "log",
-          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2024-41648-20260920-154524.log"
+          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2024-60872-20260920-172135.log"
         },
         {
           "Name": "parameters:bound",
@@ -1230,7 +1238,7 @@
         },
         {
           "Name": "pid",
-          "Value": "41648"
+          "Value": "60872"
         },
         {
           "Name": "release",
@@ -1438,7 +1446,7 @@
         },
         {
           "Name": "census: elapsed, ms",
-          "Value": "66"
+          "Value": "73"
         },
         {
           "Name": "circuit ends: electrical systems",
@@ -1478,7 +1486,7 @@
         },
         {
           "Name": "circuit ends: elapsed, ms",
-          "Value": "42"
+          "Value": "32"
         },
         {
           "Name": "circuits on the panel used",
@@ -2231,6 +2239,54 @@
         {
           "Name": "mode: indicators of ours already in the model",
           "Value": "0"
+        },
+        {
+          "Name": "splicing: fitting types in the host",
+          "Value": "4"
+        },
+        {
+          "Name": "splicing: fitting types told cable may be spliced in them",
+          "Value": "2"
+        },
+        {
+          "Name": "splicing: carriers read back as allowing a splice",
+          "Value": "2"
+        },
+        {
+          "Name": "splicing: carriers read back as not allowing one",
+          "Value": "9"
+        },
+        {
+          "Name": "splicing plan: routes found",
+          "Value": "6"
+        },
+        {
+          "Name": "splicing plan: boxes before anything is marked",
+          "Value": "10"
+        },
+        {
+          "Name": "splicing plan: splices before anything is marked",
+          "Value": "0"
+        },
+        {
+          "Name": "splicing plan: taps of found routes",
+          "Value": "12"
+        },
+        {
+          "Name": "splicing plan: carriers of the host those taps leave at",
+          "Value": "8"
+        },
+        {
+          "Name": "splicing plan: types of those carriers",
+          "Value": "1"
+        },
+        {
+          "Name": "splicing plan: boxes after marking",
+          "Value": "2"
+        },
+        {
+          "Name": "splicing plan: splices after marking",
+          "Value": "10"
         },
         {
           "Name": "current: circuits described",
@@ -2418,7 +2474,7 @@
         },
         {
           "Name": "diagnostic events",
-          "Value": "2528 received, 0 dropped by the publisher, longest quiet spell 14.8s during Starting"
+          "Value": "2607 received, 0 dropped by the publisher, longest quiet spell 15.3s during Starting"
         },
         {
           "Name": "phases seen",
@@ -2497,15 +2553,19 @@
           "Value": "\u0410\u0432\u0442\u043E\u043C\u0430\u0442\u0438\u0447\u0435\u0441\u043A\u043E\u0435 \u0441\u043E\u0435\u0434\u0438\u043D\u0435\u043D\u0438\u0435 \u0438\u0437\u043C\u0435\u043D\u0435\u043D\u043D\u044B\u0445 \u044D\u043B\u0435\u043C\u0435\u043D\u0442\u043E\u0432"
         },
         {
+          "Name": "progress caption",
+          "Value": "\u0424\u043E\u0440\u043C\u0438\u0440\u043E\u0432\u0430\u043D\u0438\u0435 \u0433\u0440\u0430\u0444\u0438\u043A\u0438 \u0434\u043B\u044F 3D \u0432\u0438\u0434: ???"
+        },
+        {
           "Name": "closed after",
-          "Value": "21.6s"
+          "Value": "22.1s"
         }
       ]
     },
     {
       "Release": 2025,
       "FileVersion": "0.1.0.0",
-      "BuiltUtc": "2026-09-20T05:21:42.2353916Z",
+      "BuiltUtc": "2026-09-20T07:21:01.8016127Z",
       "Signed": true,
       "Checks": [
         {
@@ -3037,6 +3097,14 @@
           "Ok": true
         },
         {
+          "Name": "Cabling apply: a fitting type told that cable may be spliced in it reads back that way, and a type not told does not",
+          "Ok": true
+        },
+        {
+          "Name": "Cabling apply: where a tap lands on a carrier cable may be spliced in, the plan branches there and recommends no box",
+          "Ok": true
+        },
+        {
           "Name": "Cabling lengths: what the search found, written onto its circuits, reads back as a current answer",
           "Ok": true
         },
@@ -3105,11 +3173,11 @@
         },
         {
           "Name": "launched",
-          "Value": "pid 77452"
+          "Value": "pid 47624"
         },
         {
           "Name": "registered after",
-          "Value": "19.0s"
+          "Value": "17.9s"
         },
         {
           "Name": "recovered by enumeration",
@@ -3125,11 +3193,11 @@
         },
         {
           "Name": "probe log",
-          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2025-77452-20260920-154654.log"
+          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2025-47624-20260920-172312.log"
         },
         {
           "Name": "threads",
-          "Value": "api 1, call 15"
+          "Value": "api 1, call 25"
         },
         {
           "Name": "appdomain",
@@ -3153,7 +3221,7 @@
         },
         {
           "Name": "log",
-          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2025-77452-20260920-154654.log"
+          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2025-47624-20260920-172312.log"
         },
         {
           "Name": "sinks",
@@ -3165,7 +3233,7 @@
         },
         {
           "Name": "opened after registration",
-          "Value": "12.3s"
+          "Value": "13.3s"
         },
         {
           "Name": "pane:exists",
@@ -3285,7 +3353,7 @@
         },
         {
           "Name": "instance",
-          "Value": "31362b4c31034b84be8825d1a90025cf"
+          "Value": "414fad2b95af42828402eeaaa7ef6542"
         },
         {
           "Name": "link1:linked",
@@ -3329,11 +3397,11 @@
         },
         {
           "Name": "log",
-          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2025-77452-20260920-154654.log"
+          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2025-47624-20260920-172312.log"
         },
         {
           "Name": "pid",
-          "Value": "77452"
+          "Value": "47624"
         },
         {
           "Name": "release",
@@ -3405,15 +3473,15 @@
         },
         {
           "Name": "instance",
-          "Value": "31362b4c31034b84be8825d1a90025cf"
+          "Value": "414fad2b95af42828402eeaaa7ef6542"
         },
         {
           "Name": "log",
-          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2025-77452-20260920-154654.log"
+          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2025-47624-20260920-172312.log"
         },
         {
           "Name": "pid",
-          "Value": "77452"
+          "Value": "47624"
         },
         {
           "Name": "place:after",
@@ -3501,11 +3569,11 @@
         },
         {
           "Name": "instance",
-          "Value": "31362b4c31034b84be8825d1a90025cf"
+          "Value": "414fad2b95af42828402eeaaa7ef6542"
         },
         {
           "Name": "log",
-          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2025-77452-20260920-154654.log"
+          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2025-47624-20260920-172312.log"
         },
         {
           "Name": "modal:apiCallWorked",
@@ -3533,7 +3601,7 @@
         },
         {
           "Name": "modal:awaitResumedAfter",
-          "Value": "0.42s"
+          "Value": "0.45s"
         },
         {
           "Name": "modal:awaitResumedOnApiThread",
@@ -3557,7 +3625,7 @@
         },
         {
           "Name": "modal:shownFor",
-          "Value": "2.50s"
+          "Value": "2.53s"
         },
         {
           "Name": "modal:transactionCommit",
@@ -3589,7 +3657,7 @@
         },
         {
           "Name": "pid",
-          "Value": "77452"
+          "Value": "47624"
         },
         {
           "Name": "release",
@@ -3601,11 +3669,11 @@
         },
         {
           "Name": "instance",
-          "Value": "31362b4c31034b84be8825d1a90025cf"
+          "Value": "414fad2b95af42828402eeaaa7ef6542"
         },
         {
           "Name": "log",
-          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2025-77452-20260920-154654.log"
+          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2025-47624-20260920-172312.log"
         },
         {
           "Name": "modal:measured",
@@ -3617,7 +3685,7 @@
         },
         {
           "Name": "modal:pumpRanAt",
-          "Value": "2.50s"
+          "Value": "2.53s"
         },
         {
           "Name": "modal:windowClosed",
@@ -3625,7 +3693,7 @@
         },
         {
           "Name": "pid",
-          "Value": "77452"
+          "Value": "47624"
         },
         {
           "Name": "release",
@@ -3637,11 +3705,11 @@
         },
         {
           "Name": "instance",
-          "Value": "31362b4c31034b84be8825d1a90025cf"
+          "Value": "414fad2b95af42828402eeaaa7ef6542"
         },
         {
           "Name": "log",
-          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2025-77452-20260920-154654.log"
+          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2025-47624-20260920-172312.log"
         },
         {
           "Name": "parameters:bound",
@@ -3717,7 +3785,7 @@
         },
         {
           "Name": "pid",
-          "Value": "77452"
+          "Value": "47624"
         },
         {
           "Name": "release",
@@ -3925,7 +3993,7 @@
         },
         {
           "Name": "census: elapsed, ms",
-          "Value": "34"
+          "Value": "80"
         },
         {
           "Name": "circuit ends: electrical systems",
@@ -3965,7 +4033,7 @@
         },
         {
           "Name": "circuit ends: elapsed, ms",
-          "Value": "23"
+          "Value": "29"
         },
         {
           "Name": "circuits on the panel used",
@@ -4718,6 +4786,54 @@
         {
           "Name": "mode: indicators of ours already in the model",
           "Value": "0"
+        },
+        {
+          "Name": "splicing: fitting types in the host",
+          "Value": "4"
+        },
+        {
+          "Name": "splicing: fitting types told cable may be spliced in them",
+          "Value": "2"
+        },
+        {
+          "Name": "splicing: carriers read back as allowing a splice",
+          "Value": "2"
+        },
+        {
+          "Name": "splicing: carriers read back as not allowing one",
+          "Value": "9"
+        },
+        {
+          "Name": "splicing plan: routes found",
+          "Value": "6"
+        },
+        {
+          "Name": "splicing plan: boxes before anything is marked",
+          "Value": "10"
+        },
+        {
+          "Name": "splicing plan: splices before anything is marked",
+          "Value": "0"
+        },
+        {
+          "Name": "splicing plan: taps of found routes",
+          "Value": "12"
+        },
+        {
+          "Name": "splicing plan: carriers of the host those taps leave at",
+          "Value": "8"
+        },
+        {
+          "Name": "splicing plan: types of those carriers",
+          "Value": "1"
+        },
+        {
+          "Name": "splicing plan: boxes after marking",
+          "Value": "2"
+        },
+        {
+          "Name": "splicing plan: splices after marking",
+          "Value": "10"
         },
         {
           "Name": "current: circuits described",
@@ -4937,7 +5053,7 @@
         },
         {
           "Name": "diagnostic events",
-          "Value": "2419 received, 0 dropped by the publisher, longest quiet spell 3.9s during Working"
+          "Value": "2552 received, 0 dropped by the publisher, longest quiet spell 4.1s during Working"
         },
         {
           "Name": "phases seen",
@@ -5012,15 +5128,19 @@
           "Value": "\u0427\u0435\u0440\u0442\u0435\u0436: TestCabling-\u042D\u041E\u041C.rvt - 3D \u0432\u0438\u0434: {3D}"
         },
         {
+          "Name": "progress caption",
+          "Value": "\u0424\u043E\u0440\u043C\u0438\u0440\u043E\u0432\u0430\u043D\u0438\u0435 \u0433\u0440\u0430\u0444\u0438\u043A\u0438 \u0434\u043B\u044F 3D \u0432\u0438\u0434: ???"
+        },
+        {
           "Name": "closed after",
-          "Value": "3.8s"
+          "Value": "4.0s"
         }
       ]
     },
     {
       "Release": 2026,
       "FileVersion": "0.1.0.0",
-      "BuiltUtc": "2026-09-20T05:21:42.5164549Z",
+      "BuiltUtc": "2026-09-20T07:21:00.9001674Z",
       "Signed": true,
       "Checks": [
         {
@@ -5552,6 +5672,14 @@
           "Ok": true
         },
         {
+          "Name": "Cabling apply: a fitting type told that cable may be spliced in it reads back that way, and a type not told does not",
+          "Ok": true
+        },
+        {
+          "Name": "Cabling apply: where a tap lands on a carrier cable may be spliced in, the plan branches there and recommends no box",
+          "Ok": true
+        },
+        {
           "Name": "Cabling lengths: what the search found, written onto its circuits, reads back as a current answer",
           "Ok": true
         },
@@ -5620,11 +5748,11 @@
         },
         {
           "Name": "launched",
-          "Value": "pid 54372"
+          "Value": "pid 65228"
         },
         {
           "Name": "registered after",
-          "Value": "34.0s"
+          "Value": "33.1s"
         },
         {
           "Name": "recovered by enumeration",
@@ -5640,11 +5768,11 @@
         },
         {
           "Name": "probe log",
-          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2026-54372-20260920-154742.log"
+          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2026-65228-20260920-172404.log"
         },
         {
           "Name": "threads",
-          "Value": "api 1, call 28"
+          "Value": "api 1, call 23"
         },
         {
           "Name": "appdomain",
@@ -5668,7 +5796,7 @@
         },
         {
           "Name": "log",
-          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2026-54372-20260920-154742.log"
+          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2026-65228-20260920-172404.log"
         },
         {
           "Name": "sinks",
@@ -5680,7 +5808,7 @@
         },
         {
           "Name": "opened after registration",
-          "Value": "76.8s"
+          "Value": "71.5s"
         },
         {
           "Name": "pane:exists",
@@ -5800,7 +5928,7 @@
         },
         {
           "Name": "instance",
-          "Value": "a746072211eb4ea982e77b8516f301ee"
+          "Value": "9b2bef9472e84f16b79e9d4259f0c1d0"
         },
         {
           "Name": "link1:linked",
@@ -5844,11 +5972,11 @@
         },
         {
           "Name": "log",
-          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2026-54372-20260920-154742.log"
+          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2026-65228-20260920-172404.log"
         },
         {
           "Name": "pid",
-          "Value": "54372"
+          "Value": "65228"
         },
         {
           "Name": "release",
@@ -5920,15 +6048,15 @@
         },
         {
           "Name": "instance",
-          "Value": "a746072211eb4ea982e77b8516f301ee"
+          "Value": "9b2bef9472e84f16b79e9d4259f0c1d0"
         },
         {
           "Name": "log",
-          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2026-54372-20260920-154742.log"
+          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2026-65228-20260920-172404.log"
         },
         {
           "Name": "pid",
-          "Value": "54372"
+          "Value": "65228"
         },
         {
           "Name": "place:after",
@@ -6016,11 +6144,11 @@
         },
         {
           "Name": "instance",
-          "Value": "a746072211eb4ea982e77b8516f301ee"
+          "Value": "9b2bef9472e84f16b79e9d4259f0c1d0"
         },
         {
           "Name": "log",
-          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2026-54372-20260920-154742.log"
+          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2026-65228-20260920-172404.log"
         },
         {
           "Name": "modal:apiCallWorked",
@@ -6048,7 +6176,7 @@
         },
         {
           "Name": "modal:awaitResumedAfter",
-          "Value": "0.25s"
+          "Value": "0.27s"
         },
         {
           "Name": "modal:awaitResumedOnApiThread",
@@ -6072,7 +6200,7 @@
         },
         {
           "Name": "modal:shownFor",
-          "Value": "2.32s"
+          "Value": "2.35s"
         },
         {
           "Name": "modal:transactionCommit",
@@ -6104,7 +6232,7 @@
         },
         {
           "Name": "pid",
-          "Value": "54372"
+          "Value": "65228"
         },
         {
           "Name": "release",
@@ -6116,11 +6244,11 @@
         },
         {
           "Name": "instance",
-          "Value": "a746072211eb4ea982e77b8516f301ee"
+          "Value": "9b2bef9472e84f16b79e9d4259f0c1d0"
         },
         {
           "Name": "log",
-          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2026-54372-20260920-154742.log"
+          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2026-65228-20260920-172404.log"
         },
         {
           "Name": "modal:measured",
@@ -6132,7 +6260,7 @@
         },
         {
           "Name": "modal:pumpRanAt",
-          "Value": "2.32s"
+          "Value": "2.35s"
         },
         {
           "Name": "modal:windowClosed",
@@ -6140,7 +6268,7 @@
         },
         {
           "Name": "pid",
-          "Value": "54372"
+          "Value": "65228"
         },
         {
           "Name": "release",
@@ -6152,11 +6280,11 @@
         },
         {
           "Name": "instance",
-          "Value": "a746072211eb4ea982e77b8516f301ee"
+          "Value": "9b2bef9472e84f16b79e9d4259f0c1d0"
         },
         {
           "Name": "log",
-          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2026-54372-20260920-154742.log"
+          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2026-65228-20260920-172404.log"
         },
         {
           "Name": "parameters:bound",
@@ -6232,7 +6360,7 @@
         },
         {
           "Name": "pid",
-          "Value": "54372"
+          "Value": "65228"
         },
         {
           "Name": "release",
@@ -6440,7 +6568,7 @@
         },
         {
           "Name": "census: elapsed, ms",
-          "Value": "38"
+          "Value": "55"
         },
         {
           "Name": "circuit ends: electrical systems",
@@ -6480,7 +6608,7 @@
         },
         {
           "Name": "circuit ends: elapsed, ms",
-          "Value": "20"
+          "Value": "26"
         },
         {
           "Name": "circuits on the panel used",
@@ -7233,6 +7361,54 @@
         {
           "Name": "mode: indicators of ours already in the model",
           "Value": "0"
+        },
+        {
+          "Name": "splicing: fitting types in the host",
+          "Value": "4"
+        },
+        {
+          "Name": "splicing: fitting types told cable may be spliced in them",
+          "Value": "2"
+        },
+        {
+          "Name": "splicing: carriers read back as allowing a splice",
+          "Value": "2"
+        },
+        {
+          "Name": "splicing: carriers read back as not allowing one",
+          "Value": "9"
+        },
+        {
+          "Name": "splicing plan: routes found",
+          "Value": "6"
+        },
+        {
+          "Name": "splicing plan: boxes before anything is marked",
+          "Value": "10"
+        },
+        {
+          "Name": "splicing plan: splices before anything is marked",
+          "Value": "0"
+        },
+        {
+          "Name": "splicing plan: taps of found routes",
+          "Value": "12"
+        },
+        {
+          "Name": "splicing plan: carriers of the host those taps leave at",
+          "Value": "8"
+        },
+        {
+          "Name": "splicing plan: types of those carriers",
+          "Value": "1"
+        },
+        {
+          "Name": "splicing plan: boxes after marking",
+          "Value": "2"
+        },
+        {
+          "Name": "splicing plan: splices after marking",
+          "Value": "10"
         },
         {
           "Name": "current: circuits described",
@@ -7416,7 +7592,7 @@
         },
         {
           "Name": "diagnostic events",
-          "Value": "2455 received, 0 dropped by the publisher, longest quiet spell 57.6s during Starting"
+          "Value": "2550 received, 0 dropped by the publisher, longest quiet spell 53.1s during Starting"
         },
         {
           "Name": "phases seen",
@@ -7495,15 +7671,19 @@
           "Value": "\u0410\u0432\u0442\u043E\u043C\u0430\u0442\u0438\u0447\u0435\u0441\u043A\u043E\u0435 \u0441\u043E\u0435\u0434\u0438\u043D\u0435\u043D\u0438\u0435 \u0438\u0437\u043C\u0435\u043D\u0435\u043D\u043D\u044B\u0445 \u044D\u043B\u0435\u043C\u0435\u043D\u0442\u043E\u0432"
         },
         {
+          "Name": "progress caption",
+          "Value": "\u0424\u043E\u0440\u043C\u0438\u0440\u043E\u0432\u0430\u043D\u0438\u0435 \u0433\u0440\u0430\u0444\u0438\u043A\u0438 \u0434\u043B\u044F 3D \u0432\u0438\u0434: ???"
+        },
+        {
           "Name": "closed after",
-          "Value": "17.6s"
+          "Value": "17.7s"
         }
       ]
     },
     {
       "Release": 2027,
       "FileVersion": "0.1.0.0",
-      "BuiltUtc": "2026-09-20T05:21:43.3853247Z",
+      "BuiltUtc": "2026-09-20T07:21:01.7758652Z",
       "Signed": true,
       "Checks": [
         {
@@ -8035,6 +8215,14 @@
           "Ok": true
         },
         {
+          "Name": "Cabling apply: a fitting type told that cable may be spliced in it reads back that way, and a type not told does not",
+          "Ok": true
+        },
+        {
+          "Name": "Cabling apply: where a tap lands on a carrier cable may be spliced in, the plan branches there and recommends no box",
+          "Ok": true
+        },
+        {
           "Name": "Cabling lengths: what the search found, written onto its circuits, reads back as a current answer",
           "Ok": true
         },
@@ -8103,11 +8291,11 @@
         },
         {
           "Name": "launched",
-          "Value": "pid 73972"
+          "Value": "pid 75188"
         },
         {
           "Name": "registered after",
-          "Value": "20.7s"
+          "Value": "23.5s"
         },
         {
           "Name": "recovered by enumeration",
@@ -8123,11 +8311,11 @@
         },
         {
           "Name": "probe log",
-          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2027-73972-20260920-155004.log"
+          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2027-75188-20260920-172623.log"
         },
         {
           "Name": "threads",
-          "Value": "api 2, call 18"
+          "Value": "api 2, call 7"
         },
         {
           "Name": "appdomain",
@@ -8151,7 +8339,7 @@
         },
         {
           "Name": "log",
-          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2027-73972-20260920-155004.log"
+          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2027-75188-20260920-172623.log"
         },
         {
           "Name": "sinks",
@@ -8163,7 +8351,7 @@
         },
         {
           "Name": "opened after registration",
-          "Value": "82.5s"
+          "Value": "35.3s"
         },
         {
           "Name": "pane:exists",
@@ -8283,7 +8471,7 @@
         },
         {
           "Name": "instance",
-          "Value": "d66b25e949e54e978cc61394c992f1dd"
+          "Value": "3fa66c20c2b34f46999cd33d39792b16"
         },
         {
           "Name": "link1:linked",
@@ -8327,11 +8515,11 @@
         },
         {
           "Name": "log",
-          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2027-73972-20260920-155004.log"
+          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2027-75188-20260920-172623.log"
         },
         {
           "Name": "pid",
-          "Value": "73972"
+          "Value": "75188"
         },
         {
           "Name": "release",
@@ -8403,15 +8591,15 @@
         },
         {
           "Name": "instance",
-          "Value": "d66b25e949e54e978cc61394c992f1dd"
+          "Value": "3fa66c20c2b34f46999cd33d39792b16"
         },
         {
           "Name": "log",
-          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2027-73972-20260920-155004.log"
+          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2027-75188-20260920-172623.log"
         },
         {
           "Name": "pid",
-          "Value": "73972"
+          "Value": "75188"
         },
         {
           "Name": "place:after",
@@ -8499,11 +8687,11 @@
         },
         {
           "Name": "instance",
-          "Value": "d66b25e949e54e978cc61394c992f1dd"
+          "Value": "3fa66c20c2b34f46999cd33d39792b16"
         },
         {
           "Name": "log",
-          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2027-73972-20260920-155004.log"
+          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2027-75188-20260920-172623.log"
         },
         {
           "Name": "modal:apiCallWorked",
@@ -8531,7 +8719,7 @@
         },
         {
           "Name": "modal:awaitResumedAfter",
-          "Value": "0.29s"
+          "Value": "0.32s"
         },
         {
           "Name": "modal:awaitResumedOnApiThread",
@@ -8555,7 +8743,7 @@
         },
         {
           "Name": "modal:shownFor",
-          "Value": "2.37s"
+          "Value": "2.40s"
         },
         {
           "Name": "modal:transactionCommit",
@@ -8587,7 +8775,7 @@
         },
         {
           "Name": "pid",
-          "Value": "73972"
+          "Value": "75188"
         },
         {
           "Name": "release",
@@ -8599,11 +8787,11 @@
         },
         {
           "Name": "instance",
-          "Value": "d66b25e949e54e978cc61394c992f1dd"
+          "Value": "3fa66c20c2b34f46999cd33d39792b16"
         },
         {
           "Name": "log",
-          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2027-73972-20260920-155004.log"
+          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2027-75188-20260920-172623.log"
         },
         {
           "Name": "modal:measured",
@@ -8615,7 +8803,7 @@
         },
         {
           "Name": "modal:pumpRanAt",
-          "Value": "2.37s"
+          "Value": "2.40s"
         },
         {
           "Name": "modal:windowClosed",
@@ -8623,7 +8811,7 @@
         },
         {
           "Name": "pid",
-          "Value": "73972"
+          "Value": "75188"
         },
         {
           "Name": "release",
@@ -8635,11 +8823,11 @@
         },
         {
           "Name": "instance",
-          "Value": "d66b25e949e54e978cc61394c992f1dd"
+          "Value": "3fa66c20c2b34f46999cd33d39792b16"
         },
         {
           "Name": "log",
-          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2027-73972-20260920-155004.log"
+          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2027-75188-20260920-172623.log"
         },
         {
           "Name": "parameters:bound",
@@ -8715,7 +8903,7 @@
         },
         {
           "Name": "pid",
-          "Value": "73972"
+          "Value": "75188"
         },
         {
           "Name": "release",
@@ -8923,7 +9111,7 @@
         },
         {
           "Name": "census: elapsed, ms",
-          "Value": "45"
+          "Value": "41"
         },
         {
           "Name": "circuit ends: electrical systems",
@@ -8963,7 +9151,7 @@
         },
         {
           "Name": "circuit ends: elapsed, ms",
-          "Value": "25"
+          "Value": "22"
         },
         {
           "Name": "circuits on the panel used",
@@ -9716,6 +9904,54 @@
         {
           "Name": "mode: indicators of ours already in the model",
           "Value": "0"
+        },
+        {
+          "Name": "splicing: fitting types in the host",
+          "Value": "4"
+        },
+        {
+          "Name": "splicing: fitting types told cable may be spliced in them",
+          "Value": "2"
+        },
+        {
+          "Name": "splicing: carriers read back as allowing a splice",
+          "Value": "2"
+        },
+        {
+          "Name": "splicing: carriers read back as not allowing one",
+          "Value": "9"
+        },
+        {
+          "Name": "splicing plan: routes found",
+          "Value": "6"
+        },
+        {
+          "Name": "splicing plan: boxes before anything is marked",
+          "Value": "10"
+        },
+        {
+          "Name": "splicing plan: splices before anything is marked",
+          "Value": "0"
+        },
+        {
+          "Name": "splicing plan: taps of found routes",
+          "Value": "12"
+        },
+        {
+          "Name": "splicing plan: carriers of the host those taps leave at",
+          "Value": "8"
+        },
+        {
+          "Name": "splicing plan: types of those carriers",
+          "Value": "1"
+        },
+        {
+          "Name": "splicing plan: boxes after marking",
+          "Value": "2"
+        },
+        {
+          "Name": "splicing plan: splices after marking",
+          "Value": "10"
         },
         {
           "Name": "current: circuits described",
@@ -10135,7 +10371,7 @@
         },
         {
           "Name": "assemblies loaded",
-          "Value": "783"
+          "Value": "782"
         },
         {
           "Name": "Revit\u0027s copy won",
@@ -10183,7 +10419,7 @@
         },
         {
           "Name": "diagnostic events",
-          "Value": "2389 received, 0 dropped by the publisher, longest quiet spell 62.2s during Starting"
+          "Value": "2596 received, 0 dropped by the publisher, longest quiet spell 16.1s during Starting"
         },
         {
           "Name": "phases seen",
@@ -10235,15 +10471,15 @@
         },
         {
           "Name": "progress caption",
-          "Value": "\u0424\u043E\u0440\u043C\u0438\u0440\u043E\u0432\u0430\u043D\u0438\u0435 \u0433\u0440\u0430\u0444\u0438\u043A\u0438 \u0434\u043B\u044F \u0414\u0438\u0441\u043F\u0435\u0442\u0447\u0435\u0440 \u043F\u0440\u043E\u0435\u043A\u0442\u0430"
-        },
-        {
-          "Name": "progress caption",
           "Value": "\u0424\u043E\u0440\u043C\u0438\u0440\u043E\u0432\u0430\u043D\u0438\u0435 \u0433\u0440\u0430\u0444\u0438\u043A\u0438 \u0434\u043B\u044F 3D \u0432\u0438\u0434: {3D}"
         },
         {
           "Name": "progress caption",
           "Value": "\u0424\u043E\u0440\u043C\u0438\u0440\u043E\u0432\u0430\u043D\u0438\u0435 \u0433\u0440\u0430\u0444\u0438\u043A\u0438 \u0434\u043B\u044F 3D \u0432\u0438\u0434: Proxy of {3D}"
+        },
+        {
+          "Name": "progress caption",
+          "Value": "\u0424\u043E\u0440\u043C\u0438\u0440\u043E\u0432\u0430\u043D\u0438\u0435 \u0433\u0440\u0430\u0444\u0438\u043A\u0438 \u0434\u043B\u044F \u0414\u0438\u0441\u043F\u0435\u0442\u0447\u0435\u0440 \u043F\u0440\u043E\u0435\u043A\u0442\u0430"
         },
         {
           "Name": "progress caption",
@@ -10262,12 +10498,16 @@
           "Value": "\u0410\u0432\u0442\u043E\u043C\u0430\u0442\u0438\u0447\u0435\u0441\u043A\u043E\u0435 \u0441\u043E\u0435\u0434\u0438\u043D\u0435\u043D\u0438\u0435 \u0438\u0437\u043C\u0435\u043D\u0435\u043D\u043D\u044B\u0445 \u044D\u043B\u0435\u043C\u0435\u043D\u0442\u043E\u0432"
         },
         {
+          "Name": "progress caption",
+          "Value": "\u0424\u043E\u0440\u043C\u0438\u0440\u043E\u0432\u0430\u043D\u0438\u0435 \u0433\u0440\u0430\u0444\u0438\u043A\u0438 \u0434\u043B\u044F 3D \u0432\u0438\u0434: ???"
+        },
+        {
           "Name": "closed after",
-          "Value": "14.2s"
+          "Value": "13.3s"
         }
       ]
     }
   ],
-  "Performed": 588,
+  "Performed": 596,
   "Failed": 0
 }
