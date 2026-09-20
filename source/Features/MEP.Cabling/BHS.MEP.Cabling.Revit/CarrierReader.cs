@@ -105,11 +105,16 @@ public sealed class CarrierReader
         // link's types belong to the link.
         var junctions = new JunctionBoxReader(document, _catalogue);
 
+        // Per document for the same reason, and cached by type inside: a run has thousands of
+        // fittings and a handful of types.
+        var splicing = new SplicingReader(document);
+
         MarkerTypeKnown |= markers.Known;
 
         foreach (var category in _catalogue.Categories)
         {
             var carrierClass = _catalogue.ClassOf(category);
+            var open = _catalogue.IsOpenAlongItsLength(carrierClass);
 
             var found = new FilteredElementCollector(document)
                 .OfCategory(category)
@@ -126,7 +131,7 @@ public sealed class CarrierReader
                     continue;
                 }
 
-                var node = Read(element, source, transform, carrierClass);
+                var node = Read(element, source, transform, carrierClass, open, splicing.Allows(element));
 
                 if (node is null)
                 {
@@ -159,7 +164,13 @@ public sealed class CarrierReader
             _unconnectedInHost.AddRange(junctions.Unconnected);
     }
 
-    private static CarrierNode? Read(Element element, long source, Transform transform, string carrierClass)
+    private static CarrierNode? Read(
+        Element element,
+        long source,
+        Transform transform,
+        string carrierClass,
+        bool openAlongItsLength,
+        bool allowsSplicing)
     {
         if (!TryExtent(element, out var start, out var end, out var joins))
             return null;
@@ -192,11 +203,15 @@ public sealed class CarrierReader
             new CarrierId(source, element.Id.Value),
             kind,
             carrierClass,
+            openAlongItsLength,
             kind == CarrierKind.Segment ? from.DistanceTo(to) : 0,
             CrossSection(element, carrierClass),
             from,
             to,
-            terminals);
+            terminals)
+        {
+            AllowsSplicing = allowsSplicing,
+        };
     }
 
     /// <summary>

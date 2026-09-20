@@ -102,6 +102,22 @@ public sealed class Tap
     /// </remarks>
     public CarrierId? Box { get; init; }
 
+    /// <summary>Whether the carrier the cable leaves is one cable may be spliced in.</summary>
+    /// <remarks>
+    /// <para>
+    /// Carried on the tap rather than looked up later, because the planner has no network: it is
+    /// given taps and boxes and a radius, and asking it to resolve a <see cref="CarrierId"/> back to
+    /// a node would hand it a second way to know the structure.
+    /// </para>
+    /// <para>
+    /// What it means to the planner is narrow and worth stating: no junction box is recommended here,
+    /// because the branch of the cable graph happens in this element itself. It does not move the
+    /// point, and it never beats a box already in the model - the owner's answer, and the reason is
+    /// that a box somebody drew was drawn on purpose.
+    /// </para>
+    /// </remarks>
+    public bool AllowsSplicing { get; init; }
+
     /// <summary>How far the spur runs along the structure, from its box to where it leaves it, in internal feet.</summary>
     /// <remarks>
     /// Zero unless <see cref="Box"/> is set. Kept apart from <see cref="Spur"/>, which stays the drop from

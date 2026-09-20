@@ -1,4 +1,4 @@
-using System.Globalization;
+﻿using System.Globalization;
 using System.Reflection;
 using Autodesk.Revit.DB;
 using Autodesk.Revit.DB.Electrical;
@@ -213,6 +213,18 @@ public sealed partial class CablingApplyTests : IRevitTestSuite
         new RevitTestCase(
             "applying writes the mode a run was computed with into the project inside its own transaction, and only when the project said otherwise",
             WritesTheModeItWasComputedWith,
+            writes: true),
+
+        new RevitTestCase(
+            "a fitting type told that cable may be spliced in it reads back that way, and a type not told does not",
+            ASpliceableTypeIsReadBackAsOne,
+            needsDocument: true,
+            writes: true),
+
+        new RevitTestCase(
+            "where a tap lands on a carrier cable may be spliced in, the plan branches there and recommends no box",
+            ATapOnASpliceableCarrierAsksForNoBox,
+            needsDocument: true,
             writes: true),
     };
 
@@ -1219,7 +1231,7 @@ public sealed partial class CablingApplyTests : IRevitTestSuite
 
         var run = new RouteRun(found, snapshot.Network.Version, TimeSpan.Zero)
         {
-            Boxes = BoxPlanner.Plan(found, snapshot.Boxes, project.BoxRadius),
+            Plan = BoxPlanner.Plan(found, snapshot.Boxes, project.BoxRadius),
             ExistingBoxesOnly = true,
         };
 
@@ -2057,7 +2069,7 @@ public sealed partial class CablingApplyTests : IRevitTestSuite
 
         var run = new RouteRun(results, bare.Version, TimeSpan.Zero)
         {
-            Boxes = BoxPlanner.Plan(results, snapshot.Boxes, project.BoxRadius),
+            Plan = BoxPlanner.Plan(results, snapshot.Boxes, project.BoxRadius),
         };
 
         var blocked = run.Blocked(RouteStatus.NoCarrierNear).Select(one => one.Circuit.Value).ToList();
@@ -2455,7 +2467,7 @@ public sealed partial class CablingApplyTests : IRevitTestSuite
         // Every route, the blocked ones too, and the plan's own boxes: see the remarks.
         var run = new RouteRun(plan.Results, plan.Snapshot.Network.Version, TimeSpan.Zero)
         {
-            Boxes = plan.Run.Boxes,
+            Plan = plan.Run.Plan,
         };
 
         // Read before the apply, so that a value already standing on a circuit answers for itself
@@ -2603,7 +2615,7 @@ public sealed partial class CablingApplyTests : IRevitTestSuite
 
         var run = new RouteRun(found, snapshot.Network.Version, TimeSpan.Zero)
         {
-            Boxes = BoxPlanner.Plan(results, snapshot.Boxes, project.BoxRadius),
+            Plan = BoxPlanner.Plan(results, snapshot.Boxes, project.BoxRadius),
         };
 
         NeedsDefinitionsFor(document, symbol, run, snapshot);
@@ -2915,7 +2927,7 @@ public sealed partial class CablingApplyTests : IRevitTestSuite
 
         var run = new RouteRun(found, snapshot.Network.Version, TimeSpan.Zero)
         {
-            Boxes = BoxPlanner.Plan(results, snapshot.Boxes, project.BoxRadius),
+            Plan = BoxPlanner.Plan(results, snapshot.Boxes, project.BoxRadius),
         };
 
         return (snapshot, results, run);

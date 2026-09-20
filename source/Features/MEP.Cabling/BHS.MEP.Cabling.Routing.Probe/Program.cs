@@ -14,7 +14,7 @@ namespace BHS.MEP.Cabling.Routing.Probe;
 internal static class Program
 {
     private const double Tolerance = 0.1;
-    private const int Floor = 108;
+    private const int Floor = 120;
 
     private static int _run;
     private static int _failed;
@@ -37,6 +37,7 @@ internal static class Program
         ACableCutInBoxesComesDownOnce();
         BoxesAreWhereTheTapsAreAndCountWhatTheyTake();
         WithoutAdditionalBoxesEveryDeviceIsServedFromOneThatStands();
+        WhereTheCarrierAllowsASpliceNoBoxIsAskedFor();
         TheLengthIsToldByWhereItIsLaid();
         AStoredLengthIsToldFromAStaleOne();
 
@@ -134,8 +135,8 @@ internal static class Program
 
         var carriers = new[]
         {
-            new CarrierNode(new CarrierId(1), CarrierKind.Segment, "conduit", 24, 0, P(0, 0, 0), P(20, 0, 0)),
-            new CarrierNode(new CarrierId(2), CarrierKind.Segment, "tray", 20, 0, P(0, 1, 0), P(20, 1, 0)),
+            new CarrierNode(new CarrierId(1), CarrierKind.Segment, "conduit", false, 24, 0, P(0, 0, 0), P(20, 0, 0)),
+            new CarrierNode(new CarrierId(2), CarrierKind.Segment, "tray", true, 20, 0, P(0, 1, 0), P(20, 1, 0)),
         };
 
         var network = NetworkBuilder.Build(1, carriers, Options());
@@ -389,7 +390,7 @@ internal static class Program
         // The same network as conduit rather than tray: a cable leaves a pipe where it joins
         // something, so the tray-only figure falls back to the ends and the gain disappears.
         var pipe = new CarrierNode(
-            new CarrierId(0), CarrierKind.Segment, "conduit", 20, 0.05, P(0, 0, 0), P(20, 0, 0));
+            new CarrierId(0), CarrierKind.Segment, "conduit", false, 20, 0.05, P(0, 0, 0), P(20, 0, 0));
 
         // The decomposition the screen states, and it needs a reach that both measures can see:
         // a terminal only one of them reaches is excluded from the sums by construction, because a
@@ -470,7 +471,7 @@ internal static class Program
 
         // The same geometry as a pipe, where the saving cannot be built.
         var pipe = new CarrierNode(
-            new CarrierId(0), CarrierKind.Segment, "conduit", 20, 0.05, P(0, 0, 0), P(20, 0, 0));
+            new CarrierId(0), CarrierKind.Segment, "conduit", false, 20, 0.05, P(0, 0, 0), P(20, 0, 0));
 
         var inPipe = Router.Route(
             NetworkBuilder.Build(2, new[] { pipe }, Options(reach: 12)),
@@ -576,7 +577,7 @@ internal static class Program
 
         // One circuit, three devices far apart.
         var chain = InBoxes(1, 10, 20, 30);
-        var three = BoxPlanner.Plan(new[] { chain }, Array.Empty<ExistingBox>(), radius: 1.5);
+        var three = BoxPlanner.Plan(new[] { chain }, Array.Empty<ExistingBox>(), radius: 1.5).Boxes;
 
         Check("a box at every device, the last one included", three.Count == 3);
         Check("an intermediate box takes the trunk in and out and one spur - three",
@@ -585,14 +586,14 @@ internal static class Program
         Check("all of them are recommendations, nothing stands there yet", three.All(box => box.IsRecommendation));
 
         // Two devices of one circuit closer than the radius share a box, and no trunk runs between them.
-        var close = BoxPlanner.Plan(new[] { InBoxes(1, 10, 11, 20) }, Array.Empty<ExistingBox>(), radius: 1.5);
+        var close = BoxPlanner.Plan(new[] { InBoxes(1, 10, 11, 20) }, Array.Empty<ExistingBox>(), radius: 1.5).Boxes;
 
         Check("taps closer than the radius share one box", close.Count == 2 && close[0].Spurs == 2);
         Check("which takes the trunk in, the trunk out and both spurs - four", close[0].Entries == 4);
         Check("and it stands at the first tap, on the structure, not between them", Near(close[0].At.X, 10));
 
         // Two circuits tapping at the same place share one box, and it counts both.
-        var shared = BoxPlanner.Plan(new[] { InBoxes(1, 10), InBoxes(2, 10) }, Array.Empty<ExistingBox>(), radius: 1.5);
+        var shared = BoxPlanner.Plan(new[] { InBoxes(1, 10), InBoxes(2, 10) }, Array.Empty<ExistingBox>(), radius: 1.5).Boxes;
 
         Check("two circuits in one place share one box", shared.Count == 1);
         Check("which names both circuits", shared[0].Circuits.Count == 2);
@@ -600,7 +601,7 @@ internal static class Program
 
         // An existing box within the radius is used; one nobody reaches is not part of the answer.
         var existing = new[] { new ExistingBox(new CarrierId(500), P(20.5, 0, 0)), new ExistingBox(new CarrierId(501), P(100, 0, 0)) };
-        var withReal = BoxPlanner.Plan(new[] { chain }, existing, radius: 1.5);
+        var withReal = BoxPlanner.Plan(new[] { chain }, existing, radius: 1.5).Boxes;
 
         Check("an existing box within the radius is used instead of recommending one",
             withReal.Count(box => !box.IsRecommendation) == 1
@@ -608,7 +609,7 @@ internal static class Program
         Check("and an existing box nobody reaches is left out", withReal.Count == 3);
 
         // A circuit cut at its terminals asks for no boxes at all.
-        var terminals = BoxPlanner.Plan(new[] { InBoxes(3, 10, 20).With(CircuitConnection.AtTerminal) }, Array.Empty<ExistingBox>(), 1.5);
+        var terminals = BoxPlanner.Plan(new[] { InBoxes(3, 10, 20).With(CircuitConnection.AtTerminal) }, Array.Empty<ExistingBox>(), 1.5).Boxes;
 
         Check("a circuit cut at its terminals asks for no boxes", terminals.Count == 0);
     }
@@ -668,7 +669,7 @@ internal static class Program
         Check("trunk and spurs alike are counted under the class they were walked along",
             Near(routed.AlongClass("tray"), 52) && routed.AlongByClass.Count == 1);
 
-        var planned = BoxPlanner.Plan(new[] { routed }, standing, radius: 1.5);
+        var planned = BoxPlanner.Plan(new[] { routed }, standing, radius: 1.5).Boxes;
 
         Check("the planner recommends nothing, although no tap is within a radius of a box",
             planned.Count == 2 && planned.All(box => !box.IsRecommendation));
@@ -681,7 +682,7 @@ internal static class Program
 
         Check("the ordinary mode on the same circuit gives no box to any tap", ordinary.Taps.All(tap => tap.Box is null));
         Check("and its taps would ask for three boxes",
-            BoxPlanner.Plan(new[] { ordinary }, standing, radius: 1.5).Count(box => box.IsRecommendation) == 3);
+            BoxPlanner.Plan(new[] { ordinary }, standing, radius: 1.5).Boxes.Count(box => box.IsRecommendation) == 3);
 
         var atTerminals = new CircuitSnapshot(circuit.Id, circuit.Number, circuit.Source, circuit.Devices);
 
@@ -733,9 +734,9 @@ internal static class Program
 
         var carriers = new[]
         {
-            new CarrierNode(new CarrierId(1), CarrierKind.Segment, "conduit", 10, 0.05, P(0, 0, 0), P(10, 0, 0)),
+            new CarrierNode(new CarrierId(1), CarrierKind.Segment, "conduit", false, 10, 0.05, P(0, 0, 0), P(10, 0, 0)),
             Tray(2, 10, 30),
-            new CarrierNode(new CarrierId(3), CarrierKind.Segment, "trunking", 10, 0.05, P(30, 0, 0), P(40, 0, 0)),
+            new CarrierNode(new CarrierId(3), CarrierKind.Segment, "trunking", true, 10, 0.05, P(30, 0, 0), P(40, 0, 0)),
         };
 
         var options = new RoutingOptions
@@ -864,7 +865,7 @@ internal static class Program
 
     /// <summary>A box: a fitting of no length with one connector, where the trays either side of it meet.</summary>
     private static CarrierNode Box(long id, double at) =>
-        new(new CarrierId(id), CarrierKind.Fitting, "tray", 0, 0.05, P(at, 0, 0), P(at, 0, 0), new[] { P(at, 0, 0) });
+        new(new CarrierId(id), CarrierKind.Fitting, "tray", true, 0, 0.05, P(at, 0, 0), P(at, 0, 0), new[] { P(at, 0, 0) });
 
     /// <summary>A found route cut in boxes, with a tap on the tray above each x given.</summary>
     private static RouteResult InBoxes(long circuit, params double[] taps) =>
@@ -886,12 +887,12 @@ internal static class Program
         Section("a fitting joins on every connector");
 
         var tee = new CarrierNode(
-            new CarrierId(1), CarrierKind.Fitting, "tray", 0, 0.05,
+            new CarrierId(1), CarrierKind.Fitting, "tray", true, 0, 0.05,
             P(10, 0, 0), P(14, 0, 0),
             new[] { P(10, 0, 0), P(14, 0, 0), P(12, 0, 0) });
 
         var branch = new CarrierNode(
-            new CarrierId(3), CarrierKind.Segment, "tray", 10, 0.05,
+            new CarrierId(3), CarrierKind.Segment, "tray", true, 10, 0.05,
             P(12, 0, 0), P(12, 10, 0));
 
         var network = NetworkBuilder.Build(1, new[] { Tray(0, 0, 10), tee, Tray(2, 14, 24), branch }, Options());
@@ -906,12 +907,12 @@ internal static class Program
         // The count is not three: a fitting may carry any number of connectors, so nothing anywhere
         // assumes a shape. Five here, four of them join points nothing else would have found.
         var manifold = new CarrierNode(
-            new CarrierId(4), CarrierKind.Fitting, "tray", 0, 0.05,
+            new CarrierId(4), CarrierKind.Fitting, "tray", true, 0, 0.05,
             P(0, 0, 0), P(4, 0, 0),
             new[] { P(0, 0, 0), P(4, 0, 0), P(1, 0, 0), P(2, 0, 0), P(3, 0, 0) });
 
         var onMiddle = new CarrierNode(
-            new CarrierId(5), CarrierKind.Segment, "tray", 10, 0.05,
+            new CarrierId(5), CarrierKind.Segment, "tray", true, 10, 0.05,
             P(2, 0, 0), P(2, 10, 0));
 
         var many = NetworkBuilder.Build(2, new[] { manifold, onMiddle }, Options());
@@ -920,6 +921,90 @@ internal static class Program
             many.Neighbours(new CarrierId(4)).Contains(new CarrierId(5)));
 
         Check("and a route can be found across it", many.Shape().Groups == 1);
+    }
+
+    /// <summary>
+    /// A carrier whose type allows splicing takes the branch itself, and no box is recommended there.
+    /// <code>
+    ///   +====T0====+====== trunking, splices allowed ======+     trays at z = 0
+    ///   P      S1                      S2                        all one foot below
+    ///   0       5                      20                 30
+    /// </code>
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <b>The owner's rule of 2026-09-20.</b> A cable is not spliced inside a pipe and an open splice
+    /// is not made in a tray - hence a box at S1. A trunking with a removable cover is a place cable
+    /// is spliced, so at S2 the cable graph simply branches in the carrier and there is nothing to
+    /// recommend and nothing to place.
+    /// </para>
+    /// <para>
+    /// The trunk arithmetic is the part worth guarding. The cable arrives at B1, leaves it for the
+    /// splice, and stops there - so B1 takes three: in, out and one spur. The exit is counted when the
+    /// splice is planned rather than when the next box arrives, because here there is no next box; a
+    /// planner that waited would leave B1 with two, and a designer would pick a box one entry too
+    /// small.
+    /// </para>
+    /// </remarks>
+    private static void WhereTheCarrierAllowsASpliceNoBoxIsAskedFor()
+    {
+        Section("where the carrier allows a splice, no box is asked for");
+
+        var plain = Tray(0, 0, 10);
+        var trunking = new CarrierNode(
+            new CarrierId(1), CarrierKind.Segment, "tray", true, 20, 0.05, P(10, 0, 0), P(30, 0, 0))
+        {
+            AllowsSplicing = true,
+        };
+
+        Check("a carrier says nothing about splicing unless it is told", !plain.AllowsSplicing);
+
+        var network = NetworkBuilder.Build(1, new[] { plain, trunking }, Options());
+
+        var circuit = new CircuitSnapshot(
+            new CarrierId(1), "P-1",
+            Terminal(0, 0, -1, "panel"),
+            new[] { Terminal(5, 0, -1, "S1"), Terminal(20, 0, -1, "S2") })
+        {
+            Connection = CircuitConnection.AtJunctionBox,
+        };
+
+        var routed = Router.Route(network, circuit, Options());
+
+        Check("the circuit routes", routed.Status == RouteStatus.Found);
+        Check("the tap on the plain tray does not allow a splice", !routed.Taps[0].AllowsSplicing);
+        Check("the tap on the trunking does", routed.Taps[1].AllowsSplicing);
+
+        var plan = BoxPlanner.Plan(new[] { routed }, Array.Empty<ExistingBox>(), radius: 1.5);
+
+        Check("one box, for the device over the plain tray", plan.Boxes.Count == 1);
+        Check("and one splice, for the device over the trunking", plan.Splices.Count == 1);
+        Check("the splice names the circuit and the carrier it is made in",
+            plan.Splices[0].Circuit == circuit.Id && plan.Splices[0].Carrier == trunking.Id);
+        Check("it stands where the cable leaves the carrier", Near(plan.Splices[0].At.X, 20));
+        Check("both devices are served, by a box or by a splice", plan.Served == 2);
+
+        Check("the box takes the trunk in, the trunk out and one spur - three",
+            plan.Boxes[0].Entries == 3 && plan.Boxes[0].Spurs == 1);
+
+        // The same geometry with the permission withdrawn: the trunking is an ordinary tray again.
+        var ordinary = new CarrierNode(
+            new CarrierId(1), CarrierKind.Segment, "tray", true, 20, 0.05, P(10, 0, 0), P(30, 0, 0));
+
+        var without = BoxPlanner.Plan(
+            new[] { Router.Route(NetworkBuilder.Build(2, new[] { plain, ordinary }, Options()), circuit, Options()) },
+            Array.Empty<ExistingBox>(),
+            radius: 1.5);
+
+        Check("without the permission the same circuit asks for two boxes", without.Boxes.Count == 2);
+        Check("and splices nowhere", without.Splices.Count == 0);
+
+        // A box already in the model wins, however permissive the carrier - the owner's answer.
+        var standing = new[] { new ExistingBox(new CarrierId(9), P(20, 0, 0)) };
+        var withBox = BoxPlanner.Plan(new[] { routed }, standing, radius: 1.5);
+
+        Check("an existing box within the radius is used instead of splicing in the carrier",
+            withBox.Splices.Count == 0 && withBox.Boxes.Count(box => !box.IsRecommendation) == 1);
     }
 
     private static void TheStructureSaysHowManyPiecesItIsIn()
@@ -958,7 +1043,7 @@ internal static class Program
         };
 
     private static CarrierNode Tray(long id, double from, double to) =>
-        new(new CarrierId(id), CarrierKind.Segment, "tray", to - from, 0.05, P(from, 0, 0), P(to, 0, 0));
+        new(new CarrierId(id), CarrierKind.Segment, "tray", true, to - from, 0.05, P(from, 0, 0), P(to, 0, 0));
 
     private static Point3 P(double x, double y, double z) => new(x, y, z);
 

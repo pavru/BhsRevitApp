@@ -214,6 +214,7 @@ public static class Router
             {
                 Box = one.Box,
                 SpurAlongCarriers = one.Spur.Result.AlongCarriers,
+                AllowsSplicing = Splices(network, one.Spur.Exit),
             });
         }
 
@@ -309,8 +310,21 @@ public static class Router
         if (Walk(network, entries, exits, options) is not { } walked)
             return (Blocked(RouteStatus.NoConnectivity, to), null);
 
-        return (walked.Result, new Tap(to, walked.Exit, exits[walked.Exit].At, exits[walked.Exit].Cost));
+        return (
+            walked.Result,
+            new Tap(to, walked.Exit, exits[walked.Exit].At, exits[walked.Exit].Cost)
+            {
+                AllowsSplicing = Splices(network, walked.Exit),
+            });
     }
+
+    /// <summary>Whether the carrier a tap sits on is one cable may be spliced in.</summary>
+    /// <remarks>
+    /// A carrier the network does not know cannot say, and says no: the loud answer, for the same
+    /// reason <see cref="CarrierNode.AllowsSplicing"/> defaults to it.
+    /// </remarks>
+    private static bool Splices(RouteNetwork network, CarrierId carrier) =>
+        network.Node(carrier)?.AllowsSplicing ?? false;
 
     /// <summary>What one walk through the structure found.</summary>
     /// <param name="Result">The carriers walked and what they measure, with the two approaches.</param>
