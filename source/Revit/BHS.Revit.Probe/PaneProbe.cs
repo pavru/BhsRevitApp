@@ -1,5 +1,6 @@
 using System.Globalization;
 using System.IO;
+using Autodesk.Revit.DB;
 using Autodesk.Revit.UI;
 using Autodesk.Revit.UI.Events;
 using BHS.Revit.Abstractions;
@@ -36,6 +37,13 @@ internal static class PaneProbe
 
     public const string WpfUiName = "Wpf.Ui";
 
+    /// <summary>
+    /// The assembly the pane's content needs and nothing else in this deployment names. Text again, and
+    /// for a second reason: naming a type from it would load it, and the whole question is that nobody
+    /// else does.
+    /// </summary>
+    public const string SupportAssemblyName = "BHS.Revit.Probe.Pane.Support";
+
     private static int _themeChanges;
     private static string _lastThemeChange = string.Empty;
     private static string _switch = string.Empty;
@@ -46,11 +54,21 @@ internal static class PaneProbe
     /// <summary>The same question about WPF-UI, which only the pane shell names.</summary>
     public static bool WpfUiLoadedAtStartup { get; private set; }
 
+    /// <summary>The same question about the assembly the pane's content needs beside it.</summary>
+    /// <remarks>
+    /// False is what makes the answer below worth anything: an assembly something else had already
+    /// brought in would be found by a pane whether or not the host loaded the content properly, and the
+    /// check would pass while measuring nothing. That is how this defect stayed hidden until a person
+    /// met it.
+    /// </remarks>
+    public static bool SupportLoadedAtStartup { get; private set; }
+
     /// <summary>The first line of the probe's own startup, straight after the host registered the panes.</summary>
     public static void RecordStartup(UIControlledApplication application)
     {
         PaneLoadedAtStartup = ProbeApplication.IsLoaded(PaneAssemblyName);
         WpfUiLoadedAtStartup = ProbeApplication.IsLoaded(WpfUiName);
+        SupportLoadedAtStartup = ProbeApplication.IsLoaded(SupportAssemblyName);
 
         // Counted by the probe itself, beside the host's own subscription: whether Revit raises the
         // event for a switch made through UIThemeManager is part of what the switch measures.
@@ -93,11 +111,34 @@ internal static class PaneProbe
         facts["pane:wpfUiLoaded"] = ProbeApplication.IsLoaded(WpfUiName) ? "True" : "False";
         facts["pane:wpfUiLoadedAtStartup"] = WpfUiLoadedAtStartup ? "True" : "False";
 
+        // Whether a pane's content finds what sits beside it: the half of loading that was missing until
+        // 2026-09-20, and that the sweep could not see because nothing the probe pane needed was ever
+        // unloaded. The answer itself is the content's; these two say the question was worth asking.
+        facts["pane:supportLoaded"] = ProbeApplication.IsLoaded(SupportAssemblyName) ? "True" : "False";
+        facts["pane:supportLoadedAtStartup"] = SupportLoadedAtStartup ? "True" : "False";
+        facts["pane:supportAnswer"] = PaneFacts.Support;
+        facts["pane:supportLocalised"] = PaneFacts.SupportLocalised;
+        facts["pane:supportFrom"] = PaneFacts.SupportFrom;
+
         facts["pane:created"] = PaneFacts.Created.ToString(culture);
         facts["pane:createThread"] = PaneFacts.CreateThread.ToString(culture);
         facts["pane:documentChanges"] = PaneFacts.DocumentChanges.ToString(culture);
         facts["pane:lastDocument"] = PaneFacts.LastDocument;
         facts["pane:readTitle"] = PaneFacts.ReadTitle;
+        facts["pane:selectionChanges"] = PaneFacts.SelectionChanges.ToString(culture);
+        facts["pane:lastSelection"] = PaneFacts.LastSelection;
+        facts["pane:selectionThread"] = PaneFacts.SelectionThread.ToString(culture);
+        facts["pane:hostSelectionChanges"] = (registered?.SelectionChanges ?? -1).ToString(culture);
+
+        // What Revit itself has selected at this moment - asked of the active view, not of what any pane was
+        // told, because the question is whether a press of the pane's button costs the person their selection.
+        facts["pane:selectionNow"] = Ask(() => Spell(application));
+
+        // And what the press made of it. Which side of the command's return Revit clears the selection on is
+        // not known, so PaneSelectionKeeper reads it twice and says what it did; these three are that record.
+        facts["pane:selectionAtPress"] = registered?.SelectionAtPress ?? "(unregistered)";
+        facts["pane:selectionAfterPress"] = registered?.SelectionAfterPress ?? "(unregistered)";
+        facts["pane:selectionRestore"] = registered?.SelectionRestore ?? "(unregistered)";
 
         facts["pane:revitTheme"] = Ask(() => UIThemeManager.CurrentTheme);
         facts["pane:themeChanges"] = Volatile.Read(ref _themeChanges).ToString(culture);
@@ -159,6 +200,89 @@ internal static class PaneProbe
         }
 
         return "(not found on the panel)";
+    }
+
+    private static List<ElementId>? _selectionBefore;
+
+    /// <summary>
+    /// Selects one element of the active view through the API, remembering what was selected, and says which.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <b>The selection is the person's</b>, so what stood before is kept and put back by
+    /// <see cref="RestoreSelection"/> - the same discipline as the theme, without a marker: a selection does
+    /// not outlive the session, so a Revit killed in between loses nothing of the person's.
+    /// </para>
+    /// <para>
+    /// Any element the active view shows that has a category and is neither a view nor a type: the question
+    /// is whether the pane is told, not what the element is. Chosen to differ from what is selected already,
+    /// so that "told" cannot be the ids it had before.
+    /// </para>
+    /// </remarks>
+    public static string SelectOne(UIApplication application)
+    {
+        try
+        {
+            var view = application.ActiveUIDocument;
+
+            if (view?.Document is not { } document || document.ActiveView is not { } active)
+                return "no active view";
+
+            var before = view.Selection.GetElementIds().ToList();
+            _selectionBefore ??= before;
+
+            var chosen = new FilteredElementCollector(document, active.Id)
+                .WhereElementIsNotElementType()
+                .Where(element => element.Category is not null && element is not View)
+                .Select(element => element.Id)
+                .FirstOrDefault(id => before.All(one => one.Value != id.Value));
+
+            if (chosen is null)
+                return "nothing selectable in the active view";
+
+            view.Selection.SetElementIds(new List<ElementId> { chosen });
+
+            return Spell(application);
+        }
+        catch (Exception error)
+        {
+            return "failed: " + error.GetType().Name + ": " + error.Message;
+        }
+    }
+
+    /// <summary>Puts back what was selected before <see cref="SelectOne"/>, and says what is selected now.</summary>
+    public static string RestoreSelection(UIApplication application)
+    {
+        try
+        {
+            var view = application.ActiveUIDocument;
+
+            if (view is null)
+                return "no active view";
+
+            view.Selection.SetElementIds(_selectionBefore ?? new List<ElementId>());
+            _selectionBefore = null;
+
+            return Spell(application);
+        }
+        catch (Exception error)
+        {
+            return "failed: " + error.GetType().Name + ": " + error.Message;
+        }
+    }
+
+    /// <summary>
+    /// What the active view has selected, ids ascending - the spelling <c>PaneSelection</c> and
+    /// <c>PaneSelectionKeeper</c> both use, so that the sweep can compare two answers as strings.
+    /// </summary>
+    private static string Spell(UIApplication application)
+    {
+        var view = application.ActiveUIDocument;
+
+        return view is null
+            ? string.Empty
+            : string.Join("; ", view.Selection.GetElementIds().Select(id => id.Value).OrderBy(id => id)
+                .Select(id => id.ToString(CultureInfo.InvariantCulture)));
     }
 
     /// <summary>Hides the pane by the API rather than by its button: the sweep's clean-up.</summary>

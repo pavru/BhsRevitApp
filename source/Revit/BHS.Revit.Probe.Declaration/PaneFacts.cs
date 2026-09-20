@@ -26,6 +26,12 @@ public static class PaneFacts
     private static int _documentChanges;
     private static string _lastDocument = string.Empty;
     private static string _readTitle = string.Empty;
+    private static int _selectionChanges;
+    private static string _lastSelection = string.Empty;
+    private static int _selectionThread;
+    private static string _support = string.Empty;
+    private static string _supportLocalised = string.Empty;
+    private static string _supportFrom = string.Empty;
 
     /// <summary>How many times the host called the content's <c>Create</c>.</summary>
     public static int Created => Volatile.Read(ref _created);
@@ -41,6 +47,32 @@ public static class PaneFacts
 
     /// <summary>The title the content read through the pump, the first time it had a document.</summary>
     public static string ReadTitle => Volatile.Read(ref _readTitle);
+
+    /// <summary>How many times the content was told the selection changed, through the context's event.</summary>
+    public static int SelectionChanges => Volatile.Read(ref _selectionChanges);
+
+    /// <summary>The ids in the last selection the content was told, "; "-joined; empty for none.</summary>
+    public static string LastSelection => Volatile.Read(ref _lastSelection);
+
+    /// <summary>The managed thread the last selection change arrived on; zero before one.</summary>
+    public static int SelectionThread => Volatile.Read(ref _selectionThread);
+
+    /// <summary>
+    /// What the assembly beside the pane's content answered when the content asked it, or how asking
+    /// failed. Empty until the content has been created.
+    /// </summary>
+    /// <remarks>
+    /// The one thing a pane's content does that nothing else in the probe's deployment does: reach an
+    /// assembly nobody had loaded. Whether that works is a property of how the host loaded the content,
+    /// which is why the answer is read here and compared by the sweep.
+    /// </remarks>
+    public static string Support => Volatile.Read(ref _support);
+
+    /// <summary>The same sentence out of that assembly's ru-RU satellite; empty for none.</summary>
+    public static string SupportLocalised => Volatile.Read(ref _supportLocalised);
+
+    /// <summary>Where that assembly was loaded from; empty for none.</summary>
+    public static string SupportFrom => Volatile.Read(ref _supportFrom);
 
     /// <summary>
     /// Set by the content when it is created: answers the theme questions about the live element. Null
@@ -61,4 +93,18 @@ public static class PaneFacts
     }
 
     public static void RecordRead(string? title) => Volatile.Write(ref _readTitle, title ?? string.Empty);
+
+    public static void RecordSupport(string? answer, string? localised, string? from)
+    {
+        Volatile.Write(ref _supportLocalised, localised ?? string.Empty);
+        Volatile.Write(ref _supportFrom, from ?? string.Empty);
+        Volatile.Write(ref _support, answer ?? string.Empty);
+    }
+
+    public static void RecordSelection(string ids)
+    {
+        Volatile.Write(ref _lastSelection, ids ?? string.Empty);
+        Volatile.Write(ref _selectionThread, Environment.CurrentManagedThreadId);
+        Interlocked.Increment(ref _selectionChanges);
+    }
 }

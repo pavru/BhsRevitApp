@@ -1,0 +1,112 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Russian overlay of Inspector.resx. Every key here must exist there. Draft for the owner's review. -->
+<root>
+  <resheader name="resmimetype">
+    <value>text/microsoft-resx</value>
+  </resheader>
+  <resheader name="version">
+    <value>2.0</value>
+  </resheader>
+  <resheader name="reader">
+    <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <resheader name="writer">
+    <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <data name="Inspector.NothingSelected" xml:space="preserve">
+    <value>Выберите элемент, чтобы увидеть, что на нём записал расчёт кабелей.</value>
+  </data>
+  <data name="Inspector.SeveralSelected" xml:space="preserve">
+    <value>Выбрано элементов: {0}. Выберите один, чтобы увидеть, что на нём записал расчёт кабелей.</value>
+  </data>
+  <data name="Inspector.NotOurs" xml:space="preserve">
+    <value>Расчёт кабелей ничего не записывает на этот элемент.</value>
+  </data>
+  <data name="Inspector.Link" xml:space="preserve">
+    <value>Это связанная модель. Расчёт кабелей ничего не записывает в связи; откройте саму эту модель, чтобы увидеть, что записано на её элементах.</value>
+  </data>
+  <data name="Inspector.Gone" xml:space="preserve">
+    <value>Выбранного элемента больше нет в модели.</value>
+  </data>
+  <data name="Inspector.Family" xml:space="preserve">
+    <value>Откройте проект: расчёт кабелей ничего не хранит в семействах.</value>
+  </data>
+  <data name="Inspector.Failed" xml:space="preserve">
+    <value>Не удалось прочитать этот элемент: {0}</value>
+  </data>
+  <data name="Kind.Circuit" xml:space="preserve">
+    <value>Электрическая цепь</value>
+  </data>
+  <data name="Kind.Indicator" xml:space="preserve">
+    <value>Индикатор распределительной коробки, поставленный расчётом</value>
+  </data>
+  <data name="Kind.JunctionBox" xml:space="preserve">
+    <value>Распределительная коробка</value>
+  </data>
+  <data name="Section.Result" xml:space="preserve">
+    <value>Записано расчётом</value>
+  </data>
+  <data name="Section.Input" xml:space="preserve">
+    <value>Задано проектировщиком</value>
+  </data>
+  <data name="Section.InputNote" xml:space="preserve">
+    <value>Что задано у цепи. Если у цепи не задано, используется значение щита или умолчание проекта.</value>
+  </data>
+  <data name="Section.NotBoundNote" xml:space="preserve">
+    <value>Параметров кабелей в этой модели пока нет: их добавляют «Общие параметры» или кнопка Apply в окне «Проложить кабели».</value>
+  </data>
+  <data name="Label.CableLength" xml:space="preserve">
+    <value>Длина кабеля</value>
+  </data>
+  <data name="Label.InTray" xml:space="preserve">
+    <value>В лотках</value>
+  </data>
+  <data name="Label.InConduit" xml:space="preserve">
+    <value>В трубах</value>
+  </data>
+  <data name="Label.Free" xml:space="preserve">
+    <value>Вне носителей</value>
+  </data>
+  <data name="Label.Other" xml:space="preserve">
+    <value>В прочих носителях</value>
+  </data>
+  <data name="Label.Slack" xml:space="preserve">
+    <value>Запас</value>
+  </data>
+  <data name="Label.RouteConnection" xml:space="preserve">
+    <value>Проложено</value>
+  </data>
+  <data name="Label.RouteStamp" xml:space="preserve">
+    <value>Носители</value>
+  </data>
+  <data name="Label.CircuitConnection" xml:space="preserve">
+    <value>Подключение</value>
+  </data>
+  <data name="Label.CircuitRefs" xml:space="preserve">
+    <value>Цепи</value>
+  </data>
+  <data name="Label.Recommendation" xml:space="preserve">
+    <value>Рекомендует</value>
+  </data>
+  <data name="Label.TapCount" xml:space="preserve">
+    <value>Вводов кабеля</value>
+  </data>
+  <data name="Value.NeverWritten" xml:space="preserve">
+    <value>не записано</value>
+  </data>
+  <data name="Value.NotSet" xml:space="preserve">
+    <value>у цепи не задано</value>
+  </data>
+  <data name="Value.NotBound" xml:space="preserve">
+    <value>нет в модели</value>
+  </data>
+  <data name="Value.Terminal" xml:space="preserve">
+    <value>разрез на клеммах (Terminal)</value>
+  </data>
+  <data name="Value.JunctionBox" xml:space="preserve">
+    <value>через распределительные коробки (JunctionBox)</value>
+  </data>
+  <data name="Value.RecommendsBox" xml:space="preserve">
+    <value>распределительную коробку (JunctionBox)</value>
+  </data>
+</root>

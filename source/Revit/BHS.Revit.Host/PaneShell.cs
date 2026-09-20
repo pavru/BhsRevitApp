@@ -35,13 +35,27 @@ namespace BHS.Revit.Host;
 /// </para>
 /// <para>
 /// Layout, from the Designer: one grid, the content always in it, each state an overlay in the same
-/// cell. The content is hidden rather than collapsed under an opaque state, so it keeps its layout -
-/// scroll position included - for when the state goes away.
+/// cell. <b>All three states are opaque, and the content under them is hidden rather than collapsed</b>,
+/// so it keeps its layout - scroll position included - for when the state goes away.
+/// </para>
+/// <para>
+/// <b>The waiting state hides the content too, and that is the point.</b> Until 2026-09-20 it was the
+/// odd one out: a transparent layer over a content dimmed to 0.4, which left the previous answer legible
+/// underneath. The owner found what that means on a live 2026, by hand: selecting a circuit put the
+/// waiting layer over <i>the answer about the element selected before it</i>, and a dimmed sentence about
+/// another element reads as the answer about this one. That is a plain lie about the model, and no
+/// feature can undo it from its side - the shell is what stands between an answer and the next question.
+/// Fixing it in each feature instead would be a rule every future pane has to remember, and a forgotten
+/// clear looks exactly like a slow read. The cost is named and not measured: a read that returns fast
+/// flashes the waiting card. Every read here goes through the pump, so it waits for Revit's idle at
+/// best - flashes are not expected to be the common case, and a timer that delays the card would trade
+/// this defect back for a shorter one.
 /// </para>
 /// </remarks>
 internal sealed class PaneShell : Border
 {
     private const double Padding12 = 12;
+    private const double RingSize = 24;
 
     private readonly Border _content = new();
     private readonly Border _noDocument;
@@ -62,21 +76,36 @@ internal sealed class PaneShell : Border
         TextElement.SetFontSize(this, 12);
         SetResourceReference(BackgroundProperty, PaneAccent.BackgroundKey);
 
-        // No document: opaque, over a hidden content.
+        // No document: over a hidden content.
         var noDocumentText = Paragraph(ShellStrings.Get(ShellStrings.NoDocument), "TextFillColorPrimaryBrush");
-        _noDocument = Layer(noDocumentText, opaque: true);
+        _noDocument = Layer(noDocumentText);
 
-        // Busy: transparent but hit-test visible, so it blocks input over a dimmed content.
+        // Waiting: ring and caption side by side, the ring pinned to a box of its own size. A StackPanel
+        // over the caption put the two at the mercy of what ProgressRing reports as its desired size; a
+        // Border with an explicit Width and Height reports that size whatever its child does, so the auto
+        // column cannot collapse under the ring, and the caption's left margin absorbs a ring that paints
+        // a little outside itself. Whether WPF-UI's ring does paint outside itself is not measured.
         _busyCaption = Paragraph(string.Empty, "TextFillColorSecondaryBrush");
-        _busyCaption.Margin = new Thickness(0, 8, 0, 0);
+        _busyCaption.Margin = new Thickness(Padding12, 3, 0, 0);
 
-        var ring = new ProgressRing { IsIndeterminate = true, Width = 24, Height = 24, HorizontalAlignment = HorizontalAlignment.Left };
-        var busyStack = new StackPanel();
-        busyStack.Children.Add(ring);
-        busyStack.Children.Add(_busyCaption);
-        _busy = Layer(busyStack, opaque: false);
+        var ringBox = new Border
+        {
+            Width = RingSize,
+            Height = RingSize,
+            VerticalAlignment = VerticalAlignment.Top,
+            Child = new ProgressRing { IsIndeterminate = true, Width = RingSize, Height = RingSize },
+        };
 
-        // Stopped: opaque, marked by a strip rather than by red text.
+        var busyRow = new Grid();
+        busyRow.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
+        busyRow.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
+        Grid.SetColumn(ringBox, 0);
+        Grid.SetColumn(_busyCaption, 1);
+        busyRow.Children.Add(ringBox);
+        busyRow.Children.Add(_busyCaption);
+        _busy = Layer(busyRow);
+
+        // Stopped: marked by a strip rather than by red text.
         _errorText = Paragraph(string.Empty, "TextFillColorPrimaryBrush");
         _errorLog = new System.Windows.Controls.TextBox
         {
@@ -99,7 +128,7 @@ internal sealed class PaneShell : Border
             Child = errorStack,
         };
         strip.SetResourceReference(BorderBrushProperty, "SystemFillColorCriticalBrush");
-        _error = Layer(strip, opaque: true);
+        _error = Layer(strip);
 
         var grid = new Grid();
         grid.Children.Add(_content);
@@ -195,9 +224,10 @@ internal sealed class PaneShell : Border
         _busy.Visibility = busy && !noDocument ? Visibility.Visible : Visibility.Collapsed;
         _busyCaption.Text = busy ? _captions[_captions.Count - 1].Caption : string.Empty;
 
-        // Hidden, not Collapsed: the content keeps its layout for when the state clears.
-        _content.Visibility = _failed || noDocument ? Visibility.Hidden : Visibility.Visible;
-        _content.Opacity = busy ? 0.4 : 1.0;
+        // Hidden, not Collapsed: the content keeps its layout for when the state clears. Hidden while
+        // waiting too - an answer about the previous question must not be readable under the wait for
+        // the answer to this one.
+        _content.Visibility = _failed || noDocument || busy ? Visibility.Hidden : Visibility.Visible;
     }
 
     private static System.Windows.Controls.TextBlock Paragraph(string text, string brush)
@@ -208,20 +238,20 @@ internal sealed class PaneShell : Border
     }
 
     /// <summary>One overlay: top-left, 24 from the top, 12 elsewhere.</summary>
-    private static Border Layer(UIElement child, bool opaque)
+    /// <remarks>
+    /// The pane's own background, never null and never transparent: it hides the content beneath, and a
+    /// background is what makes the layer hit-test visible, which is how the waiting layer keeps clicks
+    /// off a content that cannot answer them.
+    /// </remarks>
+    private static Border Layer(UIElement child)
     {
         var layer = new Border
         {
             Padding = new Thickness(Padding12, 24, Padding12, Padding12),
             Child = child,
-            // Transparent rather than null: a null background is not hit-test visible, and the busy
-            // layer exists to stop clicks reaching a content that is waiting.
-            Background = Brushes.Transparent,
         };
 
-        if (opaque)
-            layer.SetResourceReference(BackgroundProperty, PaneAccent.BackgroundKey);
-
+        layer.SetResourceReference(BackgroundProperty, PaneAccent.BackgroundKey);
         return layer;
     }
 

@@ -17,7 +17,7 @@
     <value>Откройте проект, чтобы работать с этой панелью.</value>
   </data>
   <data name="Pane.WaitingForRevit" xml:space="preserve">
-    <value>Ожидание Revit: он завершает текущую операцию…</value>
+    <value>Ожидание Revit. Ответ появится, как только Revit до него дойдёт.</value>
   </data>
   <data name="Pane.Failed" xml:space="preserve">
     <value>Панель остановлена: {0}. Подробности записаны в файл: {1}</value>

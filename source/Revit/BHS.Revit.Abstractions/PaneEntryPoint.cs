@@ -1,4 +1,5 @@
 using System.Collections.Concurrent;
+using System.Globalization;
 using Autodesk.Revit.DB;
 using Autodesk.Revit.UI;
 using BHS.Logging;
@@ -28,6 +29,11 @@ namespace BHS.Revit.Abstractions;
 /// class carries <c>[Transaction(TransactionMode.ReadOnly)]</c>: showing a pane touches no document,
 /// and <c>RVTRIB003</c> still requires the attribute on the class Revit constructs.
 /// </para>
+/// <para>
+/// <b>And it keeps what was selected</b>, through <see cref="PaneSelectionKeeper"/>: pressing it cost the
+/// selection, measured by hand on 2026-09-20. Here rather than in any one pane, so that every pane that
+/// ever gets a button is opened by the same gesture without paying for it.
+/// </para>
 /// </remarks>
 public abstract class PaneEntryPoint : IExternalCommand
 {
@@ -45,6 +51,10 @@ public abstract class PaneEntryPoint : IExternalCommand
             message = "This pane is not available: its add-in did not register it. See the log.";
             return Result.Failed;
         }
+
+        // Read before the pane is touched: here is an API context, and what becomes of this reading is the
+        // whole of PaneSelectionKeeper. Outside the try, because a press that fails costs the selection too.
+        var selection = PaneSelectionKeeper.Take(commandData.Application, pane, log);
 
         try
         {
@@ -81,7 +91,187 @@ public abstract class PaneEntryPoint : IExternalCommand
             message = error.Message;
             return Result.Failed;
         }
+        finally
+        {
+            selection.PutBack();
+        }
     }
+}
+
+/// <summary>
+/// What was selected when a pane's button was pressed, and putting it back when the press costs it.
+/// </summary>
+/// <remarks>
+/// <para>
+/// <b>Why at all.</b> Measured by hand on a live Revit 2026 on 2026-09-20: an element selected, the pane's
+/// button pressed, the pane opens - and nothing is selected any more. Opening a pane to look at the element
+/// in front of you is the most ordinary gesture there is, and it wiped the thing it was opened for. Why a
+/// command costs the selection is Revit's; that a button of ours must not is ours.
+/// </para>
+/// <para>
+/// <b>Which side of the command's return Revit clears on is not measured, so this does not guess.</b> The
+/// selection is read at entry and again just before the command returns - the second reading is what answers
+/// the question, and both go onto <see cref="RegisteredPane"/> for the probe to report. Then both worlds are
+/// covered: gone already, and it is put back here, where the API context is free and the pane never sees the
+/// emptiness; gone afterwards, and it is put back by the pump, whose external event runs on the first idle
+/// after the command has returned. Whichever acts, the other finds nothing to do and says so.
+/// </para>
+/// <para>
+/// <b>It only ever fills an emptiness it may have caused.</b> A selection standing when the pump runs belongs
+/// to somebody - a person quick enough to click in that gap, or another add-in - and is left alone. Ids whose
+/// elements have gone are dropped; and a document that is no longer the one the press was made in stops the
+/// restore altogether, since the same id in another document is another element.
+/// </para>
+/// <para>
+/// <b>It holds a <c>Document</c> for the length of one press</b>, which nothing else outside the pump does,
+/// and only to compare identity - guarded by <c>IsValidObject</c>, and never read from. The alternatives are
+/// a title, which is not identity, or no check at all, which would move a selection into a document that
+/// never had it.
+/// </para>
+/// </remarks>
+internal sealed class PaneSelectionKeeper
+{
+    private static readonly IList<ElementId> None = new List<ElementId>();
+
+    private readonly RegisteredPane _pane;
+    private readonly ILog _log;
+    private readonly UIApplication _application;
+    private readonly Document? _document;
+    private readonly IList<ElementId> _ids;
+
+    private PaneSelectionKeeper(RegisteredPane pane, ILog log, UIApplication application, Document? document, IList<ElementId> ids)
+    {
+        _pane = pane;
+        _log = log;
+        _application = application;
+        _document = document;
+        _ids = ids;
+    }
+
+    /// <summary>Reads what is selected now. On the API thread, inside the command.</summary>
+    public static PaneSelectionKeeper Take(UIApplication application, RegisteredPane pane, ILog log)
+    {
+        Document? document = null;
+        var ids = None;
+
+        try
+        {
+            if (application.ActiveUIDocument is { } view)
+            {
+                document = view.Document;
+                ids = view.Selection.GetElementIds().ToList();
+            }
+        }
+        catch (Exception error)
+        {
+            // Not fatal to the press: the pane still opens, and the selection is simply not kept.
+            log.Warn(error, "pane {0}: what was selected could not be read, so a press cannot put it back", pane.Name);
+        }
+
+        pane.RecordSelectionAtPress(Spell(ids));
+        return new PaneSelectionKeeper(pane, log, application, document, ids);
+    }
+
+    /// <summary>Reads the selection again, puts it back if it has already gone, and asks the pump for later.</summary>
+    public void PutBack()
+    {
+        if (_ids.Count == 0)
+        {
+            _pane.RecordSelectionRestore("nothing was selected when the button was pressed");
+            return;
+        }
+
+        var standing = Selected(_application);
+        _pane.RecordSelectionAfterPress(Spell(standing));
+
+        var inCommand = Same(standing, _ids)
+            ? "the selection was still there when the command returned"
+            : "the selection was gone when the command returned, and the command " + Restore(_application);
+
+        Later(inCommand);
+    }
+
+    /// <summary>Asks the pump to look again once the command has returned and Revit is idle.</summary>
+    private void Later(string inCommand)
+    {
+        if (HostRegistry.Find(_pane.AddInId) is not IUiFeatureServices services)
+        {
+            // A pane is registered by a host with an interface, so this is not reachable by design; said
+            // out loud rather than assumed, because a silent half-restore is exactly this defect again.
+            _pane.RecordSelectionRestore(inCommand + "; the pump could not be asked: no host with an interface is registered under this pane's add-in id");
+            return;
+        }
+
+        // Written before the pump is asked, and overwritten when it answers: a pump closed by a Revit on
+        // its way out never runs this work, and an empty record would read as a button never pressed.
+        _pane.RecordSelectionRestore(inCommand + "; the pump has been asked to look again");
+
+        services.Pump.Post("pane button: put back what was selected", session =>
+        {
+            var application = session.Application;
+            var standing = Selected(application);
+
+            var outcome = Same(standing, _ids)
+                ? "the pump found it standing"
+                : standing.Count > 0
+                    ? "another selection stands, left alone"
+                    : "the pump " + Restore(application);
+
+            _pane.RecordSelectionRestore(inCommand + "; " + outcome);
+        });
+    }
+
+    /// <returns>A sentence saying what was done, for the record the probe reads.</returns>
+    private string Restore(UIApplication? application)
+    {
+        try
+        {
+            if (application?.ActiveUIDocument is not { } view)
+                return "found no active document to put it back into";
+
+            if (_document is not { IsValidObject: true } || view.Document is not { } now || !now.Equals(_document))
+                return "did not put it back: another document is current";
+
+            var alive = _ids.Where(id => now.GetElement(id) is not null).ToList();
+
+            if (alive.Count == 0)
+                return "did not put it back: none of those elements is in the model any more";
+
+            view.Selection.SetElementIds(alive);
+
+            return alive.Count == _ids.Count
+                ? "put back " + Count(alive.Count)
+                : "put back " + Count(alive.Count) + " of " + Count(_ids.Count) + "; the rest are gone from the model";
+        }
+        catch (Exception error)
+        {
+            _log.Warn(error, "pane {0}: what was selected could not be put back", _pane.Name);
+            return "could not put it back: " + error.GetType().Name + ": " + error.Message;
+        }
+    }
+
+    private static IList<ElementId> Selected(UIApplication? application)
+    {
+        try
+        {
+            return application?.ActiveUIDocument is { } view ? view.Selection.GetElementIds().ToList() : None;
+        }
+        catch
+        {
+            // Asked twice on every press, in a finally: a reading that throws is a missing reading, not a
+            // failed press. The one that mattered - the reading at entry - already logged its own failure.
+            return None;
+        }
+    }
+
+    private static bool Same(IList<ElementId> left, IList<ElementId> right) =>
+        left.Count == right.Count && Spell(left) == Spell(right);
+
+    /// <summary>Ids ascending, as the probe and <see cref="PaneSelection"/> spell them.</summary>
+    private static string Spell(IList<ElementId> ids) =>
+        string.Join("; ", ids.Select(id => id.Value).OrderBy(value => value).Select(value => value.ToString(CultureInfo.InvariantCulture)));
+
+    private static string Count(int many) => many.ToString(CultureInfo.InvariantCulture) + " id(s)";
 }
 
 /// <summary>One pane the host registered with Revit.</summary>
@@ -111,6 +301,10 @@ public sealed class RegisteredPane
     private int _toggles;
     private int _firstSetupThread;
     private int _firstCreatorThread;
+    private int _selectionChanges;
+    private string _selectionAtPress = string.Empty;
+    private string _selectionAfterPress = string.Empty;
+    private string _selectionRestore = string.Empty;
 
     /// <summary>How many times Revit called <c>SetupDockablePane</c>.</summary>
     public int SetupCalls => Volatile.Read(ref _setupCalls);
@@ -125,11 +319,26 @@ public sealed class RegisteredPane
     /// </remarks>
     public int Toggles => Volatile.Read(ref _toggles);
 
+    /// <summary>How many selection changes the host passed on to this pane, created or not.</summary>
+    public int SelectionChanges => Volatile.Read(ref _selectionChanges);
+
     /// <summary>The managed thread of the first setup call; zero before it.</summary>
     public int FirstSetupThread => Volatile.Read(ref _firstSetupThread);
 
     /// <summary>The managed thread of the first creator call; zero before it.</summary>
     public int FirstCreatorThread => Volatile.Read(ref _firstCreatorThread);
+
+    /// <summary>What was selected when its button was last pressed; empty for nothing, or for never pressed.</summary>
+    public string SelectionAtPress => Volatile.Read(ref _selectionAtPress);
+
+    /// <summary>
+    /// What was selected when that press was about to return - the reading that says which side of the
+    /// command's return Revit clears the selection on. Empty means nothing was selected then.
+    /// </summary>
+    public string SelectionAfterPress => Volatile.Read(ref _selectionAfterPress);
+
+    /// <summary>What became of it, in a sentence: nothing to keep, kept by itself, put back, or left alone.</summary>
+    public string SelectionRestore => Volatile.Read(ref _selectionRestore);
 
     /// <summary>Whether Revit called setup inside <c>RegisterDockablePane</c> itself; set by the host.</summary>
     public bool SetupDuringRegistration { get; set; }
@@ -149,6 +358,20 @@ public sealed class RegisteredPane
     }
 
     public void RecordToggle() => Interlocked.Increment(ref _toggles);
+
+    public void RecordSelection() => Interlocked.Increment(ref _selectionChanges);
+
+    /// <summary>A press begins: what it found, and the two answers about it cleared until it has them.</summary>
+    public void RecordSelectionAtPress(string ids)
+    {
+        Volatile.Write(ref _selectionAtPress, ids ?? string.Empty);
+        Volatile.Write(ref _selectionAfterPress, string.Empty);
+        Volatile.Write(ref _selectionRestore, string.Empty);
+    }
+
+    public void RecordSelectionAfterPress(string ids) => Volatile.Write(ref _selectionAfterPress, ids ?? string.Empty);
+
+    public void RecordSelectionRestore(string outcome) => Volatile.Write(ref _selectionRestore, outcome ?? string.Empty);
 }
 
 /// <summary>

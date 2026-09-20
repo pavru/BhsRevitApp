@@ -46,6 +46,7 @@ internal sealed class PaneHost
         _log = log;
         _documents = new PaneDocuments(log);
         _documents.Changed += OnDocumentChanged;
+        _documents.SelectionChanged += OnSelectionChanged;
     }
 
     /// <summary>How many panes this host registered with Revit.</summary>
@@ -284,5 +285,11 @@ internal sealed class PaneHost
     {
         foreach (var slot in _slots)
             slot.OnDocumentChanged(document);
+    }
+
+    private void OnSelectionChanged(PaneSelection selection)
+    {
+        foreach (var slot in _slots)
+            slot.OnSelectionChanged(selection);
     }
 }

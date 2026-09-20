@@ -113,6 +113,10 @@
     <!-- The probe's dockable pane content: its own assembly, so that a pane Revit restored as shown
          can only make the pane's laziness check skip, never the ribbon's. -->
     <Project Path="source/Revit/BHS.Revit.Probe.Pane/BHS.Revit.Probe.Pane.csproj" Type="C#" />
+    <!-- What the pane's content needs and nothing else in the probe's deployment names, so that "a
+         pane's content finds what sits beside it" is a question with an answer rather than a check that
+         passes because everything was already loaded. -->
+    <Project Path="source/Revit/BHS.Revit.Probe.Pane.Support/BHS.Revit.Probe.Pane.Support.csproj" Type="C#" />
     <Project Path="source/Revit/BHS.Revit.Probe.Runner/BHS.Revit.Probe.Runner.csproj" Type="C#" />
   </Folder>
 

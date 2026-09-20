@@ -31,6 +31,16 @@ namespace BHS.Revit.Probe.Runner;
 internal static class SweepChecks
 {
     /// <summary>
+    /// What <c>BHS.Revit.Probe.Pane.Support.PaneSupport.Say</c> returns, written out rather than named.
+    /// </summary>
+    /// <remarks>
+    /// The runner is a process of its own and could reference that assembly without harm - but the two
+    /// copies would then agree by construction, and the sweep would be comparing the constant with
+    /// itself. A literal is what makes a change on one side show up as a red check on the other.
+    /// </remarks>
+    private const string SupportAnswer = "the assembly beside the pane answered";
+
+    /// <summary>
     /// How long Revit is entitled to say nothing before a wait calls it a hang.
     /// </summary>
     /// <remarks>
@@ -817,6 +827,14 @@ internal static class SweepChecks
 
             report.Check("and WPF-UI is not loaded while no pane has been shown",
                 pane.GetValueOrDefault("pane:wpfUiLoaded") == "False");
+
+            // The one that keeps the check below it honest. BHS.Revit.Probe.Pane.Support is referenced by
+            // the pane's content and by nothing else in the deployment, so a True here means something has
+            // started naming it - and from that moment "the content found what sits beside it" would pass
+            // on a host that cannot load a dependency at all. That is exactly how the defect of
+            // 2026-09-20 lived through every green sweep before it.
+            report.Check("and neither is the assembly its content needs beside it",
+                pane.GetValueOrDefault("pane:supportLoaded") == "False");
         }
 
         foreach (var key in new[]
@@ -824,7 +842,8 @@ internal static class SweepChecks
                      "pane:exists", "pane:shown", "pane:title", "pane:creatorCalls", "pane:setupCalls", "pane:setupDuringRegistration",
                      "pane:setupThread", "pane:apiThread", "pane:contentLoadedAtStartup", "pane:wpfUiLoadedAtStartup",
                      "pane:revitLanguage", "pane:shellCulture", "pane:shellNoDocument", "pane:revitTheme",
-                     "pane:titleExpected", "pane:titleCulture", "pane:gateText",
+                     "pane:titleExpected", "pane:titleCulture", "pane:gateText", "pane:hostSelectionChanges",
+                     "pane:supportLoadedAtStartup",
                  })
         {
             report.Note(key, pane.GetValueOrDefault(key) ?? "(missing)");
@@ -848,10 +867,18 @@ internal static class SweepChecks
     /// <c>PaneEntryPoint</c>, and the press is repeated only while it has not moved.
     /// </para>
     /// <para>
-    /// Six checks, each something the pane design rests on and none measured before: the button shows the
-    /// pane; Revit asks for the content only then, and the assembly loads then; the content is created
-    /// once, told the open model, and reads it through the pump; the shell wears WPF-UI's theme for
-    /// Revit's theme and our accent over it; a live theme switch reaches it; and the button hides it again.
+    /// Each check here is something the pane design rests on and none was measured before: the button shows
+    /// the pane; the press leaves the selection it found; Revit asks for the content only then, and the
+    /// assembly loads then; the content is created once, told the open model, and reads it through the pump;
+    /// it reaches the assembly beside it that nothing had loaded; the shell wears WPF-UI's theme for Revit's
+    /// theme and our accent over it; a selection made through the API reaches the content and so does
+    /// putting it back; a live theme switch reaches it; and the button hides it again.
+    /// </para>
+    /// <para>
+    /// <b>The first press is armed with a selection</b>, so that it is the gesture a person makes - select
+    /// something, open the pane to look at it - rather than a press with nothing to lose. That is the one
+    /// the owner found costing the selection on 2026-09-20, and the sweep could not have found it: it
+    /// pressed with an empty selection. Whatever happens, the person's selection is put back in a finally.
     /// </para>
     /// </remarks>
     private static async Task CheckPaneShownAsync(RevitSideChannel.RevitSideChannelClient client, Report report)
@@ -866,14 +893,31 @@ internal static class SweepChecks
         if (before.GetValueOrDefault("pane:shown") == "True")
             report.Note("pane restored as shown, hidden by the API first", HideByApi(client));
 
-        if (!await ToggleAsync(client, show: true))
+        // Armed with a selection before the press, so that the press below is the owner's own gesture -
+        // an element selected, the pane opened to look at it - and what it costs can be asked.
+        var armed = client.Ask(new AskRequest { Question = "selectforpane" }).Values.GetValueOrDefault("pane:selected") ?? "(missing)";
+        bool shown;
+
+        try
         {
-            report.Check("the pane button shows the probe pane", false);
+            shown = await ToggleAsync(client, show: true);
+            report.Check("the pane button shows the probe pane", shown);
+
+            if (shown)
+                await CheckPressKeepsSelectionAsync(client, report, armed);
+        }
+        finally
+        {
+            // Always, whatever happened above: the selection is the person's.
+            report.Note("the selection the press was armed with, put back",
+                client.Ask(new AskRequest { Question = "restoreselection" }).Values.GetValueOrDefault("pane:selectionRestored") ?? "(missing)");
+        }
+
+        if (!shown)
+        {
             NotePane(client, report);
             return;
         }
-
-        report.Check("the pane button shows the probe pane", true);
 
         // Waited for: the content reads the title through the pump, which runs when Revit is idle.
         var pane = new Dictionary<string, string>(StringComparer.Ordinal);
@@ -905,6 +949,13 @@ internal static class SweepChecks
             && title.Length > 0
             && pane.GetValueOrDefault("pane:readTitle") == title);
 
+        // The half of loading that nothing asked about until the owner met it by hand on 2026-09-20: the
+        // content is loaded, and then it reaches the assembly sitting beside it that nobody had brought in.
+        // Compared against a literal, not against the constant in that assembly - this process is not the
+        // one being measured, and the runner must not need what it is asking about.
+        report.Check("and reaches the assembly beside it that nothing had loaded",
+            pane.GetValueOrDefault("pane:supportAnswer") == SupportAnswer);
+
         report.Check("the pane wears WPF-UI's theme for Revit's theme, with our accent over it", Themed(pane));
 
         foreach (var key in new[]
@@ -912,11 +963,20 @@ internal static class SweepChecks
                      "pane:creatorCalls", "pane:creatorThread", "pane:createThread", "pane:apiThread", "pane:documentChanges",
                      "pane:themeSourceLive", "pane:accentPrimaryLive", "pane:backgroundLive", "pane:revitBackgroundLive",
                      "pane:inspect",
+                     // Where that assembly came from, and what its ru-RU satellite said. The satellite is a
+                     // note and not a check on purpose: that a .resources assembly is found in <culture>
+                     // beside its parent is measured outside Revit, on both kinds of load context, and
+                     // never inside one - and a check written before its answer agrees with whoever wrote
+                     // it. It becomes a check once a record says what Revit does, and what it should say
+                     // is the Russian sentence in the overlay, on a Revit of any language.
+                     "pane:supportFrom", "pane:supportLocalised",
                  })
         {
             if (pane.TryGetValue(key, out var value))
                 report.Note(key, value);
         }
+
+        await CheckPaneSelectionAsync(client, report);
 
         await CheckThemeSwitchAsync(client, report, pane.GetValueOrDefault("pane:revitTheme") ?? string.Empty);
 
@@ -927,6 +987,132 @@ internal static class SweepChecks
         // next sweep's laziness question could not be asked.
         if (!hidden)
             report.Note("pane hidden by the API instead", HideByApi(client));
+    }
+
+    /// <summary>
+    /// Whether a press of the pane's button leaves the selection as it found it.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <b>Bought by a person, not by a sweep.</b> The owner selected an element on a live Revit 2026 on
+    /// 2026-09-20, pressed the pane's button, and the pane opened onto an empty selection. Opening a pane
+    /// to look at what is in front of you is the most ordinary gesture there is, and until that day this
+    /// mechanism destroyed the thing it was opened for. Nothing here could have found it: the sweep pressed
+    /// the button with nothing selected, so there was nothing to lose.
+    /// </para>
+    /// <para>
+    /// <b>Two clauses, and the first is what makes the second able to go red.</b> That the command saw the
+    /// selection the sweep armed it with - a deterministic assertion, red the moment the arming or the
+    /// reading at entry stops working - and that the selection still stands once the press is over. The
+    /// second alone would pass in a world where Revit never cleared anything, measuring nothing; paired
+    /// with the notes below, it says which world this is.
+    /// </para>
+    /// <para>
+    /// <b>The mechanism is notes, deliberately.</b> Which side of the command's return Revit clears the
+    /// selection on is not measured, and a check written before its answer agrees with whoever wrote it.
+    /// So <c>PaneSelectionKeeper</c> reads the selection twice and records what it did, and those three
+    /// strings go into the record as notes. The check asserts only the invariant the owner asked for.
+    /// </para>
+    /// <para>
+    /// Waited for rather than read once: the restore may happen inside the command or on the first idle
+    /// after it, and both are right. The question the wait cannot answer - which of them acted - is the
+    /// one the notes answer.
+    /// </para>
+    /// </remarks>
+    private static async Task CheckPressKeepsSelectionAsync(
+        RevitSideChannel.RevitSideChannelClient client,
+        Report report,
+        string armed)
+    {
+        // An id list is digits and separators; anything else is the probe saying why it selected nothing.
+        var usable = armed.Length > 0 && armed.All(one => char.IsDigit(one) || one == ';' || one == ' ');
+
+        if (!usable)
+        {
+            report.Note("pressing the pane's button keeps what was selected",
+                "not asked - nothing in this model could be selected to press with: " + armed);
+            return;
+        }
+
+        var kept = await WorkWatch.WaitForAsync(
+            () => Pane(client).GetValueOrDefault("pane:selectionNow") == armed, 30_000);
+
+        var pane = Pane(client);
+
+        report.Check("pressing the pane's button leaves the selection it found",
+            pane.GetValueOrDefault("pane:selectionAtPress") == armed && kept);
+
+        report.Note("selection across the press",
+            "armed with [" + armed + "], Revit now has [" + (pane.GetValueOrDefault("pane:selectionNow") ?? "(missing)")
+            + "]; the press found [" + (pane.GetValueOrDefault("pane:selectionAtPress") ?? "(missing)")
+            + "], saw [" + (pane.GetValueOrDefault("pane:selectionAfterPress") ?? "(missing)")
+            + "] as the command returned, and " + (pane.GetValueOrDefault("pane:selectionRestore") ?? "(missing)"));
+    }
+
+    /// <summary>
+    /// Selects an element through the API and waits for the live pane to be told which, then puts the
+    /// person's selection back and waits for the pane to be told that too.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <b>The host's selection is a contract two panes rest on</b> - the cabling inspector and the probe's -
+    /// and the probe is the one the sweep can read. What it asserts is the whole path: Revit raises
+    /// <c>SelectionChanged</c>, the host passes the ids on, and the content hears them on its own thread.
+    /// </para>
+    /// <para>
+    /// <b>Written before its answer, and that is named rather than hidden.</b> Whether a selection set
+    /// through <c>Selection.SetElementIds</c> raises <c>SelectionChanged</c> at all is not measured; its
+    /// reference says only "after the selection was changed". A red here with the ids in the notes answers
+    /// that question, and does not by itself say the host is wrong - a selection by hand would settle it.
+    /// </para>
+    /// <para>
+    /// Only in the mode with the pane shown, because the content hears nothing before it exists. The count
+    /// the host keeps without a content is a note in every mode.
+    /// </para>
+    /// </remarks>
+    private static async Task CheckPaneSelectionAsync(RevitSideChannel.RevitSideChannelClient client, Report report)
+    {
+        var selected = string.Empty;
+        var told = false;
+        var restoredTold = false;
+        var restored = string.Empty;
+
+        try
+        {
+            selected = (await client.AskAsync(new AskRequest { Question = "selectforpane" })).Values.GetValueOrDefault("pane:selected") ?? "(missing)";
+
+            // An id list is digits and separators; anything else is the probe saying why it selected nothing.
+            var usable = selected.Length > 0 && selected.All(one => char.IsDigit(one) || one == ';' || one == ' ');
+
+            if (usable)
+            {
+                told = await WorkWatch.WaitForAsync(
+                    () => Pane(client).GetValueOrDefault("pane:lastSelection") == selected, 30_000);
+            }
+        }
+        finally
+        {
+            // Always, whatever happened above: the selection is the person's.
+            restored = client.Ask(new AskRequest { Question = "restoreselection" }).Values.GetValueOrDefault("pane:selectionRestored") ?? "(missing)";
+        }
+
+        if (told)
+        {
+            restoredTold = await WorkWatch.WaitForAsync(
+                () => Pane(client).GetValueOrDefault("pane:lastSelection") == restored, 30_000);
+        }
+
+        report.Check("selecting an element through the API tells the probe pane which one, and putting the selection back tells it again",
+            told && restoredTold);
+
+        var pane = Pane(client);
+
+        report.Note("pane selection",
+            "selected [" + selected + "], restored to [" + restored + "], pane last told ["
+            + (pane.GetValueOrDefault("pane:lastSelection") ?? "(missing)") + "] after "
+            + (pane.GetValueOrDefault("pane:selectionChanges") ?? "(missing)") + " change(s) on thread "
+            + (pane.GetValueOrDefault("pane:selectionThread") ?? "(missing)") + ", host passed on "
+            + (pane.GetValueOrDefault("pane:hostSelectionChanges") ?? "(missing)"));
     }
 
     /// <summary>Switches Revit's theme, checks the live pane follows, and always puts it back.</summary>

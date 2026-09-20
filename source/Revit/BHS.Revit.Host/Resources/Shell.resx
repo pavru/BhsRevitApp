@@ -22,7 +22,8 @@
     <value>Open a project to use this panel.</value>
   </data>
   <data name="Pane.WaitingForRevit" xml:space="preserve">
-    <value>Waiting for Revit to finish its current operation…</value>
+    <value>Waiting for Revit. The answer will appear as soon as Revit gets to it.</value>
+    <comment>True whether Revit is busy with work of its own or simply has not reached idle yet: the sentence says that the request is out and what happens next, and never why.</comment>
   </data>
   <data name="Pane.Failed" xml:space="preserve">
     <value>The panel stopped: {0}. Details are in the log file: {1}</value>

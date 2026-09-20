@@ -102,6 +102,34 @@
             <ToolTip>CheckLengths.ToolTip</ToolTip>
             <Order>4</Order>
         </RevitRibbonButton>
+
+        <!--
+          The cabling inspector: what the calculation wrote on the selected element, read from the model.
+          The id is fixed forever - Revit keeps the dock layout a person built under it. Right-docked at the
+          width of the properties palette, hidden until its button shows it, and dismissed in the family
+          editor and in sketch modes: the framework's defaults, each with its reason in CLAUDE.md.
+
+          The content lives in BHS.MEP.Cabling.Feature, which this project already references and which
+          stays unloaded until the pane is shown - never in this assembly or the declaration, which Revit
+          loads before any pane is asked for (RVTPAN003).
+        -->
+        <RevitDockablePane Include="BHS.Cabling.Inspector">
+            <Id>ed4d9158-61fa-436c-af3f-a6604cacddd7</Id>
+            <Title>Inspector.Title</Title>
+            <ContentAssembly>BHS.MEP.Cabling.Feature</ContentAssembly>
+            <ContentClassName>BHS.MEP.Cabling.Feature.CablingInspectorPane</ContentClassName>
+        </RevitDockablePane>
+
+        <!-- No availability class: a toggle for a pane is as useful with no model open as with one - the
+             shell says "open a model" itself - and Revit's own Properties button is never grey either. -->
+        <RevitRibbonButton Include="BHS.Cabling.Inspector">
+            <Panel>Cabling</Panel>
+            <Text>Inspector.Text</Text>
+            <ClassName>BHS.MEP.Cabling.Entry.CablingInspectorEntryPoint</ClassName>
+            <Pane>BHS.Cabling.Inspector</Pane>
+            <ToolTip>Inspector.ToolTip</ToolTip>
+            <Order>5</Order>
+        </RevitRibbonButton>
     </ItemGroup>
 
 </Project>
