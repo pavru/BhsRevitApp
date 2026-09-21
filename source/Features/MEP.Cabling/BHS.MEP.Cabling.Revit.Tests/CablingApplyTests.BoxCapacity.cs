@@ -170,6 +170,17 @@ public sealed partial class CablingApplyTests
         var before = CablingSnapshot.Build(
             document, Options, catalogue, version: 1, project.Boxes, project.DefaultConnection);
 
+        // Taken from the read itself, before anything of this case has touched the circuits. The two
+        // notes are the difference between "this model states no conductors" and "something between
+        // the read and here dropped them" - which is not a distinction worth guessing at, because on
+        // 2026-09-21 it was the second, and the skip reason said the first on all four releases.
+        Note(context, "over capacity: circuits the read describes",
+            before.Circuits.Described.Count);
+        Note(context, "over capacity: circuits the read gives conductors for",
+            before.Circuits.Described.Count(circuit => circuit.Conductors > 0));
+        Note(context, "over capacity: conductors of the richest circuit the read describes",
+            before.Circuits.Described.Count == 0 ? 0 : before.Circuits.Described.Max(circuit => circuit.Conductors));
+
         var circuits = before.Circuits.Described
             .Select(circuit => InMode(circuit, CircuitConnection.AtJunctionBox))
             .ToList();
