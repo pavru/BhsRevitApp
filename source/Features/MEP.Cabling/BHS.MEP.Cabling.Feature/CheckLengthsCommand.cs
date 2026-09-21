@@ -146,7 +146,7 @@ public sealed class CheckLengthsCommand : IFeatureCommand
                     // Planned here too, and for the same reason the routing command plans: a stored
                     // length is stale when it differs from the length computed today, and that length
                     // includes slack counted per place the cable is cut - which the plan decides.
-                    var plan = BoxPlanner.Plan(results, snapshot.Boxes, project.BoxRadius);
+                    var plan = BoxPlanner.Plan(results, snapshot.Boxes, project.BoxRadius, project.BoxCapacity);
                     var run = new RouteRun(results, snapshot.Network.Version, TimeSpan.Zero, plan, project.Slack);
 
                     return LengthReview.Of(

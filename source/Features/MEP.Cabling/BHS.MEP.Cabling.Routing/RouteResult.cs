@@ -242,6 +242,15 @@ public sealed class RouteResult
     /// <summary>How the circuit was routed - carried so that what is done with the taps can tell.</summary>
     public CircuitConnection Connection { get; init; } = CircuitConnection.AtTerminal;
 
+    /// <summary>How many conductors its cable has, zero when Revit said nothing.</summary>
+    /// <remarks>
+    /// Carried here for the same reason as <see cref="Connection"/> and <see cref="BuiltInLength"/>:
+    /// the box plan is computed from routes alone, and a number it has to multiply by must travel
+    /// with the route rather than be looked up beside it. A second lookup is a second chance to pair
+    /// the wrong circuit with the wrong count.
+    /// </remarks>
+    public int Conductors { get; init; }
+
     /// <summary>Where the cable leaves the structure, one per device, in the order the circuit visits them.</summary>
     /// <remarks>Empty unless <see cref="Status"/> is Found.</remarks>
     public IReadOnlyList<Tap> Taps { get; init; } = Array.Empty<Tap>();

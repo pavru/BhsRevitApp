@@ -90,6 +90,7 @@ public static class Router
             Approaches = tree.Approaches,
             BuiltInLength = circuit.BuiltInLength,
             Connection = circuit.Connection,
+            Conductors = circuit.Conductors,
             Taps = tree.Taps,
             Branches = tree.Branches,
         };

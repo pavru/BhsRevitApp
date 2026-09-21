@@ -14,7 +14,7 @@ namespace BHS.MEP.Cabling.Routing.Probe;
 internal static class Program
 {
     private const double Tolerance = 0.1;
-    private const int Floor = 156;
+    private const int Floor = 167;
 
     private static int _run;
     private static int _failed;
@@ -41,6 +41,7 @@ internal static class Program
         WhatASpliceCostsDecidesWhereTheCableIsCut();
         WhatATerminalHoldsDecidesWhetherItMayBranch();
         ABoxTheCableOnlyPassesThroughFeedsNothing();
+        WhatABoxHoldsIsReportedAndChangesNothing();
         SlackIsCountedWhereTheCableIsCut();
         TheLengthIsToldByWhereItIsLaid();
         AStoredLengthIsToldFromAStaleOne();
@@ -1369,6 +1370,146 @@ internal static class Program
 
         Check("so the plan holds no box at all - the one that stands was only offered",
             plan.Boxes.Count == 0 && plan.Splices.Count == 0);
+    }
+
+    /// <summary>
+    /// What a box holds is measured in conductors, reported when exceeded, and changes nothing.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <b>The owner's answers of 2026-09-21, as arithmetic.</b> A capacity is in conductors, not in
+    /// cable entries, and counts only the cables actually spliced in the box. Exceeding it warns and
+    /// moves nothing: no tap changes box, no box is split, no route is diverted. The type answers
+    /// first, the project when the type is silent, and with neither there is no limit at all. A
+    /// recommended box has no capacity whatever the project said - the indicator states the need and
+    /// the designer picks a box that takes it.
+    /// </para>
+    /// <para>
+    /// The network is the one the existing-box section uses: X at ten and Y at thirty, three devices,
+    /// three ends at each box. With a three-conductor cable that is nine conductors apiece.
+    /// </para>
+    /// <para>
+    /// <b>The check that the plan is unchanged is the one that carries the owner's answer</b>, and it
+    /// is written as a comparison of two plans over the same routes rather than as a list of expected
+    /// numbers. A list would be a second statement of what the planner does, and it would agree with
+    /// a planner that had started diverting taps as long as somebody updated the list - which is the
+    /// failure this file has already paid for once.
+    /// </para>
+    /// </remarks>
+    private static void WhatABoxHoldsIsReportedAndChangesNothing()
+    {
+        Section("what a box holds is reported, and changes nothing");
+
+        var x = Box(50, 10);
+        var y = Box(51, 30);
+        var network = NetworkBuilder.Build(1, new[] { Tray(0, 0, 10), x, Tray(1, 10, 30), y, Tray(2, 30, 40) }, Options());
+
+        var devices = new[] { Terminal(18, 0, -1, "S1"), Terminal(38, 0, -1, "S2"), Terminal(24, 0, -1, "S3") };
+
+        CircuitSnapshot Circuit(long id, int conductors) =>
+            new(new CarrierId(id), "P-" + id, Terminal(0, 0, -1, "panel"), devices)
+            {
+                Connection = CircuitConnection.AtJunctionBox,
+                Conductors = conductors,
+            };
+
+        ExistingBox[] Standing(int atX, int atY) => new[]
+        {
+            new ExistingBox(new CarrierId(50), P(10, 0, 0)) { Capacity = atX },
+            new ExistingBox(new CarrierId(51), P(30, 0, 0)) { Capacity = atY },
+        };
+
+        // Three conductors a cable, three ends at each box: nine apiece. X takes twelve and fits;
+        // Y takes six and does not.
+        var routed = Router.Route(network, Circuit(1, 3), Options(), Standing(12, 6));
+        var plan = BoxPlanner.Plan(new[] { routed }, Standing(12, 6), radius: 1.5);
+
+        var atX = plan.Boxes.Single(box => box.Existing?.Id == new CarrierId(50));
+        var atY = plan.Boxes.Single(box => box.Existing?.Id == new CarrierId(51));
+
+        Check("a box counts the conductors of every cable spliced in it: three ends of a three-wire cable",
+            atX.Conductors == 9 && atY.Conductors == 9);
+        Check("the one that holds twelve is within its capacity", !atX.IsOverfull);
+        Check("the one that holds six is over it", atY.IsOverfull);
+
+        // Same routes, no capacity anywhere. If a capacity moved anything, these two would differ.
+        var unbounded = BoxPlanner.Plan(new[] { routed }, Standing(0, 0), radius: 1.5);
+
+        Check("stating a capacity changes nothing about the plan - same boxes, same entries, same spurs",
+            unbounded.Boxes.Count == plan.Boxes.Count
+            && unbounded.Boxes.Zip(plan.Boxes, (a, b) =>
+                a.Existing?.Id == b.Existing?.Id && a.Entries == b.Entries && a.Spurs == b.Spurs).All(same => same)
+            && unbounded.Splices.Count == plan.Splices.Count);
+        Check("and with no capacity stated anywhere, no box is over one",
+            unbounded.Boxes.All(box => !box.IsOverfull));
+
+        // The type answers first: X states twelve and keeps it, Y states nothing and takes the six
+        // the project names.
+        var mixed = BoxPlanner.Plan(new[] { routed }, Standing(12, 0), radius: 1.5, defaultCapacity: 6);
+
+        Check("a box whose type states a capacity keeps it, and one that does not takes the project's",
+            mixed.Boxes.Single(box => box.Existing?.Id == new CarrierId(50)) is { Capacity: 12, IsOverfull: false }
+            && mixed.Boxes.Single(box => box.Existing?.Id == new CarrierId(51)) is { Capacity: 6, IsOverfull: true });
+
+        // A circuit Revit does not size fills nothing, however small the capacity.
+        var unsized = Router.Route(network, Circuit(2, 0), Options(), Standing(1, 1));
+        var barren = BoxPlanner.Plan(new[] { unsized }, Standing(1, 1), radius: 1.5);
+
+        Check("a circuit that reports no conductors fills no box, whatever the capacity",
+            barren.Boxes.All(box => box.Conductors == 0 && !box.IsOverfull));
+        Check("and the run says how many circuits that was, so the silence is not read as a pass",
+            new RouteRun(new[] { unsized }, 1, TimeSpan.Zero, barren).WithoutConductors == 1
+            && new RouteRun(new[] { routed }, 1, TimeSpan.Zero, plan).WithoutConductors == 0);
+        Check("the run names every box over its capacity, and only those",
+            new RouteRun(new[] { routed }, 1, TimeSpan.Zero, plan).Overfull
+                .Select(box => box.Existing?.Id).SequenceEqual(new CarrierId?[] { new CarrierId(51) }));
+
+        // Two circuits spliced in one box add: the second one's conductors are on the same block.
+        var second = Router.Route(network, Circuit(2, 3), Options(), Standing(12, 6));
+        var shared = BoxPlanner.Plan(new[] { routed, second }, Standing(12, 6), radius: 1.5);
+
+        Check("two circuits spliced in one box add their conductors, and share no capacity relief",
+            shared.Boxes.Single(box => box.Existing?.Id == new CarrierId(50)) is { Conductors: 18, IsOverfull: true });
+
+        // A recommended box, with a project capacity stated that it would be far over. Nothing in the
+        // model stands near the taps here, so the ordinary mode recommends its own boxes.
+        var recommended = BoxPlanner.Plan(
+            new[] { Router.Route(network, Circuit(3, 3), Options(), null) },
+            Array.Empty<ExistingBox>(),
+            radius: 1.5,
+            defaultCapacity: 1);
+
+        Check("a recommended box has no capacity, so the project's value never makes one overfull",
+            recommended.Boxes.Count > 0
+            && recommended.Boxes.All(box => box.IsRecommendation && box.Capacity == 0 && !box.IsOverfull));
+
+        // Two branches of one circuit merged into one box: a run that used to leave one and arrive at
+        // the other is now inside the box and is no cable at all, so the second branch adds one entry
+        // rather than three. The conductors have to follow that, and nothing above asks - the first
+        // red run of this section found the arithmetic untested, because a circuit branching twice in
+        // one box is a shape none of the networks above has.
+        var oneTray = NetworkBuilder.Build(1, new[] { Tray(1, 0, 30) }, Options());
+        var along = new CircuitSnapshot(
+            new CarrierId(4), "P-4",
+            Terminal(0, 0, -1, "panel"),
+            new[] { Terminal(10, 0, -1, "S1"), Terminal(20, 0, -1, "S2"), Terminal(30, 0, -1, "S3") })
+        {
+            Connection = CircuitConnection.AtJunctionBox,
+            Conductors = 3,
+        };
+
+        var twice = Router.Route(oneTray, along, Tree(0));
+
+        Check("with splices free the cable is cut under two of the three devices",
+            twice.Status == RouteStatus.Found && twice.Branches.Count == 2);
+
+        var merged = BoxPlanner.Plan(new[] { twice }, Array.Empty<ExistingBox>(), radius: 12).Boxes.Single();
+        var apart = BoxPlanner.Plan(new[] { twice }, Array.Empty<ExistingBox>(), radius: 1.5).Boxes;
+
+        Check("merged into one box the second branch adds one entry, and its conductors with it",
+            merged.Entries == 4 && merged.Conductors == 12);
+        Check("kept apart they are two boxes of three, and the conductors are three apiece",
+            apart.Count == 2 && apart.All(box => box is { Entries: 3, Conductors: 9 }));
     }
 
     private static CarrierNode Tray(long id, double from, double to) =>

@@ -237,6 +237,18 @@ public sealed partial class CablingApplyTests : IRevitTestSuite
             "what the search lays for a circuit is a tree: every device is served once, and every place the cable branches stands on a carrier that cable walks",
             WhatTheSearchLaysIsATree,
             needsDocument: true),
+
+        new RevitTestCase(
+            "a box type that states how many conductors it holds reads back stating it, and one that does not reads as stating nothing rather than none",
+            ABoxTypeThatStatesItsCapacityIsReadBackAsStatingIt,
+            needsDocument: true,
+            writes: true),
+
+        new RevitTestCase(
+            "stating a capacity on every box type changes nothing the calculation gives, and every box over it is reported and posted against",
+            ACapacityChangesNothingAndEveryBoxOverItIsReported,
+            needsDocument: true,
+            writes: true),
     };
 
     /// <summary>The value this suite writes wherever it wants a circuit's connection to fail to read.</summary>
@@ -3086,11 +3098,25 @@ public sealed partial class CablingApplyTests : IRevitTestSuite
     /// costs no transaction. What the router reads is carried across: the ends, their order, the number
     /// and the length Revit reports.
     /// </remarks>
+    /// <summary>The same circuit, asked in another connection mode - and otherwise the same circuit.</summary>
+    /// <remarks>
+    /// <b>Everything the read described is carried over, and that is a correction of 2026-09-21.</b> It
+    /// used to carry the connection and the built-in length only, which was true of what the cases
+    /// then asked. The day the read began to describe a circuit's conductors, every case that forces a
+    /// mode was quietly given circuits of no conductors - and the box-capacity case stood down on all
+    /// four releases saying this model reports none, which was a statement about this helper and read
+    /// as one about the owner's model. A copy that drops a field silently is a trap for whoever adds
+    /// the next one, so this one copies the description and changes the one thing it is named for.
+    /// </remarks>
     private static CircuitSnapshot InMode(CircuitSnapshot circuit, CircuitConnection connection) =>
         new(circuit.Id, circuit.Number, circuit.Source, circuit.Devices)
         {
             Connection = connection,
             BuiltInLength = circuit.BuiltInLength,
+            HasCustomPath = circuit.HasCustomPath,
+            OurRouteId = circuit.OurRouteId,
+            CableArea = circuit.CableArea,
+            Conductors = circuit.Conductors,
         };
 
     /// <summary>Why a plan recommends no box, as the middle of a skip reason; call only when it recommends none.</summary>

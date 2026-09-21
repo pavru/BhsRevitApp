@@ -728,6 +728,16 @@ public static class CablingApply
 
         foreach (var id in joined)
             Post(host, outcome, CablingFeature.IndicatorJoinedIntoNetwork, id.Value);
+
+        // Against the box itself, because being over capacity belongs to the place and not to any one
+        // of the circuits spliced there. Only a box of the host: a warning raised in the host cannot
+        // address an element of a link, which is the rule every write here already follows. The screen
+        // names all of them either way - see RouteRun.Overfull.
+        foreach (var box in run.Overfull)
+        {
+            if (box.Existing is { } stood && !stood.Id.IsLinked)
+                Post(host, outcome, CablingFeature.JunctionBoxOverCapacity, stood.Id.Value);
+        }
     }
 
     /// <summary>Posts one warning against one element, when the element is still there to post against.</summary>
