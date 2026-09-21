@@ -92,6 +92,15 @@
                        Text="{Binding GroupSummary}"
                        TextWrapping="Wrap"
                        Visibility="{Binding HasGroupSummary, Converter={StaticResource Shown}}" />
+
+            <!-- What this project counts as a carrier at all. Silent unless the project stated a
+                 catalogue of its own, or a declared category yielded nothing - because then "no
+                 route" may mean "this project does not count trays" rather than anything about the
+                 model. -->
+            <TextBlock Margin="0,6,0,0"
+                       Text="{Binding CatalogueSummary}"
+                       TextWrapping="Wrap"
+                       Visibility="{Binding HasCatalogueSummary, Converter={StaticResource Shown}}" />
         </StackPanel>
 
         <!-- Only when a run failed to cross the structure. Then it is the answer; otherwise it is

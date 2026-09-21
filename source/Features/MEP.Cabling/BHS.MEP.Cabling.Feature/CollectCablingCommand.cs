@@ -64,15 +64,20 @@ public sealed class CollectCablingCommand : IFeatureCommand
         var options = CablingOptions.Read(services.Settings);
         var version = Interlocked.Increment(ref _version);
 
-        // Which family stands for a recommended box is a project rule, so it comes from the model
-        // chain rather than the person one - and it is read here, on the API thread, because the
-        // model layer lives in the document.
-        var boxes = RecommendedBoxes.Read(services.ModelSettings.For(document));
+        // Which family stands for a recommended box, and which categories carry cable at all, are
+        // project rules, so they come from the model chain rather than the person one - and they
+        // are read here, on the API thread, because the model layer lives in the document.
+        var project = CablingProjectSettings.Read(services.ModelSettings.For(document));
 
-        var snapshot = CablingSnapshot.Build(document, options, new CarrierCatalogue(), version, boxes);
+        var snapshot = CablingSnapshot.Build(
+            document, options, project.Carriers, version, project.Boxes);
 
-        Report(services, snapshot);
-        Show(snapshot);
+        // Built here, where there is still a document: a category's display name is Revit's to
+        // give, and the two places that show it must not each work it out for themselves.
+        var catalogue = CarrierReport.Describe(document, snapshot.Tallies, project.Carriers.Declared);
+
+        Report(services, snapshot, catalogue);
+        Show(snapshot, catalogue);
 
         return Result.Succeeded;
     }
@@ -85,9 +90,15 @@ public sealed class CollectCablingCommand : IFeatureCommand
     /// afterwards. This repository has already had one measurement that existed only in a terminal
     /// somebody had closed.
     /// </remarks>
-    private static void Report(IUiFeatureServices services, CablingSnapshot snapshot)
+    private static void Report(IUiFeatureServices services, CablingSnapshot snapshot, string catalogue)
     {
         var log = services.Log;
+
+        // Warn, because it says one of two things and both are somebody's mistake rather than a
+        // state of the model: this project counts something other than trays and conduits, or a
+        // rule it wrote matches nothing.
+        if (catalogue.Length > 0)
+            log.Warn("cabling: {0}", catalogue);
 
         log.Info(
             "cabling: {0} carriers, {1} circuits, from {2} link(s)",
@@ -139,7 +150,7 @@ public sealed class CollectCablingCommand : IFeatureCommand
     /// and carries the whole UI set with it; borrowing Revit's own dialog costs nothing, looks like
     /// Revit, and cannot quietly become the design. When the real screen arrives this goes.
     /// </remarks>
-    private static void Show(CablingSnapshot snapshot)
+    private static void Show(CablingSnapshot snapshot, string catalogue)
     {
         // Spare and space circuits are named in the main body rather than under "details", because
         // they are part of the answer to "what is in this model" and not part of what went wrong.
@@ -165,7 +176,10 @@ public sealed class CollectCablingCommand : IFeatureCommand
             MainInstruction = snapshot.Network.Count == 0
                 ? "No cable-bearing elements were found"
                 : "The model has been read",
-            MainContent = found,
+
+            // In the body rather than under "details": when it speaks at all it is the answer to
+            // "why so few carriers", and an answer folded away is one nobody reads.
+            MainContent = catalogue.Length == 0 ? found : found + Environment.NewLine + Environment.NewLine + catalogue,
             ExpandedContent = missing.Length == 0 ? null : missing,
             CommonButtons = TaskDialogCommonButtons.Close,
         };

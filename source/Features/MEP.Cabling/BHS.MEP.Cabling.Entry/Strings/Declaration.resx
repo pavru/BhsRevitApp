@@ -53,4 +53,10 @@
   <data name="Inspector.ToolTip" xml:space="preserve">
     <value>Shows and hides the pane with what the cable calculation wrote on the selected element: a circuit's length and route, the circuits through a tray, conduit or box, an indicator's recommendation.</value>
   </data>
+  <data name="Carriers.Text" xml:space="preserve">
+    <value>Carriers</value>
+  </data>
+  <data name="Carriers.ToolTip" xml:space="preserve">
+    <value>Says which of this model's categories carry cable, and which of their elements count. The rules belong to the model, so everyone who opens it gets the same answer.</value>
+  </data>
 </root>

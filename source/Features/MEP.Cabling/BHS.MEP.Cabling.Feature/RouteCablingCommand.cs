@@ -81,7 +81,8 @@ public sealed class RouteCablingCommand : IFeatureCommand
                 ComputeAsync(document, options, project, existingBoxesOnly, read, progress, token, log),
             CablingLength.Formatter(document),
             _ => Task.FromResult(ApplyNow(document, application, services, read, log)),
-            project.ExistingBoxesOnly);
+            project.ExistingBoxesOnly,
+            () => read.Catalogue);
 
         var window = new RoutingWindow(model);
 
@@ -128,7 +129,7 @@ public sealed class RouteCablingCommand : IFeatureCommand
         var version = Interlocked.Increment(ref _version);
         var clock = Stopwatch.StartNew();
         var snapshot = CablingSnapshot.Build(
-            document, options, new CarrierCatalogue(), version, project.Boxes, project.DefaultConnection, project.CableGroup);
+            document, options, project.Carriers, version, project.Boxes, project.DefaultConnection, project.CableGroup);
         clock.Stop();
 
         log.Info(
@@ -138,6 +139,11 @@ public sealed class RouteCablingCommand : IFeatureCommand
             clock.Elapsed.TotalSeconds);
 
         reading.Snapshot = snapshot;
+
+        // Said after each read rather than once when the window opens: changing the mode reads the
+        // model again, and a catalogue line left over from the previous read would describe a read
+        // that is no longer on the screen.
+        reading.Catalogue = CarrierReport.Describe(document, snapshot.Tallies, project.Carriers.Declared);
 
         // Awaited rather than returned, so that the run is recorded before the window can offer to
         // write it. Returning the task would leave a window in which Apply is enabled and has
@@ -165,6 +171,9 @@ public sealed class RouteCablingCommand : IFeatureCommand
         public CablingSnapshot? Snapshot { get; set; }
 
         public RouteRun? Run { get; set; }
+
+        /// <summary>What the project counts as a carrier, in the words the window shows.</summary>
+        public string Catalogue { get; set; } = string.Empty;
     }
 
     /// <summary>
@@ -217,7 +226,7 @@ public sealed class RouteCablingCommand : IFeatureCommand
                 run,
                 snapshot,
                 project,
-                new CarrierCatalogue(),
+                project.Carriers,
                 (key, value) => services.ModelSettings.Set(document, key, value));
         }
         catch (Exception error)
@@ -448,6 +457,12 @@ public sealed class RouteCablingCommand : IFeatureCommand
 
         foreach (var cause in run.Causes)
             log.Warn("cabling: {0} circuit(s) blocked - {1}", run.Count(cause), cause);
+
+        // Warn rather than Info, and the same words as the screen. It says one of two things, and
+        // both are somebody's mistake rather than a state of the model: this project counts
+        // something other than trays and conduits, or a rule it wrote matches nothing.
+        if (model.CatalogueSummary.Length > 0)
+            log.Warn("cabling: {0}", model.CatalogueSummary);
 
         // Only alongside the failure it explains. A structure line after a run where everything
         // routed is a true sentence in a file people read to find out what went wrong.

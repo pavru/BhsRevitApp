@@ -23,7 +23,7 @@ namespace BHS.MEP.Cabling.Revit.Tests;
 /// into a test runner rather than a headless engine being lifted into a process of ours.
 /// </para>
 /// </remarks>
-public sealed class CablingReadingTests : IRevitTestSuite
+public sealed partial class CablingReadingTests : IRevitTestSuite
 {
     public string Name => "Cabling";
 
@@ -56,6 +56,22 @@ public sealed class CablingReadingTests : IRevitTestSuite
         new RevitTestCase(
             "reading the same model twice reads the same network",
             ReadingIsRepeatable,
+            needsDocument: true),
+
+        new RevitTestCase(
+            "a catalogue the project states replaces the shipped one, and its categories are the only ones read",
+            ADeclaredCatalogueReplacesTheShippedOne,
+            needsDocument: true),
+
+        new RevitTestCase(
+            "an element counts as a carrier only when its type says what the project asked it to say",
+            OnlyTypesThatSaySoCountAsCarriers,
+            needsDocument: true,
+            writes: true),
+
+        new RevitTestCase(
+            "a carrier rule that admits nothing is named on the screen, and a shipped catalogue says nothing",
+            ARuleThatAdmitsNothingIsNamed,
             needsDocument: true),
     };
 
