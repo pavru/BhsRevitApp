@@ -8,12 +8,13 @@ namespace BHS.MEP.Cabling.Revit;
 /// </summary>
 /// <remarks>
 /// <para>
-/// <b>Fourteen, and each one has something that reads it.</b> A parameter declared before something
+/// <b>Fifteen, and each one has something that reads it.</b> A parameter declared before something
 /// reads it is the same mistake as a mechanism with no consumer, and it is worse here: a parameter
 /// that has reached a customer's model cannot be withdrawn, only ignored. The rule has held through
 /// every addition - the three the apply writes arrived with the apply, the three on the circuit with
-/// the code that computes them, the five that divide the length with the code that divides it, and
-/// splicing with the planner that stops recommending a box where it is allowed.
+/// the code that computes them, the five that divide the length with the code that divides it,
+/// splicing with the planner that stops recommending a box where it is allowed, and the terminal's
+/// capacity with the tree search that stops branching at a device once it is full.
 /// </para>
 /// <para>
 /// <b>The GUIDs are new rather than the predecessor's</b> - the owner's decision, a clean slate. They
@@ -69,6 +70,30 @@ public sealed class CablingParameters : SharedParameterScheme
     /// </para>
     /// </remarks>
     public static readonly Guid Splicing = new("0b6a3f7e-5c42-4f18-9a6d-3e21c8b4d905");
+
+    /// <summary>How many conductors of one circuit this device's terminal block can hold.</summary>
+    /// <remarks>
+    /// <para>
+    /// <b>The owner's answer of 2026-09-21, asked before the code was written.</b> A cable may be cut
+    /// at a device only if the device has somewhere to put the conductors - the trunk arriving, and
+    /// the run leaving for the next device. Two is the ordinary terminal; a device whose block takes
+    /// one is the end of its branch whatever the search would prefer, and one that takes three can
+    /// start a second branch of its own.
+    /// </para>
+    /// <para>
+    /// <b>On the type, and it is a property of the product</b> - the terminal block belongs to the
+    /// device the manufacturer made, not to the instance somebody placed. Read by GUID from the
+    /// type, like <see cref="ElementRole"/> and <see cref="Splicing"/>.
+    /// </para>
+    /// <para>
+    /// <b>Empty means the type did not say, and the project's default answers instead</b>
+    /// (<c>Model:Cabling:Tree:TerminalCapacity</c>). An unset integer parameter reads as zero
+    /// through <c>AsInteger</c>, so reading it by arithmetic alone would turn "nobody said" into
+    /// "holds nothing" and quietly forbid every splice in the model - see
+    /// <c>TerminalCapacityReader</c>, which is where that distinction is kept.
+    /// </para>
+    /// </remarks>
+    public static readonly Guid TerminalCapacity = new("11fb91b8-0508-4ec1-9807-d9eb3add9a5e");
 
     /// <summary>How a circuit's devices are connected to the trunk.</summary>
     /// <remarks>
@@ -274,6 +299,26 @@ public sealed class CablingParameters : SharedParameterScheme
     /// </remarks>
     private static readonly BuiltInCategory[] WhicheverTheIndicatorIs = Array.Empty<BuiltInCategory>();
 
+    /// <summary>Nothing at compile time - a circuit's devices are whatever the project drew.</summary>
+    /// <remarks>
+    /// <para>
+    /// <b>Empty for the same reason as <see cref="WhicheverTheIndicatorIs"/>, and the list is even
+    /// less guessable.</b> An electrical circuit takes lighting fixtures, electrical fixtures, data,
+    /// fire alarm, security, communication and nurse call devices, mechanical equipment, generic
+    /// models - and whatever else a manufacturer's family declares itself to be. A list written here
+    /// would be a registry that drifts, and the day a project uses a category nobody listed, the
+    /// capacity would silently read as "the type did not say" on every device of it.
+    /// </para>
+    /// <para>
+    /// <b>The categories are not guessed at run time either - they are read off the circuits.</b> The
+    /// apply asks the model which categories its own devices belong to and names those, so the set
+    /// is exactly the one this model uses. A device in a family that declares the parameter itself
+    /// needs no binding at all; binding is what lets a designer fill it in on a family they did not
+    /// author.
+    /// </para>
+    /// </remarks>
+    private static readonly BuiltInCategory[] WhicheverTheDevicesAre = Array.Empty<BuiltInCategory>();
+
     private static readonly BuiltInCategory[] CircuitAndPanel =
     {
         BuiltInCategory.OST_ElectricalCircuit,
@@ -339,6 +384,23 @@ public sealed class CablingParameters : SharedParameterScheme
                 "BHS_Cbl_Коммутация",
                 "Можно ли коммутировать кабель в элементах этого типа - разветвлять или "
                 + "соединять - так, что распределительная коробка не нужна. Задаётся у типа.")),
+
+        new SharedParameter(
+            TerminalCapacity,
+            SpecTypeId.Int.Integer,
+            GroupTypeId.Data,
+            instance: false,
+            WhicheverTheDevicesAre,
+            english: new ParameterText(
+                "BHS_Cbl_TerminalCapacity",
+                "How many conductors of one circuit the terminal block of this device can hold - "
+                + "two for the ordinary terminal, where the cable arrives and goes on. Left empty, "
+                + "the project's default is used. Set on the type."),
+            russian: new ParameterText(
+                "BHS_Cbl_ЁмкостьКлеммника",
+                "Сколько жил одной цепи вмещает клеммник этого устройства - две у обычного, куда "
+                + "кабель приходит и откуда уходит дальше. Пустое значение означает умолчание "
+                + "проекта. Задаётся у типа.")),
 
         new SharedParameter(
             CircuitConnection,

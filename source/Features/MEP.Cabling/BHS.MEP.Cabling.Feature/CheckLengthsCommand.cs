@@ -54,7 +54,6 @@ public sealed class CheckLengthsCommand : IFeatureCommand
             return Result.Failed;
         }
 
-        var options = CablingOptions.Read(services.Settings);
         var log = services.Log;
 
         // On the API thread, like the routing command and for the same reason: the model layer of the
@@ -64,6 +63,9 @@ public sealed class CheckLengthsCommand : IFeatureCommand
 
         if (project.Unreadable.Length > 0)
             log.Warn("cabling: a project setting could not be read and its default is used - {0}", project.Unreadable);
+
+        // After the project, because the search's tree numbers are the project's to state.
+        var options = CablingOptions.Read(services.Settings, project);
 
         var model = new ReviewViewModel(
             (progress, token) => CheckAsync(document, options, project, progress, token, log),

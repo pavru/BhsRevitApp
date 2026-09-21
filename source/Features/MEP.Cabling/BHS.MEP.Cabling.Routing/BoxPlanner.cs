@@ -45,36 +45,76 @@ public sealed class PlannedBox
     /// <summary>Every circuit passing through, in the order they were first seen here.</summary>
     public IReadOnlyList<CarrierId> Circuits => _circuits;
 
-    /// <summary>How many spurs leave it for devices.</summary>
-    public int Spurs { get; private set; }
+    /// <summary>How many drops leave it for devices.</summary>
+    /// <remarks>
+    /// <b>No longer the same thing as the devices the circuit has, and since the tree replaced the
+    /// chain it never was.</b> A chain put a box at every device; a tree cuts the cable only where it
+    /// goes more than one way, so a device at the end of a branch drops straight off the carrier and
+    /// is counted by nothing here.
+    /// </remarks>
+    public int Spurs => _taps.Count;
 
     /// <summary>
-    /// Every cable entry: trunk in, trunk out, and each spur - the owner's answer of 2026-09-11.
+    /// Every cable entry: the one that arrives and every one that leaves - the owner's answer of
+    /// 2026-09-11, restated for a tree.
     /// </summary>
     /// <remarks>
     /// What the designer picks a real box by, so it counts what the box has to take rather than what
-    /// the device needs: an intermediate box with one device is three, the last box of a circuit is
-    /// two, and a box shared by two circuits takes the sum.
+    /// the device needs. A place where one cable arrives and two leave is three, whether the two are
+    /// a trunk going on and a drop going down or two trunks; a box shared by two circuits takes the
+    /// sum of both.
     /// </remarks>
     public int Entries { get; private set; }
 
-    /// <summary>The taps it serves, in the order they arrived.</summary>
+    /// <summary>The drops it serves, in the order they arrived.</summary>
     public IReadOnlyList<Tap> Taps => _taps;
 
     private readonly List<CarrierId> _circuits = new();
     private readonly List<Tap> _taps = new();
 
-    internal void Serve(CarrierId circuit, Tap tap)
+    /// <summary>Records that a circuit's cable is cut here, and how many ends that leaves.</summary>
+    /// <remarks>
+    /// <para>
+    /// <b>A second branch of the same circuit brings two fewer ends than it holds.</b> The run between
+    /// the two branches is now inside the box, so what were a cable leaving one and a cable arriving
+    /// at the other becomes no cable at all. Two branches of three ends each make a box of four - one
+    /// trunk in, one trunk out, two drops - which is the answer the planner gave before there was a
+    /// tree, about the same box.
+    /// </para>
+    /// <para>
+    /// <b>A stated approximation:</b> it takes the two branches to be consecutive on the circuit, so
+    /// that exactly one run is swallowed. Two branches with a third between them would swallow less
+    /// and the box would be reported an entry short. Branches merge only within a radius of about the
+    /// size of a box, so a third standing between them is not a shape this can meet unless the radius
+    /// has been set to something its name no longer describes.
+    /// </para>
+    /// <para>
+    /// Two <i>different</i> circuits cut in one box share nothing, so their ends simply add: the
+    /// owner's rule of 2026-09-11, unchanged.
+    /// </para>
+    /// </remarks>
+    internal void Hold(CarrierId circuit, int entries)
     {
-        if (!_circuits.Contains(circuit))
-            _circuits.Add(circuit);
+        if (_circuits.Contains(circuit))
+        {
+            Entries += entries - 2;
+            return;
+        }
 
-        _taps.Add(tap);
-        Spurs++;
-        Entries++;
+        _circuits.Add(circuit);
+        Entries += entries;
     }
 
-    internal void Trunk() => Entries++;
+    /// <summary>
+    /// Records a drop that leaves from here, without counting a further entry.
+    /// </summary>
+    /// <remarks>
+    /// The drop is one of the ends <see cref="Hold"/> already counted - a branch of two ways whose
+    /// second way is the cable going down to a device is three entries, not four. Kept separately
+    /// because the screen and the apply want to know which devices hang off which box, and the entry
+    /// count cannot say.
+    /// </remarks>
+    internal void Serve(Tap tap) => _taps.Add(tap);
 }
 
 /// <summary>A device served by a splice made in the carrier itself, with no junction box.</summary>
@@ -94,23 +134,23 @@ public sealed class PlannedBox
 /// </remarks>
 public sealed class PlannedSplice
 {
-    internal PlannedSplice(CarrierId circuit, Tap tap)
+    internal PlannedSplice(CarrierId circuit, Branch branch)
     {
         Circuit = circuit;
-        Tap = tap;
+        Branch = branch;
     }
 
     /// <summary>The circuit whose cable is cut here.</summary>
     public CarrierId Circuit { get; }
 
-    /// <summary>The tap it serves.</summary>
-    public Tap Tap { get; }
+    /// <summary>The branch of the cable tree made here.</summary>
+    public Branch Branch { get; }
 
     /// <summary>The carrier the splice is made in.</summary>
-    public CarrierId Carrier => Tap.Carrier;
+    public CarrierId Carrier => Branch.Carrier;
 
     /// <summary>Where on it, in internal feet, host coordinates.</summary>
-    public Point3 At => Tap.At;
+    public Point3 At => Branch.At;
 }
 
 /// <summary>Every place a circuit's cable is cut: the boxes it needs, and the splices it does not.</summary>
@@ -139,17 +179,23 @@ public sealed class BoxPlan
     /// <summary>The devices served by a splice in the carrier, in the order they were planned.</summary>
     public IReadOnlyList<PlannedSplice> Splices { get; }
 
-    /// <summary>How many devices the plan serves, by a box or by a splice.</summary>
-    public int Served
+    /// <summary>How many drops leave a place the cable is cut - a box or a splice.</summary>
+    /// <remarks>
+    /// <b>Not "devices served", which is what this counted until the tree replaced the chain.</b> A
+    /// chain cut the cable at every device, so the two numbers were the same; a tree cuts it only
+    /// where it splits, and a device at the end of a branch is served without any of this. Ask the
+    /// run for how many devices were served - see <c>RouteRun.Served</c>.
+    /// </remarks>
+    public int FromACut
     {
         get
         {
-            var served = Splices.Count;
+            var count = Splices.Count;
 
             foreach (var box in Boxes)
-                served += box.Spurs;
+                count += box.Spurs;
 
-            return served;
+            return count;
         }
     }
 }
@@ -202,66 +248,73 @@ public static class BoxPlanner
         {
             if (route is null
                 || route.Status != RouteStatus.Found
-                || route.Connection != CircuitConnection.AtJunctionBox
-                || route.Taps.Count == 0)
+                || route.Connection != CircuitConnection.AtJunctionBox)
             {
                 continue;
             }
 
-            PlannedBox? previous = null;
-
-            foreach (var tap in route.Taps)
+            foreach (var branch in route.Branches)
             {
-                // A tap the router already gave a box goes to that box, however far it stands: routed
-                // without additional boxes, the router chose it along the structure, and a radius on a
-                // plan has no say in that. Everything else is decided by nearness, as it always was.
-                var box = tap.Box is { } served
-                    ? boxes.Find(one => one.Existing is { } existing && existing.Id == served)
-                    : null;
+                // A cut made in a device's terminals needs nothing placed and nothing recommended -
+                // the terminal block holds it. Only the structure asks for a box.
+                if (branch.Device is not null)
+                    continue;
 
-                box ??= Nearest(boxes, tap.At, radius);
+                // An existing box the search branched at is that box, wherever the radius would have
+                // sent it: the search chose it along the structure, and a distance on a plan has no
+                // say in a decision already made about the structure.
+                var box = boxes.Find(one =>
+                    one.Existing is { } stood && stood.Id == branch.Carrier);
 
-                // Nothing near, and the carrier allows a splice: the cable branches here and no box
-                // is recommended. Asked after nearness on purpose - the owner's answer is that a box
-                // already in the model wins, and a recommendation already made for a neighbouring tap
-                // is the same kind of answer: one place instead of two, which is what the radius is
-                // for.
-                //
-                // The trunk still leaves the box before this one, and that is why the previous box is
-                // told so here rather than when the next box arrives: a splice that is the last stop
-                // of a circuit would otherwise leave the box before it counting an entry it does not
-                // have - the cable goes on, and there is no later box to notice. After it the trunk
-                // stands at the splice, which counts nothing because there is nothing to count it on.
-                if (box is null && tap.AllowsSplicing)
+                box ??= Nearest(boxes, branch.At, radius);
+
+                // Nothing near, and the carrier itself allows a splice: the cable branches inside the
+                // element and no box is recommended. Asked after nearness on purpose - the owner's
+                // answer is that a box already in the model wins, and a recommendation already made
+                // for a neighbouring branch is the same kind of answer: one place instead of two,
+                // which is what the radius is for.
+                if (box is null && branch.AllowsSplicing)
                 {
-                    splices.Add(new PlannedSplice(route.Circuit, tap));
-                    previous?.Trunk();
-                    previous = null;
+                    splices.Add(new PlannedSplice(route.Circuit, branch));
                     continue;
                 }
 
                 if (box is null)
                 {
-                    box = new PlannedBox(tap.At, null);
+                    box = new PlannedBox(branch.At, null);
                     boxes.Add(box);
                 }
 
-                // The trunk enters a box when it arrives from somewhere else - from the panel for the
-                // first, from a different box after that - and leaves the one it came from. Two taps of
-                // one circuit that share a box put no trunk between them: the cable never left.
-                if (!ReferenceEquals(box, previous))
-                {
-                    box.Trunk();
-                    previous?.Trunk();
-                }
+                box.Hold(route.Circuit, branch.Ways + 1);
+            }
 
-                box.Serve(route.Circuit, tap);
-                previous = box;
+            // Which devices hang off which box, and the tap's own answer comes first.
+            //
+            // <b>The owner's rule of 2026-09-17: a tap carries its box and belongs to it however far
+            // it stands.</b> Without additional boxes the search walks back from the device to the
+            // box the run it is on began at, and that distance is routinely past the radius - eight
+            // of twelve taps on the owner's linked set. The radius decides which taps share one box;
+            // it was never meant to decide whether a tap has the box the search already gave it, and
+            // for a while after the tree landed it did, so ten of those twelve devices were served
+            // by nothing.
+            //
+            // A tap with no box of its own is the ordinary tree: the line out of the panel reaches
+            // its device without being cut anywhere. Then nearness is the only question there is.
+            foreach (var tap in route.Taps)
+            {
+                var serving = tap.Box is { } stood
+                    ? boxes.Find(one => one.Existing is { } box && box.Id == stood)
+                    : null;
+
+                serving ??= Nearest(boxes, tap.At, radius);
+
+                if (serving is not null && serving.Circuits.Contains(route.Circuit))
+                    serving.Serve(tap);
             }
         }
 
-        // Existing boxes nobody used are not part of the answer; they were only offered.
-        return new BoxPlan(boxes.FindAll(box => box.Spurs > 0), splices);
+        // Existing boxes nobody branched at are not part of the answer; they were only offered.
+        return new BoxPlan(boxes.FindAll(box => box.Circuits.Count > 0), splices);
     }
 
     private static PlannedBox? Nearest(List<PlannedBox> boxes, Point3 at, double radius)

@@ -226,6 +226,17 @@ public sealed partial class CablingApplyTests : IRevitTestSuite
             ATapOnASpliceableCarrierAsksForNoBox,
             needsDocument: true,
             writes: true),
+
+        new RevitTestCase(
+            "a device type that states how many conductors its terminal holds reads back stating it, and one that does not reads as stating nothing rather than none",
+            ADeviceTypeThatStatesItsTerminalIsReadBackAsStatingIt,
+            needsDocument: true,
+            writes: true),
+
+        new RevitTestCase(
+            "what the search lays for a circuit is a tree: every device is served once, and every place the cable branches stands on a carrier that cable walks",
+            WhatTheSearchLaysIsATree,
+            needsDocument: true),
     };
 
     /// <summary>The value this suite writes wherever it wants a circuit's connection to fail to read.</summary>
@@ -1190,10 +1201,18 @@ public sealed partial class CablingApplyTests : IRevitTestSuite
     /// </summary>
     /// <remarks>
     /// <para>
-    /// <b>The owner's rules of 2026-09-17, asserted where the model can show them.</b> Every tap of a found
-    /// route names a box the read found; the plan recommends nothing; the apply places no indicator. How
-    /// far the boxes are from their taps is noted - that some are beyond the box radius is the whole point
-    /// of the mode, and whether this model has such a tap is the model's to say.
+    /// <b>The owner's rules of 2026-09-17, asserted where the model can show them.</b> A tap of a found
+    /// route names a box the read found or none at all; the plan recommends nothing; the apply places no
+    /// indicator. How far the boxes are from their taps is noted - that some are beyond the box radius is
+    /// the whole point of the mode, and whether this model has such a tap is the model's to say.
+    /// </para>
+    /// <para>
+    /// <b>"Or none at all" is the tree, and it read as "every tap names a box" until 2026-09-21.</b> One
+    /// line leaves the panel and ends at one device, and the cable reaches that device without being cut
+    /// anywhere, so it hangs off nothing. The chain reached every device through a box by construction,
+    /// which made that reading true and hid what the mode actually forbids - a box that is not in the
+    /// model. Only a carrier cable may be spliced in can produce a second such tap, and the count of
+    /// those is noted so that the assertion does not quietly depend on there being none.
     /// </para>
     /// <para>
     /// <b>Routed in memory, cut in boxes by the snapshot rather than by a parameter.</b> What the mode
@@ -1241,10 +1260,36 @@ public sealed partial class CablingApplyTests : IRevitTestSuite
         Note(context, "existing only: taps farther from their box than the box radius",
             taps.Count(tap => tap.Box is { } box && standing.TryGetValue(box, out var at) && at.DistanceTo(tap.At) > project.BoxRadius));
 
+        // A carrier cable may be spliced in is the other place a run may begin in this mode, and a run
+        // beginning there hangs off no box. Nothing has marked one at this point of the sweep, and the
+        // count says so rather than the case assuming it.
+        var spliceable = snapshot.Carriers.Count(one => one.AllowsSplicing);
+
+        Note(context, "existing only: carriers cable may be spliced in", spliceable);
+
         foreach (var route in found)
         {
+            // One line leaves the panel and ends at one device, and that device hangs off no box: the
+            // cable reaches it without being cut anywhere. This is the tree's difference from the
+            // chain, which reached every device through a box by construction - and the assertion here
+            // said so until 2026-09-21, which made a correct route look like a device served from
+            // nowhere. What the mode actually forbids is a box that is not in the model, and that is
+            // what is asserted below.
+            var unbound = route.Taps.Count(tap => tap.Box is null);
+
+            if (spliceable == 0)
+            {
+                Expect.That(
+                    unbound <= 1,
+                    "circuit " + route.Circuit + ": " + unbound + " of its devices hang off no box, and with no carrier "
+                    + "of this model allowing a splice only one can - the one the line out of the panel ends at");
+            }
+
             foreach (var tap in route.Taps)
             {
+                if (tap.Box is null)
+                    continue;
+
                 Expect.That(
                     tap.Box is { } box && standing.ContainsKey(box),
                     "circuit " + route.Circuit + ": a tap of a route found without additional boxes names no box the read found - "
@@ -1253,7 +1298,38 @@ public sealed partial class CablingApplyTests : IRevitTestSuite
         }
 
         Expect.Same(0, run.Boxes.Count(box => box.IsRecommendation), "boxes the plan recommends, routed without additional boxes");
-        Expect.Same(taps.Count, run.Boxes.Sum(box => box.Spurs), "spurs the plan's boxes serve, against the taps of the found routes");
+        // Every tap that names a box is served by that box, however far it stands - the owner's rule
+        // of 2026-09-17, and the one the tree quietly broke by handing taps out by nearness alone.
+        // Asked of the box the tap names rather than of a total, because a total is what let the
+        // defect through: ten of twelve served by nothing still summed to a number.
+        var hangingOff = taps.Count(tap => tap.Box is not null);
+
+        Note(context, "existing only: taps hanging off a box of their own", hangingOff);
+        Note(context, "existing only: taps served by a box of the plan", run.Boxes.Sum(box => box.Spurs));
+
+        foreach (var tap in taps)
+        {
+            if (tap.Box is not { } named)
+                continue;
+
+            var serving = run.Boxes.FirstOrDefault(box => box.Existing is { } stood && stood.Id == named);
+
+            Expect.That(
+                serving is not null && serving.Taps.Contains(tap),
+                "the tap at " + tap.At.X + ", " + tap.At.Y + ", " + tap.At.Z + ": it hangs off the box " + named
+                + ", and the plan does not serve it from there");
+        }
+
+        // A tap naming no box is the line out of the panel reaching its device without being cut
+        // anywhere: it is served by a box only where one happens to stand within the radius. So the
+        // total is at least the taps that name one and never more than all of them - requiring all of
+        // them was the chain talking, the third place in this suite it did.
+        var served = run.Boxes.Sum(box => box.Spurs);
+
+        Expect.That(
+            served >= hangingOff && served <= taps.Count,
+            "spurs the plan's boxes serve: " + served + ", against " + hangingOff
+            + " taps hanging off a box of their own and " + taps.Count + " taps in all");
 
         NeedsDefinitionsFor(document, symbol, run, snapshot);
 
@@ -1268,13 +1344,22 @@ public sealed partial class CablingApplyTests : IRevitTestSuite
     });
 
     /// <summary>
-    /// Routed without additional boxes over a model with none, every circuit whose ends reach the
-    /// structure fails for want of a box, and each is posted once.
+    /// Routed without additional boxes over a model with none, every circuit whose cable has to be cut
+    /// fails for want of a box, and each is posted once.
     /// </summary>
     /// <remarks>
+    /// <para>
     /// No box at all, rather than the model's boxes, so that the condition does not depend on which of
     /// the owner's fittings could be marked: a device that reaches a carrier and no box reaches is the
-    /// exact failure, and with no boxes every circuit whose ends reach the structure is one.
+    /// exact failure.
+    /// </para>
+    /// <para>
+    /// <b>Not every circuit whose ends reach the structure is one, and that changed with the tree.</b>
+    /// A circuit with one device is reached by the line that leaves the panel and is never cut, so it
+    /// needs no box and routes - the owner's rule that a point-to-point circuit gets nothing. Two
+    /// devices are two runs and the second begins where the first was cut, so from two upwards the
+    /// failure is exact again.
+    /// </para>
     /// </remarks>
     private static void WarnsOfNoBoxReachable(RevitTestContext context) => Watched(context, watch =>
     {
@@ -1299,7 +1384,43 @@ public sealed partial class CablingApplyTests : IRevitTestSuite
 
         context.Note("no box: circuits by status", ReachNotes.ByStatus(results));
 
-        Expect.Same(0, results.Count(one => one.Status == RouteStatus.Found), "circuits routed without additional boxes over no box at all");
+        // A circuit whose cable is never cut needs no box, and over a model with none that is the only
+        // circuit that can route: the owner's rule of 2026-09-20, that a point-to-point circuit gets
+        // nothing. The chain could not express it - it reached every device through a box - so this
+        // asked for no route at all until 2026-09-21 and called three correct ones a failure.
+        var byDevices = snapshot.Circuits.Described.ToDictionary(one => one.Id, one => one.Devices.Count);
+
+        context.Note(
+            "no box: devices of the circuits that routed anyway",
+            string.Join(", ", results.Where(one => one.Status == RouteStatus.Found)
+                .Select(one => byDevices.TryGetValue(one.Circuit, out var many) ? many : -1)));
+
+        foreach (var route in results.Where(one => one.Status == RouteStatus.Found))
+        {
+            Expect.Same(
+                0,
+                route.Branches.Count,
+                "circuit " + route.Circuit + ": places its cable is cut, over a model with no box to cut it in");
+
+            Expect.Same(
+                1,
+                byDevices.TryGetValue(route.Circuit, out var many) ? many : -1,
+                "circuit " + route.Circuit + ": devices on the only circuit shape that needs no box");
+        }
+
+        foreach (var route in results)
+        {
+            if (!byDevices.TryGetValue(route.Circuit, out var many) || many < 2)
+                continue;
+
+            // Two devices are two runs, and the second begins where the first was cut. Over a model
+            // with no box there is nowhere to cut it, so the circuit cannot route however its carriers
+            // lie - unless it never reached the structure at all, which is a different failure.
+            Expect.That(
+                route.Status != RouteStatus.Found,
+                "circuit " + route.Circuit + ": it holds " + many + " devices and routed without additional boxes "
+                + "over a model with none, so its cable was cut somewhere there is no box");
+        }
 
         Skip.When(
             blocked.Count == 0,
@@ -3159,7 +3280,10 @@ public sealed partial class CablingApplyTests : IRevitTestSuite
         "[" + string.Join(", ", ids.Select(one => one.ToString(CultureInfo.InvariantCulture))) + "]";
 
     /// <summary>The parameters and categories the apply binds: the indicator's own for all three, every carrier's for the references.</summary>
-    private static RuntimeCategories RuntimeFor(FamilySymbol symbol, CarrierCatalogue catalogue)
+    private static RuntimeCategories RuntimeFor(
+        FamilySymbol symbol,
+        CarrierCatalogue catalogue,
+        IReadOnlyList<BuiltInCategory>? devices = null)
     {
         var indicator = CategoryOf(symbol);
 
@@ -3170,6 +3294,11 @@ public sealed partial class CablingApplyTests : IRevitTestSuite
 
         foreach (var category in catalogue.Categories)
             runtime.Add(CablingParameters.CircuitRefs, category);
+
+        // The terminal capacity only when a case is going to ask about it: every other case would
+        // then bind a parameter it never writes, and a binding is a column in somebody's schedule.
+        foreach (var category in devices ?? Array.Empty<BuiltInCategory>())
+            runtime.Add(CablingParameters.TerminalCapacity, category);
 
         return runtime;
     }

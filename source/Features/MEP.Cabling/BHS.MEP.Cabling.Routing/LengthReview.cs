@@ -5,15 +5,28 @@
 /// <b>One rule in one place, because two sides now depend on it.</b> The apply writes this into
 /// <c>BHS_Cbl_RouteStamp</c>, and the check for stale lengths reads it back and compares it with what
 /// the search walks today; a second copy of the spelling would let the writer and the reader drift
-/// apart in a way that reads as "every circuit is stale". Ids in the order the route walked them, each
-/// once, joined by "; "; a carrier in a link is written <c>link:element</c>, which is
-/// <see cref="CarrierId.ToString"/> itself.
+/// apart in a way that reads as "every circuit is stale". Ids, each once, joined by "; "; a carrier in
+/// a link is written <c>link:element</c>, which is <see cref="CarrierId.ToString"/> itself.
+/// </remarks>
+/// <remarks>
+/// <b>Compared as a set, never as a string</b> - see <see cref="Same"/>. It said "in the order the
+/// route walked them" until the cable became a tree, and a tree has no single order to walk: the
+/// panel's run and a branch off it are laid in whatever order the search settled them, and two runs
+/// through one tray are one carrier either way. Comparing the text would then call a circuit stale
+/// for having been assembled differently, which is the failure that looks like a finding. Stamps
+/// already in models were written in a walk order and are read by the same rule, so they keep
+/// meaning what they meant.
 /// </remarks>
 public static class RouteStamp
 {
     private const string Separator = "; ";
 
     /// <summary>The carriers of a route, as the stamp spells them.</summary>
+    /// <remarks>
+    /// The order is the caller's - <c>RouteResult.Path</c> is a sorted set, so what a stamp written
+    /// today holds is sorted. Nothing reads it back that way, and nothing should: <see cref="Same"/>
+    /// is the comparison.
+    /// </remarks>
     public static string Of(IEnumerable<CarrierId> path)
     {
         var seen = new HashSet<CarrierId>();
@@ -26,6 +39,21 @@ public static class RouteStamp
         }
 
         return string.Join(Separator, parts);
+    }
+
+    /// <summary>Whether a stamp names the same carriers as a route, whatever order either is in.</summary>
+    /// <remarks>
+    /// <b>The question is which carriers the length was measured along, and a set answers it.</b> A
+    /// stamp that lost a tray and one that gained a tray are both stale, and which it was the review
+    /// already reports - <c>Left</c> and <c>Arrived</c>; a stamp holding exactly the same carriers in
+    /// another order describes the same measurement and is not stale at all.
+    /// </remarks>
+    public static bool Same(string stamp, IEnumerable<CarrierId> path)
+    {
+        var stored = new HashSet<CarrierId>(Parse(stamp));
+        var walked = new HashSet<CarrierId>(path ?? Array.Empty<CarrierId>());
+
+        return stored.Count == walked.Count && stored.SetEquals(walked);
     }
 
     /// <summary>
@@ -267,9 +295,8 @@ public sealed class LengthReview
             }
 
             var reasons = StaleReason.None;
-            var walked = RouteStamp.Of(route.Path);
 
-            if (!string.Equals(was.Stamp, walked, StringComparison.Ordinal))
+            if (!RouteStamp.Same(was.Stamp, route.Path))
                 reasons |= StaleReason.CarriersDiffer;
 
             if (was.Length is { } length && Math.Abs(length - run.TotalLengthOf(route.Circuit)) > tolerance)

@@ -148,8 +148,23 @@ public sealed class RouteResult
     /// </remarks>
     public long NetworkVersion { get; }
 
-    /// <summary>The carriers walked, in order. Empty unless <see cref="Status"/> is Found.</summary>
+    /// <summary>The carriers the cable runs through, each once. Empty unless <see cref="Status"/> is Found.</summary>
+    /// <remarks>
+    /// <b>A set in ascending order, and since 2026-09-21 it no longer claims to be a traversal.</b>
+    /// A circuit's cable is a tree, and a tree has no order to walk it in; what it has is the carriers
+    /// it occupies. Sorted rather than left in whatever order the search laid them, because this list
+    /// becomes <c>BHS_Cbl_ОтпечатокМаршрута</c> and is compared against what a previous run stored: an
+    /// order that depended on the search's tie-breaking would report circuits stale for nothing.
+    /// </remarks>
     public IReadOnlyList<CarrierId> Path { get; init; } = Array.Empty<CarrierId>();
+
+    /// <summary>Where the cable is cut so that it can go more than one way.</summary>
+    /// <remarks>
+    /// Empty for a circuit whose cable never splits - two devices in a row on one tray, or a
+    /// point-to-point circuit. <see cref="BoxPlanner"/> turns these into boxes; a branch made in a
+    /// device's terminals needs none.
+    /// </remarks>
+    public IReadOnlyList<Branch> Branches { get; init; } = Array.Empty<Branch>();
 
     /// <summary>Length along the carriers, in internal feet, without the slack.</summary>
     public double AlongCarriers { get; init; }

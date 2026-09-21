@@ -59,4 +59,38 @@ public sealed class RoutingOptions
 
     /// <summary>Circuits with a single device are usually feeders, and often not worth routing.</summary>
     public bool SkipSingleDeviceCircuits { get; init; }
+
+    /// <summary>
+    /// What one splice made in the structure is worth, in internal feet of cable.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <b>The exchange rate that lets one number stand for two things - the owner's question of
+    /// 2026-09-21, and the answer to it.</b> A cable tree is shorter the more often it splits, and a
+    /// split costs a box. The two are in different units, so minimising them together needs a rate;
+    /// divide the installed price of a box by the price of a metre of the cable this project usually
+    /// runs, and what comes out is how many metres of cable the project would rather run than cut.
+    /// Cost in money and cost in metres are then the same objective, one divided by the other's unit -
+    /// and metres are the unit already in the model, so no price list has to live anywhere.
+    /// </para>
+    /// <para>
+    /// Zero makes the search split wherever it is even slightly shorter, which is the pure geometric
+    /// answer and not usually the buildable one.
+    /// </para>
+    /// <para>
+    /// <b>Part of what a splice costs is already counted elsewhere and must not be counted here.</b>
+    /// <see cref="SlackRule.AtBox"/> and <see cref="SlackRule.AtSplice"/> add real cable at every place
+    /// the cable is cut, so a split is never free even at zero. This number is only the part that is
+    /// not cable: the box, the labour, and the obligation to keep the joint reachable.
+    /// </para>
+    /// </remarks>
+    public double SpliceCost { get; init; }
+
+    /// <summary>How many cables a device's terminals hold when its type does not say.</summary>
+    /// <remarks>
+    /// Two is a device the cable passes through and no more, which is what was built before there was
+    /// a tree. See <see cref="Terminal.Capacity"/> for why absence means this rather than "as many as
+    /// it takes".
+    /// </remarks>
+    public int TerminalCapacity { get; init; } = 2;
 }

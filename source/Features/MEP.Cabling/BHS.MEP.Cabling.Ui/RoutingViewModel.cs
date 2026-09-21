@@ -363,7 +363,7 @@ public sealed class RoutingViewModel : INotifyPropertyChanged
             if (run.ExistingBoxesOnly)
             {
                 return $"{circuits} circuit(s) cut in junction boxes, served from existing boxes only: "
-                       + $"{existing} box(es) used, {run.Plan.Served} device(s) served.";
+                       + $"{existing} box(es) used, {run.Served} device(s) served.";
             }
 
             var line = $"{circuits} circuit(s) cut in junction boxes: {recommended} box(es) to recommend";
@@ -377,7 +377,7 @@ public sealed class RoutingViewModel : INotifyPropertyChanged
             if (run.Splices.Count > 0)
                 line += $", {run.Splices.Count} spliced in the carrier";
 
-            return line + $", {run.Plan.Served} device(s) served.";
+            return line + $", {run.Served} device(s) served.";
         }
     }
 

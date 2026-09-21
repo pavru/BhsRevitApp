@@ -253,7 +253,7 @@ public sealed partial class CablingApplyTests
 
         Expect.Same(
             taps,
-            after.Run.Plan.Served,
+            after.Run.Served,
             "taps of the found routes, against the devices the plan reports serving by a box or by a splice");
 
         Expect.That(

@@ -190,8 +190,32 @@ public sealed class RouteRun
     /// <summary>The boxes the circuits cut in boxes need: existing ones used, and places recommended.</summary>
     public IReadOnlyList<PlannedBox> Boxes => Plan.Boxes;
 
-    /// <summary>The devices served by a splice in the carrier itself, where no box is needed.</summary>
+    /// <summary>The places a cable is cut in a carrier itself, where no box is needed.</summary>
     public IReadOnlyList<PlannedSplice> Splices => Plan.Splices;
+
+    /// <summary>How many devices the circuits cut in boxes actually reached.</summary>
+    /// <remarks>
+    /// <b>Asked of the run rather than of the plan, and that moved when the tree replaced the
+    /// chain.</b> A chain cut the cable at every device, so counting the drops the plan's boxes served
+    /// answered both questions at once; a tree cuts it only where it splits, and a device at the end
+    /// of a branch is served by no box at all. Counting devices from the plan would have gone on
+    /// looking right and reported a fraction of them.
+    /// </remarks>
+    public int Served
+    {
+        get
+        {
+            var served = 0;
+
+            foreach (var one in Results)
+            {
+                if (one.Status == RouteStatus.Found && one.Connection == CircuitConnection.AtJunctionBox)
+                    served += one.Taps.Count;
+            }
+
+            return served;
+        }
+    }
 
     /// <summary>Whether the circuits cut in boxes were routed without additional boxes.</summary>
     /// <remarks>
