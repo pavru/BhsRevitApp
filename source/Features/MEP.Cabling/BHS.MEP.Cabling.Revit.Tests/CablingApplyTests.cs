@@ -1298,7 +1298,38 @@ public sealed partial class CablingApplyTests : IRevitTestSuite
         }
 
         Expect.Same(0, run.Boxes.Count(box => box.IsRecommendation), "boxes the plan recommends, routed without additional boxes");
-        Expect.Same(taps.Count, run.Boxes.Sum(box => box.Spurs), "spurs the plan's boxes serve, against the taps of the found routes");
+        // Every tap that names a box is served by that box, however far it stands - the owner's rule
+        // of 2026-09-17, and the one the tree quietly broke by handing taps out by nearness alone.
+        // Asked of the box the tap names rather than of a total, because a total is what let the
+        // defect through: ten of twelve served by nothing still summed to a number.
+        var hangingOff = taps.Count(tap => tap.Box is not null);
+
+        Note(context, "existing only: taps hanging off a box of their own", hangingOff);
+        Note(context, "existing only: taps served by a box of the plan", run.Boxes.Sum(box => box.Spurs));
+
+        foreach (var tap in taps)
+        {
+            if (tap.Box is not { } named)
+                continue;
+
+            var serving = run.Boxes.FirstOrDefault(box => box.Existing is { } stood && stood.Id == named);
+
+            Expect.That(
+                serving is not null && serving.Taps.Contains(tap),
+                "the tap at " + tap.At.X + ", " + tap.At.Y + ", " + tap.At.Z + ": it hangs off the box " + named
+                + ", and the plan does not serve it from there");
+        }
+
+        // A tap naming no box is the line out of the panel reaching its device without being cut
+        // anywhere: it is served by a box only where one happens to stand within the radius. So the
+        // total is at least the taps that name one and never more than all of them - requiring all of
+        // them was the chain talking, the third place in this suite it did.
+        var served = run.Boxes.Sum(box => box.Spurs);
+
+        Expect.That(
+            served >= hangingOff && served <= taps.Count,
+            "spurs the plan's boxes serve: " + served + ", against " + hangingOff
+            + " taps hanging off a box of their own and " + taps.Count + " taps in all");
 
         NeedsDefinitionsFor(document, symbol, run, snapshot);
 
