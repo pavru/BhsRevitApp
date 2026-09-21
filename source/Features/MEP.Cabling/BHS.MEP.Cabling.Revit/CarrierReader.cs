@@ -109,6 +109,10 @@ public sealed class CarrierReader
         // fittings and a handful of types.
         var splicing = new SplicingReader(document);
 
+        // Per document as well, but cached by the value rather than by the type: the permission is
+        // an instance parameter, and a model says a handful of distinct things on thousands of runs.
+        var grouping = new CableGroupReader();
+
         MarkerTypeKnown |= markers.Known;
 
         foreach (var category in _catalogue.Categories)
@@ -131,7 +135,14 @@ public sealed class CarrierReader
                     continue;
                 }
 
-                var node = Read(element, source, transform, carrierClass, open, splicing.Allows(element));
+                var node = Read(
+                    element,
+                    source,
+                    transform,
+                    carrierClass,
+                    open,
+                    splicing.Allows(element),
+                    grouping.Of(element));
 
                 if (node is null)
                 {
@@ -170,7 +181,8 @@ public sealed class CarrierReader
         Transform transform,
         string carrierClass,
         bool openAlongItsLength,
-        bool allowsSplicing)
+        bool allowsSplicing,
+        CableGroups groups)
     {
         if (!TryExtent(element, out var start, out var end, out var joins))
             return null;
@@ -211,6 +223,7 @@ public sealed class CarrierReader
             terminals)
         {
             AllowsSplicing = allowsSplicing,
+            Groups = groups,
         };
     }
 

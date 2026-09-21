@@ -1,16 +1,16 @@
 {
   "Schema": 2,
   "Disclaimer": "Recorded on a developer machine. Revit cannot run on hosted CI, so CI verifies this record rather than reproducing it: no automated check here has ever started a Revit.",
-  "Commit": "a4a652ae222ac562b0835d20e2b1cdf4bbffdec5",
+  "Commit": "b931ebcd26599288c912f8006e5e1f5a9f899ac4",
   "CommitClean": true,
   "Content": {
     "source/Revit": "aabd41b14e44c2d1a2854a81d52c2a5c0d34c7f0",
     "source/Shared": "b24cf47b52c82b7083b389e7161f5ecf3e45aa1c",
     "source/WinSide": "5b71abdce4cd8186abf36416137a3dfa7f437a28",
-    "source/Features/MEP.Cabling": "27567e5e5f3b26a878ac452e216fd6499417d5ea",
+    "source/Features/MEP.Cabling": "bb9a8c8b486398e53ec0da032a7939329cb06cd9",
     "build/BHS.Revit.Sdk": "a8575677c417aaaef872bfda5c751f2858df4a0c"
   },
-  "RecordedUtc": "2026-09-21T08:43:11.1696623Z",
+  "RecordedUtc": "2026-09-21T22:21:08.2786321Z",
   "WithModel": true,
   "ShowTab": false,
   "Linked": true,
@@ -18,7 +18,7 @@
     {
       "Release": 2024,
       "FileVersion": "0.1.0.0",
-      "BuiltUtc": "2026-09-21T08:35:37.3761714Z",
+      "BuiltUtc": "2026-09-21T22:12:07.0431272Z",
       "Signed": true,
       "Checks": [
         {
@@ -574,6 +574,14 @@
           "Ok": true
         },
         {
+          "Name": "Cabling apply: a carrier that states which cable groups it admits reads back stating them, and one that does not reads as admitting only circuits in no group",
+          "Ok": true
+        },
+        {
+          "Name": "Cabling apply: a circuit is laid only in carriers that admit its cable group, and one no carrier admits is told apart from one with nothing within reach",
+          "Ok": true
+        },
+        {
           "Name": "Cabling lengths: what the search found, written onto its circuits, reads back as a current answer",
           "Ok": true
         },
@@ -642,11 +650,11 @@
         },
         {
           "Name": "launched",
-          "Value": "pid 76428"
+          "Value": "pid 34176"
         },
         {
           "Name": "registered after",
-          "Value": "42.3s"
+          "Value": "15.8s"
         },
         {
           "Name": "recovered by enumeration",
@@ -662,11 +670,11 @@
         },
         {
           "Name": "probe log",
-          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2024-76428-20260921-183638.log"
+          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2024-34176-20260922-081238.log"
         },
         {
           "Name": "threads",
-          "Value": "api 1, call 20"
+          "Value": "api 1, call 14"
         },
         {
           "Name": "appdomain",
@@ -690,7 +698,7 @@
         },
         {
           "Name": "log",
-          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2024-76428-20260921-183638.log"
+          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2024-34176-20260922-081238.log"
         },
         {
           "Name": "sinks",
@@ -702,7 +710,7 @@
         },
         {
           "Name": "opened after registration",
-          "Value": "36.9s"
+          "Value": "140.6s"
         },
         {
           "Name": "pane:exists",
@@ -822,7 +830,7 @@
         },
         {
           "Name": "instance",
-          "Value": "d5b41640929b4765851afd637121116b"
+          "Value": "34ee10eb33a0454aa3ee69bae0492455"
         },
         {
           "Name": "link1:linked",
@@ -853,6 +861,10 @@
           "Value": "1"
         },
         {
+          "Name": "link2:circuits",
+          "Value": "6"
+        },
+        {
           "Name": "link2:linked",
           "Value": "True"
         },
@@ -866,11 +878,11 @@
         },
         {
           "Name": "log",
-          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2024-76428-20260921-183638.log"
+          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2024-34176-20260922-081238.log"
         },
         {
           "Name": "pid",
-          "Value": "76428"
+          "Value": "34176"
         },
         {
           "Name": "release",
@@ -942,15 +954,15 @@
         },
         {
           "Name": "instance",
-          "Value": "d5b41640929b4765851afd637121116b"
+          "Value": "34ee10eb33a0454aa3ee69bae0492455"
         },
         {
           "Name": "log",
-          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2024-76428-20260921-183638.log"
+          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2024-34176-20260922-081238.log"
         },
         {
           "Name": "pid",
-          "Value": "76428"
+          "Value": "34176"
         },
         {
           "Name": "place:after",
@@ -1038,11 +1050,11 @@
         },
         {
           "Name": "instance",
-          "Value": "d5b41640929b4765851afd637121116b"
+          "Value": "34ee10eb33a0454aa3ee69bae0492455"
         },
         {
           "Name": "log",
-          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2024-76428-20260921-183638.log"
+          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2024-34176-20260922-081238.log"
         },
         {
           "Name": "modal:apiCallWorked",
@@ -1070,7 +1082,7 @@
         },
         {
           "Name": "modal:awaitResumedAfter",
-          "Value": "0.54s"
+          "Value": "0.45s"
         },
         {
           "Name": "modal:awaitResumedOnApiThread",
@@ -1094,7 +1106,7 @@
         },
         {
           "Name": "modal:shownFor",
-          "Value": "2.62s"
+          "Value": "2.51s"
         },
         {
           "Name": "modal:transactionCommit",
@@ -1126,7 +1138,7 @@
         },
         {
           "Name": "pid",
-          "Value": "76428"
+          "Value": "34176"
         },
         {
           "Name": "release",
@@ -1138,11 +1150,11 @@
         },
         {
           "Name": "instance",
-          "Value": "d5b41640929b4765851afd637121116b"
+          "Value": "34ee10eb33a0454aa3ee69bae0492455"
         },
         {
           "Name": "log",
-          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2024-76428-20260921-183638.log"
+          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2024-34176-20260922-081238.log"
         },
         {
           "Name": "modal:measured",
@@ -1154,7 +1166,7 @@
         },
         {
           "Name": "modal:pumpRanAt",
-          "Value": "2.62s"
+          "Value": "2.51s"
         },
         {
           "Name": "modal:windowClosed",
@@ -1162,7 +1174,7 @@
         },
         {
           "Name": "pid",
-          "Value": "76428"
+          "Value": "34176"
         },
         {
           "Name": "release",
@@ -1174,11 +1186,11 @@
         },
         {
           "Name": "instance",
-          "Value": "d5b41640929b4765851afd637121116b"
+          "Value": "34ee10eb33a0454aa3ee69bae0492455"
         },
         {
           "Name": "log",
-          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2024-76428-20260921-183638.log"
+          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2024-34176-20260922-081238.log"
         },
         {
           "Name": "parameters:bound",
@@ -1254,7 +1266,7 @@
         },
         {
           "Name": "pid",
-          "Value": "76428"
+          "Value": "34176"
         },
         {
           "Name": "release",
@@ -1318,15 +1330,15 @@
         },
         {
           "Name": "census: links inside links, not followed",
-          "Value": "1"
+          "Value": "2"
         },
         {
           "Name": "census: elements walked, by the class asked for",
-          "Value": "FamilyInstance x68; MEPCurve x39; MEPSystem x15"
+          "Value": "FamilyInstance x81; MEPCurve x39; MEPSystem x21"
         },
         {
           "Name": "census: elements with a connector manager",
-          "Value": "97 (host 84, links 13)"
+          "Value": "116 (host 84, links 32)"
         },
         {
           "Name": "census: connector managers that could not be read, by the class asked for",
@@ -1338,15 +1350,15 @@
         },
         {
           "Name": "census: connector sets, entries they say they hold against entries walked",
-          "Value": "231 against 231; sets whose size did not read 0"
+          "Value": "304 against 304; sets whose size did not read 0"
         },
         {
           "Name": "census: connectors walked",
-          "Value": "231 (host 199, links 32)"
+          "Value": "304 (host 199, links 105)"
         },
         {
           "Name": "census: connectors not physical",
-          "Value": "75 (host 75, links 0)"
+          "Value": "93 (host 75, links 18)"
         },
         {
           "Name": "census: connectors met through an element that does not own them",
@@ -1365,16 +1377,16 @@
           "Value": "none"
         },
         {
-          "Name": "connectors by what they answer: type 1 physical, domain 4: Origin reads, IsConnected true, CoordinateSystem reads, MEPSystem none",
-          "Value": "75 (host 56, links 19)"
+          "Name": "connectors by what they answer: type 1 physical, domain 2: Origin reads, IsConnected false, CoordinateSystem reads, MEPSystem none",
+          "Value": "82 (host 27, links 55)"
         },
         {
           "Name": "connectors by what they answer: type 4 not physical, domain 0: Origin refuses, IsConnected refuses, CoordinateSystem refuses, MEPSystem refuses",
-          "Value": "60 (host 60, links 0)"
+          "Value": "78 (host 60, links 18)"
         },
         {
-          "Name": "connectors by what they answer: type 1 physical, domain 2: Origin reads, IsConnected false, CoordinateSystem reads, MEPSystem none",
-          "Value": "27 (host 27, links 0)"
+          "Name": "connectors by what they answer: type 1 physical, domain 4: Origin reads, IsConnected true, CoordinateSystem reads, MEPSystem none",
+          "Value": "75 (host 56, links 19)"
         },
         {
           "Name": "connectors by what they answer: type 1 physical, domain 4: Origin reads, IsConnected false, CoordinateSystem reads, MEPSystem none",
@@ -1402,15 +1414,15 @@
         },
         {
           "Name": "connectors not physical, by where they live: ElectricalSystem OST_ElectricalCircuit, type 4, owned by the element walked",
-          "Value": "39 (host 39, links 0)"
+          "Value": "51 (host 39, links 12)"
+        },
+        {
+          "Name": "connectors not physical, by where they live: FamilyInstance OST_ElectricalEquipment, type 4, owned by the element walked",
+          "Value": "19 (host 13, links 6)"
         },
         {
           "Name": "connectors not physical, by where they live: FamilyInstance OST_ElectricalEquipment, type 32, owned by the element walked",
           "Value": "15 (host 15, links 0)"
-        },
-        {
-          "Name": "connectors not physical, by where they live: FamilyInstance OST_ElectricalEquipment, type 4, owned by the element walked",
-          "Value": "13 (host 13, links 0)"
         },
         {
           "Name": "connectors not physical, by where they live: MechanicalSystem OST_DuctSystem, type 4, owned by the element walked",
@@ -1418,19 +1430,19 @@
         },
         {
           "Name": "connectors not physical, by their references: ElectricalSystem OST_ElectricalCircuit, type 4: references 1, their types [1], owned by [FamilyInstance], IsConnectedTo the first true",
-          "Value": "26 (host 26, links 0)"
+          "Value": "32 (host 26, links 6)"
+        },
+        {
+          "Name": "connectors not physical, by their references: ElectricalSystem OST_ElectricalCircuit, type 4: references 1, their types [4], owned by [FamilyInstance], IsConnectedTo the first true",
+          "Value": "19 (host 13, links 6)"
+        },
+        {
+          "Name": "connectors not physical, by their references: FamilyInstance OST_ElectricalEquipment, type 4: references 1, their types [4], owned by [ElectricalSystem], IsConnectedTo the first true",
+          "Value": "19 (host 13, links 6)"
         },
         {
           "Name": "connectors not physical, by their references: FamilyInstance OST_ElectricalEquipment, type 32: references 0, their types [], owned by [], IsConnectedTo the first no reference to ask about",
           "Value": "15 (host 15, links 0)"
-        },
-        {
-          "Name": "connectors not physical, by their references: ElectricalSystem OST_ElectricalCircuit, type 4: references 1, their types [4], owned by [FamilyInstance], IsConnectedTo the first true",
-          "Value": "13 (host 13, links 0)"
-        },
-        {
-          "Name": "connectors not physical, by their references: FamilyInstance OST_ElectricalEquipment, type 4: references 1, their types [4], owned by [ElectricalSystem], IsConnectedTo the first true",
-          "Value": "13 (host 13, links 0)"
         },
         {
           "Name": "connectors not physical, by their references: MechanicalSystem OST_DuctSystem, type 4: references 1, their types [1], owned by [Duct], IsConnectedTo the first true",
@@ -1441,16 +1453,16 @@
           "Value": "2 (host 2, links 0)"
         },
         {
+          "Name": "connectors, listed unused against IsConnected: type 1: listed unused yes, IsConnected false",
+          "Value": "113 (host 50, links 63)"
+        },
+        {
           "Name": "connectors, listed unused against IsConnected: type 1: listed unused no, IsConnected true",
           "Value": "81 (host 62, links 19)"
         },
         {
           "Name": "connectors, listed unused against IsConnected: type 4: listed unused no, IsConnected refuses",
-          "Value": "60 (host 60, links 0)"
-        },
-        {
-          "Name": "connectors, listed unused against IsConnected: type 1: listed unused yes, IsConnected false",
-          "Value": "58 (host 50, links 8)"
+          "Value": "78 (host 60, links 18)"
         },
         {
           "Name": "connectors, listed unused against IsConnected: type 2: listed unused no, IsConnected true",
@@ -1462,7 +1474,7 @@
         },
         {
           "Name": "census: elapsed, ms",
-          "Value": "51"
+          "Value": "74"
         },
         {
           "Name": "circuit ends: electrical systems",
@@ -1502,7 +1514,7 @@
         },
         {
           "Name": "circuit ends: elapsed, ms",
-          "Value": "29"
+          "Value": "38"
         },
         {
           "Name": "circuits on the panel used",
@@ -2326,15 +2338,15 @@
         },
         {
           "Name": "splicing plan: types of those carriers",
-          "Value": "2"
+          "Value": "1"
         },
         {
           "Name": "splicing plan: boxes after marking",
-          "Value": "4"
+          "Value": "5"
         },
         {
           "Name": "splicing plan: splices after marking",
-          "Value": "2"
+          "Value": "1"
         },
         {
           "Name": "capacity: device categories the read found",
@@ -2451,6 +2463,42 @@
         {
           "Name": "over capacity: cabling warnings posted",
           "Value": "2"
+        },
+        {
+          "Name": "grouping: carriers of the host",
+          "Value": "36"
+        },
+        {
+          "Name": "grouping: carriers told which groups they admit",
+          "Value": "18"
+        },
+        {
+          "Name": "grouping: carriers read back admitting the group",
+          "Value": "18"
+        },
+        {
+          "Name": "grouping: carriers read back unmarked",
+          "Value": "18"
+        },
+        {
+          "Name": "grouping: circuits described",
+          "Value": "13"
+        },
+        {
+          "Name": "grouping: routes found before anybody is grouped",
+          "Value": "6"
+        },
+        {
+          "Name": "grouping: circuits turned away for their group",
+          "Value": "6"
+        },
+        {
+          "Name": "grouping: carriers of the host told to admit it",
+          "Value": "36"
+        },
+        {
+          "Name": "grouping: routes found once the host admits the group",
+          "Value": "1"
         },
         {
           "Name": "current: circuits described",
@@ -2638,11 +2686,11 @@
         },
         {
           "Name": "diagnostic events",
-          "Value": "3041 received, 0 dropped by the publisher, longest quiet spell 27.6s during Starting"
+          "Value": "3078 received, 0 dropped by the publisher, longest quiet spell 121.8s during Blocked"
         },
         {
           "Name": "phases seen",
-          "Value": "Starting, Idle, OpeningDocument, Working, DocumentReady"
+          "Value": "Starting, Idle, OpeningDocument, Working, DocumentReady, Blocked"
         },
         {
           "Name": "progress caption",
@@ -2659,6 +2707,10 @@
         {
           "Name": "progress caption",
           "Value": "\u0417\u0430\u0433\u0440\u0443\u0437\u043A\u0430 TestCabling-\u042D\u041E\u041C.rvt"
+        },
+        {
+          "Name": "progress caption",
+          "Value": "dialog"
         },
         {
           "Name": "progress caption",
@@ -2717,19 +2769,19 @@
           "Value": "\u0410\u0432\u0442\u043E\u043C\u0430\u0442\u0438\u0447\u0435\u0441\u043A\u043E\u0435 \u0441\u043E\u0435\u0434\u0438\u043D\u0435\u043D\u0438\u0435 \u0438\u0437\u043C\u0435\u043D\u0435\u043D\u043D\u044B\u0445 \u044D\u043B\u0435\u043C\u0435\u043D\u0442\u043E\u0432"
         },
         {
-          "Name": "progress caption",
-          "Value": "\u0424\u043E\u0440\u043C\u0438\u0440\u043E\u0432\u0430\u043D\u0438\u0435 \u0433\u0440\u0430\u0444\u0438\u043A\u0438 \u0434\u043B\u044F 3D \u0432\u0438\u0434: ???"
+          "Name": "modal dialog",
+          "Value": "TaskDialog_Stop_Operation"
         },
         {
           "Name": "closed after",
-          "Value": "22.0s"
+          "Value": "23.2s"
         }
       ]
     },
     {
       "Release": 2025,
       "FileVersion": "0.1.0.0",
-      "BuiltUtc": "2026-09-21T08:35:36.9939954Z",
+      "BuiltUtc": "2026-09-21T22:12:11.5791967Z",
       "Signed": true,
       "Checks": [
         {
@@ -3285,6 +3337,14 @@
           "Ok": true
         },
         {
+          "Name": "Cabling apply: a carrier that states which cable groups it admits reads back stating them, and one that does not reads as admitting only circuits in no group",
+          "Ok": true
+        },
+        {
+          "Name": "Cabling apply: a circuit is laid only in carriers that admit its cable group, and one no carrier admits is told apart from one with nothing within reach",
+          "Ok": true
+        },
+        {
           "Name": "Cabling lengths: what the search found, written onto its circuits, reads back as a current answer",
           "Ok": true
         },
@@ -3353,11 +3413,11 @@
         },
         {
           "Name": "launched",
-          "Value": "pid 31312"
+          "Value": "pid 61824"
         },
         {
           "Name": "registered after",
-          "Value": "32.4s"
+          "Value": "14.7s"
         },
         {
           "Name": "recovered by enumeration",
@@ -3373,11 +3433,11 @@
         },
         {
           "Name": "probe log",
-          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2025-31312-20260921-183835.log"
+          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2025-61824-20260922-081603.log"
         },
         {
           "Name": "threads",
-          "Value": "api 1, call 23"
+          "Value": "api 1, call 17"
         },
         {
           "Name": "appdomain",
@@ -3401,7 +3461,7 @@
         },
         {
           "Name": "log",
-          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2025-31312-20260921-183835.log"
+          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2025-61824-20260922-081603.log"
         },
         {
           "Name": "sinks",
@@ -3413,7 +3473,7 @@
         },
         {
           "Name": "opened after registration",
-          "Value": "11.0s"
+          "Value": "22.0s"
         },
         {
           "Name": "pane:exists",
@@ -3533,7 +3593,7 @@
         },
         {
           "Name": "instance",
-          "Value": "7b31fae272d74666a7bd2fecac044c61"
+          "Value": "d4271dbf735f46e1837f54835c71c4be"
         },
         {
           "Name": "link1:linked",
@@ -3564,6 +3624,10 @@
           "Value": "1"
         },
         {
+          "Name": "link2:circuits",
+          "Value": "6"
+        },
+        {
           "Name": "link2:linked",
           "Value": "True"
         },
@@ -3577,11 +3641,11 @@
         },
         {
           "Name": "log",
-          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2025-31312-20260921-183835.log"
+          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2025-61824-20260922-081603.log"
         },
         {
           "Name": "pid",
-          "Value": "31312"
+          "Value": "61824"
         },
         {
           "Name": "release",
@@ -3653,15 +3717,15 @@
         },
         {
           "Name": "instance",
-          "Value": "7b31fae272d74666a7bd2fecac044c61"
+          "Value": "d4271dbf735f46e1837f54835c71c4be"
         },
         {
           "Name": "log",
-          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2025-31312-20260921-183835.log"
+          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2025-61824-20260922-081603.log"
         },
         {
           "Name": "pid",
-          "Value": "31312"
+          "Value": "61824"
         },
         {
           "Name": "place:after",
@@ -3749,11 +3813,11 @@
         },
         {
           "Name": "instance",
-          "Value": "7b31fae272d74666a7bd2fecac044c61"
+          "Value": "d4271dbf735f46e1837f54835c71c4be"
         },
         {
           "Name": "log",
-          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2025-31312-20260921-183835.log"
+          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2025-61824-20260922-081603.log"
         },
         {
           "Name": "modal:apiCallWorked",
@@ -3805,7 +3869,7 @@
         },
         {
           "Name": "modal:shownFor",
-          "Value": "2.48s"
+          "Value": "2.49s"
         },
         {
           "Name": "modal:transactionCommit",
@@ -3837,7 +3901,7 @@
         },
         {
           "Name": "pid",
-          "Value": "31312"
+          "Value": "61824"
         },
         {
           "Name": "release",
@@ -3849,11 +3913,11 @@
         },
         {
           "Name": "instance",
-          "Value": "7b31fae272d74666a7bd2fecac044c61"
+          "Value": "d4271dbf735f46e1837f54835c71c4be"
         },
         {
           "Name": "log",
-          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2025-31312-20260921-183835.log"
+          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2025-61824-20260922-081603.log"
         },
         {
           "Name": "modal:measured",
@@ -3865,7 +3929,7 @@
         },
         {
           "Name": "modal:pumpRanAt",
-          "Value": "2.48s"
+          "Value": "2.49s"
         },
         {
           "Name": "modal:windowClosed",
@@ -3873,7 +3937,7 @@
         },
         {
           "Name": "pid",
-          "Value": "31312"
+          "Value": "61824"
         },
         {
           "Name": "release",
@@ -3885,11 +3949,11 @@
         },
         {
           "Name": "instance",
-          "Value": "7b31fae272d74666a7bd2fecac044c61"
+          "Value": "d4271dbf735f46e1837f54835c71c4be"
         },
         {
           "Name": "log",
-          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2025-31312-20260921-183835.log"
+          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2025-61824-20260922-081603.log"
         },
         {
           "Name": "parameters:bound",
@@ -3965,7 +4029,7 @@
         },
         {
           "Name": "pid",
-          "Value": "31312"
+          "Value": "61824"
         },
         {
           "Name": "release",
@@ -4033,11 +4097,11 @@
         },
         {
           "Name": "census: elements walked, by the class asked for",
-          "Value": "FamilyInstance x68; MEPCurve x39; MEPSystem x15"
+          "Value": "FamilyInstance x81; MEPCurve x39; MEPSystem x21"
         },
         {
           "Name": "census: elements with a connector manager",
-          "Value": "97 (host 84, links 13)"
+          "Value": "116 (host 84, links 32)"
         },
         {
           "Name": "census: connector managers that could not be read, by the class asked for",
@@ -4049,15 +4113,15 @@
         },
         {
           "Name": "census: connector sets, entries they say they hold against entries walked",
-          "Value": "231 against 231; sets whose size did not read 0"
+          "Value": "304 against 304; sets whose size did not read 0"
         },
         {
           "Name": "census: connectors walked",
-          "Value": "231 (host 199, links 32)"
+          "Value": "304 (host 199, links 105)"
         },
         {
           "Name": "census: connectors not physical",
-          "Value": "75 (host 75, links 0)"
+          "Value": "93 (host 75, links 18)"
         },
         {
           "Name": "census: connectors met through an element that does not own them",
@@ -4076,16 +4140,16 @@
           "Value": "none"
         },
         {
-          "Name": "connectors by what they answer: type 1 physical, domain 4: Origin reads, IsConnected true, CoordinateSystem reads, MEPSystem none",
-          "Value": "75 (host 56, links 19)"
+          "Name": "connectors by what they answer: type 1 physical, domain 2: Origin reads, IsConnected false, CoordinateSystem reads, MEPSystem none",
+          "Value": "82 (host 27, links 55)"
         },
         {
           "Name": "connectors by what they answer: type 4 not physical, domain 0: Origin refuses, IsConnected refuses, CoordinateSystem refuses, MEPSystem refuses",
-          "Value": "60 (host 60, links 0)"
+          "Value": "78 (host 60, links 18)"
         },
         {
-          "Name": "connectors by what they answer: type 1 physical, domain 2: Origin reads, IsConnected false, CoordinateSystem reads, MEPSystem none",
-          "Value": "27 (host 27, links 0)"
+          "Name": "connectors by what they answer: type 1 physical, domain 4: Origin reads, IsConnected true, CoordinateSystem reads, MEPSystem none",
+          "Value": "75 (host 56, links 19)"
         },
         {
           "Name": "connectors by what they answer: type 1 physical, domain 4: Origin reads, IsConnected false, CoordinateSystem reads, MEPSystem none",
@@ -4113,15 +4177,15 @@
         },
         {
           "Name": "connectors not physical, by where they live: ElectricalSystem OST_ElectricalCircuit, type 4, owned by the element walked",
-          "Value": "39 (host 39, links 0)"
+          "Value": "51 (host 39, links 12)"
+        },
+        {
+          "Name": "connectors not physical, by where they live: FamilyInstance OST_ElectricalEquipment, type 4, owned by the element walked",
+          "Value": "19 (host 13, links 6)"
         },
         {
           "Name": "connectors not physical, by where they live: FamilyInstance OST_ElectricalEquipment, type 32, owned by the element walked",
           "Value": "15 (host 15, links 0)"
-        },
-        {
-          "Name": "connectors not physical, by where they live: FamilyInstance OST_ElectricalEquipment, type 4, owned by the element walked",
-          "Value": "13 (host 13, links 0)"
         },
         {
           "Name": "connectors not physical, by where they live: MechanicalSystem OST_DuctSystem, type 4, owned by the element walked",
@@ -4129,19 +4193,19 @@
         },
         {
           "Name": "connectors not physical, by their references: ElectricalSystem OST_ElectricalCircuit, type 4: references 1, their types [1], owned by [FamilyInstance], IsConnectedTo the first true",
-          "Value": "26 (host 26, links 0)"
+          "Value": "32 (host 26, links 6)"
+        },
+        {
+          "Name": "connectors not physical, by their references: ElectricalSystem OST_ElectricalCircuit, type 4: references 1, their types [4], owned by [FamilyInstance], IsConnectedTo the first true",
+          "Value": "19 (host 13, links 6)"
+        },
+        {
+          "Name": "connectors not physical, by their references: FamilyInstance OST_ElectricalEquipment, type 4: references 1, their types [4], owned by [ElectricalSystem], IsConnectedTo the first true",
+          "Value": "19 (host 13, links 6)"
         },
         {
           "Name": "connectors not physical, by their references: FamilyInstance OST_ElectricalEquipment, type 32: references 0, their types [], owned by [], IsConnectedTo the first no reference to ask about",
           "Value": "15 (host 15, links 0)"
-        },
-        {
-          "Name": "connectors not physical, by their references: ElectricalSystem OST_ElectricalCircuit, type 4: references 1, their types [4], owned by [FamilyInstance], IsConnectedTo the first true",
-          "Value": "13 (host 13, links 0)"
-        },
-        {
-          "Name": "connectors not physical, by their references: FamilyInstance OST_ElectricalEquipment, type 4: references 1, their types [4], owned by [ElectricalSystem], IsConnectedTo the first true",
-          "Value": "13 (host 13, links 0)"
         },
         {
           "Name": "connectors not physical, by their references: MechanicalSystem OST_DuctSystem, type 4: references 1, their types [1], owned by [Duct], IsConnectedTo the first true",
@@ -4152,16 +4216,16 @@
           "Value": "2 (host 2, links 0)"
         },
         {
+          "Name": "connectors, listed unused against IsConnected: type 1: listed unused yes, IsConnected false",
+          "Value": "113 (host 50, links 63)"
+        },
+        {
           "Name": "connectors, listed unused against IsConnected: type 1: listed unused no, IsConnected true",
           "Value": "81 (host 62, links 19)"
         },
         {
           "Name": "connectors, listed unused against IsConnected: type 4: listed unused no, IsConnected refuses",
-          "Value": "60 (host 60, links 0)"
-        },
-        {
-          "Name": "connectors, listed unused against IsConnected: type 1: listed unused yes, IsConnected false",
-          "Value": "58 (host 50, links 8)"
+          "Value": "78 (host 60, links 18)"
         },
         {
           "Name": "connectors, listed unused against IsConnected: type 2: listed unused no, IsConnected true",
@@ -4173,7 +4237,7 @@
         },
         {
           "Name": "census: elapsed, ms",
-          "Value": "36"
+          "Value": "45"
         },
         {
           "Name": "circuit ends: electrical systems",
@@ -4213,7 +4277,7 @@
         },
         {
           "Name": "circuit ends: elapsed, ms",
-          "Value": "16"
+          "Value": "18"
         },
         {
           "Name": "circuits on the panel used",
@@ -5037,7 +5101,7 @@
         },
         {
           "Name": "splicing plan: types of those carriers",
-          "Value": "2"
+          "Value": "1"
         },
         {
           "Name": "splicing plan: boxes after marking",
@@ -5162,6 +5226,42 @@
         {
           "Name": "over capacity: cabling warnings posted",
           "Value": "2"
+        },
+        {
+          "Name": "grouping: carriers of the host",
+          "Value": "36"
+        },
+        {
+          "Name": "grouping: carriers told which groups they admit",
+          "Value": "18"
+        },
+        {
+          "Name": "grouping: carriers read back admitting the group",
+          "Value": "18"
+        },
+        {
+          "Name": "grouping: carriers read back unmarked",
+          "Value": "18"
+        },
+        {
+          "Name": "grouping: circuits described",
+          "Value": "13"
+        },
+        {
+          "Name": "grouping: routes found before anybody is grouped",
+          "Value": "6"
+        },
+        {
+          "Name": "grouping: circuits turned away for their group",
+          "Value": "6"
+        },
+        {
+          "Name": "grouping: carriers of the host told to admit it",
+          "Value": "36"
+        },
+        {
+          "Name": "grouping: routes found once the host admits the group",
+          "Value": "1"
         },
         {
           "Name": "current: circuits described",
@@ -5381,7 +5481,7 @@
         },
         {
           "Name": "diagnostic events",
-          "Value": "2980 received, 0 dropped by the publisher, longest quiet spell 3.8s during Working"
+          "Value": "5319 received, 0 dropped by the publisher, longest quiet spell 3.0s during Working"
         },
         {
           "Name": "phases seen",
@@ -5413,15 +5513,23 @@
         },
         {
           "Name": "progress caption",
+          "Value": "\u041E\u0431\u043D\u043E\u0432\u043B\u0435\u043D\u0438\u0435 \u0434\u043E\u043A\u0443\u043C\u0435\u043D\u0442\u0430 \u0441 \u043F\u0440\u0435\u0434\u044B\u0434\u0443\u0449\u0435\u0439 \u0432\u0435\u0440\u0441\u0438\u0438"
+        },
+        {
+          "Name": "progress caption",
           "Value": "\u041E\u0431\u043D\u043E\u0432\u043B\u0435\u043D\u0438\u0435 \u0441\u0432\u044F\u0437\u0435\u0439"
         },
         {
           "Name": "progress caption",
-          "Value": "\u041E\u0431\u043D\u043E\u0432\u043B\u0435\u043D\u0438\u0435"
+          "Value": "\u0420\u0435\u0433\u0435\u043D\u0435\u0440\u0430\u0446\u0438\u044F"
         },
         {
           "Name": "progress caption",
           "Value": "\u0424\u0438\u043A\u0441\u0430\u0446\u0438\u044F \u0442\u0440\u0430\u043D\u0437\u0430\u043A\u0446\u0438\u0439"
+        },
+        {
+          "Name": "progress caption",
+          "Value": "\u041E\u0431\u043D\u043E\u0432\u043B\u0435\u043D\u0438\u0435"
         },
         {
           "Name": "progress caption",
@@ -5430,10 +5538,6 @@
         {
           "Name": "progress caption",
           "Value": "\u0417\u0430\u0433\u0440\u0443\u0437\u043A\u0430 TestCabling-\u0421\u041A\u0421.rvt"
-        },
-        {
-          "Name": "progress caption",
-          "Value": "\u0420\u0435\u0433\u0435\u043D\u0435\u0440\u0430\u0446\u0438\u044F"
         },
         {
           "Name": "progress caption",
@@ -5456,19 +5560,15 @@
           "Value": "\u0427\u0435\u0440\u0442\u0435\u0436: TestCabling-\u042D\u041E\u041C.rvt - 3D \u0432\u0438\u0434: {3D}"
         },
         {
-          "Name": "progress caption",
-          "Value": "\u0424\u043E\u0440\u043C\u0438\u0440\u043E\u0432\u0430\u043D\u0438\u0435 \u0433\u0440\u0430\u0444\u0438\u043A\u0438 \u0434\u043B\u044F 3D \u0432\u0438\u0434: ???"
-        },
-        {
           "Name": "closed after",
-          "Value": "4.5s"
+          "Value": "4.2s"
         }
       ]
     },
     {
       "Release": 2026,
       "FileVersion": "0.1.0.0",
-      "BuiltUtc": "2026-09-21T08:35:38.6313458Z",
+      "BuiltUtc": "2026-09-21T22:12:10.6559652Z",
       "Signed": true,
       "Checks": [
         {
@@ -6024,6 +6124,14 @@
           "Ok": true
         },
         {
+          "Name": "Cabling apply: a carrier that states which cable groups it admits reads back stating them, and one that does not reads as admitting only circuits in no group",
+          "Ok": true
+        },
+        {
+          "Name": "Cabling apply: a circuit is laid only in carriers that admit its cable group, and one no carrier admits is told apart from one with nothing within reach",
+          "Ok": true
+        },
+        {
           "Name": "Cabling lengths: what the search found, written onto its circuits, reads back as a current answer",
           "Ok": true
         },
@@ -6092,11 +6200,11 @@
         },
         {
           "Name": "launched",
-          "Value": "pid 79788"
+          "Value": "pid 29484"
         },
         {
           "Name": "registered after",
-          "Value": "46.1s"
+          "Value": "27.5s"
         },
         {
           "Name": "recovered by enumeration",
@@ -6112,11 +6220,11 @@
         },
         {
           "Name": "probe log",
-          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2026-79788-20260921-183936.log"
+          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2026-29484-20260922-081701.log"
         },
         {
           "Name": "threads",
-          "Value": "api 1, call 15"
+          "Value": "api 1, call 16"
         },
         {
           "Name": "appdomain",
@@ -6140,7 +6248,7 @@
         },
         {
           "Name": "log",
-          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2026-79788-20260921-183936.log"
+          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2026-29484-20260922-081701.log"
         },
         {
           "Name": "sinks",
@@ -6152,7 +6260,7 @@
         },
         {
           "Name": "opened after registration",
-          "Value": "37.4s"
+          "Value": "71.1s"
         },
         {
           "Name": "pane:exists",
@@ -6272,7 +6380,7 @@
         },
         {
           "Name": "instance",
-          "Value": "cbfd92824d2b4c5dbd397587b840bd82"
+          "Value": "ea2220efc0484ee8b38c46e5bb6c4b9b"
         },
         {
           "Name": "link1:linked",
@@ -6303,6 +6411,10 @@
           "Value": "1"
         },
         {
+          "Name": "link2:circuits",
+          "Value": "6"
+        },
+        {
           "Name": "link2:linked",
           "Value": "True"
         },
@@ -6316,11 +6428,11 @@
         },
         {
           "Name": "log",
-          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2026-79788-20260921-183936.log"
+          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2026-29484-20260922-081701.log"
         },
         {
           "Name": "pid",
-          "Value": "79788"
+          "Value": "29484"
         },
         {
           "Name": "release",
@@ -6392,15 +6504,15 @@
         },
         {
           "Name": "instance",
-          "Value": "cbfd92824d2b4c5dbd397587b840bd82"
+          "Value": "ea2220efc0484ee8b38c46e5bb6c4b9b"
         },
         {
           "Name": "log",
-          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2026-79788-20260921-183936.log"
+          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2026-29484-20260922-081701.log"
         },
         {
           "Name": "pid",
-          "Value": "79788"
+          "Value": "29484"
         },
         {
           "Name": "place:after",
@@ -6488,11 +6600,11 @@
         },
         {
           "Name": "instance",
-          "Value": "cbfd92824d2b4c5dbd397587b840bd82"
+          "Value": "ea2220efc0484ee8b38c46e5bb6c4b9b"
         },
         {
           "Name": "log",
-          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2026-79788-20260921-183936.log"
+          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2026-29484-20260922-081701.log"
         },
         {
           "Name": "modal:apiCallWorked",
@@ -6544,7 +6656,7 @@
         },
         {
           "Name": "modal:shownFor",
-          "Value": "2.34s"
+          "Value": "2.35s"
         },
         {
           "Name": "modal:transactionCommit",
@@ -6556,7 +6668,7 @@
         },
         {
           "Name": "modal:transactionCreated",
-          "Value": "627392"
+          "Value": "627378"
         },
         {
           "Name": "modal:transactionRolledBack",
@@ -6576,7 +6688,7 @@
         },
         {
           "Name": "pid",
-          "Value": "79788"
+          "Value": "29484"
         },
         {
           "Name": "release",
@@ -6588,11 +6700,11 @@
         },
         {
           "Name": "instance",
-          "Value": "cbfd92824d2b4c5dbd397587b840bd82"
+          "Value": "ea2220efc0484ee8b38c46e5bb6c4b9b"
         },
         {
           "Name": "log",
-          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2026-79788-20260921-183936.log"
+          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2026-29484-20260922-081701.log"
         },
         {
           "Name": "modal:measured",
@@ -6604,7 +6716,7 @@
         },
         {
           "Name": "modal:pumpRanAt",
-          "Value": "2.34s"
+          "Value": "2.35s"
         },
         {
           "Name": "modal:windowClosed",
@@ -6612,7 +6724,7 @@
         },
         {
           "Name": "pid",
-          "Value": "79788"
+          "Value": "29484"
         },
         {
           "Name": "release",
@@ -6624,11 +6736,11 @@
         },
         {
           "Name": "instance",
-          "Value": "cbfd92824d2b4c5dbd397587b840bd82"
+          "Value": "ea2220efc0484ee8b38c46e5bb6c4b9b"
         },
         {
           "Name": "log",
-          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2026-79788-20260921-183936.log"
+          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2026-29484-20260922-081701.log"
         },
         {
           "Name": "parameters:bound",
@@ -6704,7 +6816,7 @@
         },
         {
           "Name": "pid",
-          "Value": "79788"
+          "Value": "29484"
         },
         {
           "Name": "release",
@@ -6772,11 +6884,11 @@
         },
         {
           "Name": "census: elements walked, by the class asked for",
-          "Value": "FamilyInstance x68; MEPCurve x39; MEPSystem x15"
+          "Value": "FamilyInstance x81; MEPCurve x39; MEPSystem x21"
         },
         {
           "Name": "census: elements with a connector manager",
-          "Value": "97 (host 84, links 13)"
+          "Value": "116 (host 84, links 32)"
         },
         {
           "Name": "census: connector managers that could not be read, by the class asked for",
@@ -6788,15 +6900,15 @@
         },
         {
           "Name": "census: connector sets, entries they say they hold against entries walked",
-          "Value": "231 against 231; sets whose size did not read 0"
+          "Value": "304 against 304; sets whose size did not read 0"
         },
         {
           "Name": "census: connectors walked",
-          "Value": "231 (host 199, links 32)"
+          "Value": "304 (host 199, links 105)"
         },
         {
           "Name": "census: connectors not physical",
-          "Value": "75 (host 75, links 0)"
+          "Value": "93 (host 75, links 18)"
         },
         {
           "Name": "census: connectors met through an element that does not own them",
@@ -6815,16 +6927,16 @@
           "Value": "none"
         },
         {
-          "Name": "connectors by what they answer: type 1 physical, domain 4: Origin reads, IsConnected true, CoordinateSystem reads, MEPSystem none",
-          "Value": "75 (host 56, links 19)"
+          "Name": "connectors by what they answer: type 1 physical, domain 2: Origin reads, IsConnected false, CoordinateSystem reads, MEPSystem none",
+          "Value": "82 (host 27, links 55)"
         },
         {
           "Name": "connectors by what they answer: type 4 not physical, domain 0: Origin refuses, IsConnected refuses, CoordinateSystem refuses, MEPSystem refuses",
-          "Value": "60 (host 60, links 0)"
+          "Value": "78 (host 60, links 18)"
         },
         {
-          "Name": "connectors by what they answer: type 1 physical, domain 2: Origin reads, IsConnected false, CoordinateSystem reads, MEPSystem none",
-          "Value": "27 (host 27, links 0)"
+          "Name": "connectors by what they answer: type 1 physical, domain 4: Origin reads, IsConnected true, CoordinateSystem reads, MEPSystem none",
+          "Value": "75 (host 56, links 19)"
         },
         {
           "Name": "connectors by what they answer: type 1 physical, domain 4: Origin reads, IsConnected false, CoordinateSystem reads, MEPSystem none",
@@ -6852,15 +6964,15 @@
         },
         {
           "Name": "connectors not physical, by where they live: ElectricalSystem OST_ElectricalCircuit, type 4, owned by the element walked",
-          "Value": "39 (host 39, links 0)"
+          "Value": "51 (host 39, links 12)"
+        },
+        {
+          "Name": "connectors not physical, by where they live: FamilyInstance OST_ElectricalEquipment, type 4, owned by the element walked",
+          "Value": "19 (host 13, links 6)"
         },
         {
           "Name": "connectors not physical, by where they live: FamilyInstance OST_ElectricalEquipment, type 32, owned by the element walked",
           "Value": "15 (host 15, links 0)"
-        },
-        {
-          "Name": "connectors not physical, by where they live: FamilyInstance OST_ElectricalEquipment, type 4, owned by the element walked",
-          "Value": "13 (host 13, links 0)"
         },
         {
           "Name": "connectors not physical, by where they live: MechanicalSystem OST_DuctSystem, type 4, owned by the element walked",
@@ -6868,19 +6980,19 @@
         },
         {
           "Name": "connectors not physical, by their references: ElectricalSystem OST_ElectricalCircuit, type 4: references 1, their types [1], owned by [FamilyInstance], IsConnectedTo the first true",
-          "Value": "26 (host 26, links 0)"
+          "Value": "32 (host 26, links 6)"
+        },
+        {
+          "Name": "connectors not physical, by their references: ElectricalSystem OST_ElectricalCircuit, type 4: references 1, their types [4], owned by [FamilyInstance], IsConnectedTo the first true",
+          "Value": "19 (host 13, links 6)"
+        },
+        {
+          "Name": "connectors not physical, by their references: FamilyInstance OST_ElectricalEquipment, type 4: references 1, their types [4], owned by [ElectricalSystem], IsConnectedTo the first true",
+          "Value": "19 (host 13, links 6)"
         },
         {
           "Name": "connectors not physical, by their references: FamilyInstance OST_ElectricalEquipment, type 32: references 0, their types [], owned by [], IsConnectedTo the first no reference to ask about",
           "Value": "15 (host 15, links 0)"
-        },
-        {
-          "Name": "connectors not physical, by their references: ElectricalSystem OST_ElectricalCircuit, type 4: references 1, their types [4], owned by [FamilyInstance], IsConnectedTo the first true",
-          "Value": "13 (host 13, links 0)"
-        },
-        {
-          "Name": "connectors not physical, by their references: FamilyInstance OST_ElectricalEquipment, type 4: references 1, their types [4], owned by [ElectricalSystem], IsConnectedTo the first true",
-          "Value": "13 (host 13, links 0)"
         },
         {
           "Name": "connectors not physical, by their references: MechanicalSystem OST_DuctSystem, type 4: references 1, their types [1], owned by [Duct], IsConnectedTo the first true",
@@ -6891,16 +7003,16 @@
           "Value": "2 (host 2, links 0)"
         },
         {
+          "Name": "connectors, listed unused against IsConnected: type 1: listed unused yes, IsConnected false",
+          "Value": "113 (host 50, links 63)"
+        },
+        {
           "Name": "connectors, listed unused against IsConnected: type 1: listed unused no, IsConnected true",
           "Value": "81 (host 62, links 19)"
         },
         {
           "Name": "connectors, listed unused against IsConnected: type 4: listed unused no, IsConnected refuses",
-          "Value": "60 (host 60, links 0)"
-        },
-        {
-          "Name": "connectors, listed unused against IsConnected: type 1: listed unused yes, IsConnected false",
-          "Value": "58 (host 50, links 8)"
+          "Value": "78 (host 60, links 18)"
         },
         {
           "Name": "connectors, listed unused against IsConnected: type 2: listed unused no, IsConnected true",
@@ -6912,7 +7024,7 @@
         },
         {
           "Name": "census: elapsed, ms",
-          "Value": "44"
+          "Value": "57"
         },
         {
           "Name": "circuit ends: electrical systems",
@@ -7780,11 +7892,11 @@
         },
         {
           "Name": "splicing plan: boxes after marking",
-          "Value": "5"
+          "Value": "4"
         },
         {
           "Name": "splicing plan: splices after marking",
-          "Value": "1"
+          "Value": "2"
         },
         {
           "Name": "capacity: device categories the read found",
@@ -7901,6 +8013,42 @@
         {
           "Name": "over capacity: cabling warnings posted",
           "Value": "2"
+        },
+        {
+          "Name": "grouping: carriers of the host",
+          "Value": "36"
+        },
+        {
+          "Name": "grouping: carriers told which groups they admit",
+          "Value": "18"
+        },
+        {
+          "Name": "grouping: carriers read back admitting the group",
+          "Value": "18"
+        },
+        {
+          "Name": "grouping: carriers read back unmarked",
+          "Value": "18"
+        },
+        {
+          "Name": "grouping: circuits described",
+          "Value": "13"
+        },
+        {
+          "Name": "grouping: routes found before anybody is grouped",
+          "Value": "6"
+        },
+        {
+          "Name": "grouping: circuits turned away for their group",
+          "Value": "6"
+        },
+        {
+          "Name": "grouping: carriers of the host told to admit it",
+          "Value": "36"
+        },
+        {
+          "Name": "grouping: routes found once the host admits the group",
+          "Value": "1"
         },
         {
           "Name": "current: circuits described",
@@ -8084,7 +8232,7 @@
         },
         {
           "Name": "diagnostic events",
-          "Value": "2916 received, 0 dropped by the publisher, longest quiet spell 21.7s during Starting"
+          "Value": "5200 received, 0 dropped by the publisher, longest quiet spell 45.9s during Starting"
         },
         {
           "Name": "phases seen",
@@ -8112,15 +8260,23 @@
         },
         {
           "Name": "progress caption",
+          "Value": "\u041E\u0431\u043D\u043E\u0432\u043B\u0435\u043D\u0438\u0435 \u0434\u043E\u043A\u0443\u043C\u0435\u043D\u0442\u0430 \u0441 \u043F\u0440\u0435\u0434\u044B\u0434\u0443\u0449\u0435\u0439 \u0432\u0435\u0440\u0441\u0438\u0438"
+        },
+        {
+          "Name": "progress caption",
           "Value": "\u041E\u0431\u043D\u043E\u0432\u043B\u0435\u043D\u0438\u0435 \u0441\u0432\u044F\u0437\u0435\u0439"
         },
         {
           "Name": "progress caption",
-          "Value": "\u041E\u0431\u043D\u043E\u0432\u043B\u0435\u043D\u0438\u0435"
+          "Value": "\u0420\u0435\u0433\u0435\u043D\u0435\u0440\u0430\u0446\u0438\u044F"
         },
         {
           "Name": "progress caption",
           "Value": "\u0424\u0438\u043A\u0441\u0430\u0446\u0438\u044F \u0442\u0440\u0430\u043D\u0437\u0430\u043A\u0446\u0438\u0439"
+        },
+        {
+          "Name": "progress caption",
+          "Value": "\u041E\u0431\u043D\u043E\u0432\u043B\u0435\u043D\u0438\u0435"
         },
         {
           "Name": "progress caption",
@@ -8129,10 +8285,6 @@
         {
           "Name": "progress caption",
           "Value": "\u0417\u0430\u0433\u0440\u0443\u0437\u043A\u0430 TestCabling-\u0421\u041A\u0421.rvt"
-        },
-        {
-          "Name": "progress caption",
-          "Value": "\u0420\u0435\u0433\u0435\u043D\u0435\u0440\u0430\u0446\u0438\u044F"
         },
         {
           "Name": "progress caption",
@@ -8164,14 +8316,14 @@
         },
         {
           "Name": "closed after",
-          "Value": "16.5s"
+          "Value": "17.0s"
         }
       ]
     },
     {
       "Release": 2027,
       "FileVersion": "0.1.0.0",
-      "BuiltUtc": "2026-09-21T08:35:40.2974814Z",
+      "BuiltUtc": "2026-09-21T22:12:10.5175299Z",
       "Signed": true,
       "Checks": [
         {
@@ -8727,6 +8879,14 @@
           "Ok": true
         },
         {
+          "Name": "Cabling apply: a carrier that states which cable groups it admits reads back stating them, and one that does not reads as admitting only circuits in no group",
+          "Ok": true
+        },
+        {
+          "Name": "Cabling apply: a circuit is laid only in carriers that admit its cable group, and one no carrier admits is told apart from one with nothing within reach",
+          "Ok": true
+        },
+        {
           "Name": "Cabling lengths: what the search found, written onto its circuits, reads back as a current answer",
           "Ok": true
         },
@@ -8795,11 +8955,11 @@
         },
         {
           "Name": "launched",
-          "Value": "pid 80600"
+          "Value": "pid 85232"
         },
         {
           "Name": "registered after",
-          "Value": "19.5s"
+          "Value": "20.1s"
         },
         {
           "Name": "recovered by enumeration",
@@ -8815,11 +8975,11 @@
         },
         {
           "Name": "probe log",
-          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2027-80600-20260921-184115.log"
+          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2027-85232-20260922-081917.log"
         },
         {
           "Name": "threads",
-          "Value": "api 2, call 21"
+          "Value": "api 2, call 18"
         },
         {
           "Name": "appdomain",
@@ -8843,7 +9003,7 @@
         },
         {
           "Name": "log",
-          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2027-80600-20260921-184115.log"
+          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2027-85232-20260922-081917.log"
         },
         {
           "Name": "sinks",
@@ -8855,7 +9015,7 @@
         },
         {
           "Name": "opened after registration",
-          "Value": "80.8s"
+          "Value": "76.3s"
         },
         {
           "Name": "pane:exists",
@@ -8975,7 +9135,7 @@
         },
         {
           "Name": "instance",
-          "Value": "bce6dda589334c1e83107d9f143d5d28"
+          "Value": "1e278eb8459f41f8af6a2449181b0622"
         },
         {
           "Name": "link1:linked",
@@ -9006,6 +9166,10 @@
           "Value": "1"
         },
         {
+          "Name": "link2:circuits",
+          "Value": "6"
+        },
+        {
           "Name": "link2:linked",
           "Value": "True"
         },
@@ -9019,11 +9183,11 @@
         },
         {
           "Name": "log",
-          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2027-80600-20260921-184115.log"
+          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2027-85232-20260922-081917.log"
         },
         {
           "Name": "pid",
-          "Value": "80600"
+          "Value": "85232"
         },
         {
           "Name": "release",
@@ -9095,15 +9259,15 @@
         },
         {
           "Name": "instance",
-          "Value": "bce6dda589334c1e83107d9f143d5d28"
+          "Value": "1e278eb8459f41f8af6a2449181b0622"
         },
         {
           "Name": "log",
-          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2027-80600-20260921-184115.log"
+          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2027-85232-20260922-081917.log"
         },
         {
           "Name": "pid",
-          "Value": "80600"
+          "Value": "85232"
         },
         {
           "Name": "place:after",
@@ -9191,11 +9355,11 @@
         },
         {
           "Name": "instance",
-          "Value": "bce6dda589334c1e83107d9f143d5d28"
+          "Value": "1e278eb8459f41f8af6a2449181b0622"
         },
         {
           "Name": "log",
-          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2027-80600-20260921-184115.log"
+          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2027-85232-20260922-081917.log"
         },
         {
           "Name": "modal:apiCallWorked",
@@ -9223,7 +9387,7 @@
         },
         {
           "Name": "modal:awaitResumedAfter",
-          "Value": "0.27s"
+          "Value": "0.29s"
         },
         {
           "Name": "modal:awaitResumedOnApiThread",
@@ -9247,7 +9411,7 @@
         },
         {
           "Name": "modal:shownFor",
-          "Value": "2.35s"
+          "Value": "2.40s"
         },
         {
           "Name": "modal:transactionCommit",
@@ -9259,7 +9423,7 @@
         },
         {
           "Name": "modal:transactionCreated",
-          "Value": "627411"
+          "Value": "627398"
         },
         {
           "Name": "modal:transactionRolledBack",
@@ -9279,7 +9443,7 @@
         },
         {
           "Name": "pid",
-          "Value": "80600"
+          "Value": "85232"
         },
         {
           "Name": "release",
@@ -9291,11 +9455,11 @@
         },
         {
           "Name": "instance",
-          "Value": "bce6dda589334c1e83107d9f143d5d28"
+          "Value": "1e278eb8459f41f8af6a2449181b0622"
         },
         {
           "Name": "log",
-          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2027-80600-20260921-184115.log"
+          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2027-85232-20260922-081917.log"
         },
         {
           "Name": "modal:measured",
@@ -9307,7 +9471,7 @@
         },
         {
           "Name": "modal:pumpRanAt",
-          "Value": "2.35s"
+          "Value": "2.40s"
         },
         {
           "Name": "modal:windowClosed",
@@ -9315,7 +9479,7 @@
         },
         {
           "Name": "pid",
-          "Value": "80600"
+          "Value": "85232"
         },
         {
           "Name": "release",
@@ -9327,11 +9491,11 @@
         },
         {
           "Name": "instance",
-          "Value": "bce6dda589334c1e83107d9f143d5d28"
+          "Value": "1e278eb8459f41f8af6a2449181b0622"
         },
         {
           "Name": "log",
-          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2027-80600-20260921-184115.log"
+          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2027-85232-20260922-081917.log"
         },
         {
           "Name": "parameters:bound",
@@ -9407,7 +9571,7 @@
         },
         {
           "Name": "pid",
-          "Value": "80600"
+          "Value": "85232"
         },
         {
           "Name": "release",
@@ -9475,11 +9639,11 @@
         },
         {
           "Name": "census: elements walked, by the class asked for",
-          "Value": "FamilyInstance x68; MEPCurve x39; MEPSystem x15"
+          "Value": "FamilyInstance x81; MEPCurve x39; MEPSystem x21"
         },
         {
           "Name": "census: elements with a connector manager",
-          "Value": "97 (host 84, links 13)"
+          "Value": "116 (host 84, links 32)"
         },
         {
           "Name": "census: connector managers that could not be read, by the class asked for",
@@ -9491,15 +9655,15 @@
         },
         {
           "Name": "census: connector sets, entries they say they hold against entries walked",
-          "Value": "231 against 231; sets whose size did not read 0"
+          "Value": "304 against 304; sets whose size did not read 0"
         },
         {
           "Name": "census: connectors walked",
-          "Value": "231 (host 199, links 32)"
+          "Value": "304 (host 199, links 105)"
         },
         {
           "Name": "census: connectors not physical",
-          "Value": "75 (host 75, links 0)"
+          "Value": "93 (host 75, links 18)"
         },
         {
           "Name": "census: connectors met through an element that does not own them",
@@ -9518,16 +9682,16 @@
           "Value": "none"
         },
         {
-          "Name": "connectors by what they answer: type 1 physical, domain 4: Origin reads, IsConnected true, CoordinateSystem reads, MEPSystem none",
-          "Value": "75 (host 56, links 19)"
+          "Name": "connectors by what they answer: type 1 physical, domain 2: Origin reads, IsConnected false, CoordinateSystem reads, MEPSystem none",
+          "Value": "82 (host 27, links 55)"
         },
         {
           "Name": "connectors by what they answer: type 4 not physical, domain 0: Origin refuses, IsConnected refuses, CoordinateSystem refuses, MEPSystem refuses",
-          "Value": "60 (host 60, links 0)"
+          "Value": "78 (host 60, links 18)"
         },
         {
-          "Name": "connectors by what they answer: type 1 physical, domain 2: Origin reads, IsConnected false, CoordinateSystem reads, MEPSystem none",
-          "Value": "27 (host 27, links 0)"
+          "Name": "connectors by what they answer: type 1 physical, domain 4: Origin reads, IsConnected true, CoordinateSystem reads, MEPSystem none",
+          "Value": "75 (host 56, links 19)"
         },
         {
           "Name": "connectors by what they answer: type 1 physical, domain 4: Origin reads, IsConnected false, CoordinateSystem reads, MEPSystem none",
@@ -9555,15 +9719,15 @@
         },
         {
           "Name": "connectors not physical, by where they live: ElectricalSystem OST_ElectricalCircuit, type 4, owned by the element walked",
-          "Value": "39 (host 39, links 0)"
+          "Value": "51 (host 39, links 12)"
+        },
+        {
+          "Name": "connectors not physical, by where they live: FamilyInstance OST_ElectricalEquipment, type 4, owned by the element walked",
+          "Value": "19 (host 13, links 6)"
         },
         {
           "Name": "connectors not physical, by where they live: FamilyInstance OST_ElectricalEquipment, type 32, owned by the element walked",
           "Value": "15 (host 15, links 0)"
-        },
-        {
-          "Name": "connectors not physical, by where they live: FamilyInstance OST_ElectricalEquipment, type 4, owned by the element walked",
-          "Value": "13 (host 13, links 0)"
         },
         {
           "Name": "connectors not physical, by where they live: MechanicalSystem OST_DuctSystem, type 4, owned by the element walked",
@@ -9571,19 +9735,19 @@
         },
         {
           "Name": "connectors not physical, by their references: ElectricalSystem OST_ElectricalCircuit, type 4: references 1, their types [1], owned by [FamilyInstance], IsConnectedTo the first true",
-          "Value": "26 (host 26, links 0)"
+          "Value": "32 (host 26, links 6)"
+        },
+        {
+          "Name": "connectors not physical, by their references: ElectricalSystem OST_ElectricalCircuit, type 4: references 1, their types [4], owned by [FamilyInstance], IsConnectedTo the first true",
+          "Value": "19 (host 13, links 6)"
+        },
+        {
+          "Name": "connectors not physical, by their references: FamilyInstance OST_ElectricalEquipment, type 4: references 1, their types [4], owned by [ElectricalSystem], IsConnectedTo the first true",
+          "Value": "19 (host 13, links 6)"
         },
         {
           "Name": "connectors not physical, by their references: FamilyInstance OST_ElectricalEquipment, type 32: references 0, their types [], owned by [], IsConnectedTo the first no reference to ask about",
           "Value": "15 (host 15, links 0)"
-        },
-        {
-          "Name": "connectors not physical, by their references: ElectricalSystem OST_ElectricalCircuit, type 4: references 1, their types [4], owned by [FamilyInstance], IsConnectedTo the first true",
-          "Value": "13 (host 13, links 0)"
-        },
-        {
-          "Name": "connectors not physical, by their references: FamilyInstance OST_ElectricalEquipment, type 4: references 1, their types [4], owned by [ElectricalSystem], IsConnectedTo the first true",
-          "Value": "13 (host 13, links 0)"
         },
         {
           "Name": "connectors not physical, by their references: MechanicalSystem OST_DuctSystem, type 4: references 1, their types [1], owned by [Duct], IsConnectedTo the first true",
@@ -9594,16 +9758,16 @@
           "Value": "2 (host 2, links 0)"
         },
         {
+          "Name": "connectors, listed unused against IsConnected: type 1: listed unused yes, IsConnected false",
+          "Value": "113 (host 50, links 63)"
+        },
+        {
           "Name": "connectors, listed unused against IsConnected: type 1: listed unused no, IsConnected true",
           "Value": "81 (host 62, links 19)"
         },
         {
           "Name": "connectors, listed unused against IsConnected: type 4: listed unused no, IsConnected refuses",
-          "Value": "60 (host 60, links 0)"
-        },
-        {
-          "Name": "connectors, listed unused against IsConnected: type 1: listed unused yes, IsConnected false",
-          "Value": "58 (host 50, links 8)"
+          "Value": "78 (host 60, links 18)"
         },
         {
           "Name": "connectors, listed unused against IsConnected: type 2: listed unused no, IsConnected true",
@@ -9615,7 +9779,7 @@
         },
         {
           "Name": "census: elapsed, ms",
-          "Value": "75"
+          "Value": "39"
         },
         {
           "Name": "circuit ends: electrical systems",
@@ -9655,7 +9819,7 @@
         },
         {
           "Name": "circuit ends: elapsed, ms",
-          "Value": "42"
+          "Value": "18"
         },
         {
           "Name": "circuits on the panel used",
@@ -10479,7 +10643,7 @@
         },
         {
           "Name": "splicing plan: types of those carriers",
-          "Value": "1"
+          "Value": "2"
         },
         {
           "Name": "splicing plan: boxes after marking",
@@ -10604,6 +10768,42 @@
         {
           "Name": "over capacity: cabling warnings posted",
           "Value": "2"
+        },
+        {
+          "Name": "grouping: carriers of the host",
+          "Value": "36"
+        },
+        {
+          "Name": "grouping: carriers told which groups they admit",
+          "Value": "18"
+        },
+        {
+          "Name": "grouping: carriers read back admitting the group",
+          "Value": "18"
+        },
+        {
+          "Name": "grouping: carriers read back unmarked",
+          "Value": "18"
+        },
+        {
+          "Name": "grouping: circuits described",
+          "Value": "13"
+        },
+        {
+          "Name": "grouping: routes found before anybody is grouped",
+          "Value": "6"
+        },
+        {
+          "Name": "grouping: circuits turned away for their group",
+          "Value": "6"
+        },
+        {
+          "Name": "grouping: carriers of the host told to admit it",
+          "Value": "36"
+        },
+        {
+          "Name": "grouping: routes found once the host admits the group",
+          "Value": "1"
         },
         {
           "Name": "current: circuits described",
@@ -11023,7 +11223,7 @@
         },
         {
           "Name": "assemblies loaded",
-          "Value": "784"
+          "Value": "788"
         },
         {
           "Name": "Revit\u0027s copy won",
@@ -11071,7 +11271,7 @@
         },
         {
           "Name": "diagnostic events",
-          "Value": "3030 received, 0 dropped by the publisher, longest quiet spell 65.5s during Starting"
+          "Value": "5419 received, 0 dropped by the publisher, longest quiet spell 50.6s during Starting"
         },
         {
           "Name": "phases seen",
@@ -11099,15 +11299,23 @@
         },
         {
           "Name": "progress caption",
+          "Value": "\u041E\u0431\u043D\u043E\u0432\u043B\u0435\u043D\u0438\u0435 \u0434\u043E\u043A\u0443\u043C\u0435\u043D\u0442\u0430 \u0441 \u043F\u0440\u0435\u0434\u044B\u0434\u0443\u0449\u0435\u0439 \u0432\u0435\u0440\u0441\u0438\u0438"
+        },
+        {
+          "Name": "progress caption",
           "Value": "\u041E\u0431\u043D\u043E\u0432\u043B\u0435\u043D\u0438\u0435 \u0441\u0432\u044F\u0437\u0435\u0439"
         },
         {
           "Name": "progress caption",
-          "Value": "\u041E\u0431\u043D\u043E\u0432\u043B\u0435\u043D\u0438\u0435"
+          "Value": "\u0420\u0435\u0433\u0435\u043D\u0435\u0440\u0430\u0446\u0438\u044F"
         },
         {
           "Name": "progress caption",
           "Value": "\u0424\u0438\u043A\u0441\u0430\u0446\u0438\u044F \u0442\u0440\u0430\u043D\u0437\u0430\u043A\u0446\u0438\u0439"
+        },
+        {
+          "Name": "progress caption",
+          "Value": "\u041E\u0431\u043D\u043E\u0432\u043B\u0435\u043D\u0438\u0435"
         },
         {
           "Name": "progress caption",
@@ -11119,7 +11327,7 @@
         },
         {
           "Name": "progress caption",
-          "Value": "\u0420\u0435\u0433\u0435\u043D\u0435\u0440\u0430\u0446\u0438\u044F"
+          "Value": "\u0424\u043E\u0440\u043C\u0438\u0440\u043E\u0432\u0430\u043D\u0438\u0435 \u0433\u0440\u0430\u0444\u0438\u043A\u0438 \u0434\u043B\u044F \u0414\u0438\u0441\u043F\u0435\u0442\u0447\u0435\u0440 \u043F\u0440\u043E\u0435\u043A\u0442\u0430"
         },
         {
           "Name": "progress caption",
@@ -11128,10 +11336,6 @@
         {
           "Name": "progress caption",
           "Value": "\u0424\u043E\u0440\u043C\u0438\u0440\u043E\u0432\u0430\u043D\u0438\u0435 \u0433\u0440\u0430\u0444\u0438\u043A\u0438 \u0434\u043B\u044F 3D \u0432\u0438\u0434: Proxy of {3D}"
-        },
-        {
-          "Name": "progress caption",
-          "Value": "\u0424\u043E\u0440\u043C\u0438\u0440\u043E\u0432\u0430\u043D\u0438\u0435 \u0433\u0440\u0430\u0444\u0438\u043A\u0438 \u0434\u043B\u044F \u0414\u0438\u0441\u043F\u0435\u0442\u0447\u0435\u0440 \u043F\u0440\u043E\u0435\u043A\u0442\u0430"
         },
         {
           "Name": "progress caption",
@@ -11150,12 +11354,16 @@
           "Value": "\u0410\u0432\u0442\u043E\u043C\u0430\u0442\u0438\u0447\u0435\u0441\u043A\u043E\u0435 \u0441\u043E\u0435\u0434\u0438\u043D\u0435\u043D\u0438\u0435 \u0438\u0437\u043C\u0435\u043D\u0435\u043D\u043D\u044B\u0445 \u044D\u043B\u0435\u043C\u0435\u043D\u0442\u043E\u0432"
         },
         {
+          "Name": "progress caption",
+          "Value": "\u0424\u043E\u0440\u043C\u0438\u0440\u043E\u0432\u0430\u043D\u0438\u0435 \u0433\u0440\u0430\u0444\u0438\u043A\u0438 \u0434\u043B\u044F 3D \u0432\u0438\u0434: ???"
+        },
+        {
           "Name": "closed after",
-          "Value": "14.0s"
+          "Value": "13.3s"
         }
       ]
     }
   ],
-  "Performed": 612,
+  "Performed": 620,
   "Failed": 0
 }

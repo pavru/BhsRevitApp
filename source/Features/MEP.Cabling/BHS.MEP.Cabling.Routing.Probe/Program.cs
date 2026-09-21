@@ -14,7 +14,7 @@ namespace BHS.MEP.Cabling.Routing.Probe;
 internal static class Program
 {
     private const double Tolerance = 0.1;
-    private const int Floor = 167;
+    private const int Floor = 187;
 
     private static int _run;
     private static int _failed;
@@ -42,6 +42,7 @@ internal static class Program
         WhatATerminalHoldsDecidesWhetherItMayBranch();
         ABoxTheCableOnlyPassesThroughFeedsNothing();
         WhatABoxHoldsIsReportedAndChangesNothing();
+        ACircuitLiesOnlyInCarriersThatAdmitIt();
         SlackIsCountedWhereTheCableIsCut();
         TheLengthIsToldByWhereItIsLaid();
         AStoredLengthIsToldFromAStaleOne();
@@ -1372,6 +1373,175 @@ internal static class Program
             plan.Boxes.Count == 0 && plan.Splices.Count == 0);
     }
 
+
+    /// <summary>
+    /// A circuit lies only in carriers that admit its cable group, and a box is a carrier too.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <b>The owner's rule of 2026-09-22, and the first one in this feature that forbids.</b> Fire
+    /// alarm goes on its own, structured cabling shares a tray with power only behind a divider - so
+    /// a shorter route through the wrong tray is not a better answer, it is an illegal one.
+    /// </para>
+    /// <para>
+    /// <b>The strict reading, which was the owner's choice of two:</b> a carrier nobody marked admits
+    /// only circuits nobody marked. So a model where nothing is filled in behaves exactly as it did
+    /// before this existed - checked here - and a fire circuit cannot slip into a tray somebody
+    /// forgot to mark.
+    /// </para>
+    /// <para>
+    /// The last four are the ones worth having: a box is a carrier, so a tap must not merge into one
+    /// that does not take it, and a box the calculation recommends belongs to the group that asked
+    /// for it - otherwise the tool's own advice would be the one place two groups met.
+    /// </para>
+    /// </remarks>
+    private static void ACircuitLiesOnlyInCarriersThatAdmitIt()
+    {
+        Section("a circuit lies only in carriers that admit its cable group");
+
+        CarrierNode Run(long id, double y, string groups) =>
+            new(new CarrierId(id), CarrierKind.Segment, "tray", true, 40, 0.05, P(0, y, 0), P(40, y, 0))
+            {
+                Groups = CableGroups.Parse(groups),
+            };
+
+        CircuitSnapshot Circuit(long id, string group, double deviceX, CircuitConnection how = CircuitConnection.AtTerminal) =>
+            new(new CarrierId(id), "P-" + id, Terminal(0, 0, -1, "panel"),
+                new[] { Terminal(deviceX, 0, -1, "S" + id) })
+            {
+                Connection = how,
+                Conductors = 3,
+                CableGroup = group,
+            };
+
+        // The rule itself, before anything is routed through it.
+        Check("a carrier nobody marked admits a circuit nobody marked",
+            CableGroups.Unmarked.Admits(string.Empty));
+        Check("and turns away one that names a group - the strict reading",
+            !CableGroups.Unmarked.Admits("fire"));
+        Check("a carrier that names a group admits that group and nothing else",
+            CableGroups.Parse("fire").Admits("fire")
+            && !CableGroups.Parse("fire").Admits("power")
+            && !CableGroups.Parse("fire").Admits(string.Empty));
+        Check("case and surrounding space are not part of the answer",
+            CableGroups.Parse(" Fire ").Admits("fire") && CableGroups.Parse("fire").Admits("FIRE"));
+        Check("a carrier may name several, and admits each of them",
+            CableGroups.Parse("power; data").Admits("power")
+            && CableGroups.Parse("power; data").Admits("data")
+            && !CableGroups.Parse("power; data").Admits("fire"));
+
+        // A model where nobody marked anything is handed back unchanged - the promise that this
+        // costs nothing to a project that ignores it, kept by construction rather than measured.
+        var plain = NetworkBuilder.Build(1, new[] { Run(10, 0, string.Empty) }, Options());
+
+        Check("a structure nobody marked is not filtered at all, it is the same network",
+            ReferenceEquals(plain.Admitting(string.Empty), plain));
+
+        var ungrouped = Router.Route(plain, Circuit(1, string.Empty, 20), Options());
+
+        Check("and an ungrouped circuit routes there as it always did", ungrouped.Status == RouteStatus.Found);
+
+        // The same tray, the same circuit, now in a group nobody gave that tray.
+        var refused = Router.Route(plain, Circuit(2, "fire", 20), Options());
+
+        Check("a circuit in a group the only tray does not admit is not routed",
+            refused.Status != RouteStatus.Found);
+        Check("and it is told apart from having nothing within reach at all",
+            refused.Status == RouteStatus.NoCarrierAllowed);
+
+        var nowhere = Router.Route(plain, Circuit(3, string.Empty, 20), Options(reach: 0.5));
+
+        Check("while a circuit that really reaches nothing still says so",
+            nowhere.Status == RouteStatus.NoCarrierNear);
+
+        // Two trays in reach of both ends: the near one is not marked for fire, the far one is.
+        var both = NetworkBuilder.Build(2, new[] { Run(10, 0, string.Empty), Run(11, 2, "fire") }, Options());
+
+        var onFire = Router.Route(both, Circuit(4, "fire", 20), Options());
+        var onPlain = Router.Route(both, Circuit(5, string.Empty, 20), Options());
+
+        Check("a circuit takes the tray that admits it even though a nearer one is unmarked",
+            onFire.Status == RouteStatus.Found && onFire.Path.Contains(new CarrierId(11)));
+        Check("and the unmarked circuit takes the unmarked tray, which is nearer",
+            onPlain.Status == RouteStatus.Found && onPlain.Path.Contains(new CarrierId(10)));
+        Check("so the permitted route is the longer one, and that is the point of the rule",
+            onFire.Measured > onPlain.Measured);
+
+        // A box is a carrier. One tray both groups may use, and two circuits whose cable is cut in
+        // boxes at very nearly the same places - so the radius would merge them, if it were allowed.
+        var shared = NetworkBuilder.Build(3, new[] { Run(10, 0, "power; fire") }, Options());
+
+        CircuitSnapshot Cut(long id, string group, double shift) =>
+            new(new CarrierId(id), "P-" + id, Terminal(0, 0, -1, "panel"),
+                new[]
+                {
+                    Terminal(10 + shift, 0, -1, "A" + id),
+                    Terminal(20 + shift, 0, -1, "B" + id),
+                    Terminal(30 + shift, 0, -1, "C" + id),
+                })
+            {
+                Connection = CircuitConnection.AtJunctionBox,
+                Conductors = 3,
+                CableGroup = group,
+            };
+
+        var power = Router.Route(shared, Cut(6, "power", 0), Options());
+        var fire = Router.Route(shared, Cut(7, "fire", 0.5), Options());
+        var alsoPower = Router.Route(shared, Cut(8, "power", 0.5), Options());
+
+        var same = BoxPlanner.Plan(new[] { power, alsoPower }, Array.Empty<ExistingBox>(), radius: 4);
+        var mixed = BoxPlanner.Plan(new[] { power, fire }, Array.Empty<ExistingBox>(), radius: 4);
+
+        Check("two circuits of one group, cut at the same places, share the boxes recommended there",
+            power.Status == RouteStatus.Found
+            && fire.Status == RouteStatus.Found
+            && same.Boxes.Any(box => box.Circuits.Count == 2));
+        Check("two circuits of different groups never share one, however near they are cut",
+            mixed.Boxes.All(box => box.Circuits.Count == 1));
+        Check("so the forbidden pair costs boxes rather than being quietly put in one",
+            mixed.Boxes.Count > same.Boxes.Count);
+
+        // And a box already standing takes only what it says it takes. Put where the fire circuit is
+        // cut, so nearness is never the reason it is passed over.
+        var where = fire.Branches[0].At;
+
+        ExistingBox[] Standing(string groups) => new[]
+        {
+            new ExistingBox(new CarrierId(50), where) { Groups = CableGroups.Parse(groups) },
+        };
+
+        var intoIt = BoxPlanner.Plan(new[] { fire }, Standing("fire"), radius: 4);
+        var pastIt = BoxPlanner.Plan(new[] { fire }, Standing("power"), radius: 4);
+
+        Check("a box that admits the group is used where the cable is cut",
+            intoIt.Boxes.Any(box => box.Existing?.Id == new CarrierId(50)));
+        Check("a box that does not admit it is not used, however near it stands",
+            pastIt.Boxes.All(box => box.Existing is null));
+
+        // Without additional boxes there is nothing to fall back on, so the same rule has to show up
+        // as a refusal rather than as a recommendation. Written because the path that filters the
+        // boxes handed to the search is its own line of code: without a case that walks it, breaking
+        // it would cost nothing here and a fire circuit would be served out of a power box.
+        var standing = NetworkBuilder.Build(
+            4,
+            new[] { Run(10, 0, "power; fire"), Box(50, 10), Box(51, 20), Box(52, 30) },
+            Options());
+
+        ExistingBox[] Boxes(string groups) => new[]
+        {
+            new ExistingBox(new CarrierId(50), P(10, 0, 0)) { Groups = CableGroups.Parse(groups) },
+            new ExistingBox(new CarrierId(51), P(20, 0, 0)) { Groups = CableGroups.Parse(groups) },
+            new ExistingBox(new CarrierId(52), P(30, 0, 0)) { Groups = CableGroups.Parse(groups) },
+        };
+
+        var served = Router.Route(standing, Cut(9, "fire", 0), Options(), Boxes("fire"));
+        var unserved = Router.Route(standing, Cut(10, "fire", 0), Options(), Boxes("power"));
+
+        Check("without additional boxes, a circuit is served from boxes that admit it",
+            served.Status == RouteStatus.Found);
+        Check("and is not served from boxes that do not, even when they are the only ones there",
+            unserved.Status != RouteStatus.Found);
+    }
     /// <summary>
     /// What a box holds is measured in conductors, reported when exceeded, and changes nothing.
     /// </summary>

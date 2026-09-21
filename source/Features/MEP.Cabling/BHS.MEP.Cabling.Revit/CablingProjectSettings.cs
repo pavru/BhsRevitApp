@@ -115,6 +115,22 @@ public sealed class CablingProjectSettings
     /// </remarks>
     public const string BoxCapacityKey = "Model:Cabling:Box:Capacity";
 
+    /// <summary>The cable group of every circuit whose own parameter and panel's are both blank.</summary>
+    /// <remarks>
+    /// <para>
+    /// <b>The bottom of the owner's ladder, and the rung that makes the feature usable at all.</b>
+    /// Circuits are read out of the host document only, so a structured-cabling file opened as the
+    /// host holds structured-cabling circuits and nothing else: one line in the model's own settings
+    /// answers for all of them, and nobody fills in a parameter a hundred times.
+    /// </para>
+    /// <para>
+    /// <b>Blank is a group, not a wildcard</b> - see <c>CableGroups</c>. A project that says nothing
+    /// here leaves its circuits ungrouped, and ungrouped circuits go into carriers nobody marked,
+    /// which is what every model did before this existed.
+    /// </para>
+    /// </remarks>
+    public const string CableGroupKey = "Model:Cabling:CableGroup";
+
     /// <summary>A hundred and fifty millimetres - the owner's value, 2026-09-13.</summary>
     /// <remarks>
     /// <b>It replaces a guess of mine, and the difference is the point.</b> Half a metre was written
@@ -134,6 +150,7 @@ public sealed class CablingProjectSettings
         double spliceCost,
         int terminalCapacity,
         int boxCapacity,
+        string cableGroup,
         string unreadable)
     {
         Boxes = boxes;
@@ -144,6 +161,7 @@ public sealed class CablingProjectSettings
         SpliceCost = spliceCost;
         TerminalCapacity = terminalCapacity;
         BoxCapacity = boxCapacity;
+        CableGroup = cableGroup;
         Unreadable = unreadable;
     }
 
@@ -170,6 +188,9 @@ public sealed class CablingProjectSettings
 
     /// <summary>How many conductors a junction box holds when its type does not say; zero for no limit.</summary>
     public int BoxCapacity { get; }
+
+    /// <summary>The cable group of a circuit whose own parameter and panel's are both blank.</summary>
+    public string CableGroup { get; }
 
     /// <summary>A setting that is present and cannot be read, or empty.</summary>
     /// <remarks>
@@ -245,6 +266,7 @@ public sealed class CablingProjectSettings
             Millimetres(model, SpliceCostKey),
             capacity > 0 ? capacity : DefaultTerminalCapacity,
             boxCapacity > 0 ? boxCapacity : 0,
+            CableGroups.Normalise(model.Text(CableGroupKey, string.Empty)),
             unreadable);
     }
 

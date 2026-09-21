@@ -1,4 +1,4 @@
-using Autodesk.Revit.DB;
+﻿using Autodesk.Revit.DB;
 using BHS.Revit.Common.Parameters;
 
 namespace BHS.MEP.Cabling.Revit;
@@ -8,7 +8,7 @@ namespace BHS.MEP.Cabling.Revit;
 /// </summary>
 /// <remarks>
 /// <para>
-/// <b>Sixteen, and each one has something that reads it.</b> A parameter declared before something
+/// <b>Eighteen, and each one has something that reads it.</b> A parameter declared before something
 /// reads it is the same mistake as a mechanism with no consumer, and it is worse here: a parameter
 /// that has reached a customer's model cannot be withdrawn, only ignored. The rule has held through
 /// every addition - the three the apply writes arrived with the apply, the three on the circuit with
@@ -127,6 +127,52 @@ public sealed class CablingParameters : SharedParameterScheme
     /// </para>
     /// </remarks>
     public static readonly Guid BoxCapacity = new("4d14bb00-b8c2-4266-bef2-68bcb6c522c3");
+
+    /// <summary>Which group of cables a circuit belongs to, for the carriers that admit it.</summary>
+    /// <remarks>
+    /// <para>
+    /// <b>The owner's rule of 2026-09-22, and the first one in this feature that forbids rather than
+    /// counts.</b> There are requirements against laying cables together - a fire alarm run goes on
+    /// its own, structured cabling shares a tray with power only where a divider separates them - and
+    /// a route that ignores them is not a cheaper route, it is an illegal one.
+    /// </para>
+    /// <para>
+    /// <b>One value on a circuit, against a list on a carrier</b>, and two parameters rather than one
+    /// because they answer different questions: this one says what the cable <i>is</i>, the other says
+    /// whom a carrier <i>takes</i>. One parameter meaning two things depending on which element holds
+    /// it is the mistake <see cref="CircuitRefs"/> made before it was unified, and a schedule built on
+    /// it was right about half the model.
+    /// </para>
+    /// <para>
+    /// Bound to the panel as well, because a fire alarm panel makes every circuit on it a fire alarm
+    /// circuit: the ladder is the circuit, then its panel, then the project, the same one
+    /// <see cref="CircuitConnection"/> climbs.
+    /// </para>
+    /// </remarks>
+    public static readonly Guid CableGroup = new("9f3c7a21-6d0e-4b84-8a57-2c6f1b9de430");
+
+    /// <summary>Which groups of cables this carrier admits. Empty admits only ungrouped circuits.</summary>
+    /// <remarks>
+    /// <para>
+    /// <b>On the instance, not the type</b> - the owner's answer of 2026-09-22, and the one place this
+    /// feature departs from its neighbours. Role, splicing and capacity are properties of a product;
+    /// a divider is a property of the run that was installed, so two lengths cut from one type may
+    /// legitimately admit different things.
+    /// </para>
+    /// <para>
+    /// <b>Empty is the strict answer, not the permissive one.</b> A carrier nobody marked admits only
+    /// circuits nobody marked - so a model where nothing is filled in behaves exactly as it did before
+    /// this existed, and a model where the fire alarm circuits are marked keeps them off every tray
+    /// that was not marked for them. The permissive reading would have required marking every other
+    /// tray in the building and never forgetting one.
+    /// </para>
+    /// <para>
+    /// <b>The divider itself is not checked, and that is the owner's decision.</b> The parameter
+    /// records a permission a designer gave; whether the tray really has a partition is his to answer
+    /// for, as it is on the drawing.
+    /// </para>
+    /// </remarks>
+    public static readonly Guid AllowedGroups = new("5e10d8c4-73b2-4f6a-9c18-4a7e2b05f9d6");
 
     /// <summary>How a circuit's devices are connected to the trunk.</summary>
     /// <remarks>
@@ -587,5 +633,31 @@ public sealed class CablingParameters : SharedParameterScheme
                 "BHS_Cbl_ОтпечатокМаршрута",
                 "Носители, по которым измерена записанная длина: идентификаторы элементов через точку с запятой, "
                 + "в порядке прохождения; элемент внутри связи записывается как связь:элемент.")),
+
+        new SharedParameter(
+            CableGroup,
+            SpecTypeId.String.Text,
+            GroupTypeId.ElectricalCircuiting,
+            instance: true,
+            CircuitAndPanel,
+            english: new ParameterText(
+                "BHS_Cbl_CableGroup",
+                "Which group of cables this circuit belongs to, for the carriers that admit it. Taken from its panel when blank."),
+            russian: new ParameterText(
+                "BHS_Cbl_ГруппаКабелей",
+                "К какой группе кабелей относится эта цепь - для носителей, которые её допускают. Пусто - берётся со щита.")),
+
+        new SharedParameter(
+            AllowedGroups,
+            SpecTypeId.String.Text,
+            GroupTypeId.Data,
+            instance: true,
+            Carriers,
+            english: new ParameterText(
+                "BHS_Cbl_AllowedGroups",
+                "Which groups of cables may be laid in this element, separated by \"; \". Blank admits only circuits in no group."),
+            russian: new ParameterText(
+                "BHS_Cbl_ДопустимыеГруппы",
+                "Какие группы кабелей можно прокладывать в этом элементе, через \"; \". Пусто - только цепи вне групп.")),
     };
 }

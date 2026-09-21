@@ -711,8 +711,14 @@ public static class CablingApply
         IReadOnlyList<ElementId> joined,
         ApplyOutcome outcome)
     {
-        foreach (var route in run.Blocked(RouteStatus.NoCarrierNear))
-            Post(host, outcome, CablingFeature.NoCarrierNear, route.Circuit.Value);
+        // Two causes, one warning - the owner's decision of 2026-09-22. Nothing within reach, and
+        // nothing within reach that admits this circuit's cable group; the registered text was
+        // widened to be true of both, and the screen is where they are told apart.
+        foreach (var status in new[] { RouteStatus.NoCarrierNear, RouteStatus.NoCarrierAllowed })
+        {
+            foreach (var route in run.Blocked(status))
+                Post(host, outcome, CablingFeature.NoCarrierNear, route.Circuit.Value);
+        }
 
         foreach (var route in run.Blocked(RouteStatus.NoConnectivity))
             Post(host, outcome, CablingFeature.NoConnectivity, route.Circuit.Value);

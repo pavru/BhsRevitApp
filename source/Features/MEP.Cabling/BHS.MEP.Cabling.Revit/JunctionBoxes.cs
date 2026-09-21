@@ -1,4 +1,4 @@
-using Autodesk.Revit.DB;
+﻿using Autodesk.Revit.DB;
 using BHS.MEP.Cabling.Routing;
 
 namespace BHS.MEP.Cabling.Revit;
@@ -178,5 +178,9 @@ internal sealed class JunctionBoxReader
             (node.Start.Z + node.End.Z) / 2))
         {
             Capacity = capacity,
+
+            // Taken off the node rather than read again: a box is a carrier, the reader already put
+            // its permission there, and a second reading is a second chance to answer differently.
+            Groups = node.Groups,
         };
 }

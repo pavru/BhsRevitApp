@@ -22,6 +22,8 @@ public sealed class RouteNetwork
     private readonly Dictionary<CarrierId, IReadOnlyList<CarrierId>> _adjacency;
     private readonly CarrierNode[] _byIndex;
     private readonly SpatialIndex _index;
+    private readonly double _approachRadius;
+    private readonly Dictionary<string, RouteNetwork> _admitting = new(StringComparer.OrdinalIgnoreCase);
 
     public RouteNetwork(
         long version,
@@ -30,6 +32,7 @@ public sealed class RouteNetwork
         double approachRadius)
     {
         Version = version;
+        _approachRadius = approachRadius;
         _nodes = nodes.ToDictionary(one => one.Id);
         _adjacency = adjacency.ToDictionary(one => one.Key, one => one.Value);
         _byIndex = nodes.ToArray();
@@ -55,6 +58,64 @@ public sealed class RouteNetwork
 
     public IReadOnlyList<CarrierId> Neighbours(CarrierId id) =>
         _adjacency.TryGetValue(id, out var next) ? next : Array.Empty<CarrierId>();
+
+    /// <summary>The part of this structure a circuit of the given cable group is allowed to use.</summary>
+    /// <remarks>
+    /// <para>
+    /// <b>A smaller network rather than a question asked at every step, and that is what makes the
+    /// rule impossible to forget.</b> The search reaches carriers three ways - a drop from an end of
+    /// the circuit, laying a carrier into the graph, and crossing where two carriers touch - and a
+    /// predicate would have to be remembered at all three. A carrier that is not in the network
+    /// cannot be reached by any of them, so the permission is enforced by absence, once, here.
+    /// </para>
+    /// <para>
+    /// <b>A model nobody marked gets itself back.</b> When every carrier admits the group, there is
+    /// nothing to remove, so no second index is built and no memory is spent: the promise that this
+    /// feature costs nothing to a project that ignores it is kept by construction rather than by
+    /// measurement.
+    /// </para>
+    /// <para>
+    /// Cached per group, because a run asks this once per circuit and a project has a handful of
+    /// groups; the lock is there because nothing else about this type is mutable, and a shared
+    /// network is exactly the sort of thing a later caller will route with from two threads.
+    /// </para>
+    /// </remarks>
+    public RouteNetwork Admitting(string? group)
+    {
+        var wanted = CableGroups.Normalise(group);
+
+        lock (_admitting)
+        {
+            if (_admitting.TryGetValue(wanted, out var cached))
+                return cached;
+
+            var kept = _nodes.Values.Where(one => one.Groups.Admits(wanted)).ToList();
+
+            var admitting = kept.Count == _nodes.Count ? this : Restricted(kept);
+
+            _admitting[wanted] = admitting;
+            return admitting;
+        }
+    }
+
+    private RouteNetwork Restricted(IReadOnlyCollection<CarrierNode> kept)
+    {
+        var ids = new HashSet<CarrierId>(kept.Select(one => one.Id));
+
+        var adjacency = new Dictionary<CarrierId, IReadOnlyList<CarrierId>>(kept.Count);
+
+        foreach (var one in kept)
+        {
+            var next = Neighbours(one.Id).Where(ids.Contains).ToArray();
+
+            if (next.Length != 0)
+                adjacency[one.Id] = next;
+        }
+
+        // The same version: this is the same reading of the same model, seen by one circuit. A new
+        // number here would make every stored route look stale the moment a project marked a tray.
+        return new RouteNetwork(Version, kept, adjacency, _approachRadius);
+    }
 
     /// <summary>
     /// How many separate pieces the structure falls into.
@@ -313,6 +374,17 @@ public sealed class CircuitSnapshot
     /// decided. The owner's settings and parameters say otherwise per project and per panel.
     /// </remarks>
     public CircuitConnection Connection { get; init; } = CircuitConnection.AtTerminal;
+
+    /// <summary>Which group of cables this circuit belongs to, for the carriers that admit it.</summary>
+    /// <remarks>
+    /// <b>One value, against the carrier's list</b> - a circuit is one kind of cable, while a tray
+    /// with a divider is several. Empty means nobody put this circuit in a group, which is a group of
+    /// its own rather than a wildcard: see <see cref="CableGroups"/> for the single rule both sides
+    /// obey. Read from the circuit, then its panel, then the project, the same ladder as
+    /// <see cref="Connection"/>, because a fire alarm panel makes every circuit on it a fire alarm
+    /// circuit and nobody should have to say so a hundred times.
+    /// </remarks>
+    public string CableGroup { get; init; } = string.Empty;
 }
 
 /// <summary>What the structure looks like as a graph, for when a search says it could not cross it.</summary>

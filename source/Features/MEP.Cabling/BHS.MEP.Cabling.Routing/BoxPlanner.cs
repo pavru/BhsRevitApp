@@ -1,4 +1,4 @@
-namespace BHS.MEP.Cabling.Routing;
+﻿namespace BHS.MEP.Cabling.Routing;
 
 /// <summary>A junction box that already stands in the model, joined to the structure.</summary>
 /// <remarks>
@@ -39,12 +39,20 @@ public sealed class ExistingBox
     /// </para>
     /// </remarks>
     public int Capacity { get; init; }
+
+    /// <summary>Which circuits this box admits, by cable group - it is a carrier like any other.</summary>
+    /// <remarks>
+    /// The owner's answer of 2026-09-22, and it closes a hole the rule would otherwise leave wide
+    /// open: a box is a fitting, the structure already refuses a cable the tray may not carry, and a
+    /// box a spur merges into by nearness would have been the one place a forbidden pair still met.
+    /// </remarks>
+    public CableGroups Groups { get; init; } = CableGroups.Unmarked;
 }
 
 /// <summary>One box the calculation needs: an existing one it uses, or a place it recommends.</summary>
 public sealed class PlannedBox
 {
-    internal PlannedBox(Point3 at, ExistingBox? existing, int defaultCapacity = 0)
+    internal PlannedBox(Point3 at, ExistingBox? existing, int defaultCapacity = 0, string? group = null)
     {
         At = at;
         Existing = existing;
@@ -56,6 +64,10 @@ public sealed class PlannedBox
         Capacity = existing is null
             ? 0
             : existing.Capacity > 0 ? existing.Capacity : defaultCapacity;
+
+        // An existing box says for itself whom it takes; a recommended one becomes the box of the
+        // group that asked for it, so a second group cannot merge into it afterwards by nearness.
+        Groups = existing?.Groups ?? CableGroups.ForOne(group);
     }
 
     /// <summary>Where it stands - the existing box's own point, or the first tap that asked for it.</summary>
@@ -71,6 +83,9 @@ public sealed class PlannedBox
 
     /// <summary>Whether an indicator has to be placed for it.</summary>
     public bool IsRecommendation => Existing is null;
+
+    /// <summary>Which circuits may be cut in it, by cable group.</summary>
+    public CableGroups Groups { get; }
 
     /// <summary>Every circuit passing through, in the order they were first seen here.</summary>
     public IReadOnlyList<CarrierId> Circuits => _circuits;
@@ -331,7 +346,7 @@ public static class BoxPlanner
                 var box = boxes.Find(one =>
                     one.Existing is { } stood && stood.Id == branch.Carrier);
 
-                box ??= Nearest(boxes, branch.At, radius);
+                box ??= Nearest(boxes, branch.At, radius, route.CableGroup);
 
                 // Nothing near, and the carrier itself allows a splice: the cable branches inside the
                 // element and no box is recommended. Asked after nearness on purpose - the owner's
@@ -349,7 +364,7 @@ public static class BoxPlanner
                     // The project's value is handed over here too, although a recommendation takes
                     // none of it: the constructor is where that rule lives, and a second copy of it
                     // - an argument quietly left off - would be a rule no breakage could show red.
-                    box = new PlannedBox(branch.At, null, defaultCapacity);
+                    box = new PlannedBox(branch.At, null, defaultCapacity, route.CableGroup);
                     boxes.Add(box);
                 }
 
@@ -374,7 +389,7 @@ public static class BoxPlanner
                     ? boxes.Find(one => one.Existing is { } box && box.Id == stood)
                     : null;
 
-                serving ??= Nearest(boxes, tap.At, radius);
+                serving ??= Nearest(boxes, tap.At, radius, route.CableGroup);
 
                 if (serving is not null && serving.Circuits.Contains(route.Circuit))
                     serving.Serve(tap);
@@ -385,13 +400,20 @@ public static class BoxPlanner
         return new BoxPlan(boxes.FindAll(box => box.Circuits.Count > 0), splices);
     }
 
-    private static PlannedBox? Nearest(List<PlannedBox> boxes, Point3 at, double radius)
+    /// <param name="group">
+    /// The cable group asking. A box that does not admit it is not a candidate at any distance: the
+    /// radius decides which taps may share one box, never whether they are allowed to.
+    /// </param>
+    private static PlannedBox? Nearest(List<PlannedBox> boxes, Point3 at, double radius, string group)
     {
         PlannedBox? best = null;
         var distance = double.MaxValue;
 
         foreach (var box in boxes)
         {
+            if (!box.Groups.Admits(group))
+                continue;
+
             var candidate = box.At.DistanceTo(at);
 
             if (candidate > radius || candidate >= distance)
