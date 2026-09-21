@@ -299,6 +299,7 @@ internal static class CableTree
         }
 
         Improve(graph, network, circuit, rules, ends, cable, runs, runEdges, tapOf);
+        HangOff(graph, rules, cable, runEdges, tapOf);
 
         var edges = new List<(int From, int To, Arc Step)>();
 
@@ -330,8 +331,6 @@ internal static class CableTree
         var cursor = ends[device];
         var leaves = -1;
         var drop = 0.0;
-        var fromTheBox = 0.0;
-        ExistingBox? hangsOff = null;
 
         while (reach.From[cursor] >= 0)
         {
@@ -347,20 +346,9 @@ internal static class CableTree
                 leaves = previous;
                 drop = step.Length;
             }
-            else if (!step.IsApproach && hangsOff is null)
-            {
-                fromTheBox += step.Length;
-            }
 
             cursor = previous;
             run.Add(cursor);
-
-            // Walking back from the device, the first box already in the model is the one it hangs
-            // off, and what has been walked so far is the spur from it. Not the place the run was
-            // started from: a run that begins at the panel may well pass through a box on its way,
-            // and the cable is cut there - it is the last cut before the device that the device
-            // hangs off, which is the owner's rule of 2026-09-17 said about a tree.
-            hangsOff ??= Standing(rules.ExistingBoxes, graph.At(cursor), rules.JoinTolerance);
         }
 
         cable.Lay(run);
@@ -372,12 +360,80 @@ internal static class CableTree
 
         var at = graph.At(leaves);
 
+        // Which box the device hangs off is not decided here - see HangOff. It cannot be: the cable
+        // is still being laid, and whether a place is cut is a fact about the finished tree.
         tapOf[device] = new Tap(circuit.Devices[device - 1], at.Carrier, at.At, drop)
         {
             AllowsSplicing = Router.Splices(network, at.Carrier),
-            Box = hangsOff?.Id,
-            SpurAlongCarriers = hangsOff is null ? 0 : fromTheBox,
         };
+    }
+
+    /// <summary>
+    /// Says which box already in the model each device hangs off, once the whole tree is laid.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <b>The last cut before the device, and not merely the nearest box its cable goes past.</b> The
+    /// piece of cable that feeds a device runs from the place it was last cut; that is what a spur is
+    /// and what the box at that place holds. A box the cable passes through uncut feeds nothing - the
+    /// run simply goes on through it - and naming it would tell the apply to write this circuit on a
+    /// box it does not branch at, and the screen that a device is served from somewhere it is not.
+    /// </para>
+    /// <para>
+    /// <b>After the search, never during it, and that is the half that made the first version wrong
+    /// in a way no paper network showed.</b> Whether a place is cut depends on runs that have not
+    /// been laid yet: a box in the middle of this run becomes a cut the moment another device's run
+    /// begins there, which may be three devices later, and the improvement pass re-lays runs after
+    /// that again. Asked while the tree grows, the question has no stable answer.
+    /// </para>
+    /// <para>
+    /// <b>Found by the canonical sweep, and only after the case stopped asking about a total.</b> On
+    /// the owner's linked set ten of twelve taps name a box; asked as a sum, a tap naming the wrong
+    /// one is invisible, because some other tap makes the count up.
+    /// </para>
+    /// </remarks>
+    private static void HangOff(
+        Graph graph,
+        Rules rules,
+        Laid cable,
+        List<(int From, int To, Arc Step)>[] runEdges,
+        Tap?[] tapOf)
+    {
+        if (rules.ExistingBoxes is null)
+            return;
+
+        for (var device = 1; device < tapOf.Length; device++)
+        {
+            if (tapOf[device] is not { } tap || runEdges[device] is not { } edges)
+                continue;
+
+            var walked = 0.0;
+
+            foreach (var edge in edges)
+            {
+                if (!edge.Step.IsApproach)
+                    walked += edge.Step.Length;
+
+                // The run's own beginning is cut by being one - so a run that starts at a box stops
+                // here, and one that starts at the panel walks out of the loop with nothing named.
+                if (!cable.IsCut(edge.From))
+                    continue;
+
+                if (Standing(rules.ExistingBoxes, graph.At(edge.From), rules.JoinTolerance) is { } box)
+                {
+                    tapOf[device] = new Tap(tap.Device, tap.Carrier, tap.At, tap.Spur)
+                    {
+                        AllowsSplicing = tap.AllowsSplicing,
+                        Box = box.Id,
+                        SpurAlongCarriers = walked,
+                    };
+                }
+
+                // Cut and no box standing there: the device hangs off that cut, which is a splice in
+                // a carrier, and off no box at all. Either way the walk stops at the first cut.
+                break;
+            }
+        }
     }
 
     /// <summary>

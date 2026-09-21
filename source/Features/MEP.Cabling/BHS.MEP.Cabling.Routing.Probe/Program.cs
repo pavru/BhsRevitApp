@@ -14,7 +14,7 @@ namespace BHS.MEP.Cabling.Routing.Probe;
 internal static class Program
 {
     private const double Tolerance = 0.1;
-    private const int Floor = 152;
+    private const int Floor = 156;
 
     private static int _run;
     private static int _failed;
@@ -40,6 +40,7 @@ internal static class Program
         WhereTheCarrierAllowsASpliceNoBoxIsAskedFor();
         WhatASpliceCostsDecidesWhereTheCableIsCut();
         WhatATerminalHoldsDecidesWhetherItMayBranch();
+        ABoxTheCableOnlyPassesThroughFeedsNothing();
         SlackIsCountedWhereTheCableIsCut();
         TheLengthIsToldByWhereItIsLaid();
         AStoredLengthIsToldFromAStaleOne();
@@ -1316,6 +1317,58 @@ internal static class Program
 
         Check("and a type that does say overrules the project",
             byType.Status == RouteStatus.Found && byType.Branches.Count == 1 && Near(byType.AlongCarriers, 30));
+    }
+
+    /// <summary>
+    /// A box the cable goes through without being cut feeds nothing, and no device hangs off it.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <b>One device, one box, and the shortest network that can tell the two rules apart.</b> The
+    /// line out of the panel reaches the device without being cut anywhere, and it passes straight
+    /// through a box on the way. The piece of cable feeding the device runs from the panel, not from
+    /// that box, so the device hangs off nothing and the box serves nobody.
+    /// </para>
+    /// <para>
+    /// <b>Written after the canonical sweep found it, because nothing on paper had asked.</b> The
+    /// search named the first box standing anywhere along the run, cut or not - and on every paper
+    /// network that box also happened to be one another run began at, so every check agreed. On the
+    /// owner's model it named a box the apply would then have written this circuit onto, and the
+    /// screen would have reported a device served from a place nothing is joined at.
+    /// </para>
+    /// </remarks>
+    private static void ABoxTheCableOnlyPassesThroughFeedsNothing()
+    {
+        Section("a box the cable only passes through feeds nothing");
+
+        var standing = new[] { new ExistingBox(new CarrierId(60), P(10, 0, 0)) };
+
+        var network = NetworkBuilder.Build(
+            1, new[] { Tray(0, 0, 10), Box(60, 10), Tray(1, 10, 20) }, Options());
+
+        var circuit = new CircuitSnapshot(
+            new CarrierId(1), "P-1", Terminal(0, 0, -1, "panel"), new[] { Terminal(18, 0, -1, "S1") })
+        {
+            Connection = CircuitConnection.AtJunctionBox,
+        };
+
+        var routed = Router.Route(network, circuit, Options(), standing);
+
+        Check("a circuit of one device needs no box and is routed without one",
+            routed.Status == RouteStatus.Found && routed.Branches.Count == 0);
+        // The box stands where the two trays meet, and the cable walks both - so it goes past the box
+        // whether or not the path names the box element itself. It usually does not: three carriers
+        // meeting at one point touch each other, and the cheapest way across is tray to tray. That is
+        // why a box is matched by where it stands rather than by which element a place belongs to.
+        Check("the cable walks both trays, so it goes past the point the box stands at",
+            routed.Path.Contains(new CarrierId(0)) && routed.Path.Contains(new CarrierId(1)));
+        Check("and the device hangs off nothing, because nothing was cut",
+            routed.Taps.Count == 1 && routed.Taps[0].Box is null && Near(routed.Taps[0].SpurAlongCarriers, 0));
+
+        var plan = BoxPlanner.Plan(new[] { routed }, standing, radius: 1.5);
+
+        Check("so the plan holds no box at all - the one that stands was only offered",
+            plan.Boxes.Count == 0 && plan.Splices.Count == 0);
     }
 
     private static CarrierNode Tray(long id, double from, double to) =>
