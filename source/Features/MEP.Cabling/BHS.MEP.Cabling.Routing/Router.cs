@@ -57,263 +57,42 @@ public static class Router
             };
         }
 
-        if (existingBoxesOnly is not null && circuit.Connection == CircuitConnection.AtJunctionBox)
-            return ThroughExistingBoxes(network, circuit, options, existingBoxesOnly);
+        // One cable line leaves the panel and branches below it - the owner's model, and what
+        // CableTree searches for. The chain that stood here until 2026-09-21 visited the devices in
+        // the order the model listed them, which Revit gives nobody a way to set, and could not split.
+        var rules = new CableTree.Rules(
+            circuit.Connection,
+            options.SpliceCost,
+            options.TerminalCapacity,
+            circuit.Connection == CircuitConnection.AtJunctionBox ? existingBoxesOnly : null,
+            options.JoinTolerance);
 
-        // A circuit is a chain: panel to the first device, then device to device. Each leg is routed
-        // on its own and the legs are concatenated, which is what the predecessor did and is right -
-        // the order is the electrician's, not the search's, and reordering it would silently produce
-        // a route nobody wired.
-        var path = new List<CarrierId>();
-        var taps = new List<Tap>();
-        var alongCarriers = 0.0;
-        var byClass = new Dictionary<string, double>(StringComparer.OrdinalIgnoreCase);
-        var approaches = 0.0;
-        var from = circuit.Source;
+        var tree = CableTree.Search(network, circuit, options, rules);
 
-        // Where the trunk stands when the cable is cut in boxes. The next leg starts there, on the
-        // structure, instead of at the device: the trunk does not go down to a device and back up,
-        // only a spur does, so what the terminal mode counts twice this mode counts once.
-        var boxes = circuit.Connection == CircuitConnection.AtJunctionBox;
-        Tap? trunk = null;
-
-        foreach (var to in circuit.Devices)
+        if (tree.Status != RouteStatus.Found)
         {
-            var (leg, tap) = Leg(network, from, trunk, to, options);
-
-            if (leg.Status != RouteStatus.Found)
+            // The circuit's own number in front of the end that stopped it. Measured on the first
+            // real run: the screen groups by cause and says "26 circuits", then lists addresses that
+            // are devices - two different levels, so the list answers a question nobody asked and
+            // leaves the circuits unnamed.
+            return new RouteResult(circuit.Id, tree.Status, network.Version)
             {
-                // The circuit's own number in front of the end that stopped it. Measured on the
-                // first real run: the screen groups by cause and says "26 circuits", then lists
-                // addresses that are devices - two different levels, so the list answers a question
-                // nobody asked and leaves the circuits unnamed. A leg does not know which circuit it
-                // belongs to; this is the only place that does.
-                return new RouteResult(circuit.Id, leg.Status, network.Version)
-                {
-                    BlockedAt = circuit.Number + " - " + leg.BlockedAt,
-                    BuiltInLength = circuit.BuiltInLength,
-                };
-            }
-
-            // A leg that doubles back over carriers the previous leg already used is normal - two
-            // sockets on one tray share it - and the length is counted once per leg because the
-            // cable runs the distance once per leg. The path is deduplicated only for display.
-            foreach (var step in leg.Path)
-            {
-                if (path.Count == 0 || path[path.Count - 1] != step)
-                    path.Add(step);
-            }
-
-            alongCarriers += leg.AlongCarriers;
-            Add(byClass, leg.AlongByClass);
-            approaches += leg.Approaches;
-            taps.Add(tap!);
-            from = to;
-
-            if (boxes)
-                trunk = tap;
+                BlockedAt = circuit.Number + " - " + tree.BlockedAt,
+                BuiltInLength = circuit.BuiltInLength,
+            };
         }
 
         return new RouteResult(circuit.Id, RouteStatus.Found, network.Version)
         {
-            Path = path,
-            AlongCarriers = alongCarriers,
-            AlongByClass = byClass,
-            Approaches = approaches,
+            Path = tree.Carriers,
+            AlongCarriers = tree.AlongCarriers,
+            AlongByClass = tree.AlongByClass,
+            Approaches = tree.Approaches,
             BuiltInLength = circuit.BuiltInLength,
             Connection = circuit.Connection,
-            Taps = taps,
+            Taps = tree.Taps,
+            Branches = tree.Branches,
         };
-    }
-
-    /// <summary>A circuit cut in boxes, served only from boxes already in the model.</summary>
-    /// <remarks>
-    /// <para>
-    /// <b>Every rule here is the owner's, answered on 2026-09-17 before a line of it was written.</b>
-    /// Each device is served from the existing box nearest it <i>along the structure</i>, however far -
-    /// a box behind a wall or on another tray is not near because it is close on a plan, and a box on a
-    /// part of the structure the device does not reach is not reachable at all. The trunk runs from the
-    /// panel through those boxes, in the order the circuit visits its devices; a spur leaves the box
-    /// along the structure and comes down to the device. A device no box reaches fails the circuit.
-    /// </para>
-    /// <para>
-    /// <b>Every device is given its box before the trunk is walked</b>, because the trunk visits boxes
-    /// and cannot know which until every device has been asked. Consecutive devices on one box share one
-    /// visit; a box the circuit comes back to after another is visited again, which is how it would be
-    /// wired.
-    /// </para>
-    /// </remarks>
-    private static RouteResult ThroughExistingBoxes(
-        RouteNetwork network,
-        CircuitSnapshot circuit,
-        RoutingOptions options,
-        IReadOnlyCollection<ExistingBox> boxes)
-    {
-        var standing = new Dictionary<CarrierId, (Point3 At, double Cost)>();
-
-        foreach (var box in boxes)
-        {
-            if (box is not null && network.Node(box.Id) is not null)
-                standing[box.Id] = (box.At, 0);
-        }
-
-        var served = new List<(Terminal Device, CarrierId Box, Walked Spur, Point3 At, double Drop)>();
-
-        foreach (var device in circuit.Devices)
-        {
-            var exits = Approachable(network, device, options);
-
-            if (exits.Count == 0)
-                return Failed(network, circuit, RouteStatus.NoCarrierNear, device);
-
-            if (standing.Count == 0 || Walk(network, standing, exits, options) is not { } spur)
-                return Failed(network, circuit, RouteStatus.NoBoxReachable, device);
-
-            served.Add((device, spur.Seed, spur, exits[spur.Exit].At, exits[spur.Exit].Cost));
-        }
-
-        var fromPanel = Approachable(network, circuit.Source, options);
-
-        if (fromPanel.Count == 0)
-            return Failed(network, circuit, RouteStatus.NoCarrierNear, circuit.Source);
-
-        var path = new List<CarrierId>();
-        var taps = new List<Tap>();
-        var alongCarriers = 0.0;
-        var byClass = new Dictionary<string, double>(StringComparer.OrdinalIgnoreCase);
-        var approaches = 0.0;
-        CarrierId? at = null;
-
-        foreach (var one in served)
-        {
-            if (at != one.Box)
-            {
-                var from = at is { } previous
-                    ? new Dictionary<CarrierId, (Point3 At, double Cost)> { [previous] = standing[previous] }
-                    : fromPanel;
-
-                var to = new Dictionary<CarrierId, (Point3 At, double Cost)> { [one.Box] = standing[one.Box] };
-
-                if (Walk(network, from, to, options) is not { } trunk)
-                    return Failed(network, circuit, RouteStatus.NoConnectivity, one.Device);
-
-                Append(path, trunk.Result.Path);
-                alongCarriers += trunk.Result.AlongCarriers;
-                Add(byClass, trunk.Result.AlongByClass);
-                approaches += trunk.Result.Approaches;
-                at = one.Box;
-            }
-
-            Append(path, one.Spur.Result.Path);
-            alongCarriers += one.Spur.Result.AlongCarriers;
-            Add(byClass, one.Spur.Result.AlongByClass);
-            approaches += one.Drop;
-
-            taps.Add(new Tap(one.Device, one.Spur.Exit, one.At, one.Drop)
-            {
-                Box = one.Box,
-                SpurAlongCarriers = one.Spur.Result.AlongCarriers,
-                AllowsSplicing = Splices(network, one.Spur.Exit),
-            });
-        }
-
-        return new RouteResult(circuit.Id, RouteStatus.Found, network.Version)
-        {
-            Path = path,
-            AlongCarriers = alongCarriers,
-            AlongByClass = byClass,
-            Approaches = approaches,
-            BuiltInLength = circuit.BuiltInLength,
-            Connection = circuit.Connection,
-            Taps = taps,
-        };
-    }
-
-    /// <summary>The carriers of a walk after those already walked, a carrier repeated in place said once.</summary>
-    private static void Append(List<CarrierId> path, IReadOnlyList<CarrierId> walked)
-    {
-        foreach (var step in walked)
-        {
-            if (path.Count == 0 || path[path.Count - 1] != step)
-                path.Add(step);
-        }
-    }
-
-    /// <summary>Adds what one walk measured along each class of carrier to what the route has measured so far.</summary>
-    private static void Add(Dictionary<string, double> byClass, IReadOnlyDictionary<string, double> walked)
-    {
-        foreach (var part in walked)
-            Add(byClass, part.Key, part.Value);
-    }
-
-    private static void Add(Dictionary<string, double> byClass, string carrierClass, double length)
-    {
-        byClass.TryGetValue(carrierClass, out var known);
-        byClass[carrierClass] = known + length;
-    }
-
-    /// <summary>A circuit that stopped at one of its ends, named the way a leg that stopped is named.</summary>
-    private static RouteResult Failed(RouteNetwork network, CircuitSnapshot circuit, RouteStatus status, Terminal at) =>
-        new(circuit.Id, status, network.Version)
-        {
-            BlockedAt = circuit.Number + " - " + at.Label,
-            BuiltInLength = circuit.BuiltInLength,
-        };
-
-    /// <summary>One leg: from one terminal to the next, through the structure.</summary>
-    /// <remarks>
-    /// <para>
-    /// <b>The vertex is a terminal of a carrier, not the carrier.</b> With carriers as vertices a
-    /// carrier has one cost, so every route that touches it pays its whole length - which was
-    /// deliberate and guarded, because the alternative at the time was paying nothing at all. But a
-    /// cable that joins a twenty-foot tray at its middle and leaves at one end walks ten feet, and a
-    /// single number per carrier cannot say ten to one route and twenty to another.
-    /// </para>
-    /// <para>
-    /// So a carrier is entered at a point and left at a terminal, and what it costs is the distance
-    /// between those two. Carriers that touch are joined by an edge of nothing, which is what
-    /// touching means. The graph grows by the number of terminals - two to four apiece - and answers
-    /// a question the old one could only approximate.
-    /// </para>
-    /// <para>
-    /// <b>And the finish is taken on the way in, never on the way out.</b> A device hanging under a
-    /// carrier is reached from the point where the cable enters that carrier; asking at the terminal
-    /// we arrived at would walk the carrier to its end and then back down it.
-    /// </para>
-    /// </remarks>
-    /// <param name="trunk">
-    /// Where the trunk already stands, when the cable is cut in boxes and this is not the first leg.
-    /// The leg then starts on the structure at that point, at no cost, instead of climbing up from
-    /// <paramref name="from"/> - which is the whole difference between the two connection modes.
-    /// </param>
-    private static (RouteResult Leg, Tap? Tap) Leg(
-        RouteNetwork network,
-        Terminal from,
-        Tap? trunk,
-        Terminal to,
-        RoutingOptions options)
-    {
-        var entries = trunk is not null && network.Node(trunk.Carrier) is not null
-            ? new Dictionary<CarrierId, (Point3 At, double Cost)> { [trunk.Carrier] = (trunk.At, 0) }
-            : Approachable(network, from, options);
-
-        if (entries.Count == 0)
-            return (Blocked(RouteStatus.NoCarrierNear, from), null);
-
-        var exits = Approachable(network, to, options);
-
-        if (exits.Count == 0)
-            return (Blocked(RouteStatus.NoCarrierNear, to), null);
-
-        if (Walk(network, entries, exits, options) is not { } walked)
-            return (Blocked(RouteStatus.NoConnectivity, to), null);
-
-        return (
-            walked.Result,
-            new Tap(to, walked.Exit, exits[walked.Exit].At, exits[walked.Exit].Cost)
-            {
-                AllowsSplicing = Splices(network, walked.Exit),
-            });
     }
 
     /// <summary>Whether the carrier a tap sits on is one cable may be spliced in.</summary>
@@ -321,185 +100,8 @@ public static class Router
     /// A carrier the network does not know cannot say, and says no: the loud answer, for the same
     /// reason <see cref="CarrierNode.AllowsSplicing"/> defaults to it.
     /// </remarks>
-    private static bool Splices(RouteNetwork network, CarrierId carrier) =>
+    internal static bool Splices(RouteNetwork network, CarrierId carrier) =>
         network.Node(carrier)?.AllowsSplicing ?? false;
-
-    /// <summary>What one walk through the structure found.</summary>
-    /// <param name="Result">The carriers walked and what they measure, with the two approaches.</param>
-    /// <param name="Seed">The entry the walk started from.</param>
-    /// <param name="Exit">The exit it finished at.</param>
-    private sealed record Walked(RouteResult Result, CarrierId Seed, CarrierId Exit);
-
-    /// <summary>
-    /// The shortest walk from any of the entries to any of the exits, or null when none joins them.
-    /// </summary>
-    /// <remarks>
-    /// <para>
-    /// <b>Entries and exits rather than two terminals</b>, because three questions ask it: a leg of a
-    /// circuit, from what a device reaches to what the next one reaches; the trunk of a circuit routed
-    /// without additional boxes, from one existing box to the next; and which existing box is nearest a
-    /// device, which is the same walk with every box as an entry - the search answers all of them at once
-    /// and names the one it started from.
-    /// </para>
-    /// <para>
-    /// A box given as an entry or an exit costs nothing to reach, and a box is a fitting, so a walk that
-    /// passes through it pays the fitting's length on the way in and again on the way out. A stated
-    /// approximation, the size of one box family; measuring what a box's body really adds is not
-    /// something the snapshot knows.
-    /// </para>
-    /// </remarks>
-    private static Walked? Walk(
-        RouteNetwork network,
-        Dictionary<CarrierId, (Point3 At, double Cost)> entries,
-        Dictionary<CarrierId, (Point3 At, double Cost)> exits,
-        RoutingOptions options)
-    {
-        var best = new Dictionary<Port, double>();
-        var came = new Dictionary<Port, Port>();
-        var entered = new Dictionary<Port, Point3>();
-        var queue = new PriorityQueue();
-
-        var finish = double.MaxValue;
-        var finishAt = default(CarrierId);
-        var finishFrom = default(Port);
-        var finishSeeded = false;
-        var finishEntry = default(Point3);
-
-        void Arrive(CarrierNode node, Point3 at, double before, Port previous, bool hasPrevious)
-        {
-            var factor = Factor(node, options);
-
-            if (exits.TryGetValue(node.Id, out var exit))
-            {
-                var whole = before + (Along(node, at, exit.At) * factor) + exit.Cost;
-
-                if (whole < finish)
-                {
-                    finish = whole;
-                    finishAt = node.Id;
-                    finishFrom = previous;
-                    finishSeeded = !hasPrevious;
-                    finishEntry = at;
-                }
-            }
-
-            for (var t = 0; t < node.Terminals.Count; t++)
-            {
-                var port = new Port(node.Id, t);
-                var cost = before + (Along(node, at, node.Terminals[t]) * factor);
-
-                if (best.TryGetValue(port, out var known) && known <= cost)
-                    continue;
-
-                best[port] = cost;
-                entered[port] = at;
-
-                if (hasPrevious)
-                    came[port] = previous;
-                else
-                    came.Remove(port);
-
-                queue.Push(port, cost);
-            }
-        }
-
-        foreach (var entry in entries)
-        {
-            if (network.Node(entry.Key) is { } node)
-                Arrive(node, entry.Value.At, entry.Value.Cost, default, false);
-        }
-
-        var settled = new HashSet<Port>();
-
-        while (queue.TryPop(out var port, out var cost))
-        {
-            if (!settled.Add(port) || cost >= finish)
-                continue;
-
-            if (network.Node(port.Carrier) is not { } node)
-                continue;
-
-            var reached = node.Terminals[port.Terminal];
-
-            foreach (var next in network.Neighbours(port.Carrier))
-            {
-                if (network.Node(next) is not { } other)
-                    continue;
-
-                // Which terminal of the neighbour this one meets. Adjacency says the two carriers
-                // touch somewhere; the search needs to know where, because that is where the cable
-                // enters and what it then has to walk is measured from it.
-                var touch = Touching(other, reached, options.JoinTolerance);
-
-                if (touch >= 0)
-                    Arrive(other, other.Terminals[touch], cost, port, true);
-            }
-        }
-
-        if (finish >= double.MaxValue)
-            return null;
-
-        var carriers = new List<CarrierId>();
-
-        // The true length, walked again over the chosen path - not the cost the search minimised.
-        // The two differ by the conduit preference, which is a thumb on the scale for choosing a
-        // route and has no business in the number we write into a parameter. Reporting the cost
-        // would inflate every tray route by the preference and quietly disagree with a tape measure.
-        var length = 0.0;
-        var byClass = new Dictionary<string, double>(StringComparer.OrdinalIgnoreCase);
-
-        if (!finishSeeded)
-        {
-            var walk = new List<Port>();
-            var cursor = finishFrom;
-
-            while (true)
-            {
-                walk.Add(cursor);
-
-                if (!came.TryGetValue(cursor, out var previous))
-                    break;
-
-                cursor = previous;
-            }
-
-            walk.Reverse();
-
-            foreach (var step in walk)
-            {
-                if (network.Node(step.Carrier) is not { } node)
-                    continue;
-
-                var walked = Along(node, entered[step], node.Terminals[step.Terminal]);
-
-                carriers.Add(step.Carrier);
-                length += walked;
-                Add(byClass, node.Class, walked);
-            }
-        }
-
-        if (network.Node(finishAt) is { } last)
-        {
-            var walked = Along(last, finishEntry, exits[finishAt].At);
-
-            carriers.Add(finishAt);
-            length += walked;
-            Add(byClass, last.Class, walked);
-        }
-
-        var seed = carriers.Count > 0 ? carriers[0] : finishAt;
-        var approach = entries.TryGetValue(seed, out var seeded) ? seeded.Cost : 0;
-
-        var result = new RouteResult(default, RouteStatus.Found, network.Version)
-        {
-            Path = carriers,
-            AlongCarriers = length,
-            AlongByClass = byClass,
-            Approaches = approach + exits[finishAt].Cost,
-        };
-
-        return new Walked(result, seed, finishAt);
-    }
 
     /// <summary>The carriers a terminal can reach, where it meets each one, and what that costs.</summary>
     /// <remarks>
@@ -508,7 +110,7 @@ public static class Router
     /// measured to the nearest terminal of everything, which put a socket under the middle of a
     /// twenty-metre tray eleven metres from a run it was one metre below.
     /// </remarks>
-    private static Dictionary<CarrierId, (Point3 At, double Cost)> Approachable(
+    internal static Dictionary<CarrierId, (Point3 At, double Cost)> Approachable(
         RouteNetwork network,
         Terminal terminal,
         RoutingOptions options)
@@ -554,7 +156,7 @@ public static class Router
     }
 
     /// <summary>Which terminal of a carrier meets this point, or -1 when none is within reach.</summary>
-    private static int Touching(CarrierNode node, Point3 at, double tolerance)
+    internal static int Touching(CarrierNode node, Point3 at, double tolerance)
     {
         var best = -1;
         var distance = double.MaxValue;
@@ -600,7 +202,7 @@ public static class Router
     /// says it is, and entering and leaving by the same connector costs nothing.
     /// </para>
     /// </remarks>
-    private static double Along(CarrierNode node, Point3 a, Point3 b)
+    internal static double Along(CarrierNode node, Point3 a, Point3 b)
     {
         if (node.Kind != CarrierKind.Segment)
             return a.DistanceTo(b) <= 1e-9 ? 0 : node.Length;
@@ -618,7 +220,7 @@ public static class Router
     /// which is the correction to the predecessor: it multiplied the finished length, so a route
     /// through both conduit and tray was penalised as though all of it were tray.
     /// </remarks>
-    private static double Factor(CarrierNode node, RoutingOptions options) =>
+    internal static double Factor(CarrierNode node, RoutingOptions options) =>
         string.Equals(node.Class, "conduit", StringComparison.OrdinalIgnoreCase)
             ? 1.0
             : 1.0 + options.PreferConduitUntil;

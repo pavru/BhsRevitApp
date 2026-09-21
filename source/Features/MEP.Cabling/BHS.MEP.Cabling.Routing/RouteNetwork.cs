@@ -198,6 +198,23 @@ public sealed class Terminal
 
     /// <summary>What to call it on screen, carried because asking the model is an API call.</summary>
     public string Label { get; }
+
+    /// <summary>How many cables this element's terminals hold; zero when its type does not say.</summary>
+    /// <remarks>
+    /// <para>
+    /// <b>The owner's answer of 2026-09-21, asked because a cable tree may split at a device.</b> The
+    /// chain put two cables into every device it passed through; a tree that branches there puts in
+    /// three or more, and a socket's terminal block has a limit. Without one the search would branch
+    /// wherever the geometry favoured it and produce something nobody can wire.
+    /// </para>
+    /// <para>
+    /// <b>Zero means the type did not say, and then the project answers</b> - the same shape as the
+    /// splicing permission next door, and for the same reason: absence has to mean the loud answer.
+    /// The project's default is two, a device the cable passes through and no more, which is exactly
+    /// what was built before there was a tree.
+    /// </para>
+    /// </remarks>
+    public int Capacity { get; init; }
 }
 
 /// <summary>How the devices of a circuit are connected to its cable.</summary>
