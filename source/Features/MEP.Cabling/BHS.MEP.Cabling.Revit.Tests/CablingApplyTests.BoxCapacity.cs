@@ -1,4 +1,5 @@
 using Autodesk.Revit.DB;
+using Autodesk.Revit.DB.Electrical;
 using BHS.MEP.Cabling.Declaration;
 using BHS.MEP.Cabling.Routing;
 using BHS.Revit.Testing;
@@ -123,6 +124,164 @@ public sealed partial class CablingApplyTests
     });
 
     /// <summary>
+    /// The conductors a circuit of this model reports, as the suite reads them off Revit itself.
+    /// </summary>
+    /// <remarks>
+    /// <b>The suite's own arithmetic, not the reader's</b>, so that a note about the model and the
+    /// code that consumes it do not agree by construction. The release split is the same one the
+    /// reader carries and for the same measured reason: <c>OtherConductorsNumber</c> is declared only
+    /// in the 2026 and 2027 assemblies.
+    /// </remarks>
+    private static int ConductorsOf(ElectricalSystem system)
+    {
+        var conductors =
+            system.HotConductorsNumber + system.NeutralConductorsNumber + system.GroundConductorsNumber;
+
+#if REVIT2026_OR_GREATER
+        conductors += system.OtherConductorsNumber;
+#endif
+
+        return conductors <= 0 ? 0 : conductors * (system.RunsNumber > 0 ? system.RunsNumber : 1);
+    }
+
+    /// <summary>
+    /// Gives every circuit a wire type when none of them reports a conductor, and says what changed.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <b>The case builds its own question rather than asking for the model to be edited</b> - this
+    /// suite's standing rule, and here it is possible because of what the metadata says. The conductor
+    /// counts are derived and carry no setter on any of the four releases: neither this suite nor a
+    /// designer can write them. What does carry a setter on all four is
+    /// <c>ElectricalSystem.WireType</c>; on 2026 and 2027 there is a second, <c>CableType</c>, which
+    /// is not touched here because one mechanism present everywhere is the one worth measuring first.
+    /// </para>
+    /// <para>
+    /// <b>That assigning a wire type makes Revit report conductors is a hypothesis, and it is written
+    /// as one.</b> Everything here is a note; nothing is asserted. A check written before the answer
+    /// agrees with whoever wrote it, and the answer to this one is not known to anybody in this
+    /// repository. If it turns out to be false, the case that calls this stands down out loud and the
+    /// notes say at which step it stopped - which is what tells the owner what to set, instead of
+    /// leaving them to edit four models and find out.
+    /// </para>
+    /// <para>
+    /// <b>Nothing is named.</b> The record is public: wire type names, panel names and circuit numbers
+    /// belong to the owner's building and stay out of it. Counts and ids of our own making do not.
+    /// </para>
+    /// </remarks>
+    private static void ArrangeConductors(RevitTestContext context, PostedWarnings watch, Document document, string label)
+    {
+        var circuits = new FilteredElementCollector(document)
+            .OfClass(typeof(ElectricalSystem))
+            .Cast<ElectricalSystem>()
+            .Where(one => one.CircuitType == CircuitType.Circuit)
+            .ToList();
+
+        Note(context, label + ": circuits in the host", circuits.Count);
+        Note(context, label + ": of them reporting conductors before anything", circuits.Count(ReportsConductors));
+
+        if (circuits.Count == 0 || circuits.Any(ReportsConductors))
+            return;
+
+        // What a circuit's cable is called differs by release, and the compiler is what said so rather
+        // than the metadata strings: Revit 2026 deprecates ElectricalSystem.WireType in favour of
+        // CableType - "CableType will be set on ElectricalSystem properly during document upgrade" -
+        // and 2027 removes the property outright. A grep of the assembly still finds the name on 2027,
+        // which is exactly the trap this repository has recorded twice before.
+#if REVIT2026_OR_GREATER
+        var kinds = new FilteredElementCollector(document)
+            .OfClass(typeof(CableType))
+            .OrderBy(one => one.Id.Value)
+            .ToList();
+
+        const string What = "cable type";
+#else
+        var kinds = new FilteredElementCollector(document)
+            .OfClass(typeof(WireType))
+            .OrderBy(one => one.Id.Value)
+            .ToList();
+
+        const string What = "wire type";
+#endif
+
+        Note(context, label + ": " + What + "s in the project", kinds.Count);
+
+        // A project with none cannot be arranged at all, and that is itself the answer to what the
+        // owner would have to add.
+        if (kinds.Count == 0)
+            return;
+
+        var kind = kinds[0];
+        var assigned = 0;
+        var refused = 0;
+        var mark = watch.Mark;
+        TransactionStatus status;
+
+        using (var transaction = new Transaction(document, "BHS test: every circuit is given a cable"))
+        {
+            transaction.Start();
+
+            foreach (var circuit in circuits)
+            {
+                try
+                {
+#if REVIT2026_OR_GREATER
+                    // An id, not the element: the reference says so by what it refuses - "the id is
+                    // not a Cable Type id nor invalidElementId".
+                    circuit.CableType = kind.Id;
+#else
+                    circuit.WireType = (WireType)kind;
+#endif
+                    assigned++;
+                }
+                catch (Autodesk.Revit.Exceptions.ApplicationException)
+                {
+                    // Revit refusing one circuit is an answer, not a reason to lose the rest of the
+                    // arrangement. How many it refused is the note that says so.
+                    refused++;
+                }
+            }
+
+            // The conductor counts are derived, and a derived value is what a regeneration is for.
+            document.Regenerate();
+
+            status = transaction.Commit();
+        }
+
+        Committed(watch, mark, status, "giving every circuit a " + What);
+
+        Note(context, label + ": circuits given a " + What, assigned);
+        Note(context, label + ": circuits Revit refused one on", refused);
+        Note(context, label + ": of them reporting conductors afterwards", circuits.Count(ReportsConductors));
+        Note(context, label + ": conductors of the richest circuit afterwards",
+            circuits.Count == 0 ? 0 : circuits.Max(ConductorsOfSafe));
+    }
+
+    /// <summary>Whether this circuit reports any conductor at all, asked safely.</summary>
+    private static bool ReportsConductors(ElectricalSystem system) => ConductorsOfSafe(system) > 0;
+
+    /// <summary>
+    /// What this circuit reports, or zero when Revit refuses the question.
+    /// </summary>
+    /// <remarks>
+    /// Caught rather than allowed through, and only here. This is a note about a model, and a model
+    /// that refuses one of these is a model whose count is unknown rather than a sweep that stops; the
+    /// production reader asks the same properties of a described circuit, where a refusal would be a
+    /// finding. What Revit does with these on a spare or an unsized circuit is not measured.
+    /// </remarks>
+    private static int ConductorsOfSafe(ElectricalSystem system)
+    {
+        try
+        {
+            return ConductorsOf(system);
+        }
+        catch (Autodesk.Revit.Exceptions.ApplicationException)
+        {
+            return 0;
+        }
+    }
+
+    /// <summary>
     /// Stating a capacity changes nothing the calculation gives, and every box over it is reported -
     /// and, where the box is of the host, posted as a warning against that box.
     /// </summary>
@@ -164,6 +323,10 @@ public sealed partial class CablingApplyTests
         new CablingParameters().Export(application);
         Bind(watch, document, application, RuntimeFor(symbol, catalogue));
         MarkJoinedFittingTypesBoxes(context, watch, document, symbol, catalogue, "over capacity");
+
+        // Before the read, because the read is what has to see the conductors. Notes only - whether
+        // this achieves anything is the question the sweep answers.
+        ArrangeConductors(context, watch, document, "over capacity");
 
         // Cut in boxes, because a circuit cut at terminals fills no box at all and the question would
         // have nowhere to be asked. The mode is the case's, exactly as the box cases beside it.
@@ -314,7 +477,7 @@ public sealed partial class CablingApplyTests
 
         Skip.When(
             mine.Count == 0,
-            "with a capacity of one on every box type, no box of this model holds more - every circuit through them reports no conductors at all");
+            "with a capacity of one on every box type, no box of this model holds more: the circuits spliced in them report no conductors, and the notes of this case say how far it got in arranging for them to");
 
         // The warning half. Only the boxes of the host can be addressed by one.
         var addressable = mine
