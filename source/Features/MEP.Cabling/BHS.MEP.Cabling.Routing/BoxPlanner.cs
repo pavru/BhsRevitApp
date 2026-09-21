@@ -288,12 +288,27 @@ public static class BoxPlanner
                 box.Hold(route.Circuit, branch.Ways + 1);
             }
 
-            // Which devices hang off which box. A drop that leaves within the radius of a box leaves
-            // from it - the same nearness that merged the branches in the first place - and a drop
-            // that leaves from bare carrier belongs to no box at all, which a tree makes ordinary.
+            // Which devices hang off which box, and the tap's own answer comes first.
+            //
+            // <b>The owner's rule of 2026-09-17: a tap carries its box and belongs to it however far
+            // it stands.</b> Without additional boxes the search walks back from the device to the
+            // box the run it is on began at, and that distance is routinely past the radius - eight
+            // of twelve taps on the owner's linked set. The radius decides which taps share one box;
+            // it was never meant to decide whether a tap has the box the search already gave it, and
+            // for a while after the tree landed it did, so ten of those twelve devices were served
+            // by nothing.
+            //
+            // A tap with no box of its own is the ordinary tree: the line out of the panel reaches
+            // its device without being cut anywhere. Then nearness is the only question there is.
             foreach (var tap in route.Taps)
             {
-                if (Nearest(boxes, tap.At, radius) is { } serving && serving.Circuits.Contains(route.Circuit))
+                var serving = tap.Box is { } stood
+                    ? boxes.Find(one => one.Existing is { } box && box.Id == stood)
+                    : null;
+
+                serving ??= Nearest(boxes, tap.At, radius);
+
+                if (serving is not null && serving.Circuits.Contains(route.Circuit))
                     serving.Serve(tap);
             }
         }

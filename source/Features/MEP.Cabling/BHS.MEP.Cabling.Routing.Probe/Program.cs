@@ -14,7 +14,7 @@ namespace BHS.MEP.Cabling.Routing.Probe;
 internal static class Program
 {
     private const double Tolerance = 0.1;
-    private const int Floor = 150;
+    private const int Floor = 152;
 
     private static int _run;
     private static int _failed;
@@ -688,12 +688,17 @@ internal static class Program
         Check("the planner recommends nothing, although no tap is within a radius of a box",
             planned.Count == 2 && planned.All(box => !box.IsRecommendation));
         // Three ends at each: the cable arrives, goes on, and a second run leaves for another device.
-        // No drop of their own - the devices hang further along, which is what a tree looks like and
-        // what the chain could not express.
-        Check("X holds three cable ends: the trunk in, the trunk on, and the run that leaves it",
-            planned.SingleOrDefault(box => box.Existing?.Id == new CarrierId(50)) is { Entries: 3, Spurs: 0 });
-        Check("and so does Y",
-            planned.SingleOrDefault(box => box.Existing?.Id == new CarrierId(51)) is { Entries: 3, Spurs: 0 });
+        // The spurs are what hangs off each - and every one of the three is farther from its box than
+        // the radius, which is the whole of this mode. The spur counts stood at zero here until
+        // 2026-09-21, written to match a planner that had quietly stopped reading the box a tap
+        // carries and was giving taps out by nearness alone; on the owner's linked set that left ten
+        // devices of twelve served by nothing, and the probe agreed with it.
+        Check("X holds three cable ends - the trunk in, the trunk on, the run that leaves it - and feeds one device",
+            planned.SingleOrDefault(box => box.Existing?.Id == new CarrierId(50)) is { Entries: 3, Spurs: 1 });
+        Check("and Y the same, feeding two: the device its own run leaves for, and the one the trunk goes on to",
+            planned.SingleOrDefault(box => box.Existing?.Id == new CarrierId(51)) is { Entries: 3, Spurs: 2 });
+        Check("so every device of the circuit is served, and none twice",
+            planned.Sum(box => box.Spurs) == routed.Taps.Count);
 
         var ordinary = Router.Route(network, circuit, Options());
 
