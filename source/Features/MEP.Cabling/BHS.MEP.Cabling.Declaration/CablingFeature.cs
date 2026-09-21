@@ -1,4 +1,4 @@
-using Autodesk.Revit.ApplicationServices;
+﻿using Autodesk.Revit.ApplicationServices;
 using Autodesk.Revit.DB;
 using BHS.Logging;
 using BHS.Revit.Abstractions;
@@ -93,6 +93,14 @@ public sealed class CablingFeature : IFeatureModule
     /// "this device" first, while the apply set the circuit as the failing element - so the element
     /// Revit selected was never the thing the sentence was about. And the router stops at whichever
     /// end has nothing near, which is as often the panel as a device, so the sentence says both.
+    /// </para>
+    /// <para>
+    /// <b>It covers two causes, by the owner's decision of 2026-09-22, and its wording was widened to
+    /// stay true of both.</b> Nothing within reach, and nothing within reach that will take this
+    /// cable - a tray that is there and admits another group of cables. One warning for the two,
+    /// because a designer is sent to the same circuit either way; the screen tells them apart, and
+    /// <c>RouteStatus.NoCarrierAllowed</c> is what it reads. "It may use" is the whole of the
+    /// widening, and without it the sentence would be false every time the second cause fired.
     /// </para>
     /// </remarks>
     public static readonly FailureDefinitionId NoCarrierNear =
@@ -208,8 +216,8 @@ public sealed class CablingFeature : IFeatureModule
     private static readonly (FailureDefinitionId Id, string Message)[] Declared =
     {
         (NoCarrierNear,
-            "An end of this circuit - its panel or one of its devices - has no cable tray or conduit within reach, "
-            + "so no route could be found for this circuit."),
+            "An end of this circuit - its panel or one of its devices - has no cable tray or conduit it may use "
+            + "within reach, so no route could be found for this circuit."),
         (NoConnectivity,
             "This circuit's devices cannot be reached through the cable trays and conduits of this model."),
         (ConnectionUnreadable,

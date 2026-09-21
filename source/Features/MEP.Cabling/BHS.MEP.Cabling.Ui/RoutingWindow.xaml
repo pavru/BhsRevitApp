@@ -84,6 +84,14 @@
                        Text="{Binding CapacitySummary}"
                        TextWrapping="Wrap"
                        Visibility="{Binding HasCapacitySummary, Converter={StaticResource Shown}}" />
+
+            <!-- Which cable groups this run involved, and how many circuits were turned away for
+                 theirs. Shown only where somebody grouped something, for the same reason as above -
+                 and it is the only place a designer can tell that failure from "nothing near". -->
+            <TextBlock Margin="0,6,0,0"
+                       Text="{Binding GroupSummary}"
+                       TextWrapping="Wrap"
+                       Visibility="{Binding HasGroupSummary, Converter={StaticResource Shown}}" />
         </StackPanel>
 
         <!-- Only when a run failed to cross the structure. Then it is the answer; otherwise it is

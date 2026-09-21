@@ -128,7 +128,7 @@ public sealed class RouteCablingCommand : IFeatureCommand
         var version = Interlocked.Increment(ref _version);
         var clock = Stopwatch.StartNew();
         var snapshot = CablingSnapshot.Build(
-            document, options, new CarrierCatalogue(), version, project.Boxes, project.DefaultConnection);
+            document, options, new CarrierCatalogue(), version, project.Boxes, project.DefaultConnection, project.CableGroup);
         clock.Stop();
 
         log.Info(

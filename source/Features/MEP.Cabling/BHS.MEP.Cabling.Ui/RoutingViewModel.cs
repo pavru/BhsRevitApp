@@ -430,6 +430,53 @@ public sealed class RoutingViewModel : INotifyPropertyChanged
 
     public bool HasCapacitySummary => CapacitySummary.Length > 0;
 
+    /// <summary>What the rule on laying cables together did to this run, when anybody stated it.</summary>
+    /// <remarks>
+    /// <para>
+    /// <b>Its own line, and the reason is the warning it stands beside.</b> A circuit turned away for
+    /// its cable group and one with nothing within reach are posted as the same warning - the owner's
+    /// decision - because a designer goes to the same circuit either way. What he does there is not
+    /// the same: one asks for a tray that is missing, the other asks whether the tray already there
+    /// may carry this cable. The screen is free to say which, and so it does.
+    /// </para>
+    /// <para>
+    /// <b>Silent in a model where nobody grouped anything</b>, which is every project that has not
+    /// taken this up: no circuit names a group and none was turned away. The same rule that keeps the
+    /// capacity line quiet, and for the same reason - a report that remarks on what nobody asked about
+    /// is one people stop reading.
+    /// </para>
+    /// </remarks>
+    public string GroupSummary
+    {
+        get
+        {
+            if (Run is null)
+                return string.Empty;
+
+            var turnedAway = Run.Count(RouteStatus.NoCarrierAllowed);
+
+            var groups = Run.Results
+                .Select(one => one.CableGroup)
+                .Where(one => one.Length > 0)
+                .Distinct(StringComparer.OrdinalIgnoreCase)
+                .OrderBy(one => one, StringComparer.OrdinalIgnoreCase)
+                .ToList();
+
+            if (groups.Count == 0 && turnedAway == 0)
+                return string.Empty;
+
+            var said = groups.Count == 0
+                ? "No circuit in this run names a cable group."
+                : $"Cable groups in this run: {string.Join(", ", groups)}.";
+
+            return turnedAway == 0
+                ? said + " Every circuit found carriers that admit it."
+                : said + $" {turnedAway} circuit(s) reached carriers and none of them admits the circuit's group.";
+        }
+    }
+
+    public bool HasGroupSummary => GroupSummary.Length > 0;
+
     /// <summary>What the read of the model left behind, when it left anything.</summary>
     /// <remarks>
     /// Shown on every run that has any, not only a failed one. These are the counts written so that
@@ -601,6 +648,7 @@ public sealed class RoutingViewModel : INotifyPropertyChanged
     private static string Explain(RouteStatus status) => status switch
     {
         RouteStatus.NoCarrierNear => "No tray or conduit within reach",
+        RouteStatus.NoCarrierAllowed => "Trays or conduits within reach, none admitting this cable group",
         RouteStatus.NoConnectivity => "Both ends reachable, but nothing joins them",
         RouteStatus.NothingToRoute => "Nothing to route",
         RouteStatus.NoBoxReachable => "No existing junction box reaches a device through the structure",
@@ -653,6 +701,8 @@ public sealed class RoutingViewModel : INotifyPropertyChanged
                 Raise(nameof(HasBoxSummary));
                 Raise(nameof(CapacitySummary));
                 Raise(nameof(HasCapacitySummary));
+                Raise(nameof(GroupSummary));
+                Raise(nameof(HasGroupSummary));
                 Raise(nameof(Reading));
                 Raise(nameof(HasReading));
                 Raise(nameof(Causes));

@@ -118,10 +118,18 @@ public sealed class CircuitReader
     /// to one.
     /// </remarks>
     private readonly CircuitConnection _default;
+    private readonly string _defaultGroup;
 
     /// <param name="defaultConnection">The project's answer, for a circuit and panel that give none.</param>
-    public CircuitReader(CircuitConnection defaultConnection = CircuitConnection.AtTerminal) =>
+    /// <param name="defaultGroup">
+    /// The project's answer for a circuit and panel that name no cable group. Empty is a group of its
+    /// own - the circuits nobody grouped - and not a wildcard; see <c>CableGroups</c>.
+    /// </param>
+    public CircuitReader(CircuitConnection defaultConnection = CircuitConnection.AtTerminal, string? defaultGroup = null)
+    {
         _default = defaultConnection;
+        _defaultGroup = CableGroups.Normalise(defaultGroup);
+    }
 
     public CircuitHarvest Read(Document host)
     {
@@ -171,6 +179,7 @@ public sealed class CircuitReader
                 HasCustomPath = system.HasCustomCircuitPath,
                 Connection = Connection(system, unreadable, unreadableIds),
                 Conductors = Conductors(system),
+                CableGroup = Group(system),
 
                 // OurRouteId stays empty until the parameter scheme exists. It is what tells our own
                 // custom path from somebody else's, and reading it before we can write it would be a
@@ -273,6 +282,35 @@ public sealed class CircuitReader
         }
 
         return _default;
+    }
+
+    /// <summary>Which group of cables this circuit belongs to: its own, its panel's, or the project's.</summary>
+    /// <remarks>
+    /// <para>
+    /// The same ladder <see cref="Connection"/> climbs, and for the owner's reason: a fire alarm panel
+    /// makes every circuit on it a fire alarm circuit, and nobody should have to say so once per way.
+    /// By identifier, never by name - a model where the parameter arrived on a Russian Revit calls it
+    /// <c>BHS_Cbl_ГруппаКабелей</c> for ever.
+    /// </para>
+    /// <para>
+    /// <b>Nothing here is unreadable, unlike a connection, and that is not an omission.</b> A
+    /// connection is one of two words this tool defined, so a third word is a typo it can name. A
+    /// group is a word the project chose; there is no list to check it against, and a value nobody
+    /// else uses simply means this circuit goes where that word is written and nowhere else - which
+    /// the run already reports, by name, as a circuit no carrier would take.
+    /// </para>
+    /// </remarks>
+    private string Group(ElectricalSystem system)
+    {
+        foreach (var owner in new Element?[] { system, system.BaseEquipment })
+        {
+            var text = owner?.get_Parameter(CablingParameters.CableGroup)?.AsString();
+
+            if (!string.IsNullOrWhiteSpace(text))
+                return CableGroups.Normalise(text);
+        }
+
+        return _defaultGroup;
     }
 
     /// <summary>The panel end, taken from the connector the circuit is actually fed from.</summary>

@@ -315,7 +315,7 @@ public sealed class RouteRun
     {
         get
         {
-            foreach (var status in new[] { RouteStatus.NoCarrierNear, RouteStatus.NoConnectivity, RouteStatus.NoBoxReachable, RouteStatus.NothingToRoute })
+            foreach (var status in new[] { RouteStatus.NoCarrierNear, RouteStatus.NoCarrierAllowed, RouteStatus.NoConnectivity, RouteStatus.NoBoxReachable, RouteStatus.NothingToRoute })
             {
                 if (Count(status) > 0)
                     yield return status;

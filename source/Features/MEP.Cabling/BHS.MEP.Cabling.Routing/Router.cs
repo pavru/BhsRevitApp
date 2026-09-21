@@ -57,6 +57,19 @@ public static class Router
             };
         }
 
+        // The structure this circuit is allowed to use, and the search never sees the rest of it. A
+        // model where nobody marked anything hands back the same network, so this line costs nothing
+        // until somebody uses the feature.
+        var allowed = network.Admitting(circuit.CableGroup);
+
+        // And the boxes it may be served from are the ones that admit it. A box is a carrier, so it
+        // answers the same question by the same rule - asked of the box itself rather than of its
+        // node in the filtered network, because a caller may hand over a box the network never saw
+        // and "not a node" would then silently mean "not allowed".
+        var boxes = existingBoxesOnly is null
+            ? null
+            : existingBoxesOnly.Where(one => one.Groups.Admits(circuit.CableGroup)).ToArray();
+
         // One cable line leaves the panel and branches below it - the owner's model, and what
         // CableTree searches for. The chain that stood here until 2026-09-21 visited the devices in
         // the order the model listed them, which Revit gives nobody a way to set, and could not split.
@@ -64,21 +77,36 @@ public static class Router
             circuit.Connection,
             options.SpliceCost,
             options.TerminalCapacity,
-            circuit.Connection == CircuitConnection.AtJunctionBox ? existingBoxesOnly : null,
+            circuit.Connection == CircuitConnection.AtJunctionBox ? boxes : null,
             options.JoinTolerance);
 
-        var tree = CableTree.Search(network, circuit, options, rules);
+        var tree = CableTree.Search(allowed, circuit, options, rules);
 
         if (tree.Status != RouteStatus.Found)
         {
+            // "Nothing within reach" and "nothing within reach that will take this cable" send a
+            // designer to two different places, so the true one is worth asking for. Reach rather
+            // than a second search: the question is only whether the structure is there at all, and
+            // it is asked on the failure alone, and only when something was actually filtered out.
+            var status = tree.Status == RouteStatus.NoCarrierNear
+                         && !ReferenceEquals(allowed, network)
+                         && ReachesTheStructure(network, circuit, options)
+                ? RouteStatus.NoCarrierAllowed
+                : tree.Status;
+
             // The circuit's own number in front of the end that stopped it. Measured on the first
             // real run: the screen groups by cause and says "26 circuits", then lists addresses that
             // are devices - two different levels, so the list answers a question nobody asked and
             // leaves the circuits unnamed.
-            return new RouteResult(circuit.Id, tree.Status, network.Version)
+            return new RouteResult(circuit.Id, status, network.Version)
             {
                 BlockedAt = circuit.Number + " - " + tree.BlockedAt,
                 BuiltInLength = circuit.BuiltInLength,
+
+                // Carried on a failure too: the screen counts which groups a run involved at all, and
+                // a circuit turned away for its group is exactly the one that must not be missing
+                // from that count.
+                CableGroup = circuit.CableGroup,
             };
         }
 
@@ -91,6 +119,7 @@ public static class Router
             BuiltInLength = circuit.BuiltInLength,
             Connection = circuit.Connection,
             Conductors = circuit.Conductors,
+            CableGroup = circuit.CableGroup,
             Taps = tree.Taps,
             Branches = tree.Branches,
         };
@@ -103,6 +132,30 @@ public static class Router
     /// </remarks>
     internal static bool Splices(RouteNetwork network, CarrierId carrier) =>
         network.Node(carrier)?.AllowsSplicing ?? false;
+
+    /// <summary>Whether every end of the circuit has some carrier within reach, permission aside.</summary>
+    /// <remarks>
+    /// Asked of the whole structure, to tell a circuit that has nowhere to go from one that has
+    /// somewhere it is not allowed. It answers about reach alone and never about a path: a circuit
+    /// whose ends both reach carriers that do not join up is a different failure, and the search has
+    /// already named it by the time this is asked.
+    /// </remarks>
+    private static bool ReachesTheStructure(
+        RouteNetwork network,
+        CircuitSnapshot circuit,
+        RoutingOptions options)
+    {
+        if (Approachable(network, circuit.Source, options).Count == 0)
+            return false;
+
+        foreach (var device in circuit.Devices)
+        {
+            if (Approachable(network, device, options).Count == 0)
+                return false;
+        }
+
+        return true;
+    }
 
     /// <summary>The carriers a terminal can reach, where it meets each one, and what that costs.</summary>
     /// <remarks>

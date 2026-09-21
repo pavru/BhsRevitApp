@@ -249,6 +249,18 @@ public sealed partial class CablingApplyTests : IRevitTestSuite
             ACapacityChangesNothingAndEveryBoxOverItIsReported,
             needsDocument: true,
             writes: true),
+
+        new RevitTestCase(
+            "a carrier that states which cable groups it admits reads back stating them, and one that does not reads as admitting only circuits in no group",
+            ACarrierThatStatesWhichGroupsItAdmitsIsReadBackStatingThem,
+            needsDocument: true,
+            writes: true),
+
+        new RevitTestCase(
+            "a circuit is laid only in carriers that admit its cable group, and one no carrier admits is told apart from one with nothing within reach",
+            ACircuitIsLaidOnlyInCarriersThatAdmitItsGroup,
+            needsDocument: true,
+            writes: true),
     };
 
     /// <summary>The value this suite writes wherever it wants a circuit's connection to fail to read.</summary>

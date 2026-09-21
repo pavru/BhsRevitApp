@@ -297,6 +297,23 @@ public sealed class CarrierNode
     /// </remarks>
     public bool AllowsSplicing { get; init; }
 
+    /// <summary>Which circuits this carrier admits, by the group they belong to.</summary>
+    /// <remarks>
+    /// <para>
+    /// <b>An instance property, unlike role, splicing and capacity, which live on the type</b> - the
+    /// owner's answer of 2026-09-22. A divider is a feature of the run that was installed, not of the
+    /// catalogue entry it came from, so two lengths of one type can legitimately admit different
+    /// things.
+    /// </para>
+    /// <para>
+    /// <b>An <c>init</c> defaulting to <see cref="CableGroups.Unmarked"/>, and that is the loud
+    /// answer</b>, as with <see cref="AllowsSplicing"/> beside it. A carrier nobody marked admits
+    /// only circuits nobody marked; so a reader that forgets to fill this in turns marked circuits
+    /// away and the run says so, rather than quietly letting a fire alarm cable into a power tray.
+    /// </para>
+    /// </remarks>
+    public CableGroups Groups { get; init; } = CableGroups.Unmarked;
+
     /// <summary>The name a person would recognise, carried because <c>Element.Name</c> is an API call.</summary>
     public string Label { get; init; } = string.Empty;
 }

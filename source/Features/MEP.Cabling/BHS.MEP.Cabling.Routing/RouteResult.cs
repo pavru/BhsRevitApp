@@ -47,6 +47,23 @@ public enum RouteStatus
     /// </para>
     /// </remarks>
     NoBoxReachable,
+
+    /// <summary>
+    /// An end of the circuit has carriers within reach, and none of them admits its cable group.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <b>Apart from <see cref="NoCarrierNear"/> because the two want opposite actions.</b> "Nothing
+    /// within reach" sends a designer to draw a tray that is missing; this one sends him to a tray
+    /// that is already there, to decide whether it may carry this cable. Reported as the same warning
+    /// - the owner's decision of 2026-09-22, and the registered text was widened to stay true of both
+    /// - but told apart on the screen, which costs nothing and is where the difference is read.
+    /// </para>
+    /// <para>
+    /// Last in the enumeration, so every value already compared keeps its number.
+    /// </para>
+    /// </remarks>
+    NoCarrierAllowed,
 }
 
 /// <summary>Where the cable leaves the structure for one device.</summary>
@@ -250,6 +267,15 @@ public sealed class RouteResult
     /// the wrong circuit with the wrong count.
     /// </remarks>
     public int Conductors { get; init; }
+
+    /// <summary>Which group of cables this circuit belongs to, carried for the same reason as above.</summary>
+    /// <remarks>
+    /// The planner needs it after the search is over - a box admits some groups and not others, and
+    /// which one a spur belongs to is a property of the circuit it came from. Travelling with the
+    /// route rather than looked up beside it, so there is no second chance to pair the wrong group
+    /// with the wrong circuit.
+    /// </remarks>
+    public string CableGroup { get; init; } = string.Empty;
 
     /// <summary>Where the cable leaves the structure, one per device, in the order the circuit visits them.</summary>
     /// <remarks>Empty unless <see cref="Status"/> is Found.</remarks>
