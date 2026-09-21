@@ -237,7 +237,7 @@ public static class CablingApply
 
         var indicator = (BuiltInCategory)symbol.Category.Id.Value;
         var scheme = new CablingParameters();
-        var runtime = Runtime(indicator, catalogue);
+        var runtime = Runtime(indicator, catalogue, snapshot.Circuits.DeviceCategories);
 
         scheme.Install(host, application, runtime, out var binding);
 
@@ -375,12 +375,23 @@ public static class CablingApply
 
     /// <summary>Where each parameter is wanted beyond what it could declare at compile time.</summary>
     /// <remarks>
+    /// <para>
     /// The indicator's own category for all three, and every carrier category for the references -
     /// the catalogue is the user's list, so a project that calls something else a carrier gets the
     /// parameter there too. <c>RuntimeCategories</c> adds to what a parameter declares and never
     /// replaces it, so the shipped four cost nothing here.
+    /// </para>
+    /// <para>
+    /// <b>The terminal's capacity goes to the categories this model's own devices are in</b>, which
+    /// the reader collected while it read the circuits. Neither declaring a list of device
+    /// categories in code nor asking the user for one would be right: a circuit takes whatever a
+    /// manufacturer's family calls itself, and the model already knows which of those it uses.
+    /// </para>
     /// </remarks>
-    private static RuntimeCategories Runtime(BuiltInCategory indicator, CarrierCatalogue catalogue)
+    private static RuntimeCategories Runtime(
+        BuiltInCategory indicator,
+        CarrierCatalogue catalogue,
+        IReadOnlyList<BuiltInCategory> devices)
     {
         var runtime = new RuntimeCategories()
             .Add(CablingParameters.Recommendation, indicator)
@@ -389,6 +400,9 @@ public static class CablingApply
 
         foreach (var category in catalogue?.Categories ?? Array.Empty<BuiltInCategory>())
             runtime.Add(CablingParameters.CircuitRefs, category);
+
+        foreach (var category in devices ?? Array.Empty<BuiltInCategory>())
+            runtime.Add(CablingParameters.TerminalCapacity, category);
 
         return runtime;
     }

@@ -226,6 +226,17 @@ public sealed partial class CablingApplyTests : IRevitTestSuite
             ATapOnASpliceableCarrierAsksForNoBox,
             needsDocument: true,
             writes: true),
+
+        new RevitTestCase(
+            "a device type that states how many conductors its terminal holds reads back stating it, and one that does not reads as stating nothing rather than none",
+            ADeviceTypeThatStatesItsTerminalIsReadBackAsStatingIt,
+            needsDocument: true,
+            writes: true),
+
+        new RevitTestCase(
+            "what the search lays for a circuit is a tree: every device is served once, and every place the cable branches stands on a carrier that cable walks",
+            WhatTheSearchLaysIsATree,
+            needsDocument: true),
     };
 
     /// <summary>The value this suite writes wherever it wants a circuit's connection to fail to read.</summary>
@@ -3159,7 +3170,10 @@ public sealed partial class CablingApplyTests : IRevitTestSuite
         "[" + string.Join(", ", ids.Select(one => one.ToString(CultureInfo.InvariantCulture))) + "]";
 
     /// <summary>The parameters and categories the apply binds: the indicator's own for all three, every carrier's for the references.</summary>
-    private static RuntimeCategories RuntimeFor(FamilySymbol symbol, CarrierCatalogue catalogue)
+    private static RuntimeCategories RuntimeFor(
+        FamilySymbol symbol,
+        CarrierCatalogue catalogue,
+        IReadOnlyList<BuiltInCategory>? devices = null)
     {
         var indicator = CategoryOf(symbol);
 
@@ -3170,6 +3184,11 @@ public sealed partial class CablingApplyTests : IRevitTestSuite
 
         foreach (var category in catalogue.Categories)
             runtime.Add(CablingParameters.CircuitRefs, category);
+
+        // The terminal capacity only when a case is going to ask about it: every other case would
+        // then bind a parameter it never writes, and a binding is a column in somebody's schedule.
+        foreach (var category in devices ?? Array.Empty<BuiltInCategory>())
+            runtime.Add(CablingParameters.TerminalCapacity, category);
 
         return runtime;
     }

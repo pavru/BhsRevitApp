@@ -63,6 +63,41 @@ public sealed class CablingProjectSettings
     /// </remarks>
     public const string SlackAtSpliceKey = "Model:Cabling:Slack:AtSpliceMm";
 
+    /// <summary>What one splice costs the tree, stated as a length of cable in millimetres.</summary>
+    /// <remarks>
+    /// <para>
+    /// <b>It is what makes the tree an optimisation rather than a preference</b> - the owner's
+    /// decision of 2026-09-21. A tree that only minimised length would branch everywhere it could,
+    /// because a branch never lengthens the cable; a tree that never branched would be the chain.
+    /// The search minimises <c>length + N × splices</c>, and this is N: the installed price of a box
+    /// divided by the price of a metre of cable, said in the units the rest of the calculation is
+    /// in, which is length.
+    /// </para>
+    /// <para>
+    /// <b>Only the part that is not cable.</b> What a splice costs in cable is already paid, by
+    /// <see cref="SlackAtBoxKey"/> and <see cref="SlackAtSpliceKey"/>; counting it here as well would
+    /// charge the same metres twice and quietly push every circuit back towards a chain.
+    /// </para>
+    /// <para>
+    /// <b>No default, and that is deliberate.</b> A number invented here would set the shape of every
+    /// tree in every model that never named one - and it would be invisible, because the result is a
+    /// plausible route either way. Absent, the search is told nothing costs a splice but the cable,
+    /// which is the answer that follows from what the project did say.
+    /// </para>
+    /// </remarks>
+    public const string SpliceCostKey = "Model:Cabling:Tree:SpliceCostMm";
+
+    /// <summary>How many conductors a terminal holds when its type does not say.</summary>
+    /// <remarks>
+    /// Two: the trunk arrives and a run leaves for the next device, which is the ordinary terminal
+    /// and the only arrangement the chain could ever express. A project whose devices are mostly
+    /// pass-through or mostly end-of-line says so here once instead of on every type.
+    /// </remarks>
+    public const string TerminalCapacityKey = "Model:Cabling:Tree:TerminalCapacity";
+
+    /// <summary>Two conductors of one circuit - the ordinary terminal.</summary>
+    public const int DefaultTerminalCapacity = 2;
+
     /// <summary>A hundred and fifty millimetres - the owner's value, 2026-09-13.</summary>
     /// <remarks>
     /// <b>It replaces a guess of mine, and the difference is the point.</b> Half a metre was written
@@ -79,6 +114,8 @@ public sealed class CablingProjectSettings
         double boxRadius,
         bool existingBoxesOnly,
         SlackRule slack,
+        double spliceCost,
+        int terminalCapacity,
         string unreadable)
     {
         Boxes = boxes;
@@ -86,6 +123,8 @@ public sealed class CablingProjectSettings
         Slack = slack;
         BoxRadius = boxRadius;
         ExistingBoxesOnly = existingBoxesOnly;
+        SpliceCost = spliceCost;
+        TerminalCapacity = terminalCapacity;
         Unreadable = unreadable;
     }
 
@@ -103,6 +142,12 @@ public sealed class CablingProjectSettings
 
     /// <summary>Whether circuits cut in boxes are served only from boxes already in the model.</summary>
     public bool ExistingBoxesOnly { get; }
+
+    /// <summary>What one splice costs the tree beyond its cable, in internal feet.</summary>
+    public double SpliceCost { get; }
+
+    /// <summary>How many conductors a terminal holds when its type does not say.</summary>
+    public int TerminalCapacity { get; }
 
     /// <summary>A setting that is present and cannot be read, or empty.</summary>
     /// <remarks>
@@ -156,8 +201,23 @@ public sealed class CablingProjectSettings
             AtSplice = Millimetres(model, SlackAtSpliceKey),
         };
 
+        // The capacity is a count, not a length, so it is never converted - Number rather than Real,
+        // for the same reason the slack ratio is never converted: a terminal that holds two and a
+        // half conductors is a typo, and a typo read as a number is a plausible answer nobody can
+        // trace. A project that names zero or less is treated as having named nothing, the same rule
+        // the type parameter follows, because a model where no cable may be cut anywhere is not
+        // something anybody configures on purpose.
+        var capacity = model.Number(TerminalCapacityKey, DefaultTerminalCapacity);
+
         return new CablingProjectSettings(
-            RecommendedBoxes.Read(model), connection, radius, existingBoxesOnly, slack, unreadable);
+            RecommendedBoxes.Read(model),
+            connection,
+            radius,
+            existingBoxesOnly,
+            slack,
+            Millimetres(model, SpliceCostKey),
+            capacity > 0 ? capacity : DefaultTerminalCapacity,
+            unreadable);
     }
 
     /// <summary>A length the project states in millimetres, in internal feet; zero when it says nothing.</summary>

@@ -14,7 +14,7 @@ namespace BHS.MEP.Cabling.Routing.Probe;
 internal static class Program
 {
     private const double Tolerance = 0.1;
-    private const int Floor = 140;
+    private const int Floor = 150;
 
     private static int _run;
     private static int _failed;
@@ -38,6 +38,8 @@ internal static class Program
         BoxesAreWhereTheTapsAreAndCountWhatTheyTake();
         WithoutAdditionalBoxesEveryDeviceIsServedFromOneThatStands();
         WhereTheCarrierAllowsASpliceNoBoxIsAskedFor();
+        WhatASpliceCostsDecidesWhereTheCableIsCut();
+        WhatATerminalHoldsDecidesWhetherItMayBranch();
         SlackIsCountedWhereTheCableIsCut();
         TheLengthIsToldByWhereItIsLaid();
         AStoredLengthIsToldFromAStaleOne();
@@ -844,6 +846,15 @@ internal static class Program
         Check("a difference inside the tolerance is not a change",
             !Review(results, Stored(routed.Circuit, 22.0005, CircuitConnection.AtTerminal, walked)).Any);
 
+        // A tree has no single order to walk, so a stamp written by an earlier version of us - or by
+        // a search that settled its branches in the other order - names the same measurement. Reading
+        // that as a change would report every circuit in a model as stale, which is the failure that
+        // looks exactly like a finding.
+        Check("the same carriers in the other order are the same measurement",
+            !Review(results, Stored(routed.Circuit, 22, CircuitConnection.AtTerminal, "2; 1")).Any);
+        Check("and a carrier named twice is still named once",
+            !Review(results, Stored(routed.Circuit, 22, CircuitConnection.AtTerminal, "2; 1; 2")).Any);
+
         var elsewhere = Review(results, Stored(routed.Circuit, 22, CircuitConnection.AtTerminal, "1; 9"));
 
         Check("a stamp naming other carriers is stale, and says which left and which arrived",
@@ -1172,8 +1183,153 @@ internal static class Program
             BuiltInLength = builtIn,
         };
 
+    /// <summary>
+    /// What a splice costs is what decides where a tree branches, and both answers are right.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <b>Three devices strung under one tray, which is the plainest shape that offers a choice.</b>
+    /// Cutting the cable under each device costs nothing in cable - the trunk was going past anyway -
+    /// and costs two cuts. Cutting it once and running three separate lines from that one place costs
+    /// ten feet of cable and one cut. Neither is wrong; which is cheaper is what the project states by
+    /// saying what a splice costs, and a search that ignored the number would always give the first.
+    /// </para>
+    /// <para>
+    /// <b>A place already cut takes another run for nothing</b> - that is what makes the second plan
+    /// possible at all, and it is the part of the price easiest to write wrong: charged per leaving
+    /// run instead of per place cut, the two plans would cost the same in cuts and the number would
+    /// decide nothing.
+    /// </para>
+    /// </remarks>
+    private static void WhatASpliceCostsDecidesWhereTheCableIsCut()
+    {
+        Section("what a splice costs decides where the cable is cut");
+
+        var network = NetworkBuilder.Build(1, new[] { Tray(1, 0, 30) }, Options());
+
+        var circuit = new CircuitSnapshot(
+            new CarrierId(1), "P-1",
+            Terminal(0, 0, -1, "panel"),
+            new[] { Terminal(10, 0, -1, "S1"), Terminal(20, 0, -1, "S2"), Terminal(30, 0, -1, "S3") })
+        {
+            Connection = CircuitConnection.AtJunctionBox,
+        };
+
+        var cheap = Router.Route(network, circuit, Tree(0));
+
+        Check("with splices free the cable runs the tray once and is cut under two of the devices",
+            cheap.Status == RouteStatus.Found && cheap.Branches.Count == 2 && Near(cheap.AlongCarriers, 30));
+
+        var dear = Router.Route(network, circuit, Tree(20));
+
+        Check("with a splice worth twenty feet of cable it is cut once and three lines leave that place",
+            dear.Status == RouteStatus.Found && dear.Branches.Count == 1 && Near(dear.AlongCarriers, 40));
+        Check("and the one place it is cut holds four cable ends - the trunk in, and three lines out",
+            dear.Branches[0].Ways == 3);
+
+        // The drops are untouched by either answer: every device is still reached from the tray above
+        // it, and the panel still leaves once. A plan that moved a drop would be measuring something
+        // else, and the lengths above would still look plausible.
+        Check("either way the panel and the three devices are approached once each",
+            Near(cheap.Approaches, 4) && Near(dear.Approaches, 4));
+    }
+
+    /// <summary>
+    /// A device may be branched at only while its terminal block has room, and the room is the type's
+    /// answer where it gives one and the project's where it does not.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <b>A tee with a device at the junction and one at the end of each arm, cut at terminals.</b>
+    /// Cutting in the tray is not allowed in this connection, so the only places the cable may be cut
+    /// are the devices themselves - which is exactly where the capacity governs. With the ordinary
+    /// terminal the cable arrives and goes on, no more: the far device is reached the long way round,
+    /// back through the other arm. A block that holds three lets the second arm leave the junction
+    /// device directly, and ten feet of cable are not laid.
+    /// </para>
+    /// <para>
+    /// <b>The project's default and the type's answer are asked the same question twice</b>, because
+    /// they are two ways to one number and only one of them is exercised by a model whose types are
+    /// all blank - which is every model, until somebody fills one in.
+    /// </para>
+    /// </remarks>
+    private static void WhatATerminalHoldsDecidesWhetherItMayBranch()
+    {
+        Section("what a terminal holds decides whether it may branch");
+
+        var trunk = Tray(1, 0, 10);
+        var north = new CarrierNode(
+            new CarrierId(2), CarrierKind.Segment, "tray", true, 10, 0.05, P(10, 0, 0), P(10, 10, 0));
+        var south = new CarrierNode(
+            new CarrierId(3), CarrierKind.Segment, "tray", true, 10, 0.05, P(10, 0, 0), P(10, -10, 0));
+
+        var network = NetworkBuilder.Build(1, new[] { trunk, north, south }, Options());
+
+        Check("the tee is one piece", network.Shape().Groups == 1);
+
+        // Spelled out rather than taken from the helper: it names a terminal after where it stands
+        // along X, and all three of these stand at the same X.
+        var junction = new Terminal(new CarrierId(801), P(10, 0, -1), "S1");
+        var far = new Terminal(new CarrierId(802), P(10, 10, -1), "S2");
+        var other = new Terminal(new CarrierId(803), P(10, -10, -1), "S3");
+
+        var ordinary = new CircuitSnapshot(
+            new CarrierId(1), "P-1", Terminal(0, 0, -1, "panel"), new[] { junction, far, other })
+        {
+            Connection = CircuitConnection.AtTerminal,
+        };
+
+        var chained = Router.Route(network, ordinary, Tree(0));
+
+        Check("an ordinary terminal takes the cable in and out and no more, so the third device is reached the long way",
+            chained.Status == RouteStatus.Found && chained.Branches.Count == 0 && Near(chained.AlongCarriers, 40));
+
+        var roomy = new CircuitSnapshot(
+            new CarrierId(1), "P-1", Terminal(0, 0, -1, "panel"),
+            new[] { new Terminal(junction.Owner, junction.At, junction.Label) { Capacity = 3 }, far, other })
+        {
+            Connection = CircuitConnection.AtTerminal,
+        };
+
+        var branched = Router.Route(network, roomy, Tree(0));
+
+        Check("a block that holds three lets the second arm leave the device itself, ten feet shorter",
+            branched.Status == RouteStatus.Found && branched.Branches.Count == 1 && Near(branched.AlongCarriers, 30));
+        Check("and the branch names the device it was made at",
+            branched.Branches[0].Device is not null && branched.Branches[0].Device!.Owner == junction.Owner);
+
+        // The same answer reached the other way: the type says nothing and the project says three.
+        var byProject = Router.Route(network, ordinary, Tree(0, capacity: 3));
+
+        Check("a type that says nothing gets the project's answer, which reaches the same tree",
+            byProject.Status == RouteStatus.Found && byProject.Branches.Count == 1
+            && Near(byProject.AlongCarriers, 30));
+
+        // And the type overrules the project rather than the other way about: a project that says one
+        // cannot make a block that holds three hold one.
+        var byType = Router.Route(network, roomy, Tree(0, capacity: 1));
+
+        Check("and a type that does say overrules the project",
+            byType.Status == RouteStatus.Found && byType.Branches.Count == 1 && Near(byType.AlongCarriers, 30));
+    }
+
     private static CarrierNode Tray(long id, double from, double to) =>
         new(new CarrierId(id), CarrierKind.Segment, "tray", true, to - from, 0.05, P(from, 0, 0), P(to, 0, 0));
+
+    /// <summary>The ordinary options with the two numbers that shape a tree stated.</summary>
+    /// <remarks>
+    /// A helper rather than a default on <c>Options</c>: every other section is about something else
+    /// and would then be quietly routed with a price on splices it never asked for.
+    /// </remarks>
+    private static RoutingOptions Tree(double splice, int capacity = 2) =>
+        new()
+        {
+            JoinTolerance = Tolerance,
+            MaxApproach = 6,
+            AxisAlignedApproach = true,
+            SpliceCost = splice,
+            TerminalCapacity = capacity,
+        };
 
     private static Point3 P(double x, double y, double z) => new(x, y, z);
 

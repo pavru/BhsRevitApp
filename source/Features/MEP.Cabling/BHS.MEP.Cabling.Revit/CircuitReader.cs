@@ -21,8 +21,10 @@ public sealed class CircuitHarvest
         int devicesSkipped,
         int spareOrSpace,
         IReadOnlyList<string>? unreadableConnection = null,
-        IReadOnlyList<long>? unreadableConnectionIds = null)
+        IReadOnlyList<long>? unreadableConnectionIds = null,
+        IReadOnlyList<BuiltInCategory>? deviceCategories = null)
     {
+        DeviceCategories = deviceCategories ?? Array.Empty<BuiltInCategory>();
         UnreadableConnection = unreadableConnection ?? Array.Empty<string>();
         UnreadableConnectionIds = unreadableConnectionIds ?? Array.Empty<long>();
         Described = circuits;
@@ -40,6 +42,17 @@ public sealed class CircuitHarvest
     /// and that is the distinction the name has to carry.
     /// </remarks>
     public IReadOnlyList<CircuitSnapshot> Described { get; }
+
+    /// <summary>Every category this model's circuit devices belong to, each once.</summary>
+    /// <remarks>
+    /// <b>Read off the circuits rather than declared, and that is what makes it honest.</b> An
+    /// electrical circuit takes fixtures, data, fire alarm, security, mechanical equipment and
+    /// whatever else a manufacturer's family calls itself, so a list written in code would be a
+    /// registry that drifts. This is the set the model actually uses, and the apply names it when it
+    /// binds <c>BHS_Cbl_ЁмкостьКлеммника</c> - so a designer can fill the capacity in on a family
+    /// they did not author, and a family that declares the parameter itself needs no binding at all.
+    /// </remarks>
+    public IReadOnlyList<BuiltInCategory> DeviceCategories { get; }
 
     /// <summary>Circuits with no panel to start from, which cannot be described at all.</summary>
     public int WithoutPanel { get; }
@@ -119,6 +132,8 @@ public sealed class CircuitReader
         var withoutDevices = 0;
         var devicesSkipped = 0;
         var spareOrSpace = 0;
+        var capacities = new TerminalCapacityReader(host);
+        var categories = new List<BuiltInCategory>();
 
         var found = new FilteredElementCollector(host)
             .OfClass(typeof(ElectricalSystem))
@@ -142,7 +157,7 @@ public sealed class CircuitReader
                 continue;
             }
 
-            var devices = Devices(system, ref devicesSkipped);
+            var devices = Devices(system, capacities, categories, ref devicesSkipped);
 
             if (devices.Count == 0)
             {
@@ -163,7 +178,8 @@ public sealed class CircuitReader
         }
 
         return new CircuitHarvest(
-            circuits, withoutPanel, withoutDevices, devicesSkipped, spareOrSpace, unreadable, unreadableIds);
+            circuits, withoutPanel, withoutDevices, devicesSkipped, spareOrSpace, unreadable, unreadableIds,
+            categories);
     }
 
     /// <summary>
@@ -285,12 +301,26 @@ public sealed class CircuitReader
     /// a known unknown rather than relied upon; the day a mode routes device to device in sequence,
     /// the order has to be measured first.
     /// </remarks>
-    private static IReadOnlyList<Terminal> Devices(ElectricalSystem system, ref int skipped)
+    private static IReadOnlyList<Terminal> Devices(
+        ElectricalSystem system,
+        TerminalCapacityReader capacities,
+        List<BuiltInCategory> categories,
+        ref int skipped)
     {
         var terminals = new List<Terminal>();
 
         foreach (Element element in system.Elements)
         {
+            // The category is taken from every device the circuit holds, including one the search
+            // will skip: what the apply binds the capacity to is which categories this model draws
+            // its devices in, and a device we could not locate is still one of them.
+            if (element.Category is { } category
+                && Enum.IsDefined(typeof(BuiltInCategory), category.Id.Value)
+                && !categories.Contains((BuiltInCategory)category.Id.Value))
+            {
+                categories.Add((BuiltInCategory)category.Id.Value);
+            }
+
             var at = DeviceOrigin(element, system);
 
             if (at is null)
@@ -299,7 +329,12 @@ public sealed class CircuitReader
                 continue;
             }
 
-            terminals.Add(new Terminal(new CarrierId(element.Id.Value), new Point3(at.X, at.Y, at.Z), Address(element)));
+            terminals.Add(new Terminal(new CarrierId(element.Id.Value), new Point3(at.X, at.Y, at.Z), Address(element))
+            {
+                // Zero means the type said the block holds nothing, which forbids a splice there;
+                // an unfilled type reports nothing and the search falls back to the project.
+                Capacity = capacities.Of(element) ?? 0,
+            });
         }
 
         return terminals;

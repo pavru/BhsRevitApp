@@ -56,7 +56,6 @@ public sealed class RouteCablingCommand : IFeatureCommand
             return Result.Failed;
         }
 
-        var options = CablingOptions.Read(services.Settings);
         var log = services.Log;
 
         // Read here rather than inside the search: this is the API thread, and the model layer of
@@ -66,6 +65,9 @@ public sealed class RouteCablingCommand : IFeatureCommand
 
         if (project.Unreadable.Length > 0)
             log.Warn("cabling: a project setting could not be read and its default is used - {0}", project.Unreadable);
+
+        // After the project, because the search's tree numbers are the project's to state.
+        var options = CablingOptions.Read(services.Settings, project);
 
         // What the read produced, kept so that the write can use it. The apply phase reports
         // conditions the search never sees - a connection value nobody can read, a box joined to

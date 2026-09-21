@@ -1,4 +1,5 @@
 ﻿using Autodesk.Revit.DB;
+using BHS.MEP.Cabling.Revit;
 using BHS.MEP.Cabling.Routing;
 using BHS.Settings;
 
@@ -46,7 +47,14 @@ internal static class CablingOptions
     /// </remarks>
     public static IReadOnlyList<double> ToleranceLadder { get; } = new[] { 50.0, 100, 250, 500, 1000 };
 
-    public static RoutingOptions Read(ISettings settings)
+    /// <param name="project">
+    /// What the model says, when the caller is going to route. The two numbers the tree needs - what
+    /// a splice costs and how many conductors a terminal holds - are project rules rather than
+    /// personal preferences, so they are read from the model's own layer and merely joined here to
+    /// the ones a person writes in their settings file. A caller that only reads structure passes
+    /// nothing and gets the search's own answers, which is what "no tree was asked for" means.
+    /// </param>
+    public static RoutingOptions Read(ISettings settings, CablingProjectSettings? project = null)
     {
         var join = settings.Real("Cabling:JoinToleranceMm", DefaultJoinToleranceMm);
         var approach = settings.Real("Cabling:MaxApproachMm", DefaultMaxApproachMm);
@@ -61,6 +69,13 @@ internal static class CablingOptions
 
             AxisAlignedApproach = settings.Flag("Cabling:AxisAlignedApproach", true),
             SkipSingleDeviceCircuits = settings.Flag("Cabling:SkipSingleDeviceCircuits", false),
+
+            // Already in internal feet and already a count: the project layer converted the one that
+            // is a length and left alone the one that is not. Converting either here would be the
+            // same number twice over, which is the error that gives a plausible route nobody can
+            // trace back to a setting.
+            SpliceCost = project?.SpliceCost ?? 0,
+            TerminalCapacity = project?.TerminalCapacity ?? CablingProjectSettings.DefaultTerminalCapacity,
         };
     }
 
