@@ -234,6 +234,18 @@ public sealed class CablingFeature : IFeatureModule
             + "with no capacity stated at all."),
     };
 
+    /// <summary>Every failure this feature declares, for anything that has to know the whole set.</summary>
+    /// <remarks>
+    /// <b>Derived from the declaration rather than written beside it, and that is a correction of
+    /// 2026-09-21.</b> The sweep's own observer kept a hand-written list of six to tell this feature's
+    /// warnings from another vendor's. The seventh was added and the list was not, so the check that
+    /// stands first in every warning case - as many processed as the apply says it posted - counted
+    /// none of this feature's own and reported that something had dismissed them. A list of what
+    /// somebody else declares is a registry that drifts; this one cannot.
+    /// </remarks>
+    public static IReadOnlyList<FailureDefinitionId> Failures { get; } =
+        Array.ConvertAll(Declared, one => one.Id);
+
     public void Start(IFeatureServices services)
     {
         // Asked of Revit before anything is created, and this is the check rather than bookkeeping of

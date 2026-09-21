@@ -15,15 +15,17 @@ namespace BHS.MEP.Cabling.Revit.Tests;
 /// </remarks>
 internal sealed class ProcessedFailure
 {
+    /// <summary>Every failure the cabling feature declares, taken from the declaration itself.</summary>
+    /// <remarks>
+    /// <b>Not a list kept here, and it was one until 2026-09-21.</b> Six were written out by hand; a
+    /// seventh was declared and this was not touched, so every warning of that kind counted as another
+    /// vendor's, and the check that stands first in each warning case - as many processed as the apply
+    /// says it posted - failed on all four releases saying something had dismissed them. A copy of a
+    /// list somebody else owns is a registry that drifts, which is what this repository says about
+    /// every other one.
+    /// </remarks>
     private static readonly Guid[] Cabling =
-    {
-        CablingFeature.NoCarrierNear.Guid,
-        CablingFeature.NoConnectivity.Guid,
-        CablingFeature.ConnectionUnreadable.Guid,
-        CablingFeature.JunctionBoxJoinedToNothing.Guid,
-        CablingFeature.IndicatorJoinedIntoNetwork.Guid,
-        CablingFeature.NoBoxReachable.Guid,
-    };
+        CablingFeature.Failures.Select(one => one.Guid).ToArray();
 
     public ProcessedFailure(string transaction, Guid definition, FailureSeverity severity, IReadOnlyList<long> elements)
     {
@@ -43,7 +45,7 @@ internal sealed class ProcessedFailure
     /// <summary>The failing elements, by id.</summary>
     public IReadOnlyList<long> Elements { get; }
 
-    /// <summary>Whether it is one of the six the cabling feature declares.</summary>
+    /// <summary>Whether it is one of the failures the cabling feature declares.</summary>
     public bool IsCabling => Array.IndexOf(Cabling, Definition) >= 0;
 
     public bool Is(FailureDefinitionId id) => Definition == id.Guid;
