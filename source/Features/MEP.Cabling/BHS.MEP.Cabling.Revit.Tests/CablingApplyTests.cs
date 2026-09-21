@@ -237,6 +237,18 @@ public sealed partial class CablingApplyTests : IRevitTestSuite
             "what the search lays for a circuit is a tree: every device is served once, and every place the cable branches stands on a carrier that cable walks",
             WhatTheSearchLaysIsATree,
             needsDocument: true),
+
+        new RevitTestCase(
+            "a box type that states how many conductors it holds reads back stating it, and one that does not reads as stating nothing rather than none",
+            ABoxTypeThatStatesItsCapacityIsReadBackAsStatingIt,
+            needsDocument: true,
+            writes: true),
+
+        new RevitTestCase(
+            "stating a capacity on every box type changes nothing the calculation gives, and every box over it is reported and posted against",
+            ACapacityChangesNothingAndEveryBoxOverItIsReported,
+            needsDocument: true,
+            writes: true),
     };
 
     /// <summary>The value this suite writes wherever it wants a circuit's connection to fail to read.</summary>

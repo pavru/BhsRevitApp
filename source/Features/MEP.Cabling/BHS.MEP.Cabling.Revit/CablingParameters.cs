@@ -8,13 +8,14 @@ namespace BHS.MEP.Cabling.Revit;
 /// </summary>
 /// <remarks>
 /// <para>
-/// <b>Fifteen, and each one has something that reads it.</b> A parameter declared before something
+/// <b>Sixteen, and each one has something that reads it.</b> A parameter declared before something
 /// reads it is the same mistake as a mechanism with no consumer, and it is worse here: a parameter
 /// that has reached a customer's model cannot be withdrawn, only ignored. The rule has held through
 /// every addition - the three the apply writes arrived with the apply, the three on the circuit with
 /// the code that computes them, the five that divide the length with the code that divides it,
-/// splicing with the planner that stops recommending a box where it is allowed, and the terminal's
-/// capacity with the tree search that stops branching at a device once it is full.
+/// splicing with the planner that stops recommending a box where it is allowed, the terminal's
+/// capacity with the tree search that stops branching at a device once it is full, and the box's
+/// capacity with the count of conductors the planner spliced in it.
 /// </para>
 /// <para>
 /// <b>The GUIDs are new rather than the predecessor's</b> - the owner's decision, a clean slate. They
@@ -94,6 +95,38 @@ public sealed class CablingParameters : SharedParameterScheme
     /// </para>
     /// </remarks>
     public static readonly Guid TerminalCapacity = new("11fb91b8-0508-4ec1-9807-d9eb3add9a5e");
+
+    /// <summary>How many conductors the junction box of this type can hold.</summary>
+    /// <remarks>
+    /// <para>
+    /// <b>The owner's answers of 2026-09-21, asked before the code was written. In conductors, not in
+    /// cable entries</b> - a box with four glands and a terminal block of six conductors is bounded by
+    /// the six, and the entries say nothing about it. And counted only over the cables actually
+    /// spliced here: one that passes through uncut is not opened, so nothing of it lands on the block.
+    /// </para>
+    /// <para>
+    /// <b>On the type, and on the same categories as <see cref="ElementRole"/></b>, because it
+    /// describes the same elements: a box is a fitting whose role says so, and its capacity is a
+    /// property of the product a manufacturer made.
+    /// </para>
+    /// <para>
+    /// <b>It bounds nothing and moves nothing - it only warns.</b> The owner's answer of the same day:
+    /// exceeding it does not divert the search, does not stop taps merging and does not change a
+    /// single length. A box that is over its capacity is reported, on the screen and as a warning on
+    /// the box itself, and the designer decides. Nor does a recommended box have a capacity at all -
+    /// the indicator already carries what it needs (<see cref="TapCount"/>) and the designer picks a
+    /// box no smaller.
+    /// </para>
+    /// <para>
+    /// <b>Empty means the type did not say, and the project answers instead</b>
+    /// (<c>Model:Cabling:Box:Capacity</c>) - and when the project is silent too, there is no limit and
+    /// no warning. That last part is deliberate and matches <c>Model:Cabling:Tree:SpliceCostMm</c>:
+    /// there is no capacity every junction box on earth has, so a default invented here would put
+    /// plausible warnings into every model that never named one. Zero and below read as "did not say"
+    /// for the reason given at <see cref="TerminalCapacity"/>.
+    /// </para>
+    /// </remarks>
+    public static readonly Guid BoxCapacity = new("4d14bb00-b8c2-4266-bef2-68bcb6c522c3");
 
     /// <summary>How a circuit's devices are connected to the trunk.</summary>
     /// <remarks>
@@ -401,6 +434,25 @@ public sealed class CablingParameters : SharedParameterScheme
                 "Сколько жил одной цепи вмещает клеммник этого устройства - две у обычного, куда "
                 + "кабель приходит и откуда уходит дальше. Пустое значение означает умолчание "
                 + "проекта. Задаётся у типа.")),
+
+        new SharedParameter(
+            BoxCapacity,
+            SpecTypeId.Int.Integer,
+            GroupTypeId.Data,
+            instance: false,
+            CarrierFittings,
+            english: new ParameterText(
+                "BHS_Cbl_BoxCapacity",
+                "How many conductors the junction box of this type can hold - counting only the "
+                + "cables spliced in it, of every circuit. Exceeding it is reported, and changes "
+                + "nothing in the calculation. Left empty, the project's value is used; with "
+                + "neither, there is no limit. Set on the type."),
+            russian: new ParameterText(
+                "BHS_Cbl_ЁмкостьКоробки",
+                "Сколько жил вмещает распределительная коробка этого типа - считаются только "
+                + "коммутируемые в ней кабели, всех цепей. Превышение показывается и ничего не "
+                + "меняет в расчёте. Пустое значение означает величину проекта; если нет и её - "
+                + "предела нет. Задаётся у типа.")),
 
         new SharedParameter(
             CircuitConnection,

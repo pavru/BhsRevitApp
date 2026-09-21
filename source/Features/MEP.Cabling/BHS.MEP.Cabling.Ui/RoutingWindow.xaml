@@ -77,6 +77,13 @@
                        Text="{Binding BoxSummary}"
                        TextWrapping="Wrap"
                        Visibility="{Binding HasBoxSummary, Converter={StaticResource Shown}}" />
+            <!-- What the boxes that state a capacity say about it. Shown only where somebody stated
+                 one: a line about conductors on a project that never named a capacity is noise, and
+                 a report that talks about the ordinary stops being read. -->
+            <TextBlock Margin="0,6,0,0"
+                       Text="{Binding CapacitySummary}"
+                       TextWrapping="Wrap"
+                       Visibility="{Binding HasCapacitySummary, Converter={StaticResource Shown}}" />
         </StackPanel>
 
         <!-- Only when a run failed to cross the structure. Then it is the answer; otherwise it is

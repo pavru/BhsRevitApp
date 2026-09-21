@@ -289,6 +289,23 @@ public sealed class CircuitSnapshot
     /// <summary>Cross-section of the cable, for the fill calculation. Zero when unknown.</summary>
     public double CableArea { get; init; }
 
+    /// <summary>How many conductors its cable has, or zero when Revit said nothing about them.</summary>
+    /// <remarks>
+    /// <para>
+    /// <b>What a junction box's capacity is measured against</b> - the owner's answer of 2026-09-21
+    /// that a box is bounded in conductors rather than in cable entries. A box where one cable arrives
+    /// and two leave takes three times this many, and two circuits spliced in one box add.
+    /// </para>
+    /// <para>
+    /// <b>Zero is what a circuit that says nothing contributes: nothing.</b> Revit's own conductor
+    /// counts belong to a power circuit, and a circuit that carries none - a data circuit, or one
+    /// nobody has sized - then never fills a box on its own. That is the honest answer rather than an
+    /// invented one, and the run says out loud how many circuits it applies to, because a silent zero
+    /// looks exactly like a box that fits.
+    /// </para>
+    /// </remarks>
+    public int Conductors { get; init; }
+
     /// <summary>How its devices are connected. Terminal unless somebody said otherwise.</summary>
     /// <remarks>
     /// Terminal is the default because it is what the search did before the question was asked, and

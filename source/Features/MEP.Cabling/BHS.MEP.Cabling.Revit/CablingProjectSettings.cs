@@ -98,6 +98,23 @@ public sealed class CablingProjectSettings
     /// <summary>Two conductors of one circuit - the ordinary terminal.</summary>
     public const int DefaultTerminalCapacity = 2;
 
+    /// <summary>How many conductors a junction box holds when its own type does not say.</summary>
+    /// <remarks>
+    /// <para>
+    /// <b>No default, for the same reason as <see cref="SpliceCostKey"/>.</b> There is no capacity
+    /// every junction box on earth has, so a number invented here would be a plausible one that put
+    /// warnings into every model that never named it - and it would warn about somebody else's boxes,
+    /// which is the loudest way to be wrong. With neither the type's answer nor this one, a box has no
+    /// limit and is never reported.
+    /// </para>
+    /// <para>
+    /// <b>It never applies to a recommended box</b> - the owner's answer of 2026-09-21. The indicator
+    /// already carries how many entries meet there and the designer picks a box that takes them; a
+    /// limit on a recommendation would be the tool disputing its own advice.
+    /// </para>
+    /// </remarks>
+    public const string BoxCapacityKey = "Model:Cabling:Box:Capacity";
+
     /// <summary>A hundred and fifty millimetres - the owner's value, 2026-09-13.</summary>
     /// <remarks>
     /// <b>It replaces a guess of mine, and the difference is the point.</b> Half a metre was written
@@ -116,6 +133,7 @@ public sealed class CablingProjectSettings
         SlackRule slack,
         double spliceCost,
         int terminalCapacity,
+        int boxCapacity,
         string unreadable)
     {
         Boxes = boxes;
@@ -125,6 +143,7 @@ public sealed class CablingProjectSettings
         ExistingBoxesOnly = existingBoxesOnly;
         SpliceCost = spliceCost;
         TerminalCapacity = terminalCapacity;
+        BoxCapacity = boxCapacity;
         Unreadable = unreadable;
     }
 
@@ -148,6 +167,9 @@ public sealed class CablingProjectSettings
 
     /// <summary>How many conductors a terminal holds when its type does not say.</summary>
     public int TerminalCapacity { get; }
+
+    /// <summary>How many conductors a junction box holds when its type does not say; zero for no limit.</summary>
+    public int BoxCapacity { get; }
 
     /// <summary>A setting that is present and cannot be read, or empty.</summary>
     /// <remarks>
@@ -209,6 +231,11 @@ public sealed class CablingProjectSettings
         // something anybody configures on purpose.
         var capacity = model.Number(TerminalCapacityKey, DefaultTerminalCapacity);
 
+        // The box has no default at all, so zero passes straight through and means no limit - see
+        // BoxCapacityKey. Zero or less from the project is the same answer as saying nothing, which
+        // is the one rule it does share with the terminal.
+        var boxCapacity = model.Number(BoxCapacityKey, 0);
+
         return new CablingProjectSettings(
             RecommendedBoxes.Read(model),
             connection,
@@ -217,6 +244,7 @@ public sealed class CablingProjectSettings
             slack,
             Millimetres(model, SpliceCostKey),
             capacity > 0 ? capacity : DefaultTerminalCapacity,
+            boxCapacity > 0 ? boxCapacity : 0,
             unreadable);
     }
 

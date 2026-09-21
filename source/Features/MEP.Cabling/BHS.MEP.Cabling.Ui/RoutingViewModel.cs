@@ -383,6 +383,53 @@ public sealed class RoutingViewModel : INotifyPropertyChanged
 
     public bool HasBoxSummary => BoxSummary.Length > 0;
 
+    /// <summary>What the boxes that state a capacity say about the conductors spliced in them.</summary>
+    /// <remarks>
+    /// <para>
+    /// <b>Its own line rather than more of <see cref="BoxSummary"/>, because it is a finding and not
+    /// a tally.</b> The box summary says what the plan is; this says what is wrong with somebody's
+    /// model, and the two are read for different reasons. It is shown in both modes, since a box can
+    /// be over its capacity whether or not the project recommends new ones.
+    /// </para>
+    /// <para>
+    /// <b>Silent when no box in the plan states a capacity at all</b>, which is every project that has
+    /// not taken this up. A line about conductors on a model where nobody asked about conductors is
+    /// the kind of noise that teaches people to stop reading the report - the same rule that keeps
+    /// spare circuits out of the "what went wrong" section.
+    /// </para>
+    /// <para>
+    /// <b>And it names the circuits Revit did not size, which is the part that could mislead.</b> A
+    /// circuit reporting no conductors fills nothing, so "no box is over its capacity" can be true of
+    /// a model where most of the cable was never counted. Saying nothing here would make a silence
+    /// into a reassurance.
+    /// </para>
+    /// </remarks>
+    public string CapacitySummary
+    {
+        get
+        {
+            if (Run is not { } run || run.Boxes.All(box => box.Capacity <= 0))
+                return string.Empty;
+
+            var said = new List<string>();
+
+            said.Add(run.Overfull.Count == 0
+                ? "No junction box holds more conductors than its capacity."
+                : $"{run.Overfull.Count} junction box(es) hold more conductors than the capacity stated "
+                  + "for them; nothing in this run was changed because of it.");
+
+            if (run.WithoutConductors > 0)
+            {
+                said.Add($"{run.WithoutConductors} circuit(s) cut in junction boxes report no conductors, "
+                         + "so they count towards no capacity.");
+            }
+
+            return string.Join(" ", said);
+        }
+    }
+
+    public bool HasCapacitySummary => CapacitySummary.Length > 0;
+
     /// <summary>What the read of the model left behind, when it left anything.</summary>
     /// <remarks>
     /// Shown on every run that has any, not only a failed one. These are the counts written so that
@@ -604,6 +651,8 @@ public sealed class RoutingViewModel : INotifyPropertyChanged
                 Raise(nameof(HasApproachSummary));
                 Raise(nameof(BoxSummary));
                 Raise(nameof(HasBoxSummary));
+                Raise(nameof(CapacitySummary));
+                Raise(nameof(HasCapacitySummary));
                 Raise(nameof(Reading));
                 Raise(nameof(HasReading));
                 Raise(nameof(Causes));

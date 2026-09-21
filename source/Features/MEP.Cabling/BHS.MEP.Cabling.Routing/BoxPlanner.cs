@@ -17,15 +17,45 @@ public sealed class ExistingBox
     public CarrierId Id { get; }
 
     public Point3 At { get; }
+
+    /// <summary>How many conductors it holds, or zero when its type did not say.</summary>
+    /// <remarks>
+    /// <para>
+    /// <b>In conductors and not in cable entries - the owner's answer of 2026-09-21.</b> A box with
+    /// four glands and a terminal block of six conductors is bounded by the six.
+    /// </para>
+    /// <para>
+    /// <b>Zero is "nobody said", never "holds nothing",</b> for the reason a device's terminal
+    /// capacity keeps the same distinction: a box that is in the wiring holds at least one conductor
+    /// by being there, so zero is a blank or a typo rather than a property of a product. The project
+    /// answers for a blank, and when the project is silent too there is no limit at all.
+    /// </para>
+    /// <para>
+    /// <b>An <c>init</c> rather than a constructor argument, and the asymmetry with a carrier's
+    /// openness along its length is deliberate.</b> That one is a required argument because a carrier
+    /// wrongly called open cuts into the middle of a run and the length that comes out is
+    /// indistinguishable from a right one, so every caller is made to answer. A capacity forgotten
+    /// costs a warning that is not raised - visible as silence, not as a plausible wrong number.
+    /// </para>
+    /// </remarks>
+    public int Capacity { get; init; }
 }
 
 /// <summary>One box the calculation needs: an existing one it uses, or a place it recommends.</summary>
 public sealed class PlannedBox
 {
-    internal PlannedBox(Point3 at, ExistingBox? existing)
+    internal PlannedBox(Point3 at, ExistingBox? existing, int defaultCapacity = 0)
     {
         At = at;
         Existing = existing;
+
+        // The owner's chain of 2026-09-21: the type, then the project, then no limit at all. And a
+        // recommendation has no capacity by their answer of the same day - the indicator says how
+        // many entries meet here and the designer picks a box that takes them, so a limit here would
+        // be the tool arguing with the advice it is about to give.
+        Capacity = existing is null
+            ? 0
+            : existing.Capacity > 0 ? existing.Capacity : defaultCapacity;
     }
 
     /// <summary>Where it stands - the existing box's own point, or the first tap that asked for it.</summary>
@@ -69,6 +99,28 @@ public sealed class PlannedBox
     /// <summary>The drops it serves, in the order they arrived.</summary>
     public IReadOnlyList<Tap> Taps => _taps;
 
+    /// <summary>How many conductors are spliced here, over every circuit cut in this box.</summary>
+    /// <remarks>
+    /// <b>Only the cables actually cut here, which is the owner's answer and not a simplification.</b>
+    /// A cable the run merely passes through the box with is never opened, so nothing of it lands on
+    /// the block - and it is not counted, because the planner is only ever told about branches.
+    /// Circuits whose conductor count Revit does not give contribute nothing; see
+    /// <c>CircuitSnapshot.Conductors</c>.
+    /// </remarks>
+    public int Conductors { get; private set; }
+
+    /// <summary>How many it may hold: its type's answer, the project's, or zero for no limit.</summary>
+    public int Capacity { get; }
+
+    /// <summary>Whether more conductors are spliced here than it holds.</summary>
+    /// <remarks>
+    /// <b>It changes nothing and is only reported</b> - the owner's answer of 2026-09-21. No tap is
+    /// moved, no box is split, no route is diverted and no length differs by a millimetre from what
+    /// the same model gave before anybody stated a capacity. What an overfull box buys is a line on
+    /// the screen and a warning Revit shows against the box itself.
+    /// </remarks>
+    public bool IsOverfull => Capacity > 0 && Conductors > Capacity;
+
     private readonly List<CarrierId> _circuits = new();
     private readonly List<Tap> _taps = new();
 
@@ -93,16 +145,23 @@ public sealed class PlannedBox
     /// owner's rule of 2026-09-11, unchanged.
     /// </para>
     /// </remarks>
-    internal void Hold(CarrierId circuit, int entries)
+    /// <param name="conductors">
+    /// How many conductors one cable of this circuit has, zero when Revit did not say. The conductors
+    /// follow the entries exactly, including the two an adjoining second branch swallows: the run that
+    /// disappears into the box takes its conductors with it.
+    /// </param>
+    internal void Hold(CarrierId circuit, int entries, int conductors = 0)
     {
         if (_circuits.Contains(circuit))
         {
             Entries += entries - 2;
+            Conductors += (entries - 2) * conductors;
             return;
         }
 
         _circuits.Add(circuit);
         Entries += entries;
+        Conductors += entries * conductors;
     }
 
     /// <summary>
@@ -230,10 +289,16 @@ public static class BoxPlanner
     /// <param name="routes">Every route; only those cut in boxes and found are planned.</param>
     /// <param name="existing">Boxes already in the model and joined to the structure.</param>
     /// <param name="radius">The box radius, in internal feet.</param>
+    /// <param name="defaultCapacity">
+    /// How many conductors a box holds when its own type does not say, in the project's answer; zero
+    /// when the project does not say either, and then those boxes have no limit. Recommended boxes
+    /// never take it - the owner's answer of 2026-09-21 is that a recommendation has no capacity.
+    /// </param>
     public static BoxPlan Plan(
         IEnumerable<RouteResult> routes,
         IEnumerable<ExistingBox> existing,
-        double radius)
+        double radius,
+        int defaultCapacity = 0)
     {
         var boxes = new List<PlannedBox>();
         var splices = new List<PlannedSplice>();
@@ -241,7 +306,7 @@ public static class BoxPlanner
         foreach (var box in existing ?? Array.Empty<ExistingBox>())
         {
             if (box is not null)
-                boxes.Add(new PlannedBox(box.At, box));
+                boxes.Add(new PlannedBox(box.At, box, defaultCapacity));
         }
 
         foreach (var route in routes ?? Array.Empty<RouteResult>())
@@ -281,11 +346,14 @@ public static class BoxPlanner
 
                 if (box is null)
                 {
-                    box = new PlannedBox(branch.At, null);
+                    // The project's value is handed over here too, although a recommendation takes
+                    // none of it: the constructor is where that rule lives, and a second copy of it
+                    // - an argument quietly left off - would be a rule no breakage could show red.
+                    box = new PlannedBox(branch.At, null, defaultCapacity);
                     boxes.Add(box);
                 }
 
-                box.Hold(route.Circuit, branch.Ways + 1);
+                box.Hold(route.Circuit, branch.Ways + 1, route.Conductors);
             }
 
             // Which devices hang off which box, and the tap's own answer comes first.

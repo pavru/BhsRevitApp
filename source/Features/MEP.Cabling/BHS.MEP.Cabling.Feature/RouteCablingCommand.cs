@@ -143,7 +143,9 @@ public sealed class RouteCablingCommand : IFeatureCommand
         // write it. Returning the task would leave a window in which Apply is enabled and has
         // nothing to apply.
         var run = await Task.Run(
-                () => Search(snapshot, options, project.BoxRadius, project.Slack, existingBoxesOnly, progress, token),
+                () => Search(
+                    snapshot, options, project.BoxRadius, project.BoxCapacity, project.Slack, existingBoxesOnly,
+                    progress, token),
                 token)
             .ConfigureAwait(true);
 
@@ -315,6 +317,7 @@ public sealed class RouteCablingCommand : IFeatureCommand
         CablingSnapshot snapshot,
         RoutingOptions options,
         double boxRadius,
+        int boxCapacity,
         SlackRule slack,
         bool existingBoxesOnly,
         IProgress<RoutingProgress> progress,
@@ -352,7 +355,7 @@ public sealed class RouteCablingCommand : IFeatureCommand
         // are what the plan decides. The boxes the model already has come from the read, by the role
         // on the fitting's type and by whether it is joined to the structure; a tap within the radius
         // of one uses it and asks for nothing to be added.
-        var plan = BoxPlanner.Plan(results, snapshot.Boxes, boxRadius);
+        var plan = BoxPlanner.Plan(results, snapshot.Boxes, boxRadius, boxCapacity);
 
         return new RouteRun(results, snapshot.Network.Version, clock.Elapsed, plan, slack)
         {

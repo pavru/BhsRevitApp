@@ -26,6 +26,7 @@ public sealed class RouteRun
 {
     private readonly int[] _byStatus;
     private readonly Dictionary<CarrierId, double> _slack = new();
+    private readonly IReadOnlyList<PlannedBox> _overfull;
 
     /// <param name="plan">
     /// Where each circuit's cable is cut: the boxes it needs and the splices that need none. Slack is
@@ -68,10 +69,23 @@ public sealed class RouteRun
             splices[splice.Circuit] = seen + 1;
         }
 
+        // Every box over its capacity, once, in the plan's order - so that the apply warns about the
+        // same ones in the same order on every run of an unchanged model.
+        var overfull = new List<PlannedBox>();
+
+        foreach (var box in Plan.Boxes)
+        {
+            if (box.IsOverfull)
+                overfull.Add(box);
+        }
+
+        _overfull = overfull;
+
         var failures = new List<RouteResult>();
         var statuses = new int[Enum.GetValues(typeof(RouteStatus)).Length];
         var length = 0.0;
         var builtIn = 0.0;
+        var unsized = 0;
 
         foreach (var one in results)
         {
@@ -85,6 +99,11 @@ public sealed class RouteRun
                 failures.Add(one);
                 continue;
             }
+
+            // Only the circuits cut in boxes: one cut at the terminal fills no box whatever its cable
+            // has, so counting it among those nobody sized would overstate what is unknown.
+            if (one.Connection == CircuitConnection.AtJunctionBox && one.Conductors <= 0)
+                unsized++;
 
             boxes.TryGetValue(one.Circuit, out var cut);
             splices.TryGetValue(one.Circuit, out var spliced);
@@ -101,6 +120,7 @@ public sealed class RouteRun
         Failures = failures;
         TotalLength = length;
         BuiltInLength = builtIn;
+        WithoutConductors = unsized;
     }
 
     /// <summary>What the project adds beyond what the routes measure.</summary>
@@ -216,6 +236,27 @@ public sealed class RouteRun
             return served;
         }
     }
+
+    /// <summary>The boxes holding more conductors than their capacity, in the plan's order.</summary>
+    /// <remarks>
+    /// <b>A list rather than a count, because every one of them is addressed.</b> Each gets a warning
+    /// Revit posts against that element, so the apply needs to know which; a tally could be shown and
+    /// could not be pointed at - the same reason <c>JunctionBoxReader.Unconnected</c> keeps ids.
+    /// Recommended boxes are never here: by the owner's answer they have no capacity.
+    /// </remarks>
+    public IReadOnlyList<PlannedBox> Overfull => _overfull;
+
+    /// <summary>
+    /// How many routed circuits cut in boxes say nothing about their conductors, and so fill nothing.
+    /// </summary>
+    /// <remarks>
+    /// <b>Said out loud because a silent zero reads exactly like a box that fits.</b> Revit's
+    /// conductor counts belong to a power circuit; a data circuit, or one nobody has sized, reports
+    /// none, and then no capacity in the model can ever be exceeded by it. A screen that shows "no box
+    /// is over its capacity" without saying that half the circuits were not counted has told the
+    /// designer something untrue about their model.
+    /// </remarks>
+    public int WithoutConductors { get; }
 
     /// <summary>Whether the circuits cut in boxes were routed without additional boxes.</summary>
     /// <remarks>

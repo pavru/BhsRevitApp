@@ -170,6 +170,7 @@ public sealed class CircuitReader
                 BuiltInLength = system.Length,
                 HasCustomPath = system.HasCustomCircuitPath,
                 Connection = Connection(system, unreadable, unreadableIds),
+                Conductors = Conductors(system),
 
                 // OurRouteId stays empty until the parameter scheme exists. It is what tells our own
                 // custom path from somebody else's, and reading it before we can write it would be a
@@ -180,6 +181,58 @@ public sealed class CircuitReader
         return new CircuitHarvest(
             circuits, withoutPanel, withoutDevices, devicesSkipped, spareOrSpace, unreadable, unreadableIds,
             categories);
+    }
+
+    /// <summary>How many conductors this circuit's cable has, as Revit itself counts them.</summary>
+    /// <remarks>
+    /// <para>
+    /// <b>Revit's own numbers, not ours, and that was measured rather than assumed.</b> Going into
+    /// this I had written that a circuit says nothing about its conductors and that a box capacity in
+    /// conductors would have to wait for the cable. It does not:
+    /// <c>HotConductorsNumber</c>, <c>NeutralConductorsNumber</c> and <c>GroundConductorsNumber</c>
+    /// are declared in the reference <c>RevitAPI.dll</c> of 2024.3.60, 2025.4.60, 2026.4.10 and
+    /// 2027.2.0 alike - checked in the metadata, not only in the documentation XML, which has named
+    /// members this project could not compile against three times.
+    /// </para>
+    /// <para>
+    /// <b>Times the runs, by the owner's answer of 2026-09-21.</b> A circuit pulled as two parallel
+    /// runs lands twice as many conductors in every box it is cut in, so the count of one cable is not
+    /// what a box has to take.
+    /// </para>
+    /// <para>
+    /// <b><c>OtherConductorsNumber</c> exists only on 2026 and later</b> - measured the same way, it is
+    /// absent from the 2024 and 2025 assemblies. The owner chose on 2026-09-21 to read it where it
+    /// exists, with the cost named: the same model gives a larger count on 2026 and 2027 than on 2024
+    /// and 2025, and therefore can warn about a box on one release and not on another. The alternative
+    /// - ignoring it everywhere - would have been consistent and would have undercounted every project
+    /// that uses those conductors. Nothing in the sweep may assert a conductor count for this reason;
+    /// only invariants.
+    /// </para>
+    /// <para>
+    /// <b>Zero is left as zero.</b> A circuit Revit does not size - a data circuit, or one nobody has
+    /// filled in - contributes nothing to any box, and the run says how many such circuits there were
+    /// rather than inventing a number for them.
+    /// </para>
+    /// </remarks>
+    private static int Conductors(ElectricalSystem system)
+    {
+        var conductors =
+            system.HotConductorsNumber
+            + system.NeutralConductorsNumber
+            + system.GroundConductorsNumber;
+
+#if REVIT2026_OR_GREATER
+        conductors += system.OtherConductorsNumber;
+#endif
+
+        if (conductors <= 0)
+            return 0;
+
+        // A circuit that says nothing about its runs is one run; the property is an int and Revit
+        // reports at least one for a real circuit, but a zero here would erase a cable that exists.
+        var runs = system.RunsNumber > 0 ? system.RunsNumber : 1;
+
+        return conductors * runs;
     }
 
     /// <summary>

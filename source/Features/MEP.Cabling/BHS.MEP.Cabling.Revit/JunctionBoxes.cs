@@ -45,6 +45,9 @@ internal sealed class JunctionBoxReader
     /// <summary>Role by type id: a run has thousands of fittings and a handful of types.</summary>
     private readonly Dictionary<long, bool> _roles = new();
 
+    /// <summary>Capacity by type id, cached for the same reason as the role and off the same type.</summary>
+    private readonly Dictionary<long, int> _capacities = new();
+
     public JunctionBoxReader(Document document, CarrierCatalogue catalogue)
     {
         _document = document;
@@ -128,6 +131,38 @@ internal sealed class JunctionBoxReader
         return false;
     }
 
+    /// <summary>How many conductors this element's type says its box holds, zero when it does not.</summary>
+    /// <remarks>
+    /// <para>
+    /// <b>Zero and below read as "the type did not say"</b>, never as "holds nothing" - the same
+    /// distinction <c>TerminalCapacityReader</c> keeps, and for the same reason: an unset integer
+    /// parameter reads as zero through <c>AsInteger</c>, so arithmetic alone would turn every model
+    /// where nobody filled this in into a model where every box is over its capacity. A box that is
+    /// in the wiring holds at least one conductor by being there.
+    /// </para>
+    /// <para>
+    /// Asked of the type like the role, and cached beside it: the two answers are about the same
+    /// element and are looked up on the same pass.
+    /// </para>
+    /// </remarks>
+    public int CapacityOf(Element element)
+    {
+        var type = element?.GetTypeId();
+
+        if (type is null || type == ElementId.InvalidElementId)
+            return 0;
+
+        if (_capacities.TryGetValue(type.Value, out var known))
+            return known;
+
+        var parameter = _document.GetElement(type)?.get_Parameter(CablingParameters.BoxCapacity);
+
+        known = parameter is { HasValue: true } && parameter.AsInteger() > 0 ? parameter.AsInteger() : 0;
+        _capacities[type.Value] = known;
+
+        return known;
+    }
+
     /// <summary>Where the box stands: the middle of the element the network already described.</summary>
     /// <remarks>
     /// Taken from the node rather than measured again, and that is not only economy: the node's two
@@ -136,9 +171,12 @@ internal sealed class JunctionBoxReader
     /// coordinate system every tap is expressed in. Measuring it here would be a second definition of
     /// the same place, and the two would disagree inside a link.
     /// </remarks>
-    public static ExistingBox Where(CarrierNode node) =>
+    public static ExistingBox Where(CarrierNode node, int capacity = 0) =>
         new(node.Id, new Point3(
             (node.Start.X + node.End.X) / 2,
             (node.Start.Y + node.End.Y) / 2,
-            (node.Start.Z + node.End.Z) / 2));
+            (node.Start.Z + node.End.Z) / 2))
+        {
+            Capacity = capacity,
+        };
 }

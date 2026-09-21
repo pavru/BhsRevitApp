@@ -143,7 +143,7 @@ public sealed class CarrierReader
                 // it. What being a box adds is that a tap may use it instead of asking for one to be
                 // put there - see BoxPlanner.
                 if (junctions.IsRealBox(element))
-                    _existing.Add(JunctionBoxReader.Where(node));
+                    _existing.Add(JunctionBoxReader.Where(node, junctions.CapacityOf(element)));
 
                 yield return node;
             }

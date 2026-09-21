@@ -181,6 +181,30 @@ public sealed class CablingFeature : IFeatureModule
     public static readonly FailureDefinitionId NoBoxReachable =
         new(new Guid("1da845fd-1306-4c83-b52a-0a936bca4536"));
 
+    /// <summary>A junction box holding more conductors than its capacity says it can.</summary>
+    /// <remarks>
+    /// <para>
+    /// <b>It warns and changes nothing</b> - the owner's answer of 2026-09-21. Nothing is moved, no
+    /// box is split, no route is diverted, and the lengths are the same as they would be if nobody had
+    /// stated a capacity at all. The designer decides what to do about it.
+    /// </para>
+    /// <para>
+    /// <b>Posted against the box, and not against a circuit,</b> because being over capacity is a
+    /// property of the place: several circuits may be spliced in one box, and naming one of them would
+    /// blame whichever happened to be routed first - an order this tool takes from Revit and does not
+    /// choose. A box inside a link gets no warning at all, since a warning in the host cannot address
+    /// an element of a link; it is on the result screen either way.
+    /// </para>
+    /// <para>
+    /// <b>The wording says "the calculation" and never a number,</b> because the registered string is
+    /// all Revit shows and has to be true of every occurrence. The counts belong on the result screen,
+    /// and the count itself differs by release: <c>OtherConductorsNumber</c> exists only on Revit 2026
+    /// and later, so the same model can be over capacity on one release and within it on another.
+    /// </para>
+    /// </remarks>
+    public static readonly FailureDefinitionId JunctionBoxOverCapacity =
+        new(new Guid("ecb044ae-1990-4fc6-8914-883d69077635"));
+
     private static readonly (FailureDefinitionId Id, string Message)[] Declared =
     {
         (NoCarrierNear,
@@ -202,6 +226,12 @@ public sealed class CablingFeature : IFeatureModule
             + "and because it also still carries the tool's recommendation (BHS_Cbl_Recommendation, or "
             + "BHS_Cbl_Рекомендация where these parameters were created on a Russian Revit), "
             + "cable routing leaves it as it is."),
+        (JunctionBoxOverCapacity,
+            "The cable routing calculation splices more conductors in this junction box than the capacity "
+            + "stated for it allows (BHS_Cbl_BoxCapacity on its type, or BHS_Cbl_ЁмкостьКоробки where these "
+            + "parameters were created on a Russian Revit; the project's own value where the type is empty). "
+            + "Nothing was changed because of it: the route and its length are the same as they would be "
+            + "with no capacity stated at all."),
     };
 
     public void Start(IFeatureServices services)
