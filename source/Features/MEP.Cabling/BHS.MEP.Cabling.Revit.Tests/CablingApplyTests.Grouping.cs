@@ -1,4 +1,4 @@
-using Autodesk.Revit.DB;
+﻿using Autodesk.Revit.DB;
 using BHS.MEP.Cabling.Routing;
 using BHS.Revit.Testing;
 
@@ -165,9 +165,14 @@ public sealed partial class CablingApplyTests
             Note(context, "grouping: circuits described", plain.Snapshot.Circuits.Described.Count);
             Note(context, "grouping: routes found before anybody is grouped", routed.Count);
 
+            // Counted over every result, never over the run: a RouteRun is built from the routes that
+            // were found, so asking it how many circuits failed for a reason is asking a question it
+            // cannot answer with anything but zero. The first version of this line did exactly that,
+            // and the control that is supposed to prove the rule never fires on an ungrouped model
+            // proved nothing at all - found on the first sweep, by a note beside it reading "0".
             Expect.Same(
                 0,
-                plain.Run.Count(RouteStatus.NoCarrierAllowed),
+                plain.Results.Count(one => one.Status == RouteStatus.NoCarrierAllowed),
                 "circuits reported as turned away for their cable group in a model where nobody named one");
 
             Skip.When(
@@ -206,7 +211,7 @@ public sealed partial class CablingApplyTests
                     "circuit " + circuit + " reached the structure and was refused by every carrier, and the run called that " + result.Status);
             }
 
-            Note(context, "grouping: circuits turned away for their group", orphaned.Run.Count(RouteStatus.NoCarrierAllowed));
+            Note(context, "grouping: circuits turned away for their group", orphaned.Results.Count(one => one.Status == RouteStatus.NoCarrierAllowed));
 
             // And now the host's carriers are told to admit it. The links are not written to, so what
             // routes here is whatever can be laid in the host alone - a number this case never claims.
