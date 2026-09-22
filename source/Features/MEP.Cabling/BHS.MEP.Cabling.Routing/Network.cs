@@ -314,6 +314,22 @@ public sealed class CarrierNode
     /// </remarks>
     public CableGroups Groups { get; init; } = CableGroups.Unmarked;
 
+    /// <summary>How the cable is installed along this carrier, as the project's own type parameter says.</summary>
+    /// <remarks>
+    /// <para>
+    /// <b>A second axis beside <see cref="Class"/>, and not a replacement for it</b> - the owner's
+    /// decision of 2026-09-22. The class says how the carrier behaves for routing (open along its
+    /// length or not); the method says what a cable journal and an estimate call the stretch. Two
+    /// trays of one class can be laid two ways, and a duct counted as trunking is still a method of
+    /// its own.
+    /// </para>
+    /// <para>
+    /// <b>Empty means "the project said nothing here"</b>, and that is kept as its own key rather than
+    /// folded into a neighbour: the length along such carriers is the part the screen has to name.
+    /// </para>
+    /// </remarks>
+    public string Method { get; init; } = string.Empty;
+
     /// <summary>The name a person would recognise, carried because <c>Element.Name</c> is an API call.</summary>
     public string Label { get; init; } = string.Empty;
 }

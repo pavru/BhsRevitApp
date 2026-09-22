@@ -156,6 +156,14 @@ public sealed class RouteCablingCommand : IFeatureCommand
             .ConfigureAwait(true);
 
         reading.Run = run;
+
+        // After the search, because which methods the run walked without a slot is a fact about the
+        // routes. Formatted here, back on the API thread, where Revit's own length formatting is legal.
+        var methods = MethodReport.Describe(run, project.Carriers.Methods, CablingLength.Formatter(document));
+
+        if (methods.Length != 0)
+            reading.Catalogue = reading.Catalogue.Length == 0 ? methods : reading.Catalogue + " " + methods;
+
         return run;
     }
 

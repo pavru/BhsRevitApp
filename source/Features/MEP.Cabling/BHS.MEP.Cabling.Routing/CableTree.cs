@@ -114,6 +114,9 @@ internal static class CableTree
         public IReadOnlyDictionary<string, double> AlongByClass { get; init; } =
             new Dictionary<string, double>(StringComparer.OrdinalIgnoreCase);
 
+        public IReadOnlyDictionary<string, double> AlongByMethod { get; init; } =
+            new Dictionary<string, double>(StringComparer.OrdinalIgnoreCase);
+
         public double Approaches { get; init; }
 
         /// <summary>Where the cable leaves the structure, one per device.</summary>
@@ -1090,6 +1093,7 @@ internal static class CableTree
         var along = 0.0;
         var approaches = 0.0;
         var byClass = new Dictionary<string, double>(StringComparer.OrdinalIgnoreCase);
+        var byMethod = new Dictionary<string, double>(StringComparer.OrdinalIgnoreCase);
         var carriers = new List<CarrierId>();
         var seen = new HashSet<CarrierId>();
 
@@ -1107,6 +1111,15 @@ internal static class CableTree
                 byClass[edge.Step.Class] = known + edge.Step.Length;
             else
                 byClass[edge.Step.Class] = edge.Step.Length;
+
+            // Looked up rather than carried on the arc: the method is read once per carrier, and an
+            // arc that copied it would be a second place for the same answer to go stale in.
+            var method = (network.Node(edge.Step.Along)?.Method ?? string.Empty).Trim();
+
+            if (byMethod.TryGetValue(method, out var laid))
+                byMethod[method] = laid + edge.Step.Length;
+            else
+                byMethod[method] = edge.Step.Length;
 
             if (seen.Add(edge.Step.Along))
                 carriers.Add(edge.Step.Along);
@@ -1166,6 +1179,7 @@ internal static class CableTree
             Carriers = carriers,
             AlongCarriers = along,
             AlongByClass = byClass,
+            AlongByMethod = byMethod,
             Approaches = approaches,
             Taps = taps,
             Branches = branches,

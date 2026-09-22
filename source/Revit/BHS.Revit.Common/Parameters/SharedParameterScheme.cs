@@ -176,6 +176,7 @@ public abstract class SharedParameterScheme
                         Description = text.Description,
                         Visible = true,
                         UserModifiable = true,
+                        HideWhenNoValue = declared.HideWhenNoValue,
                     };
 
                     group.Definitions.Create(options);

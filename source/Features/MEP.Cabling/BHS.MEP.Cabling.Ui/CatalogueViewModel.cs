@@ -136,6 +136,68 @@ public sealed class CatalogueRule : INotifyPropertyChanged
 }
 
 /// <summary>
+/// One of the six installation-method slots, as the screen holds it.
+/// </summary>
+/// <remarks>
+/// <b>The number is the point, not the order of a list.</b> Every circuit writes the method named here
+/// into the pair of parameters with this number, so a schedule column is a slot; renaming a slot in a
+/// project that already wrote lengths makes that column mean something else from the next apply on.
+/// </remarks>
+public sealed class MethodSlot : INotifyPropertyChanged
+{
+    private string _name = string.Empty;
+
+    public MethodSlot(int number, string name)
+    {
+        Number = number;
+        _name = name ?? string.Empty;
+    }
+
+    public event PropertyChangedEventHandler? PropertyChanged;
+
+    /// <summary>Which pair of circuit parameters this slot writes, one-based.</summary>
+    public int Number { get; }
+
+    /// <summary>The label, for the column the number sits in.</summary>
+    public string Caption => "Slot " + Number;
+
+    /// <summary>The method as the carriers' type parameter spells it, or empty for an unused slot.</summary>
+    public string Name
+    {
+        get => _name;
+        set
+        {
+            var said = value ?? string.Empty;
+
+            if (string.Equals(_name, said, StringComparison.Ordinal))
+                return;
+
+            _name = said;
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(Name)));
+        }
+    }
+}
+
+/// <summary>What the window hands over to be written: the carrier rules and the methods beside them.</summary>
+public sealed class CatalogueDraft
+{
+    public CatalogueDraft(IReadOnlyList<CatalogueRule> rules, string methodParameter, IReadOnlyList<string> methods)
+    {
+        Rules = rules;
+        MethodParameter = methodParameter;
+        Methods = methods;
+    }
+
+    public IReadOnlyList<CatalogueRule> Rules { get; }
+
+    /// <summary>The carriers' type parameter the method is read from, trimmed; empty for off.</summary>
+    public string MethodParameter { get; }
+
+    /// <summary>The method named in each slot, slot 1 first, trimmed; empty for unused.</summary>
+    public IReadOnlyList<string> Methods { get; }
+}
+
+/// <summary>
 /// A category a person may add to the catalogue, by the name their Revit gives it.
 /// </summary>
 public sealed class CatalogueCategory
@@ -181,10 +243,11 @@ public sealed class CatalogueCategory
 public sealed class CatalogueViewModel : INotifyPropertyChanged
 {
     private readonly Func<CatalogueRule, (int Seen, int Counted)> _count;
-    private readonly Func<IReadOnlyList<CatalogueRule>, string> _save;
+    private readonly Func<CatalogueDraft, string> _save;
     private readonly IReadOnlyList<CatalogueRule> _shipped;
 
     private CatalogueCategory? _chosen;
+    private string _methodParameter = string.Empty;
     private string _saved = string.Empty;
     private bool _dirty;
 
@@ -193,12 +256,16 @@ public sealed class CatalogueViewModel : INotifyPropertyChanged
     /// <param name="shipped">The defaults, for the button that puts them back.</param>
     /// <param name="count">How many elements a rule sees and how many it admits.</param>
     /// <param name="save">Writes the table into the model; returns what went wrong, or empty.</param>
+    /// <param name="methodParameter">The carriers' type parameter the installation method is read from.</param>
+    /// <param name="methods">The method in each of the six slots, slot 1 first.</param>
     public CatalogueViewModel(
         IReadOnlyList<CatalogueRule> rules,
         IReadOnlyList<CatalogueCategory> categories,
         IReadOnlyList<CatalogueRule> shipped,
         Func<CatalogueRule, (int Seen, int Counted)> count,
-        Func<IReadOnlyList<CatalogueRule>, string> save)
+        Func<CatalogueDraft, string> save,
+        string methodParameter = "",
+        IReadOnlyList<string>? methods = null)
     {
         _count = count;
         _save = save;
@@ -206,6 +273,25 @@ public sealed class CatalogueViewModel : INotifyPropertyChanged
 
         Categories = categories;
         Rules = new ObservableCollection<CatalogueRule>();
+
+        _methodParameter = methodParameter ?? string.Empty;
+        Methods = new ObservableCollection<MethodSlot>();
+
+        // Six, always, and never a seventh - the owner's fourth answer. A method with no slot is laid
+        // into the other length and named on the run screen; the window does not offer a place for it.
+        for (var i = 0; i < SlotCount; i++)
+        {
+            var slot = new MethodSlot(i + 1, methods is not null && i < methods.Count ? methods[i] : string.Empty);
+
+            slot.PropertyChanged += (_, _) =>
+            {
+                Dirty();
+                Raise(nameof(MethodWarning));
+                Raise(nameof(HasMethodWarning));
+            };
+
+            Methods.Add(slot);
+        }
 
         foreach (var rule in rules)
             Add(rule);
@@ -219,6 +305,67 @@ public sealed class CatalogueViewModel : INotifyPropertyChanged
     }
 
     public event PropertyChangedEventHandler? PropertyChanged;
+
+    /// <summary>How many installation-method slots a circuit has.</summary>
+    public const int SlotCount = 6;
+
+    /// <summary>The carriers' type parameter the installation method is read from; empty turns methods off.</summary>
+    public string MethodParameter
+    {
+        get => _methodParameter;
+        set
+        {
+            var said = value ?? string.Empty;
+
+            if (string.Equals(_methodParameter, said, StringComparison.Ordinal))
+                return;
+
+            _methodParameter = said;
+            Raise(nameof(MethodParameter));
+            Dirty();
+            Raise(nameof(MethodWarning));
+            Raise(nameof(HasMethodWarning));
+        }
+    }
+
+    /// <summary>The six slots, slot 1 first.</summary>
+    public ObservableCollection<MethodSlot> Methods { get; }
+
+    /// <summary>What is wrong with the methods as written, or empty.</summary>
+    /// <remarks>
+    /// Said where the mistake is made, like <see cref="Warning"/>: a method named in two slots would split
+    /// its length between two schedule columns, and slots named with no parameter to read them from do
+    /// nothing at all - both look fine until a schedule is built.
+    /// </remarks>
+    public string MethodWarning
+    {
+        get
+        {
+            var named = Methods.Where(one => one.Name.Trim().Length != 0).ToList();
+
+            var twice = named
+                .GroupBy(one => one.Name.Trim(), StringComparer.OrdinalIgnoreCase)
+                .Where(group => group.Count() > 1)
+                .Select(group => "'" + group.Key + "' (slots " + string.Join(", ", group.Select(one => one.Number)) + ")")
+                .ToList();
+
+            if (twice.Count != 0)
+                return "A method is named in more than one slot: " + string.Join("; ", twice)
+                    + ". Its length would be split between two columns of every schedule.";
+
+            if (MethodParameter.Trim().Length == 0 && named.Count != 0)
+                return "The slots are named but no type parameter is, so lengths by method are off:"
+                    + " name the parameter the carrier types say their method in.";
+
+            if (MethodParameter.Trim().Length != 0 && named.Count == 0)
+                return "The parameter is named but no slot is, so every metre laid along carriers goes"
+                    + " into the other length.";
+
+            return string.Empty;
+        }
+    }
+
+    public bool HasMethodWarning => MethodWarning.Length > 0;
 
     /// <summary>What the project counts as a carrier, one row per category.</summary>
     public ObservableCollection<CatalogueRule> Rules { get; }
@@ -321,7 +468,10 @@ public sealed class CatalogueViewModel : INotifyPropertyChanged
     /// <summary>Writes the table into the model.</summary>
     public void Save()
     {
-        var failed = _save(Rules.ToList());
+        var failed = _save(new CatalogueDraft(
+            Rules.ToList(),
+            MethodParameter.Trim(),
+            Methods.Select(one => one.Name.Trim()).ToList()));
 
         if (failed.Length != 0)
         {

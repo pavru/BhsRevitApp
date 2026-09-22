@@ -125,6 +125,11 @@ public sealed class CarrierReader
         // an instance parameter, and a model says a handful of distinct things on thousands of runs.
         var grouping = new CableGroupReader();
 
+        // Per document, like the splicing reader: the method lives on the type, and a link's types
+        // belong to the link. One parameter for every category, unlike the filter - see
+        // InstallationMethods.
+        var method = new InstallationMethodReader(document, _catalogue.Methods.Parameter);
+
         MarkerTypeKnown |= markers.Known;
 
         foreach (var category in _catalogue.Categories)
@@ -172,7 +177,8 @@ public sealed class CarrierReader
                     carrierClass,
                     open,
                     splicing.Allows(element),
-                    grouping.Of(element));
+                    grouping.Of(element),
+                    method.Of(element));
 
                 if (node is null)
                 {
@@ -217,7 +223,8 @@ public sealed class CarrierReader
         string carrierClass,
         bool openAlongItsLength,
         bool allowsSplicing,
-        CableGroups groups)
+        CableGroups groups,
+        string method)
     {
         if (!TryExtent(element, out var start, out var end, out var joins))
             return null;
@@ -259,6 +266,7 @@ public sealed class CarrierReader
         {
             AllowsSplicing = allowsSplicing,
             Groups = groups,
+            Method = method,
         };
     }
 

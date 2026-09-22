@@ -86,10 +86,14 @@ public sealed class CarrierCatalogue
         IReadOnlyDictionary<string, bool>? openAlongTheirLength = null,
         IReadOnlyDictionary<BuiltInCategory, CarrierFilter>? filters = null,
         bool declared = false,
-        string unreadable = "")
+        string unreadable = "",
+        InstallationMethods? methods = null)
     {
         Declared = declared;
-        Unreadable = unreadable;
+        Methods = methods ?? InstallationMethods.Off;
+        Unreadable = Methods.Unreadable.Length == 0 ? unreadable
+            : unreadable.Length == 0 ? Methods.Unreadable
+            : unreadable + "; " + Methods.Unreadable;
 
         _open = new Dictionary<string, bool>(StringComparer.OrdinalIgnoreCase)
         {
@@ -139,6 +143,13 @@ public sealed class CarrierCatalogue
     /// missing.
     /// </remarks>
     public bool Declared { get; }
+
+    /// <summary>How the project names its installation methods, and the slot each one is written into.</summary>
+    /// <remarks>
+    /// Carried by the catalogue because it is read from the same carriers and edited in the same window:
+    /// which elements carry cable, and how each one is laid, are two questions about one list.
+    /// </remarks>
+    public InstallationMethods Methods { get; }
 
     /// <summary>Rules that are present and cannot be read, or empty.</summary>
     /// <remarks>
@@ -227,8 +238,10 @@ public sealed class CarrierCatalogue
                 names.Add(name);
         }
 
+        var methods = InstallationMethods.Read(model);
+
         if (names.Count == 0)
-            return new CarrierCatalogue();
+            return new CarrierCatalogue(methods: methods);
 
         var classes = new Dictionary<BuiltInCategory, string>();
         var filters = new Dictionary<BuiltInCategory, CarrierFilter>();
@@ -268,7 +281,8 @@ public sealed class CarrierCatalogue
             openAlongTheirLength: null,
             filters,
             declared: classes.Count != 0,
-            unreadable: string.Join("; ", unreadable));
+            unreadable: string.Join("; ", unreadable),
+            methods: methods);
     }
 }
 
@@ -415,25 +429,95 @@ internal sealed class CarrierMarkingReader
 
     private bool Says(Element? type)
     {
-        var parameter = type?.LookupParameter(_filter.Parameter);
+        var text = TypeParameterText.Read(_document, type, _filter.Parameter, out var incomparable);
+
+        if (incomparable)
+            Incomparable++;
+
+        return text is not null && _filter.Admits(text);
+    }
+}
+
+/// <summary>How a carrier is installed, as the project's type parameter says, cached by type.</summary>
+/// <remarks>
+/// Empty when the project named no parameter, when the type lacks it or leaves it blank, and when it
+/// holds a kind no comparison can read. All of those put the length under «прочая» and the screen
+/// names the carriers, so none of them is a reason to fail the read.
+/// </remarks>
+internal sealed class InstallationMethodReader
+{
+    private readonly Document _document;
+
+    private readonly string _parameter;
+
+    private readonly Dictionary<long, string> _types = new();
+
+    public InstallationMethodReader(Document document, string parameter)
+    {
+        _document = document;
+        _parameter = parameter;
+    }
+
+    /// <summary>The element's installation method, trimmed, or empty.</summary>
+    public string Of(Element element)
+    {
+        if (_parameter.Length == 0 || element is null)
+            return string.Empty;
+
+        var type = element.GetTypeId();
+
+        if (type == ElementId.InvalidElementId)
+            return string.Empty;
+
+        if (_types.TryGetValue(type.Value, out var known))
+            return known;
+
+        known = (TypeParameterText.Read(_document, _document.GetElement(type), _parameter, out _) ?? string.Empty).Trim();
+        _types[type.Value] = known;
+
+        return known;
+    }
+}
+
+/// <summary>
+/// A user-chosen type parameter as text, by the one rule both the catalogue filter and the
+/// installation method read it with.
+/// </summary>
+/// <remarks>
+/// <b>One rule, because two readers of one parameter disagreeing is the failure to avoid.</b> A
+/// project that filters ducts by <c>Способ прокладки</c> and takes the method from the same
+/// parameter would otherwise be told a duct counts and then find its length laid by no method.
+/// The rule itself is written on <see cref="CarrierMarkingReader"/>.
+/// </remarks>
+internal static class TypeParameterText
+{
+    /// <summary>
+    /// The value as stored, or null when the type has no such parameter, it holds nothing, or it holds
+    /// a kind no comparison can read - which last sets <paramref name="incomparable"/>.
+    /// </summary>
+    public static string? Read(Document document, Element? type, string name, out bool incomparable)
+    {
+        incomparable = false;
+
+        var parameter = type?.LookupParameter(name);
 
         if (parameter is not { HasValue: true })
-            return false;
+            return null;
 
         switch (parameter.StorageType)
         {
             case StorageType.String:
-                return _filter.Admits(parameter.AsString());
+                return parameter.AsString();
 
             case StorageType.Integer:
-                return _filter.Admits(parameter.AsInteger().ToString(CultureInfo.InvariantCulture));
+                return parameter.AsInteger().ToString(CultureInfo.InvariantCulture);
 
             case StorageType.ElementId:
-                return _filter.Admits(_document.GetElement(parameter.AsElementId())?.Name);
+                return document.GetElement(parameter.AsElementId())?.Name;
 
             default:
-                Incomparable++;
-                return false;
+                incomparable = true;
+                return null;
         }
     }
 }

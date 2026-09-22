@@ -8,7 +8,7 @@
         d:DataContext="{d:DesignInstance ui:CatalogueViewModel}"
         Title="Carrier catalogue"
         Width="760"
-        MaxHeight="620"
+        MaxHeight="760"
         SizeToContent="Height"
         ResizeMode="CanResize"
         ShowInTaskbar="False"
@@ -32,6 +32,7 @@
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />
             <RowDefinition Height="*" />
+            <RowDefinition Height="Auto" />
             <RowDefinition Height="Auto" />
             <RowDefinition Height="Auto" />
             <RowDefinition Height="Auto" />
@@ -130,13 +131,55 @@
                     Click="OnRestore" />
         </StackPanel>
 
-        <TextBlock Grid.Row="4"
+        <!-- The installation methods beside the rules, because they are read from the same carriers:
+             which elements carry cable, and how each one is laid, are two questions about one list.
+             Six slots and no way to add a seventh - the owner's decision; each slot is a pair of
+             circuit parameters, and a schedule column is a slot. -->
+        <GroupBox Grid.Row="4"
+                  Margin="0,16,0,0"
+                  Header="Installation methods">
+            <StackPanel Margin="8">
+                <TextBlock TextWrapping="Wrap"
+                           Text="Each circuit writes the length laid by the method in slot N into BHS_Cbl_LengthMethodN, and the method's name beside it. Keep a method in its slot once lengths are written: a schedule column is a slot. Leave the parameter empty to keep the lengths by class only." />
+
+                <StackPanel Margin="0,8,0,0" Orientation="Horizontal">
+                    <TextBlock VerticalAlignment="Center" Text="Carrier type parameter:" />
+                    <TextBox Margin="8,0,0,0"
+                             Width="240"
+                             Text="{Binding MethodParameter, UpdateSourceTrigger=PropertyChanged}" />
+                </StackPanel>
+
+                <ItemsControl Margin="0,8,0,0" ItemsSource="{Binding Methods}">
+                    <ItemsControl.ItemsPanel>
+                        <ItemsPanelTemplate>
+                            <UniformGrid Columns="3" />
+                        </ItemsPanelTemplate>
+                    </ItemsControl.ItemsPanel>
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate>
+                            <StackPanel Margin="0,4,12,4" Orientation="Horizontal">
+                                <TextBlock Width="44" VerticalAlignment="Center" Text="{Binding Caption}" />
+                                <TextBox Width="160" Text="{Binding Name, UpdateSourceTrigger=PropertyChanged}" />
+                            </StackPanel>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+
+                <TextBlock Margin="0,8,0,0"
+                           TextWrapping="Wrap"
+                           Foreground="#B3261E"
+                           Text="{Binding MethodWarning}"
+                           Visibility="{Binding HasMethodWarning, Converter={StaticResource Shown}}" />
+            </StackPanel>
+        </GroupBox>
+
+        <TextBlock Grid.Row="5"
                    Margin="0,12,0,0"
                    TextWrapping="Wrap"
                    Text="{Binding Saved}"
                    Visibility="{Binding HasSaved, Converter={StaticResource Shown}}" />
 
-        <StackPanel Grid.Row="5"
+        <StackPanel Grid.Row="6"
                     Margin="0,16,0,0"
                     Orientation="Horizontal"
                     HorizontalAlignment="Right">

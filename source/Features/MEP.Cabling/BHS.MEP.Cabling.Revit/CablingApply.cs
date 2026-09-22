@@ -304,7 +304,7 @@ public static class CablingApply
 
         var joined = Indicators(host, symbol, run, project, outcome);
         References(host, run, outcome);
-        Lengths(host, run, outcome);
+        Lengths(host, run, project.Carriers.Methods, outcome);
         Warn(host, run, snapshot, joined, outcome);
 
         // Inside the run's own transaction, the owner's decision of 2026-09-17: a mode kept while the run
@@ -791,7 +791,7 @@ public static class CablingApply
     /// between the read and the write somebody may have deleted the circuit.
     /// </para>
     /// </remarks>
-    private static void Lengths(Document host, RouteRun run, ApplyOutcome outcome)
+    private static void Lengths(Document host, RouteRun run, InstallationMethods methods, ApplyOutcome outcome)
     {
         foreach (var route in run.Results)
         {
@@ -806,7 +806,9 @@ public static class CablingApply
             written |= Set(circuit, CablingParameters.LengthInTray, route.AlongClass(CarrierCatalogue.Tray));
             written |= Set(circuit, CablingParameters.LengthInConduit, route.AlongClass(CarrierCatalogue.Conduit));
             written |= Set(circuit, CablingParameters.LengthFree, route.Approaches);
-            written |= Set(circuit, CablingParameters.LengthOther, AlongOtherClasses(route));
+            written |= Set(circuit, CablingParameters.LengthOther,
+                methods.IsOn ? AlongNoSlot(route, methods) : AlongOtherClasses(route));
+            written |= Slots(circuit, route, methods);
             written |= Set(circuit, CablingParameters.LengthSlack, run.SlackOf(route.Circuit));
 
             written |= Set(circuit, CablingParameters.RouteConnection, CircuitConnections.Text(route.Connection));
@@ -815,6 +817,64 @@ public static class CablingApply
             if (written)
                 outcome.CircuitsWritten++;
         }
+    }
+
+    /// <summary>Writes the six method slots of one circuit, or empties them.</summary>
+    /// <remarks>
+    /// <para>
+    /// <b>A label only beside a length above zero, and otherwise both empty</b> - the owner's ninth
+    /// answer of 2026-09-22. So a slot whose method this circuit never walked is cleared rather than
+    /// left holding what an earlier run wrote: a stale length in a schedule column is the one number
+    /// nobody questions.
+    /// </para>
+    /// <para>
+    /// <b>With the methods off, every slot is emptied</b>: a project that stopped naming methods has
+    /// columns that describe settings it no longer has.
+    /// </para>
+    /// </remarks>
+    private static bool Slots(Element circuit, RouteResult route, InstallationMethods methods)
+    {
+        var written = false;
+
+        for (var slot = 1; slot <= InstallationMethods.Slots; slot++)
+        {
+            var name = methods.IsOn ? methods[slot] : string.Empty;
+            var length = name.Length == 0 ? 0 : route.AlongMethod(name);
+            var label = CablingParameters.MethodLabel[slot - 1];
+            var measure = CablingParameters.MethodLength[slot - 1];
+
+            if (length > 0)
+            {
+                written |= Set(circuit, label, name);
+                written |= Set(circuit, measure, length);
+            }
+            else
+            {
+                written |= Clear(circuit, label);
+                written |= Clear(circuit, measure);
+            }
+        }
+
+        return written;
+    }
+
+    /// <summary>What a route walked along carriers laid by a method the project gave no slot, or by none.</summary>
+    /// <remarks>
+    /// Summed from the methods for the reason <see cref="AlongOtherClasses"/> is summed from the classes:
+    /// zero when it is zero. Which methods landed here is said on the screen and in the log, not in the
+    /// model - a seventh column would be the registry the slots exist to avoid.
+    /// </remarks>
+    private static double AlongNoSlot(RouteResult route, InstallationMethods methods)
+    {
+        var other = 0.0;
+
+        foreach (var part in route.AlongByMethod)
+        {
+            if (methods.SlotOf(part.Key) == 0)
+                other += part.Value;
+        }
+
+        return other;
     }
 
     /// <summary>What a route walked along carriers of every class other than tray and conduit.</summary>
@@ -899,6 +959,30 @@ public static class CablingApply
         var found = element?.get_Parameter(parameter);
 
         return found is { IsReadOnly: false } && found.Set(value);
+    }
+
+    /// <summary>Empties a parameter that holds something; true when it did.</summary>
+    /// <remarks>
+    /// <c>ClearValue</c> succeeds only for a shared parameter defined with <c>HideWhenNoValue</c>, which the
+    /// slots are. It throws otherwise, and that is caught here rather than let out: the one way to meet it
+    /// is a definition that reached the model some other way, and a slot left as it was is a smaller
+    /// failure than an apply abandoned for it.
+    /// </remarks>
+    private static bool Clear(Element element, Guid parameter)
+    {
+        var found = element?.get_Parameter(parameter);
+
+        if (found is not { IsReadOnly: false, HasValue: true })
+            return false;
+
+        try
+        {
+            return found.ClearValue();
+        }
+        catch (Autodesk.Revit.Exceptions.InvalidOperationException)
+        {
+            return false;
+        }
     }
 
     /// <summary>Sets a length, in Revit's internal units.</summary>
