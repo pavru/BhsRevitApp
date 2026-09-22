@@ -689,7 +689,7 @@
     "file": "source/Features/MEP.Cabling/BHS.MEP.Cabling.Revit/CarrierCatalogue.cs",
     "anchor": "        if (_parameter.Length == 0 || element is null)\n            return string.Empty;",
     "replacement": "        if (_parameter.Length == 0 || element is null || true)\n            return string.Empty;",
-    "reddens": "carrier N, whose type says 'BHS-TEST-METHOD-TRAY', read back laid by ''",
+    "reddens": "carrier N, whose type says 'BHS-TEST-METHOD-NO-SLOT', read back laid by '' - whichever carrier the collector reaches first",
     "alsoReddens": [],
     "hides": [],
     "rationale": "Makes the reader answer 'no method' for every carrier. It is the failure that looks like a model nobody configured: every metre lands in the other length, the screen names 'carriers whose type names no method', and a person goes to check the types - which are right. Only a case that compares the method read with the one it wrote can tell the two apart.",
