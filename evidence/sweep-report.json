@@ -1,16 +1,16 @@
 {
   "Schema": 2,
   "Disclaimer": "Recorded on a developer machine. Revit cannot run on hosted CI, so CI verifies this record rather than reproducing it: no automated check here has ever started a Revit.",
-  "Commit": "b931ebcd26599288c912f8006e5e1f5a9f899ac4",
+  "Commit": "fdd658cf8d56811e118e70f2aa310077b2ba5d59",
   "CommitClean": true,
   "Content": {
     "source/Revit": "aabd41b14e44c2d1a2854a81d52c2a5c0d34c7f0",
     "source/Shared": "b24cf47b52c82b7083b389e7161f5ecf3e45aa1c",
     "source/WinSide": "5b71abdce4cd8186abf36416137a3dfa7f437a28",
-    "source/Features/MEP.Cabling": "bb9a8c8b486398e53ec0da032a7939329cb06cd9",
+    "source/Features/MEP.Cabling": "abde253e13c3ebd6ad8db8f9027cbf378d84c8c9",
     "build/BHS.Revit.Sdk": "a8575677c417aaaef872bfda5c751f2858df4a0c"
   },
-  "RecordedUtc": "2026-09-21T22:21:08.2786321Z",
+  "RecordedUtc": "2026-09-22T02:46:16.7004511Z",
   "WithModel": true,
   "ShowTab": false,
   "Linked": true,
@@ -18,7 +18,7 @@
     {
       "Release": 2024,
       "FileVersion": "0.1.0.0",
-      "BuiltUtc": "2026-09-21T22:12:07.0431272Z",
+      "BuiltUtc": "2026-09-22T02:38:46.3289585Z",
       "Signed": true,
       "Checks": [
         {
@@ -438,6 +438,18 @@
           "Ok": true
         },
         {
+          "Name": "Cabling: a catalogue the project states replaces the shipped one, and its categories are the only ones read",
+          "Ok": true
+        },
+        {
+          "Name": "Cabling: an element counts as a carrier only when its type says what the project asked it to say",
+          "Ok": true
+        },
+        {
+          "Name": "Cabling: a carrier rule that admits nothing is named on the screen, and a shipped catalogue says nothing",
+          "Ok": true
+        },
+        {
           "Name": "Connector census: every connector of the family instances, MEP curves, fabrication parts and MEP systems of the host and of each link it loads directly reads its type and domain, every physical one answers whether it is connected, and every other property asked of any of them reads or refuses with Revit\u0027s InvalidOperationException itself",
           "Ok": true
         },
@@ -650,11 +662,11 @@
         },
         {
           "Name": "launched",
-          "Value": "pid 34176"
+          "Value": "pid 30664"
         },
         {
           "Name": "registered after",
-          "Value": "15.8s"
+          "Value": "36.4s"
         },
         {
           "Name": "recovered by enumeration",
@@ -670,11 +682,11 @@
         },
         {
           "Name": "probe log",
-          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2024-34176-20260922-081238.log"
+          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2024-30664-20260922-123939.log"
         },
         {
           "Name": "threads",
-          "Value": "api 1, call 14"
+          "Value": "api 1, call 15"
         },
         {
           "Name": "appdomain",
@@ -698,7 +710,7 @@
         },
         {
           "Name": "log",
-          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2024-34176-20260922-081238.log"
+          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2024-30664-20260922-123939.log"
         },
         {
           "Name": "sinks",
@@ -710,7 +722,7 @@
         },
         {
           "Name": "opened after registration",
-          "Value": "140.6s"
+          "Value": "39.8s"
         },
         {
           "Name": "pane:exists",
@@ -830,7 +842,7 @@
         },
         {
           "Name": "instance",
-          "Value": "34ee10eb33a0454aa3ee69bae0492455"
+          "Value": "7f3e2fc233b344c5a374b3ba1138d2ba"
         },
         {
           "Name": "link1:linked",
@@ -878,11 +890,11 @@
         },
         {
           "Name": "log",
-          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2024-34176-20260922-081238.log"
+          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2024-30664-20260922-123939.log"
         },
         {
           "Name": "pid",
-          "Value": "34176"
+          "Value": "30664"
         },
         {
           "Name": "release",
@@ -954,15 +966,15 @@
         },
         {
           "Name": "instance",
-          "Value": "34ee10eb33a0454aa3ee69bae0492455"
+          "Value": "7f3e2fc233b344c5a374b3ba1138d2ba"
         },
         {
           "Name": "log",
-          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2024-34176-20260922-081238.log"
+          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2024-30664-20260922-123939.log"
         },
         {
           "Name": "pid",
-          "Value": "34176"
+          "Value": "30664"
         },
         {
           "Name": "place:after",
@@ -1050,11 +1062,11 @@
         },
         {
           "Name": "instance",
-          "Value": "34ee10eb33a0454aa3ee69bae0492455"
+          "Value": "7f3e2fc233b344c5a374b3ba1138d2ba"
         },
         {
           "Name": "log",
-          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2024-34176-20260922-081238.log"
+          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2024-30664-20260922-123939.log"
         },
         {
           "Name": "modal:apiCallWorked",
@@ -1082,7 +1094,7 @@
         },
         {
           "Name": "modal:awaitResumedAfter",
-          "Value": "0.45s"
+          "Value": "0.43s"
         },
         {
           "Name": "modal:awaitResumedOnApiThread",
@@ -1106,7 +1118,7 @@
         },
         {
           "Name": "modal:shownFor",
-          "Value": "2.51s"
+          "Value": "2.49s"
         },
         {
           "Name": "modal:transactionCommit",
@@ -1138,7 +1150,7 @@
         },
         {
           "Name": "pid",
-          "Value": "34176"
+          "Value": "30664"
         },
         {
           "Name": "release",
@@ -1150,11 +1162,11 @@
         },
         {
           "Name": "instance",
-          "Value": "34ee10eb33a0454aa3ee69bae0492455"
+          "Value": "7f3e2fc233b344c5a374b3ba1138d2ba"
         },
         {
           "Name": "log",
-          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2024-34176-20260922-081238.log"
+          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2024-30664-20260922-123939.log"
         },
         {
           "Name": "modal:measured",
@@ -1166,7 +1178,7 @@
         },
         {
           "Name": "modal:pumpRanAt",
-          "Value": "2.51s"
+          "Value": "2.49s"
         },
         {
           "Name": "modal:windowClosed",
@@ -1174,7 +1186,7 @@
         },
         {
           "Name": "pid",
-          "Value": "34176"
+          "Value": "30664"
         },
         {
           "Name": "release",
@@ -1186,11 +1198,11 @@
         },
         {
           "Name": "instance",
-          "Value": "34ee10eb33a0454aa3ee69bae0492455"
+          "Value": "7f3e2fc233b344c5a374b3ba1138d2ba"
         },
         {
           "Name": "log",
-          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2024-34176-20260922-081238.log"
+          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2024-30664-20260922-123939.log"
         },
         {
           "Name": "parameters:bound",
@@ -1266,7 +1278,7 @@
         },
         {
           "Name": "pid",
-          "Value": "34176"
+          "Value": "30664"
         },
         {
           "Name": "release",
@@ -1315,6 +1327,38 @@
         {
           "Name": "total carrier length, internal feet",
           "Value": "504.693"
+        },
+        {
+          "Name": "catalogue: carriers with the shipped set",
+          "Value": "49"
+        },
+        {
+          "Name": "catalogue: of them trays",
+          "Value": "18"
+        },
+        {
+          "Name": "catalogue: cable trays in the host",
+          "Value": "7"
+        },
+        {
+          "Name": "catalogue: their types",
+          "Value": "2"
+        },
+        {
+          "Name": "catalogue: the parameter this case marks",
+          "Value": "\u041A\u043E\u043C\u043C\u0435\u043D\u0442\u0430\u0440\u0438\u0438 \u043A \u0442\u0438\u043F\u043E\u0440\u0430\u0437\u043C\u0435\u0440\u0443"
+        },
+        {
+          "Name": "catalogue: tray types marked",
+          "Value": "1"
+        },
+        {
+          "Name": "catalogue: trays their marks admit",
+          "Value": "5"
+        },
+        {
+          "Name": "catalogue: what the screen says",
+          "Value": "Nothing counts as a carrier in 1 of the categories this project declared: \u041A\u0430\u0431\u0435\u043B\u044C\u043D\u044B\u0435 \u043B\u043E\u0442\u043A\u0438 (BHS-TEST-NO-SUCH-PARAMETER = BHS-TEST-CARRIER, 0 of 13). A rule that matches nothing reads exactly like a model that holds nothing. This project states its own carrier categories instead of the shipped trays and conduits: \u041A\u0430\u0431\u0435\u043B\u044C\u043D\u044B\u0435 \u043B\u043E\u0442\u043A\u0438 (tray, BHS-TEST-NO-SUCH-PARAMETER = BHS-TEST-CARRIER, 0 of 13)."
         },
         {
           "Name": "census: documents walked",
@@ -1474,7 +1518,7 @@
         },
         {
           "Name": "census: elapsed, ms",
-          "Value": "74"
+          "Value": "42"
         },
         {
           "Name": "circuit ends: electrical systems",
@@ -1514,7 +1558,7 @@
         },
         {
           "Name": "circuit ends: elapsed, ms",
-          "Value": "38"
+          "Value": "20"
         },
         {
           "Name": "circuits on the panel used",
@@ -2338,15 +2382,15 @@
         },
         {
           "Name": "splicing plan: types of those carriers",
-          "Value": "1"
+          "Value": "2"
         },
         {
           "Name": "splicing plan: boxes after marking",
-          "Value": "5"
+          "Value": "4"
         },
         {
           "Name": "splicing plan: splices after marking",
-          "Value": "1"
+          "Value": "2"
         },
         {
           "Name": "capacity: device categories the read found",
@@ -2686,7 +2730,7 @@
         },
         {
           "Name": "diagnostic events",
-          "Value": "3078 received, 0 dropped by the publisher, longest quiet spell 121.8s during Blocked"
+          "Value": "3178 received, 0 dropped by the publisher, longest quiet spell 27.3s during Starting"
         },
         {
           "Name": "phases seen",
@@ -2769,19 +2813,23 @@
           "Value": "\u0410\u0432\u0442\u043E\u043C\u0430\u0442\u0438\u0447\u0435\u0441\u043A\u043E\u0435 \u0441\u043E\u0435\u0434\u0438\u043D\u0435\u043D\u0438\u0435 \u0438\u0437\u043C\u0435\u043D\u0435\u043D\u043D\u044B\u0445 \u044D\u043B\u0435\u043C\u0435\u043D\u0442\u043E\u0432"
         },
         {
+          "Name": "progress caption",
+          "Value": "\u0424\u043E\u0440\u043C\u0438\u0440\u043E\u0432\u0430\u043D\u0438\u0435 \u0433\u0440\u0430\u0444\u0438\u043A\u0438 \u0434\u043B\u044F 3D \u0432\u0438\u0434: ???"
+        },
+        {
           "Name": "modal dialog",
           "Value": "TaskDialog_Stop_Operation"
         },
         {
           "Name": "closed after",
-          "Value": "23.2s"
+          "Value": "22.6s"
         }
       ]
     },
     {
       "Release": 2025,
       "FileVersion": "0.1.0.0",
-      "BuiltUtc": "2026-09-21T22:12:11.5791967Z",
+      "BuiltUtc": "2026-09-22T02:38:49.5898667Z",
       "Signed": true,
       "Checks": [
         {
@@ -3201,6 +3249,18 @@
           "Ok": true
         },
         {
+          "Name": "Cabling: a catalogue the project states replaces the shipped one, and its categories are the only ones read",
+          "Ok": true
+        },
+        {
+          "Name": "Cabling: an element counts as a carrier only when its type says what the project asked it to say",
+          "Ok": true
+        },
+        {
+          "Name": "Cabling: a carrier rule that admits nothing is named on the screen, and a shipped catalogue says nothing",
+          "Ok": true
+        },
+        {
           "Name": "Connector census: every connector of the family instances, MEP curves, fabrication parts and MEP systems of the host and of each link it loads directly reads its type and domain, every physical one answers whether it is connected, and every other property asked of any of them reads or refuses with Revit\u0027s InvalidOperationException itself",
           "Ok": true
         },
@@ -3413,11 +3473,11 @@
         },
         {
           "Name": "launched",
-          "Value": "pid 61824"
+          "Value": "pid 2204"
         },
         {
           "Name": "registered after",
-          "Value": "14.7s"
+          "Value": "24.5s"
         },
         {
           "Name": "recovered by enumeration",
@@ -3433,11 +3493,11 @@
         },
         {
           "Name": "probe log",
-          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2025-61824-20260922-081603.log"
+          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2025-2204-20260922-124130.log"
         },
         {
           "Name": "threads",
-          "Value": "api 1, call 17"
+          "Value": "api 1, call 25"
         },
         {
           "Name": "appdomain",
@@ -3461,7 +3521,7 @@
         },
         {
           "Name": "log",
-          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2025-61824-20260922-081603.log"
+          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2025-2204-20260922-124130.log"
         },
         {
           "Name": "sinks",
@@ -3473,7 +3533,7 @@
         },
         {
           "Name": "opened after registration",
-          "Value": "22.0s"
+          "Value": "17.5s"
         },
         {
           "Name": "pane:exists",
@@ -3593,7 +3653,7 @@
         },
         {
           "Name": "instance",
-          "Value": "d4271dbf735f46e1837f54835c71c4be"
+          "Value": "93fe0044f00c4eb298ac7efac7bf6407"
         },
         {
           "Name": "link1:linked",
@@ -3641,11 +3701,11 @@
         },
         {
           "Name": "log",
-          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2025-61824-20260922-081603.log"
+          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2025-2204-20260922-124130.log"
         },
         {
           "Name": "pid",
-          "Value": "61824"
+          "Value": "2204"
         },
         {
           "Name": "release",
@@ -3717,15 +3777,15 @@
         },
         {
           "Name": "instance",
-          "Value": "d4271dbf735f46e1837f54835c71c4be"
+          "Value": "93fe0044f00c4eb298ac7efac7bf6407"
         },
         {
           "Name": "log",
-          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2025-61824-20260922-081603.log"
+          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2025-2204-20260922-124130.log"
         },
         {
           "Name": "pid",
-          "Value": "61824"
+          "Value": "2204"
         },
         {
           "Name": "place:after",
@@ -3813,11 +3873,11 @@
         },
         {
           "Name": "instance",
-          "Value": "d4271dbf735f46e1837f54835c71c4be"
+          "Value": "93fe0044f00c4eb298ac7efac7bf6407"
         },
         {
           "Name": "log",
-          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2025-61824-20260922-081603.log"
+          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2025-2204-20260922-124130.log"
         },
         {
           "Name": "modal:apiCallWorked",
@@ -3845,7 +3905,7 @@
         },
         {
           "Name": "modal:awaitResumedAfter",
-          "Value": "0.41s"
+          "Value": "0.40s"
         },
         {
           "Name": "modal:awaitResumedOnApiThread",
@@ -3869,7 +3929,7 @@
         },
         {
           "Name": "modal:shownFor",
-          "Value": "2.49s"
+          "Value": "2.46s"
         },
         {
           "Name": "modal:transactionCommit",
@@ -3901,7 +3961,7 @@
         },
         {
           "Name": "pid",
-          "Value": "61824"
+          "Value": "2204"
         },
         {
           "Name": "release",
@@ -3913,11 +3973,11 @@
         },
         {
           "Name": "instance",
-          "Value": "d4271dbf735f46e1837f54835c71c4be"
+          "Value": "93fe0044f00c4eb298ac7efac7bf6407"
         },
         {
           "Name": "log",
-          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2025-61824-20260922-081603.log"
+          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2025-2204-20260922-124130.log"
         },
         {
           "Name": "modal:measured",
@@ -3929,7 +3989,7 @@
         },
         {
           "Name": "modal:pumpRanAt",
-          "Value": "2.49s"
+          "Value": "2.46s"
         },
         {
           "Name": "modal:windowClosed",
@@ -3937,7 +3997,7 @@
         },
         {
           "Name": "pid",
-          "Value": "61824"
+          "Value": "2204"
         },
         {
           "Name": "release",
@@ -3949,11 +4009,11 @@
         },
         {
           "Name": "instance",
-          "Value": "d4271dbf735f46e1837f54835c71c4be"
+          "Value": "93fe0044f00c4eb298ac7efac7bf6407"
         },
         {
           "Name": "log",
-          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2025-61824-20260922-081603.log"
+          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2025-2204-20260922-124130.log"
         },
         {
           "Name": "parameters:bound",
@@ -4029,7 +4089,7 @@
         },
         {
           "Name": "pid",
-          "Value": "61824"
+          "Value": "2204"
         },
         {
           "Name": "release",
@@ -4078,6 +4138,38 @@
         {
           "Name": "total carrier length, internal feet",
           "Value": "504.693"
+        },
+        {
+          "Name": "catalogue: carriers with the shipped set",
+          "Value": "49"
+        },
+        {
+          "Name": "catalogue: of them trays",
+          "Value": "18"
+        },
+        {
+          "Name": "catalogue: cable trays in the host",
+          "Value": "7"
+        },
+        {
+          "Name": "catalogue: their types",
+          "Value": "2"
+        },
+        {
+          "Name": "catalogue: the parameter this case marks",
+          "Value": "\u041A\u043E\u043C\u043C\u0435\u043D\u0442\u0430\u0440\u0438\u0438 \u043A \u0442\u0438\u043F\u043E\u0440\u0430\u0437\u043C\u0435\u0440\u0443"
+        },
+        {
+          "Name": "catalogue: tray types marked",
+          "Value": "1"
+        },
+        {
+          "Name": "catalogue: trays their marks admit",
+          "Value": "5"
+        },
+        {
+          "Name": "catalogue: what the screen says",
+          "Value": "Nothing counts as a carrier in 1 of the categories this project declared: \u041A\u0430\u0431\u0435\u043B\u044C\u043D\u044B\u0435 \u043B\u043E\u0442\u043A\u0438 (BHS-TEST-NO-SUCH-PARAMETER = BHS-TEST-CARRIER, 0 of 13). A rule that matches nothing reads exactly like a model that holds nothing. This project states its own carrier categories instead of the shipped trays and conduits: \u041A\u0430\u0431\u0435\u043B\u044C\u043D\u044B\u0435 \u043B\u043E\u0442\u043A\u0438 (tray, BHS-TEST-NO-SUCH-PARAMETER = BHS-TEST-CARRIER, 0 of 13)."
         },
         {
           "Name": "census: documents walked",
@@ -4237,7 +4329,7 @@
         },
         {
           "Name": "census: elapsed, ms",
-          "Value": "45"
+          "Value": "34"
         },
         {
           "Name": "circuit ends: electrical systems",
@@ -4277,7 +4369,7 @@
         },
         {
           "Name": "circuit ends: elapsed, ms",
-          "Value": "18"
+          "Value": "14"
         },
         {
           "Name": "circuits on the panel used",
@@ -5105,11 +5197,11 @@
         },
         {
           "Name": "splicing plan: boxes after marking",
-          "Value": "4"
+          "Value": "5"
         },
         {
           "Name": "splicing plan: splices after marking",
-          "Value": "2"
+          "Value": "1"
         },
         {
           "Name": "capacity: device categories the read found",
@@ -5481,7 +5573,7 @@
         },
         {
           "Name": "diagnostic events",
-          "Value": "5319 received, 0 dropped by the publisher, longest quiet spell 3.0s during Working"
+          "Value": "5364 received, 0 dropped by the publisher, longest quiet spell 2.9s during Working"
         },
         {
           "Name": "phases seen",
@@ -5560,15 +5652,19 @@
           "Value": "\u0427\u0435\u0440\u0442\u0435\u0436: TestCabling-\u042D\u041E\u041C.rvt - 3D \u0432\u0438\u0434: {3D}"
         },
         {
+          "Name": "progress caption",
+          "Value": "\u0424\u043E\u0440\u043C\u0438\u0440\u043E\u0432\u0430\u043D\u0438\u0435 \u0433\u0440\u0430\u0444\u0438\u043A\u0438 \u0434\u043B\u044F 3D \u0432\u0438\u0434: ???"
+        },
+        {
           "Name": "closed after",
-          "Value": "4.2s"
+          "Value": "4.5s"
         }
       ]
     },
     {
       "Release": 2026,
       "FileVersion": "0.1.0.0",
-      "BuiltUtc": "2026-09-21T22:12:10.6559652Z",
+      "BuiltUtc": "2026-09-22T02:38:49.1769006Z",
       "Signed": true,
       "Checks": [
         {
@@ -5988,6 +6084,18 @@
           "Ok": true
         },
         {
+          "Name": "Cabling: a catalogue the project states replaces the shipped one, and its categories are the only ones read",
+          "Ok": true
+        },
+        {
+          "Name": "Cabling: an element counts as a carrier only when its type says what the project asked it to say",
+          "Ok": true
+        },
+        {
+          "Name": "Cabling: a carrier rule that admits nothing is named on the screen, and a shipped catalogue says nothing",
+          "Ok": true
+        },
+        {
           "Name": "Connector census: every connector of the family instances, MEP curves, fabrication parts and MEP systems of the host and of each link it loads directly reads its type and domain, every physical one answers whether it is connected, and every other property asked of any of them reads or refuses with Revit\u0027s InvalidOperationException itself",
           "Ok": true
         },
@@ -6200,11 +6308,11 @@
         },
         {
           "Name": "launched",
-          "Value": "pid 29484"
+          "Value": "pid 87368"
         },
         {
           "Name": "registered after",
-          "Value": "27.5s"
+          "Value": "36.5s"
         },
         {
           "Name": "recovered by enumeration",
@@ -6220,11 +6328,11 @@
         },
         {
           "Name": "probe log",
-          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2026-29484-20260922-081701.log"
+          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2026-87368-20260922-124230.log"
         },
         {
           "Name": "threads",
-          "Value": "api 1, call 16"
+          "Value": "api 1, call 7"
         },
         {
           "Name": "appdomain",
@@ -6248,7 +6356,7 @@
         },
         {
           "Name": "log",
-          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2026-29484-20260922-081701.log"
+          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2026-87368-20260922-124230.log"
         },
         {
           "Name": "sinks",
@@ -6260,7 +6368,7 @@
         },
         {
           "Name": "opened after registration",
-          "Value": "71.1s"
+          "Value": "58.5s"
         },
         {
           "Name": "pane:exists",
@@ -6380,7 +6488,7 @@
         },
         {
           "Name": "instance",
-          "Value": "ea2220efc0484ee8b38c46e5bb6c4b9b"
+          "Value": "749440f142d045f38248653cfd61b8b4"
         },
         {
           "Name": "link1:linked",
@@ -6428,11 +6536,11 @@
         },
         {
           "Name": "log",
-          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2026-29484-20260922-081701.log"
+          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2026-87368-20260922-124230.log"
         },
         {
           "Name": "pid",
-          "Value": "29484"
+          "Value": "87368"
         },
         {
           "Name": "release",
@@ -6504,15 +6612,15 @@
         },
         {
           "Name": "instance",
-          "Value": "ea2220efc0484ee8b38c46e5bb6c4b9b"
+          "Value": "749440f142d045f38248653cfd61b8b4"
         },
         {
           "Name": "log",
-          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2026-29484-20260922-081701.log"
+          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2026-87368-20260922-124230.log"
         },
         {
           "Name": "pid",
-          "Value": "29484"
+          "Value": "87368"
         },
         {
           "Name": "place:after",
@@ -6600,11 +6708,11 @@
         },
         {
           "Name": "instance",
-          "Value": "ea2220efc0484ee8b38c46e5bb6c4b9b"
+          "Value": "749440f142d045f38248653cfd61b8b4"
         },
         {
           "Name": "log",
-          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2026-29484-20260922-081701.log"
+          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2026-87368-20260922-124230.log"
         },
         {
           "Name": "modal:apiCallWorked",
@@ -6656,7 +6764,7 @@
         },
         {
           "Name": "modal:shownFor",
-          "Value": "2.35s"
+          "Value": "2.32s"
         },
         {
           "Name": "modal:transactionCommit",
@@ -6688,7 +6796,7 @@
         },
         {
           "Name": "pid",
-          "Value": "29484"
+          "Value": "87368"
         },
         {
           "Name": "release",
@@ -6700,11 +6808,11 @@
         },
         {
           "Name": "instance",
-          "Value": "ea2220efc0484ee8b38c46e5bb6c4b9b"
+          "Value": "749440f142d045f38248653cfd61b8b4"
         },
         {
           "Name": "log",
-          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2026-29484-20260922-081701.log"
+          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2026-87368-20260922-124230.log"
         },
         {
           "Name": "modal:measured",
@@ -6716,7 +6824,7 @@
         },
         {
           "Name": "modal:pumpRanAt",
-          "Value": "2.35s"
+          "Value": "2.32s"
         },
         {
           "Name": "modal:windowClosed",
@@ -6724,7 +6832,7 @@
         },
         {
           "Name": "pid",
-          "Value": "29484"
+          "Value": "87368"
         },
         {
           "Name": "release",
@@ -6736,11 +6844,11 @@
         },
         {
           "Name": "instance",
-          "Value": "ea2220efc0484ee8b38c46e5bb6c4b9b"
+          "Value": "749440f142d045f38248653cfd61b8b4"
         },
         {
           "Name": "log",
-          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2026-29484-20260922-081701.log"
+          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2026-87368-20260922-124230.log"
         },
         {
           "Name": "parameters:bound",
@@ -6816,7 +6924,7 @@
         },
         {
           "Name": "pid",
-          "Value": "29484"
+          "Value": "87368"
         },
         {
           "Name": "release",
@@ -6865,6 +6973,38 @@
         {
           "Name": "total carrier length, internal feet",
           "Value": "504.693"
+        },
+        {
+          "Name": "catalogue: carriers with the shipped set",
+          "Value": "49"
+        },
+        {
+          "Name": "catalogue: of them trays",
+          "Value": "18"
+        },
+        {
+          "Name": "catalogue: cable trays in the host",
+          "Value": "7"
+        },
+        {
+          "Name": "catalogue: their types",
+          "Value": "2"
+        },
+        {
+          "Name": "catalogue: the parameter this case marks",
+          "Value": "\u041A\u043E\u043C\u043C\u0435\u043D\u0442\u0430\u0440\u0438\u0438 \u043A \u0442\u0438\u043F\u043E\u0440\u0430\u0437\u043C\u0435\u0440\u0443"
+        },
+        {
+          "Name": "catalogue: tray types marked",
+          "Value": "1"
+        },
+        {
+          "Name": "catalogue: trays their marks admit",
+          "Value": "5"
+        },
+        {
+          "Name": "catalogue: what the screen says",
+          "Value": "Nothing counts as a carrier in 1 of the categories this project declared: \u041A\u0430\u0431\u0435\u043B\u044C\u043D\u044B\u0435 \u043B\u043E\u0442\u043A\u0438 (BHS-TEST-NO-SUCH-PARAMETER = BHS-TEST-CARRIER, 0 of 13). A rule that matches nothing reads exactly like a model that holds nothing. This project states its own carrier categories instead of the shipped trays and conduits: \u041A\u0430\u0431\u0435\u043B\u044C\u043D\u044B\u0435 \u043B\u043E\u0442\u043A\u0438 (tray, BHS-TEST-NO-SUCH-PARAMETER = BHS-TEST-CARRIER, 0 of 13)."
         },
         {
           "Name": "census: documents walked",
@@ -7024,7 +7164,7 @@
         },
         {
           "Name": "census: elapsed, ms",
-          "Value": "57"
+          "Value": "33"
         },
         {
           "Name": "circuit ends: electrical systems",
@@ -7064,7 +7204,7 @@
         },
         {
           "Name": "circuit ends: elapsed, ms",
-          "Value": "22"
+          "Value": "14"
         },
         {
           "Name": "circuits on the panel used",
@@ -7892,11 +8032,11 @@
         },
         {
           "Name": "splicing plan: boxes after marking",
-          "Value": "4"
+          "Value": "5"
         },
         {
           "Name": "splicing plan: splices after marking",
-          "Value": "2"
+          "Value": "1"
         },
         {
           "Name": "capacity: device categories the read found",
@@ -8232,7 +8372,7 @@
         },
         {
           "Name": "diagnostic events",
-          "Value": "5200 received, 0 dropped by the publisher, longest quiet spell 45.9s during Starting"
+          "Value": "5326 received, 0 dropped by the publisher, longest quiet spell 35.2s during Starting"
         },
         {
           "Name": "phases seen",
@@ -8315,15 +8455,19 @@
           "Value": "\u0410\u0432\u0442\u043E\u043C\u0430\u0442\u0438\u0447\u0435\u0441\u043A\u043E\u0435 \u0441\u043E\u0435\u0434\u0438\u043D\u0435\u043D\u0438\u0435 \u0438\u0437\u043C\u0435\u043D\u0435\u043D\u043D\u044B\u0445 \u044D\u043B\u0435\u043C\u0435\u043D\u0442\u043E\u0432"
         },
         {
+          "Name": "progress caption",
+          "Value": "\u0424\u043E\u0440\u043C\u0438\u0440\u043E\u0432\u0430\u043D\u0438\u0435 \u0433\u0440\u0430\u0444\u0438\u043A\u0438 \u0434\u043B\u044F 3D \u0432\u0438\u0434: ???"
+        },
+        {
           "Name": "closed after",
-          "Value": "17.0s"
+          "Value": "19.9s"
         }
       ]
     },
     {
       "Release": 2027,
       "FileVersion": "0.1.0.0",
-      "BuiltUtc": "2026-09-21T22:12:10.5175299Z",
+      "BuiltUtc": "2026-09-22T02:38:48.7246695Z",
       "Signed": true,
       "Checks": [
         {
@@ -8743,6 +8887,18 @@
           "Ok": true
         },
         {
+          "Name": "Cabling: a catalogue the project states replaces the shipped one, and its categories are the only ones read",
+          "Ok": true
+        },
+        {
+          "Name": "Cabling: an element counts as a carrier only when its type says what the project asked it to say",
+          "Ok": true
+        },
+        {
+          "Name": "Cabling: a carrier rule that admits nothing is named on the screen, and a shipped catalogue says nothing",
+          "Ok": true
+        },
+        {
           "Name": "Connector census: every connector of the family instances, MEP curves, fabrication parts and MEP systems of the host and of each link it loads directly reads its type and domain, every physical one answers whether it is connected, and every other property asked of any of them reads or refuses with Revit\u0027s InvalidOperationException itself",
           "Ok": true
         },
@@ -8955,11 +9111,11 @@
         },
         {
           "Name": "launched",
-          "Value": "pid 85232"
+          "Value": "pid 14688"
         },
         {
           "Name": "registered after",
-          "Value": "20.1s"
+          "Value": "32.9s"
         },
         {
           "Name": "recovered by enumeration",
@@ -8975,11 +9131,11 @@
         },
         {
           "Name": "probe log",
-          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2027-85232-20260922-081917.log"
+          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2027-14688-20260922-124445.log"
         },
         {
           "Name": "threads",
-          "Value": "api 2, call 18"
+          "Value": "api 2, call 5"
         },
         {
           "Name": "appdomain",
@@ -9003,7 +9159,7 @@
         },
         {
           "Name": "log",
-          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2027-85232-20260922-081917.log"
+          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2027-14688-20260922-124445.log"
         },
         {
           "Name": "sinks",
@@ -9015,7 +9171,7 @@
         },
         {
           "Name": "opened after registration",
-          "Value": "76.3s"
+          "Value": "58.4s"
         },
         {
           "Name": "pane:exists",
@@ -9135,7 +9291,7 @@
         },
         {
           "Name": "instance",
-          "Value": "1e278eb8459f41f8af6a2449181b0622"
+          "Value": "6bb388263a944eaeb6cf7f3d211bd3ba"
         },
         {
           "Name": "link1:linked",
@@ -9183,11 +9339,11 @@
         },
         {
           "Name": "log",
-          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2027-85232-20260922-081917.log"
+          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2027-14688-20260922-124445.log"
         },
         {
           "Name": "pid",
-          "Value": "85232"
+          "Value": "14688"
         },
         {
           "Name": "release",
@@ -9259,15 +9415,15 @@
         },
         {
           "Name": "instance",
-          "Value": "1e278eb8459f41f8af6a2449181b0622"
+          "Value": "6bb388263a944eaeb6cf7f3d211bd3ba"
         },
         {
           "Name": "log",
-          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2027-85232-20260922-081917.log"
+          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2027-14688-20260922-124445.log"
         },
         {
           "Name": "pid",
-          "Value": "85232"
+          "Value": "14688"
         },
         {
           "Name": "place:after",
@@ -9355,11 +9511,11 @@
         },
         {
           "Name": "instance",
-          "Value": "1e278eb8459f41f8af6a2449181b0622"
+          "Value": "6bb388263a944eaeb6cf7f3d211bd3ba"
         },
         {
           "Name": "log",
-          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2027-85232-20260922-081917.log"
+          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2027-14688-20260922-124445.log"
         },
         {
           "Name": "modal:apiCallWorked",
@@ -9411,7 +9567,7 @@
         },
         {
           "Name": "modal:shownFor",
-          "Value": "2.40s"
+          "Value": "2.36s"
         },
         {
           "Name": "modal:transactionCommit",
@@ -9443,7 +9599,7 @@
         },
         {
           "Name": "pid",
-          "Value": "85232"
+          "Value": "14688"
         },
         {
           "Name": "release",
@@ -9455,11 +9611,11 @@
         },
         {
           "Name": "instance",
-          "Value": "1e278eb8459f41f8af6a2449181b0622"
+          "Value": "6bb388263a944eaeb6cf7f3d211bd3ba"
         },
         {
           "Name": "log",
-          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2027-85232-20260922-081917.log"
+          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2027-14688-20260922-124445.log"
         },
         {
           "Name": "modal:measured",
@@ -9471,7 +9627,7 @@
         },
         {
           "Name": "modal:pumpRanAt",
-          "Value": "2.40s"
+          "Value": "2.36s"
         },
         {
           "Name": "modal:windowClosed",
@@ -9479,7 +9635,7 @@
         },
         {
           "Name": "pid",
-          "Value": "85232"
+          "Value": "14688"
         },
         {
           "Name": "release",
@@ -9491,11 +9647,11 @@
         },
         {
           "Name": "instance",
-          "Value": "1e278eb8459f41f8af6a2449181b0622"
+          "Value": "6bb388263a944eaeb6cf7f3d211bd3ba"
         },
         {
           "Name": "log",
-          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2027-85232-20260922-081917.log"
+          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2027-14688-20260922-124445.log"
         },
         {
           "Name": "parameters:bound",
@@ -9571,7 +9727,7 @@
         },
         {
           "Name": "pid",
-          "Value": "85232"
+          "Value": "14688"
         },
         {
           "Name": "release",
@@ -9620,6 +9776,38 @@
         {
           "Name": "total carrier length, internal feet",
           "Value": "504.693"
+        },
+        {
+          "Name": "catalogue: carriers with the shipped set",
+          "Value": "49"
+        },
+        {
+          "Name": "catalogue: of them trays",
+          "Value": "18"
+        },
+        {
+          "Name": "catalogue: cable trays in the host",
+          "Value": "7"
+        },
+        {
+          "Name": "catalogue: their types",
+          "Value": "2"
+        },
+        {
+          "Name": "catalogue: the parameter this case marks",
+          "Value": "\u041A\u043E\u043C\u043C\u0435\u043D\u0442\u0430\u0440\u0438\u0438 \u043A \u0442\u0438\u043F\u043E\u0440\u0430\u0437\u043C\u0435\u0440\u0443"
+        },
+        {
+          "Name": "catalogue: tray types marked",
+          "Value": "1"
+        },
+        {
+          "Name": "catalogue: trays their marks admit",
+          "Value": "5"
+        },
+        {
+          "Name": "catalogue: what the screen says",
+          "Value": "Nothing counts as a carrier in 1 of the categories this project declared: \u041A\u0430\u0431\u0435\u043B\u044C\u043D\u044B\u0435 \u043B\u043E\u0442\u043A\u0438 (BHS-TEST-NO-SUCH-PARAMETER = BHS-TEST-CARRIER, 0 of 13). A rule that matches nothing reads exactly like a model that holds nothing. This project states its own carrier categories instead of the shipped trays and conduits: \u041A\u0430\u0431\u0435\u043B\u044C\u043D\u044B\u0435 \u043B\u043E\u0442\u043A\u0438 (tray, BHS-TEST-NO-SUCH-PARAMETER = BHS-TEST-CARRIER, 0 of 13)."
         },
         {
           "Name": "census: documents walked",
@@ -9779,7 +9967,7 @@
         },
         {
           "Name": "census: elapsed, ms",
-          "Value": "39"
+          "Value": "33"
         },
         {
           "Name": "circuit ends: electrical systems",
@@ -9819,7 +10007,7 @@
         },
         {
           "Name": "circuit ends: elapsed, ms",
-          "Value": "18"
+          "Value": "15"
         },
         {
           "Name": "circuits on the panel used",
@@ -10643,7 +10831,7 @@
         },
         {
           "Name": "splicing plan: types of those carriers",
-          "Value": "2"
+          "Value": "1"
         },
         {
           "Name": "splicing plan: boxes after marking",
@@ -11271,7 +11459,7 @@
         },
         {
           "Name": "diagnostic events",
-          "Value": "5419 received, 0 dropped by the publisher, longest quiet spell 50.6s during Starting"
+          "Value": "5420 received, 0 dropped by the publisher, longest quiet spell 31.6s during Starting"
         },
         {
           "Name": "phases seen",
@@ -11359,11 +11547,11 @@
         },
         {
           "Name": "closed after",
-          "Value": "13.3s"
+          "Value": "12.9s"
         }
       ]
     }
   ],
-  "Performed": 620,
+  "Performed": 632,
   "Failed": 0
 }
