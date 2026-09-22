@@ -61,6 +61,7 @@ public sealed class RoutingViewModel : INotifyPropertyChanged
     private double _total;
     private RouteRun? _run;
     private string _failure = string.Empty;
+    private readonly Func<string>? _catalogue;
     private readonly Func<CancellationToken, Task<ApplyReport>>? _apply;
     private ApplyReport? _applied;
     private bool _applying;
@@ -76,16 +77,23 @@ public sealed class RoutingViewModel : INotifyPropertyChanged
     /// appears rather than appearing and refusing.
     /// </param>
     /// <param name="existingBoxesOnly">What the project says today, which is where the check box starts.</param>
+    /// <param name="catalogue">
+    /// What the project counts as a carrier, asked after each read. A function rather than a value
+    /// because changing the mode reads the model again: a string handed over once would describe the
+    /// read before last.
+    /// </param>
     public RoutingViewModel(
         Func<bool, IProgress<RoutingProgress>, CancellationToken, Task<RouteRun>> compute,
         Func<double, string> length,
         Func<CancellationToken, Task<ApplyReport>>? apply = null,
-        bool existingBoxesOnly = false)
+        bool existingBoxesOnly = false,
+        Func<string>? catalogue = null)
     {
         _compute = compute;
         _length = length;
         _apply = apply;
         _existingBoxesOnly = existingBoxesOnly;
+        _catalogue = catalogue;
     }
 
     public event PropertyChangedEventHandler? PropertyChanged;
@@ -161,6 +169,26 @@ public sealed class RoutingViewModel : INotifyPropertyChanged
     }
 
     public bool HasResult => Run is not null;
+
+    /// <summary>
+    /// What the project counts as a carrier, when that is worth saying. Empty otherwise.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <b>Written by the side that has a document, and only a string arrives here</b> - the same
+    /// arrangement as <see cref="ApplyReport"/>, and for the same reason: a category has a display
+    /// name only Revit can give, and this assembly may not name a Revit type at all.
+    /// </para>
+    /// <para>
+    /// <b>Silent on a project that never stated a catalogue and whose categories all yielded
+    /// something.</b> A line naming the four shipped categories after every run would be true and
+    /// would bury the lines that are findings - which is the rule this window already follows for
+    /// cable groups and for box capacity.
+    /// </para>
+    /// </remarks>
+    public string CatalogueSummary => Run is null ? string.Empty : _catalogue?.Invoke() ?? string.Empty;
+
+    public bool HasCatalogueSummary => CatalogueSummary.Length > 0;
 
     /// <summary>What went wrong, when something did. Empty otherwise.</summary>
     public string Failure
@@ -703,6 +731,8 @@ public sealed class RoutingViewModel : INotifyPropertyChanged
                 Raise(nameof(HasCapacitySummary));
                 Raise(nameof(GroupSummary));
                 Raise(nameof(HasGroupSummary));
+                Raise(nameof(CatalogueSummary));
+                Raise(nameof(HasCatalogueSummary));
                 Raise(nameof(Reading));
                 Raise(nameof(HasReading));
                 Raise(nameof(Causes));
@@ -713,6 +743,7 @@ public sealed class RoutingViewModel : INotifyPropertyChanged
             case nameof(Failure):
                 Raise(nameof(HasFailure));
                 break;
+
         }
     }
 

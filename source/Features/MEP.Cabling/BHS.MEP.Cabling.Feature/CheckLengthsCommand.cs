@@ -106,7 +106,7 @@ public sealed class CheckLengthsCommand : IFeatureCommand
         var version = Interlocked.Increment(ref _version);
         var clock = Stopwatch.StartNew();
         var snapshot = CablingSnapshot.Build(
-            document, options, new CarrierCatalogue(), version, project.Boxes, project.DefaultConnection, project.CableGroup);
+            document, options, project.Carriers, version, project.Boxes, project.DefaultConnection, project.CableGroup);
 
         var circuits = snapshot.Circuits.Described;
         var stored = StoredRoutes.Read(document, circuits.Select(one => one.Id));

@@ -104,6 +104,21 @@
         </RevitRibbonButton>
 
         <!--
+          Which of this model's elements carry cable. It writes into the model's own settings layer,
+          which nothing else can reach: without this button the shipped trays and conduits would be
+          the only catalogue any project could ever have. Sixth on the panel, after the four commands
+          that read and the pane that shows - a rule is set once and looked at rarely.
+        -->
+        <RevitRibbonButton Include="BHS.Cabling.Carriers">
+            <Panel>Cabling</Panel>
+            <Text>Carriers.Text</Text>
+            <ClassName>BHS.MEP.Cabling.Entry.CarrierCatalogueEntryPoint</ClassName>
+            <AvailabilityClassName>BHS.MEP.Cabling.Entry.CablingNeedsProjectDocument</AvailabilityClassName>
+            <ToolTip>Carriers.ToolTip</ToolTip>
+            <Order>6</Order>
+        </RevitRibbonButton>
+
+        <!--
           The cabling inspector: what the calculation wrote on the selected element, read from the model.
           The id is fixed forever - Revit keeps the dock layout a person built under it. Right-docked at the
           width of the properties palette, hidden until its button shows it, and dismissed in the family

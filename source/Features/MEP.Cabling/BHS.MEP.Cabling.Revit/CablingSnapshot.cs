@@ -38,8 +38,10 @@ public sealed class CablingSnapshot
         bool markerTypeKnown = false,
         IReadOnlyList<ExistingBox>? boxes = null,
         int boxesUnconnected = 0,
-        IReadOnlyList<long>? boxesUnconnectedIds = null)
+        IReadOnlyList<long>? boxesUnconnectedIds = null,
+        IReadOnlyList<CarrierTally>? tallies = null)
     {
+        Tallies = tallies ?? Array.Empty<CarrierTally>();
         Boxes = boxes ?? Array.Empty<ExistingBox>();
         BoxesUnconnected = boxesUnconnected;
         BoxesUnconnectedIds = boxesUnconnectedIds ?? Array.Empty<long>();
@@ -53,6 +55,16 @@ public sealed class CablingSnapshot
         MarkersExcluded = markersExcluded;
         MarkerTypeKnown = markerTypeKnown;
     }
+
+    /// <summary>What each declared carrier category offered, and how much of it counted.</summary>
+    /// <remarks>
+    /// <b>Travels with the read rather than being recomputed, because it is a fact about the read.</b>
+    /// A project that filtered a category by a type parameter has no other way of learning that the
+    /// filter matched nothing: the run simply comes back short, which looks like a model with no
+    /// structure in it. Asking the model again afterwards would ask a different question - it would
+    /// not know which elements this read excluded as markers of ours.
+    /// </remarks>
+    public IReadOnlyList<CarrierTally> Tallies { get; }
 
     public RouteNetwork Network { get; }
 
@@ -167,6 +179,7 @@ public sealed class CablingSnapshot
             reader.MarkerTypeKnown,
             reader.Boxes,
             reader.BoxesUnconnected,
-            reader.BoxesUnconnectedIds);
+            reader.BoxesUnconnectedIds,
+            reader.Tallies);
     }
 }

@@ -89,6 +89,18 @@ public sealed class CarrierReader
     /// </remarks>
     public int Skipped { get; private set; }
 
+    /// <summary>How many elements each declared category offered, and how many of them counted.</summary>
+    /// <remarks>
+    /// <b>Because a filter that matches nothing looks exactly like a category that is empty.</b> A
+    /// project naming a type parameter it spelled differently, or a value it later renamed, gets no
+    /// carriers out of that category and no error - the run simply reports circuits it could not
+    /// route, which sends somebody to look at the model for a fault that is in the settings. The
+    /// tally is what lets the screen say "412 ducts, 0 of them carriers" instead.
+    /// </remarks>
+    public IReadOnlyList<CarrierTally> Tallies => _tallies.Values.ToList();
+
+    private readonly Dictionary<BuiltInCategory, CarrierTally> _tallies = new();
+
     /// <summary>Reads every carrier of every configured category, in host coordinates.</summary>
     /// <param name="document">The model to read - the host, or a link's own document.</param>
     /// <param name="source">Zero for the host; the link instance's id for a link.</param>
@@ -119,6 +131,14 @@ public sealed class CarrierReader
         {
             var carrierClass = _catalogue.ClassOf(category);
             var open = _catalogue.IsOpenAlongItsLength(carrierClass);
+            var filter = _catalogue.FilterOf(category);
+
+            // Per category as well as per document, because the parameter is the category's: one
+            // project may mark its ducts by system and its trays not at all.
+            var marking = new CarrierMarkingReader(document, filter);
+
+            if (!_tallies.TryGetValue(category, out var tally))
+                _tallies[category] = tally = new CarrierTally(category, carrierClass, filter);
 
             var found = new FilteredElementCollector(document)
                 .OfCategory(category)
@@ -134,6 +154,16 @@ public sealed class CarrierReader
                     Markers++;
                     continue;
                 }
+
+                tally.Saw();
+
+                // Asked before the element is described rather than after, because describing it
+                // walks its connectors: the ventilation of a large model is thousands of elements
+                // this project has said it does not care about.
+                if (!marking.Admits(element))
+                    continue;
+
+                tally.Admitted();
 
                 var node = Read(
                     element,
@@ -158,6 +188,11 @@ public sealed class CarrierReader
 
                 yield return node;
             }
+
+            // After this category's walk, for the reason the unconnected count is taken after the
+            // document's: the reader fills as it goes, and a number read earlier describes less than
+            // it claims to.
+            tally.Refused(marking.Incomparable);
         }
 
         // After the walk, not inside it: this is an iterator, and a caller that stops early has read
@@ -377,4 +412,48 @@ public sealed class CarrierReader
 
         return curve.Width * curve.Height;
     }
+}
+
+/// <summary>What one declared category offered a read, and how much of it counted.</summary>
+/// <remarks>
+/// <b>Kept for every declared category, not only the filtered ones.</b> A category that yielded
+/// nothing is worth saying out loud either way: with a filter it is probably a rule that matches
+/// nothing, without one it is a model that holds none - and the two readings send a person to two
+/// different places. The number is what tells them apart, so the number travels.
+/// </remarks>
+public sealed class CarrierTally
+{
+    public CarrierTally(BuiltInCategory category, string carrierClass, CarrierFilter filter)
+    {
+        Category = category;
+        Class = carrierClass;
+        Filter = filter;
+    }
+
+    /// <summary>The category, as the project declared it.</summary>
+    public BuiltInCategory Category { get; }
+
+    /// <summary>What class it counts as.</summary>
+    public string Class { get; }
+
+    /// <summary>What its elements had to say about themselves, or <see cref="CarrierFilter.None"/>.</summary>
+    public CarrierFilter Filter { get; }
+
+    /// <summary>Elements of this category the read met, across the host and every link.</summary>
+    public int Seen { get; private set; }
+
+    /// <summary>How many of them the filter let through.</summary>
+    public int Counted { get; private set; }
+
+    /// <summary>Elements whose type holds the named parameter in a form no comparison can read.</summary>
+    public int Incomparable { get; private set; }
+
+    /// <summary>Whether the category was declared with a filter and nothing satisfied it.</summary>
+    public bool Empty => !Filter.Absent && Seen != 0 && Counted == 0;
+
+    internal void Saw() => Seen++;
+
+    internal void Admitted() => Counted++;
+
+    internal void Refused(int incomparable) => Incomparable += incomparable;
 }

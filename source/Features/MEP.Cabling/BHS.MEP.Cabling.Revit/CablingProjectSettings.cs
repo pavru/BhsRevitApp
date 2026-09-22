@@ -143,6 +143,7 @@ public sealed class CablingProjectSettings
 
     private CablingProjectSettings(
         RecommendedBoxes boxes,
+        CarrierCatalogue carriers,
         CircuitConnection connection,
         double boxRadius,
         bool existingBoxesOnly,
@@ -154,6 +155,7 @@ public sealed class CablingProjectSettings
         string unreadable)
     {
         Boxes = boxes;
+        Carriers = carriers;
         DefaultConnection = connection;
         Slack = slack;
         BoxRadius = boxRadius;
@@ -167,6 +169,14 @@ public sealed class CablingProjectSettings
 
     /// <summary>Which family stands for a recommended box.</summary>
     public RecommendedBoxes Boxes { get; }
+
+    /// <summary>Which categories carry this project's cable, and which of their elements count.</summary>
+    /// <remarks>
+    /// Read here with its neighbours rather than built at each call site, which is what the four
+    /// commands did until 2026-09-22: each said <c>new CarrierCatalogue()</c>, so the project's own
+    /// answer had nowhere to arrive and the catalogue was a constant with a configurable shape.
+    /// </remarks>
+    public CarrierCatalogue Carriers { get; }
 
     /// <summary>The project's answer for a circuit whose own parameter and panel's are both empty.</summary>
     public CircuitConnection DefaultConnection { get; }
@@ -257,8 +267,17 @@ public sealed class CablingProjectSettings
         // is the one rule it does share with the terminal.
         var boxCapacity = model.Number(BoxCapacityKey, 0);
 
+        // The catalogue reports its own unreadable rules, and they join the rest of the line: a
+        // category nobody recognises and a connection nobody can parse are the same kind of news,
+        // and a person reading the screen should not have to learn two places to look.
+        var carriers = CarrierCatalogue.Read(model);
+
+        if (carriers.Unreadable.Length != 0)
+            unreadable = unreadable.Length == 0 ? carriers.Unreadable : unreadable + "; " + carriers.Unreadable;
+
         return new CablingProjectSettings(
             RecommendedBoxes.Read(model),
+            carriers,
             connection,
             radius,
             existingBoxesOnly,

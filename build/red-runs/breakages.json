@@ -628,5 +628,59 @@
     "risk": "A model where every linked element carries one circuit answers the same both ways; the case notes the pairs beside the count, so a green would say so.",
     "alsoReddens": [],
     "hides": []
+  },
+  {
+    "run": 17,
+    "case": "a catalogue the project states replaces the shipped one, and its categories are the only ones read",
+    "file": "source/Features/MEP.Cabling/BHS.MEP.Cabling.Revit/CarrierCatalogue.cs",
+    "anchor": "        var classes = new Dictionary<BuiltInCategory, string>();",
+    "replacement": "        var classes = new Dictionary<BuiltInCategory, string>();\n        foreach (var shipped in Defaults) classes[shipped.Key] = shipped.Value;",
+    "reddens": "categories a project that stated two collects: expected 2, got 4",
+    "rationale": "Seeds the catalogue with the shipped four before reading what the project said, which turns replacing into adding. That is the owner's answer of 2026-09-22 reversed, and it is the half that fails silently: every project that never stated a catalogue reads exactly as before, every project that stated one gets everything it asked for plus everything it did not, and the only symptom is routes through categories the project deliberately stopped counting. It is also the plausible edit - adding is the safe-looking choice, and a reviewer would read the loop as a sensible default rather than as a reversal.",
+    "leftUnproven": "The two assertions after it: \"carriers read by a catalogue naming only the two tray categories\", which is the equality this case exists for, and \"a carrier of a class the project never declared was read all the same\". Both would also be red under this breakage - the conduits come back - but a red assertion stops its case, so only the count of declared categories is proven here.",
+    "risk": "Measured, not predicted: on the linked set this reddens only its own case. It changes what the other two catalogue cases read - both declare a catalogue, so both get the shipped four back as well - but neither's first assertion depends on the undeclared categories: the filtered-tray case looks up its two tallies by category and finds them, and the empty-rule case asks about the tray tally alone. Cannot throw: the loop writes into a dictionary that is about to be overwritten key by key.",
+    "alsoReddens": [],
+    "hides": []
+  },
+  {
+    "run": 17,
+    "case": "a carrier rule that admits nothing is named on the screen, and a shipped catalogue says nothing",
+    "file": "source/Features/MEP.Cabling/BHS.MEP.Cabling.Revit/CarrierReport.cs",
+    "anchor": "        if (!declared && empty.Count == 0 && incomparable.Count == 0)",
+    "replacement": "        if (!declared)",
+    "reddens": "the screen says nothing about a rule that turned away every element of its category",
+    "rationale": "Makes the report speak only about a catalogue the project stated, never about a rule that admits nothing. The owner's answer of 2026-09-22 was that a category yielding no carriers is a warning, and this is the whole of that warning: Revit's own mechanism cannot carry it - the registered text is all Revit shows, so it could not name the category, and there is no element to point it at. With this line narrowed, a mistyped parameter name produces a run that comes back short and a screen that explains nothing, which is indistinguishable from a model with no structure in it.",
+    "leftUnproven": "The three assertions after it: that the finding names the category, that it says how many elements were turned away - the number being what tells a bad rule from an empty category - and that a stated catalogue is reported at all. The assertions before it do run and pass, including the control that a shipped catalogue produces an empty string and the count of trays the bogus rule admitted.",
+    "risk": "This case was rewritten before the run precisely because of this breakage: as first written it asserted against the report taken with the project's own declared flag, and a stated catalogue is listed whatever its rules admit - so the listing names the category and prints its counts, and the assertions passed with the empty-rule branch deleted. The case now asks a second time with declared:false, where the finding is the only thing left that can speak. Without that change this breakage would have given zero red, which is the outcome worth recording.",
+    "alsoReddens": [],
+    "hides": []
+  },
+  {
+    "run": 17,
+    "case": "an element counts as a carrier only when its type says what the project asked it to say",
+    "file": "source/Features/MEP.Cabling/BHS.MEP.Cabling.Revit/CarrierCount.cs",
+    "anchor": "        var links = new FilteredElementCollector(host)\n            .OfClass(typeof(RevitLinkInstance))\n            .Cast<RevitLinkInstance>();\n\n        foreach (var link in links)\n        {\n            if (link.GetLinkDocument() is { } linked)\n                Count(linked, boxes, category, filter, ref seen, ref counted);\n        }\n\n        return (seen, counted);",
+    "replacement": "        return (seen, counted);",
+    "reddens": "cable trays the catalogue window would say the rule sees: expected 13, got 7",
+    "rationale": "Makes the count behind the catalogue window walk the host and stop. The window's whole purpose is that the number beside a rule predicts the run, and the run reads the host and every loaded link - so a host-only count understates every project whose carriers live in a link, which is the ordinary case rather than the exotic one. It is the plausible edit: a count is obviously about the model, and the links are the part somebody writing a preview forgets.",
+    "leftUnproven": "Nothing in this case - it is the last assertion. Everything before it runs and passes: the marks are written and committed, the filtered read admits exactly the elements of the marked types, the rule admits fewer than it sees, the unfiltered fitting category counts the same as under the shipped catalogue, and the preview's own admitted count still agrees, because the links hold no marked types and contribute nothing to it.",
+    "risk": "It reddens only where links actually hold elements of the category - on a model whose carriers are all in the host, both numbers would agree and nothing would be proven. Measured on the linked set on 2026-09-22: 13 cable trays across host and links, 7 in the host, so six live in a link and the assertion falls. Cannot throw: the method simply returns earlier.",
+    "alsoReddens": [],
+    "hides": []
+  },
+  {
+    "run": 18,
+    "case": "an element counts as a carrier only when its type says what the project asked it to say",
+    "file": "source/Features/MEP.Cabling/BHS.MEP.Cabling.Revit/CarrierCatalogue.cs",
+    "anchor": "        if (_filter.Absent)\n            return true;\n\n        if (element is null)",
+    "replacement": "        if (_filter.Absent || true)\n            return true;\n\n        if (element is null)",
+    "reddens": "cable trays admitted by a rule that only marked types satisfy: expected 5, got 13",
+    "rationale": "Makes the filter admit everything, which is the whole of the owner's answer of 2026-09-22 undone in one clause. It is the failure that cannot announce itself: every category counts whole again, so no route is missing and no warning is raised - a project that drew its cable channels as ducts simply has its cable run through the ventilation, and the lengths that come out are plausible. Nothing but a case that marks half the types and counts the difference can see it.",
+    "leftUnproven": "Everything after the first assertion: that the rule admits fewer elements than it sees, that a category the project asked nothing of still counts whole, and both of the window's promises - that its preview's counted and seen numbers agree with the read. Those are reached by run 17's third breakage instead, which passes every assertion before them.",
+    "risk": "Measured, not predicted: it also reddens the empty-rule case, on \"cable trays admitted by a rule naming a parameter no type has: expected 0, got 13\" - the same cause said twice, since a rule naming a parameter no type has admits everything too. Neither red is masked by the other and both name their own assertion. Compiles with no warning on all four TFMs: a constant-true disjunct leaves no unreachable statement, unlike deleting the branch. Cannot throw.",
+    "alsoReddens": [
+      "a carrier rule that admits nothing is named on the screen, and a shipped catalogue says nothing"
+    ],
+    "hides": []
   }
 ]

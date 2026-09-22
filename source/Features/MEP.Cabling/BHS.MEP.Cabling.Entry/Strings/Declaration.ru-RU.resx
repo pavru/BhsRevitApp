@@ -49,4 +49,10 @@
   <data name="Inspector.ToolTip" xml:space="preserve">
     <value>Показывает и скрывает панель с тем, что расчёт кабелей записал на выбранный элемент: длину и маршрут цепи, цепи в лотке, трубе или коробке, рекомендацию индикатора.</value>
   </data>
+  <data name="Carriers.Text" xml:space="preserve">
+    <value>Носители</value>
+  </data>
+  <data name="Carriers.ToolTip" xml:space="preserve">
+    <value>Задаёт, какие категории этой модели несут кабель и какие их элементы считаются носителями. Правила принадлежат модели, поэтому все, кто её откроет, получат один ответ.</value>
+  </data>
 </root>
