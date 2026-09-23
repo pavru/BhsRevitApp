@@ -1,16 +1,16 @@
 {
   "Schema": 2,
   "Disclaimer": "Recorded on a developer machine. Revit cannot run on hosted CI, so CI verifies this record rather than reproducing it: no automated check here has ever started a Revit.",
-  "Commit": "fdd658cf8d56811e118e70f2aa310077b2ba5d59",
+  "Commit": "217dbfa2f452cb658759de67334cbc0671bd323d",
   "CommitClean": true,
   "Content": {
-    "source/Revit": "aabd41b14e44c2d1a2854a81d52c2a5c0d34c7f0",
+    "source/Revit": "51b1368d7db3a6d3aec743cb1ff6c731bbe3cf73",
     "source/Shared": "b24cf47b52c82b7083b389e7161f5ecf3e45aa1c",
     "source/WinSide": "5b71abdce4cd8186abf36416137a3dfa7f437a28",
-    "source/Features/MEP.Cabling": "abde253e13c3ebd6ad8db8f9027cbf378d84c8c9",
+    "source/Features/MEP.Cabling": "0b4603dee642443da9796e8e25811ab7bdfb8d0c",
     "build/BHS.Revit.Sdk": "a8575677c417aaaef872bfda5c751f2858df4a0c"
   },
-  "RecordedUtc": "2026-09-22T02:46:16.7004511Z",
+  "RecordedUtc": "2026-09-22T23:51:18.1146764Z",
   "WithModel": true,
   "ShowTab": false,
   "Linked": true,
@@ -18,7 +18,7 @@
     {
       "Release": 2024,
       "FileVersion": "0.1.0.0",
-      "BuiltUtc": "2026-09-22T02:38:46.3289585Z",
+      "BuiltUtc": "2026-09-22T23:44:09.4988238Z",
       "Signed": true,
       "Checks": [
         {
@@ -506,6 +506,10 @@
           "Ok": true
         },
         {
+          "Name": "Cabling apply: every circuit that routed is told how its length is laid by the project\u0027s methods - each slot names its method beside a length above zero or holds nothing, a method with no slot lands in the other length, and the slots, the free length and the slack add up to its length",
+          "Ok": true
+        },
+        {
           "Name": "Cabling apply: what an apply wrote reads back through the inspector pane\u0027s reader as it stands - on circuits, indicators and a carrier - and a circuit it did not route reads as never written, not as zero",
           "Ok": true
         },
@@ -662,11 +666,11 @@
         },
         {
           "Name": "launched",
-          "Value": "pid 30664"
+          "Value": "pid 52100"
         },
         {
           "Name": "registered after",
-          "Value": "36.4s"
+          "Value": "15.4s"
         },
         {
           "Name": "recovered by enumeration",
@@ -682,11 +686,11 @@
         },
         {
           "Name": "probe log",
-          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2024-30664-20260922-123939.log"
+          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2024-52100-20260923-094437.log"
         },
         {
           "Name": "threads",
-          "Value": "api 1, call 15"
+          "Value": "api 1, call 13"
         },
         {
           "Name": "appdomain",
@@ -710,7 +714,7 @@
         },
         {
           "Name": "log",
-          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2024-30664-20260922-123939.log"
+          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2024-52100-20260923-094437.log"
         },
         {
           "Name": "sinks",
@@ -722,7 +726,7 @@
         },
         {
           "Name": "opened after registration",
-          "Value": "39.8s"
+          "Value": "20.5s"
         },
         {
           "Name": "pane:exists",
@@ -842,7 +846,7 @@
         },
         {
           "Name": "instance",
-          "Value": "7f3e2fc233b344c5a374b3ba1138d2ba"
+          "Value": "9fbd5228176149b78450cebfc88be290"
         },
         {
           "Name": "link1:linked",
@@ -890,11 +894,11 @@
         },
         {
           "Name": "log",
-          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2024-30664-20260922-123939.log"
+          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2024-52100-20260923-094437.log"
         },
         {
           "Name": "pid",
-          "Value": "30664"
+          "Value": "52100"
         },
         {
           "Name": "release",
@@ -966,15 +970,15 @@
         },
         {
           "Name": "instance",
-          "Value": "7f3e2fc233b344c5a374b3ba1138d2ba"
+          "Value": "9fbd5228176149b78450cebfc88be290"
         },
         {
           "Name": "log",
-          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2024-30664-20260922-123939.log"
+          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2024-52100-20260923-094437.log"
         },
         {
           "Name": "pid",
-          "Value": "30664"
+          "Value": "52100"
         },
         {
           "Name": "place:after",
@@ -1062,11 +1066,11 @@
         },
         {
           "Name": "instance",
-          "Value": "7f3e2fc233b344c5a374b3ba1138d2ba"
+          "Value": "9fbd5228176149b78450cebfc88be290"
         },
         {
           "Name": "log",
-          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2024-30664-20260922-123939.log"
+          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2024-52100-20260923-094437.log"
         },
         {
           "Name": "modal:apiCallWorked",
@@ -1094,7 +1098,7 @@
         },
         {
           "Name": "modal:awaitResumedAfter",
-          "Value": "0.43s"
+          "Value": "0.49s"
         },
         {
           "Name": "modal:awaitResumedOnApiThread",
@@ -1118,7 +1122,7 @@
         },
         {
           "Name": "modal:shownFor",
-          "Value": "2.49s"
+          "Value": "2.55s"
         },
         {
           "Name": "modal:transactionCommit",
@@ -1150,7 +1154,7 @@
         },
         {
           "Name": "pid",
-          "Value": "30664"
+          "Value": "52100"
         },
         {
           "Name": "release",
@@ -1162,11 +1166,11 @@
         },
         {
           "Name": "instance",
-          "Value": "7f3e2fc233b344c5a374b3ba1138d2ba"
+          "Value": "9fbd5228176149b78450cebfc88be290"
         },
         {
           "Name": "log",
-          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2024-30664-20260922-123939.log"
+          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2024-52100-20260923-094437.log"
         },
         {
           "Name": "modal:measured",
@@ -1178,7 +1182,7 @@
         },
         {
           "Name": "modal:pumpRanAt",
-          "Value": "2.49s"
+          "Value": "2.55s"
         },
         {
           "Name": "modal:windowClosed",
@@ -1186,7 +1190,7 @@
         },
         {
           "Name": "pid",
-          "Value": "30664"
+          "Value": "52100"
         },
         {
           "Name": "release",
@@ -1198,11 +1202,11 @@
         },
         {
           "Name": "instance",
-          "Value": "7f3e2fc233b344c5a374b3ba1138d2ba"
+          "Value": "9fbd5228176149b78450cebfc88be290"
         },
         {
           "Name": "log",
-          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2024-30664-20260922-123939.log"
+          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2024-52100-20260923-094437.log"
         },
         {
           "Name": "parameters:bound",
@@ -1278,7 +1282,7 @@
         },
         {
           "Name": "pid",
-          "Value": "30664"
+          "Value": "52100"
         },
         {
           "Name": "release",
@@ -1518,7 +1522,7 @@
         },
         {
           "Name": "census: elapsed, ms",
-          "Value": "42"
+          "Value": "51"
         },
         {
           "Name": "circuit ends: electrical systems",
@@ -1558,7 +1562,7 @@
         },
         {
           "Name": "circuit ends: elapsed, ms",
-          "Value": "20"
+          "Value": "32"
         },
         {
           "Name": "circuits on the panel used",
@@ -1907,6 +1911,62 @@
         {
           "Name": "length by where: routes with a length in other carriers",
           "Value": "0"
+        },
+        {
+          "Name": "methods: cable tray types in the host",
+          "Value": "2"
+        },
+        {
+          "Name": "methods: conduit types in the host",
+          "Value": "1"
+        },
+        {
+          "Name": "methods: the type parameter this case states methods in",
+          "Value": "\u041A\u043E\u043C\u043C\u0435\u043D\u0442\u0430\u0440\u0438\u0438 \u043A \u0442\u0438\u043F\u043E\u0440\u0430\u0437\u043C\u0435\u0440\u0443"
+        },
+        {
+          "Name": "methods: indicators of ours already in the model",
+          "Value": "0"
+        },
+        {
+          "Name": "methods: host carriers read back with the method their type states",
+          "Value": "25"
+        },
+        {
+          "Name": "methods: circuits cut in boxes",
+          "Value": "13"
+        },
+        {
+          "Name": "methods: routes found",
+          "Value": "6"
+        },
+        {
+          "Name": "methods: other failures while applying",
+          "Value": "0"
+        },
+        {
+          "Name": "methods: warnings dismissed while applying",
+          "Value": "0"
+        },
+        {
+          "Name": "methods: routes with a length in the slotted tray method",
+          "Value": "6"
+        },
+        {
+          "Name": "methods: routes with a length in the slotted conduit method",
+          "Value": "4"
+        },
+        {
+          "Name": "methods: routes with a length in the unslotted method",
+          "Value": "6"
+        },
+        {
+          "Name": "methods: routes with a length in carriers stating no method",
+          "Value": "5"
+        },
+        {
+          "Name": "methods: what the run screen says",
+          "Value": "names the unslotted method"
         },
         {
           "Name": "inspector: indicators of ours already in the model",
@@ -2730,11 +2790,11 @@
         },
         {
           "Name": "diagnostic events",
-          "Value": "3178 received, 0 dropped by the publisher, longest quiet spell 27.3s during Starting"
+          "Value": "3335 received, 0 dropped by the publisher, longest quiet spell 10.8s during Starting"
         },
         {
           "Name": "phases seen",
-          "Value": "Starting, Idle, OpeningDocument, Working, DocumentReady, Blocked"
+          "Value": "Starting, Idle, OpeningDocument, Working, DocumentReady"
         },
         {
           "Name": "progress caption",
@@ -2751,10 +2811,6 @@
         {
           "Name": "progress caption",
           "Value": "\u0417\u0430\u0433\u0440\u0443\u0437\u043A\u0430 TestCabling-\u042D\u041E\u041C.rvt"
-        },
-        {
-          "Name": "progress caption",
-          "Value": "dialog"
         },
         {
           "Name": "progress caption",
@@ -2817,19 +2873,15 @@
           "Value": "\u0424\u043E\u0440\u043C\u0438\u0440\u043E\u0432\u0430\u043D\u0438\u0435 \u0433\u0440\u0430\u0444\u0438\u043A\u0438 \u0434\u043B\u044F 3D \u0432\u0438\u0434: ???"
         },
         {
-          "Name": "modal dialog",
-          "Value": "TaskDialog_Stop_Operation"
-        },
-        {
           "Name": "closed after",
-          "Value": "22.6s"
+          "Value": "22.1s"
         }
       ]
     },
     {
       "Release": 2025,
       "FileVersion": "0.1.0.0",
-      "BuiltUtc": "2026-09-22T02:38:49.5898667Z",
+      "BuiltUtc": "2026-09-22T23:44:09.3703086Z",
       "Signed": true,
       "Checks": [
         {
@@ -3317,6 +3369,10 @@
           "Ok": true
         },
         {
+          "Name": "Cabling apply: every circuit that routed is told how its length is laid by the project\u0027s methods - each slot names its method beside a length above zero or holds nothing, a method with no slot lands in the other length, and the slots, the free length and the slack add up to its length",
+          "Ok": true
+        },
+        {
           "Name": "Cabling apply: what an apply wrote reads back through the inspector pane\u0027s reader as it stands - on circuits, indicators and a carrier - and a circuit it did not route reads as never written, not as zero",
           "Ok": true
         },
@@ -3473,11 +3529,11 @@
         },
         {
           "Name": "launched",
-          "Value": "pid 2204"
+          "Value": "pid 59528"
         },
         {
           "Name": "registered after",
-          "Value": "24.5s"
+          "Value": "14.1s"
         },
         {
           "Name": "recovered by enumeration",
@@ -3493,11 +3549,11 @@
         },
         {
           "Name": "probe log",
-          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2025-2204-20260922-124130.log"
+          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2025-59528-20260923-094601.log"
         },
         {
           "Name": "threads",
-          "Value": "api 1, call 25"
+          "Value": "api 1, call 5"
         },
         {
           "Name": "appdomain",
@@ -3521,7 +3577,7 @@
         },
         {
           "Name": "log",
-          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2025-2204-20260922-124130.log"
+          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2025-59528-20260923-094601.log"
         },
         {
           "Name": "sinks",
@@ -3533,7 +3589,7 @@
         },
         {
           "Name": "opened after registration",
-          "Value": "17.5s"
+          "Value": "21.0s"
         },
         {
           "Name": "pane:exists",
@@ -3653,7 +3709,7 @@
         },
         {
           "Name": "instance",
-          "Value": "93fe0044f00c4eb298ac7efac7bf6407"
+          "Value": "134fdc2e25ee4a67a6c4dc3b97e8fa7e"
         },
         {
           "Name": "link1:linked",
@@ -3701,11 +3757,11 @@
         },
         {
           "Name": "log",
-          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2025-2204-20260922-124130.log"
+          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2025-59528-20260923-094601.log"
         },
         {
           "Name": "pid",
-          "Value": "2204"
+          "Value": "59528"
         },
         {
           "Name": "release",
@@ -3777,15 +3833,15 @@
         },
         {
           "Name": "instance",
-          "Value": "93fe0044f00c4eb298ac7efac7bf6407"
+          "Value": "134fdc2e25ee4a67a6c4dc3b97e8fa7e"
         },
         {
           "Name": "log",
-          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2025-2204-20260922-124130.log"
+          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2025-59528-20260923-094601.log"
         },
         {
           "Name": "pid",
-          "Value": "2204"
+          "Value": "59528"
         },
         {
           "Name": "place:after",
@@ -3873,11 +3929,11 @@
         },
         {
           "Name": "instance",
-          "Value": "93fe0044f00c4eb298ac7efac7bf6407"
+          "Value": "134fdc2e25ee4a67a6c4dc3b97e8fa7e"
         },
         {
           "Name": "log",
-          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2025-2204-20260922-124130.log"
+          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2025-59528-20260923-094601.log"
         },
         {
           "Name": "modal:apiCallWorked",
@@ -3905,7 +3961,7 @@
         },
         {
           "Name": "modal:awaitResumedAfter",
-          "Value": "0.40s"
+          "Value": "0.41s"
         },
         {
           "Name": "modal:awaitResumedOnApiThread",
@@ -3929,7 +3985,7 @@
         },
         {
           "Name": "modal:shownFor",
-          "Value": "2.46s"
+          "Value": "2.48s"
         },
         {
           "Name": "modal:transactionCommit",
@@ -3961,7 +4017,7 @@
         },
         {
           "Name": "pid",
-          "Value": "2204"
+          "Value": "59528"
         },
         {
           "Name": "release",
@@ -3973,11 +4029,11 @@
         },
         {
           "Name": "instance",
-          "Value": "93fe0044f00c4eb298ac7efac7bf6407"
+          "Value": "134fdc2e25ee4a67a6c4dc3b97e8fa7e"
         },
         {
           "Name": "log",
-          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2025-2204-20260922-124130.log"
+          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2025-59528-20260923-094601.log"
         },
         {
           "Name": "modal:measured",
@@ -3989,7 +4045,7 @@
         },
         {
           "Name": "modal:pumpRanAt",
-          "Value": "2.46s"
+          "Value": "2.48s"
         },
         {
           "Name": "modal:windowClosed",
@@ -3997,7 +4053,7 @@
         },
         {
           "Name": "pid",
-          "Value": "2204"
+          "Value": "59528"
         },
         {
           "Name": "release",
@@ -4009,11 +4065,11 @@
         },
         {
           "Name": "instance",
-          "Value": "93fe0044f00c4eb298ac7efac7bf6407"
+          "Value": "134fdc2e25ee4a67a6c4dc3b97e8fa7e"
         },
         {
           "Name": "log",
-          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2025-2204-20260922-124130.log"
+          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2025-59528-20260923-094601.log"
         },
         {
           "Name": "parameters:bound",
@@ -4089,7 +4145,7 @@
         },
         {
           "Name": "pid",
-          "Value": "2204"
+          "Value": "59528"
         },
         {
           "Name": "release",
@@ -4329,7 +4385,7 @@
         },
         {
           "Name": "census: elapsed, ms",
-          "Value": "34"
+          "Value": "44"
         },
         {
           "Name": "circuit ends: electrical systems",
@@ -4369,7 +4425,7 @@
         },
         {
           "Name": "circuit ends: elapsed, ms",
-          "Value": "14"
+          "Value": "20"
         },
         {
           "Name": "circuits on the panel used",
@@ -4718,6 +4774,62 @@
         {
           "Name": "length by where: routes with a length in other carriers",
           "Value": "0"
+        },
+        {
+          "Name": "methods: cable tray types in the host",
+          "Value": "2"
+        },
+        {
+          "Name": "methods: conduit types in the host",
+          "Value": "1"
+        },
+        {
+          "Name": "methods: the type parameter this case states methods in",
+          "Value": "\u041A\u043E\u043C\u043C\u0435\u043D\u0442\u0430\u0440\u0438\u0438 \u043A \u0442\u0438\u043F\u043E\u0440\u0430\u0437\u043C\u0435\u0440\u0443"
+        },
+        {
+          "Name": "methods: indicators of ours already in the model",
+          "Value": "0"
+        },
+        {
+          "Name": "methods: host carriers read back with the method their type states",
+          "Value": "25"
+        },
+        {
+          "Name": "methods: circuits cut in boxes",
+          "Value": "13"
+        },
+        {
+          "Name": "methods: routes found",
+          "Value": "6"
+        },
+        {
+          "Name": "methods: other failures while applying",
+          "Value": "0"
+        },
+        {
+          "Name": "methods: warnings dismissed while applying",
+          "Value": "0"
+        },
+        {
+          "Name": "methods: routes with a length in the slotted tray method",
+          "Value": "6"
+        },
+        {
+          "Name": "methods: routes with a length in the slotted conduit method",
+          "Value": "4"
+        },
+        {
+          "Name": "methods: routes with a length in the unslotted method",
+          "Value": "6"
+        },
+        {
+          "Name": "methods: routes with a length in carriers stating no method",
+          "Value": "5"
+        },
+        {
+          "Name": "methods: what the run screen says",
+          "Value": "names the unslotted method"
         },
         {
           "Name": "inspector: indicators of ours already in the model",
@@ -5193,15 +5305,15 @@
         },
         {
           "Name": "splicing plan: types of those carriers",
-          "Value": "1"
+          "Value": "2"
         },
         {
           "Name": "splicing plan: boxes after marking",
-          "Value": "5"
+          "Value": "4"
         },
         {
           "Name": "splicing plan: splices after marking",
-          "Value": "1"
+          "Value": "2"
         },
         {
           "Name": "capacity: device categories the read found",
@@ -5477,63 +5589,63 @@
         },
         {
           "Name": "Microsoft.Extensions.Configuration 8.0.0.0",
-          "Value": "elsewhere  C:\\program files\\dotnet\\shared\\Microsoft.AspNetCore.App\\8.0.31\\Microsoft.Extensions.Configuration.dll"
+          "Value": "elsewhere  c:\\program files\\dotnet\\shared\\Microsoft.AspNetCore.App\\8.0.31\\Microsoft.Extensions.Configuration.dll"
         },
         {
           "Name": "Microsoft.Extensions.Configuration.Abstractions 8.0.0.0",
-          "Value": "elsewhere  C:\\program files\\dotnet\\shared\\Microsoft.AspNetCore.App\\8.0.31\\Microsoft.Extensions.Configuration.Abstractions.dll"
+          "Value": "elsewhere  c:\\program files\\dotnet\\shared\\Microsoft.AspNetCore.App\\8.0.31\\Microsoft.Extensions.Configuration.Abstractions.dll"
         },
         {
           "Name": "Microsoft.Extensions.Configuration.FileExtensions 8.0.0.0",
-          "Value": "elsewhere  C:\\program files\\dotnet\\shared\\Microsoft.AspNetCore.App\\8.0.31\\Microsoft.Extensions.Configuration.FileExtensions.dll"
+          "Value": "elsewhere  c:\\program files\\dotnet\\shared\\Microsoft.AspNetCore.App\\8.0.31\\Microsoft.Extensions.Configuration.FileExtensions.dll"
         },
         {
           "Name": "Microsoft.Extensions.DependencyInjection 8.0.0.0",
-          "Value": "elsewhere  C:\\program files\\dotnet\\shared\\Microsoft.AspNetCore.App\\8.0.31\\Microsoft.Extensions.DependencyInjection.dll"
+          "Value": "elsewhere  c:\\program files\\dotnet\\shared\\Microsoft.AspNetCore.App\\8.0.31\\Microsoft.Extensions.DependencyInjection.dll"
         },
         {
           "Name": "Microsoft.Extensions.DependencyInjection.Abstractions 8.0.0.0",
-          "Value": "elsewhere  C:\\program files\\dotnet\\shared\\Microsoft.AspNetCore.App\\8.0.31\\Microsoft.Extensions.DependencyInjection.Abstractions.dll"
+          "Value": "elsewhere  c:\\program files\\dotnet\\shared\\Microsoft.AspNetCore.App\\8.0.31\\Microsoft.Extensions.DependencyInjection.Abstractions.dll"
         },
         {
           "Name": "Microsoft.Extensions.Diagnostics 8.0.0.0",
-          "Value": "elsewhere  C:\\program files\\dotnet\\shared\\Microsoft.AspNetCore.App\\8.0.31\\Microsoft.Extensions.Diagnostics.dll"
+          "Value": "elsewhere  c:\\program files\\dotnet\\shared\\Microsoft.AspNetCore.App\\8.0.31\\Microsoft.Extensions.Diagnostics.dll"
         },
         {
           "Name": "Microsoft.Extensions.Diagnostics.Abstractions 8.0.0.0",
-          "Value": "elsewhere  C:\\program files\\dotnet\\shared\\Microsoft.AspNetCore.App\\8.0.31\\Microsoft.Extensions.Diagnostics.Abstractions.dll"
+          "Value": "elsewhere  c:\\program files\\dotnet\\shared\\Microsoft.AspNetCore.App\\8.0.31\\Microsoft.Extensions.Diagnostics.Abstractions.dll"
         },
         {
           "Name": "Microsoft.Extensions.FileProviders.Abstractions 8.0.0.0",
-          "Value": "elsewhere  C:\\program files\\dotnet\\shared\\Microsoft.AspNetCore.App\\8.0.31\\Microsoft.Extensions.FileProviders.Abstractions.dll"
+          "Value": "elsewhere  c:\\program files\\dotnet\\shared\\Microsoft.AspNetCore.App\\8.0.31\\Microsoft.Extensions.FileProviders.Abstractions.dll"
         },
         {
           "Name": "Microsoft.Extensions.FileProviders.Physical 8.0.0.0",
-          "Value": "elsewhere  C:\\program files\\dotnet\\shared\\Microsoft.AspNetCore.App\\8.0.31\\Microsoft.Extensions.FileProviders.Physical.dll"
+          "Value": "elsewhere  c:\\program files\\dotnet\\shared\\Microsoft.AspNetCore.App\\8.0.31\\Microsoft.Extensions.FileProviders.Physical.dll"
         },
         {
           "Name": "Microsoft.Extensions.Hosting 8.0.0.0",
-          "Value": "elsewhere  C:\\program files\\dotnet\\shared\\Microsoft.AspNetCore.App\\8.0.31\\Microsoft.Extensions.Hosting.dll"
+          "Value": "elsewhere  c:\\program files\\dotnet\\shared\\Microsoft.AspNetCore.App\\8.0.31\\Microsoft.Extensions.Hosting.dll"
         },
         {
           "Name": "Microsoft.Extensions.Hosting.Abstractions 8.0.0.0",
-          "Value": "elsewhere  C:\\program files\\dotnet\\shared\\Microsoft.AspNetCore.App\\8.0.31\\Microsoft.Extensions.Hosting.Abstractions.dll"
+          "Value": "elsewhere  c:\\program files\\dotnet\\shared\\Microsoft.AspNetCore.App\\8.0.31\\Microsoft.Extensions.Hosting.Abstractions.dll"
         },
         {
           "Name": "Microsoft.Extensions.Logging 8.0.0.0",
-          "Value": "elsewhere  C:\\program files\\dotnet\\shared\\Microsoft.AspNetCore.App\\8.0.31\\Microsoft.Extensions.Logging.dll"
+          "Value": "elsewhere  c:\\program files\\dotnet\\shared\\Microsoft.AspNetCore.App\\8.0.31\\Microsoft.Extensions.Logging.dll"
         },
         {
           "Name": "Microsoft.Extensions.Logging.Abstractions 8.0.0.0",
-          "Value": "elsewhere  C:\\program files\\dotnet\\shared\\Microsoft.AspNetCore.App\\8.0.31\\Microsoft.Extensions.Logging.Abstractions.dll"
+          "Value": "elsewhere  c:\\program files\\dotnet\\shared\\Microsoft.AspNetCore.App\\8.0.31\\Microsoft.Extensions.Logging.Abstractions.dll"
         },
         {
           "Name": "Microsoft.Extensions.Options 8.0.0.0",
-          "Value": "elsewhere  C:\\program files\\dotnet\\shared\\Microsoft.AspNetCore.App\\8.0.31\\Microsoft.Extensions.Options.dll"
+          "Value": "elsewhere  c:\\program files\\dotnet\\shared\\Microsoft.AspNetCore.App\\8.0.31\\Microsoft.Extensions.Options.dll"
         },
         {
           "Name": "Microsoft.Extensions.Primitives 8.0.0.0",
-          "Value": "elsewhere  C:\\program files\\dotnet\\shared\\Microsoft.AspNetCore.App\\8.0.31\\Microsoft.Extensions.Primitives.dll"
+          "Value": "elsewhere  c:\\program files\\dotnet\\shared\\Microsoft.AspNetCore.App\\8.0.31\\Microsoft.Extensions.Primitives.dll"
         },
         {
           "Name": "Newtonsoft.Json 13.0.0.0",
@@ -5541,19 +5653,19 @@
         },
         {
           "Name": "System.Collections.Immutable 8.0.0.0",
-          "Value": "elsewhere  C:\\program files\\dotnet\\shared\\Microsoft.NETCore.App\\8.0.31\\System.Collections.Immutable.dll"
+          "Value": "elsewhere  c:\\program files\\dotnet\\shared\\Microsoft.NETCore.App\\8.0.31\\System.Collections.Immutable.dll"
         },
         {
           "Name": "System.Memory 8.0.0.0",
-          "Value": "elsewhere  C:\\program files\\dotnet\\shared\\Microsoft.NETCore.App\\8.0.31\\System.Memory.dll"
+          "Value": "elsewhere  c:\\program files\\dotnet\\shared\\Microsoft.NETCore.App\\8.0.31\\System.Memory.dll"
         },
         {
           "Name": "System.Numerics.Vectors 8.0.0.0",
-          "Value": "elsewhere  C:\\program files\\dotnet\\shared\\Microsoft.NETCore.App\\8.0.31\\System.Numerics.Vectors.dll"
+          "Value": "elsewhere  c:\\program files\\dotnet\\shared\\Microsoft.NETCore.App\\8.0.31\\System.Numerics.Vectors.dll"
         },
         {
           "Name": "System.Runtime.CompilerServices.Unsafe 8.0.0.0",
-          "Value": "elsewhere  C:\\program files\\dotnet\\shared\\Microsoft.NETCore.App\\8.0.31\\System.Runtime.CompilerServices.Unsafe.dll"
+          "Value": "elsewhere  c:\\program files\\dotnet\\shared\\Microsoft.NETCore.App\\8.0.31\\System.Runtime.CompilerServices.Unsafe.dll"
         },
         {
           "Name": "assemblies loaded",
@@ -5573,7 +5685,7 @@
         },
         {
           "Name": "diagnostic events",
-          "Value": "5364 received, 0 dropped by the publisher, longest quiet spell 2.9s during Working"
+          "Value": "5546 received, 0 dropped by the publisher, longest quiet spell 2.9s during Working"
         },
         {
           "Name": "phases seen",
@@ -5657,14 +5769,14 @@
         },
         {
           "Name": "closed after",
-          "Value": "4.5s"
+          "Value": "4.7s"
         }
       ]
     },
     {
       "Release": 2026,
       "FileVersion": "0.1.0.0",
-      "BuiltUtc": "2026-09-22T02:38:49.1769006Z",
+      "BuiltUtc": "2026-09-22T23:44:09.4988238Z",
       "Signed": true,
       "Checks": [
         {
@@ -6152,6 +6264,10 @@
           "Ok": true
         },
         {
+          "Name": "Cabling apply: every circuit that routed is told how its length is laid by the project\u0027s methods - each slot names its method beside a length above zero or holds nothing, a method with no slot lands in the other length, and the slots, the free length and the slack add up to its length",
+          "Ok": true
+        },
+        {
           "Name": "Cabling apply: what an apply wrote reads back through the inspector pane\u0027s reader as it stands - on circuits, indicators and a carrier - and a circuit it did not route reads as never written, not as zero",
           "Ok": true
         },
@@ -6304,15 +6420,15 @@
       "Notes": [
         {
           "Name": "linked set",
-          "Value": "3 model(s), host and links copied together"
+          "Value": "4 model(s), host and links copied together"
         },
         {
           "Name": "launched",
-          "Value": "pid 87368"
+          "Value": "pid 24412"
         },
         {
           "Name": "registered after",
-          "Value": "36.5s"
+          "Value": "26.0s"
         },
         {
           "Name": "recovered by enumeration",
@@ -6328,11 +6444,11 @@
         },
         {
           "Name": "probe log",
-          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2026-87368-20260922-124230.log"
+          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2026-24412-20260923-094656.log"
         },
         {
           "Name": "threads",
-          "Value": "api 1, call 7"
+          "Value": "api 1, call 24"
         },
         {
           "Name": "appdomain",
@@ -6356,7 +6472,7 @@
         },
         {
           "Name": "log",
-          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2026-87368-20260922-124230.log"
+          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2026-24412-20260923-094656.log"
         },
         {
           "Name": "sinks",
@@ -6368,7 +6484,7 @@
         },
         {
           "Name": "opened after registration",
-          "Value": "58.5s"
+          "Value": "72.2s"
         },
         {
           "Name": "pane:exists",
@@ -6488,7 +6604,7 @@
         },
         {
           "Name": "instance",
-          "Value": "749440f142d045f38248653cfd61b8b4"
+          "Value": "f838f2be08a344748e72391da59e5004"
         },
         {
           "Name": "link1:linked",
@@ -6536,11 +6652,11 @@
         },
         {
           "Name": "log",
-          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2026-87368-20260922-124230.log"
+          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2026-24412-20260923-094656.log"
         },
         {
           "Name": "pid",
-          "Value": "87368"
+          "Value": "24412"
         },
         {
           "Name": "release",
@@ -6612,15 +6728,15 @@
         },
         {
           "Name": "instance",
-          "Value": "749440f142d045f38248653cfd61b8b4"
+          "Value": "f838f2be08a344748e72391da59e5004"
         },
         {
           "Name": "log",
-          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2026-87368-20260922-124230.log"
+          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2026-24412-20260923-094656.log"
         },
         {
           "Name": "pid",
-          "Value": "87368"
+          "Value": "24412"
         },
         {
           "Name": "place:after",
@@ -6708,11 +6824,11 @@
         },
         {
           "Name": "instance",
-          "Value": "749440f142d045f38248653cfd61b8b4"
+          "Value": "f838f2be08a344748e72391da59e5004"
         },
         {
           "Name": "log",
-          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2026-87368-20260922-124230.log"
+          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2026-24412-20260923-094656.log"
         },
         {
           "Name": "modal:apiCallWorked",
@@ -6740,7 +6856,7 @@
         },
         {
           "Name": "modal:awaitResumedAfter",
-          "Value": "0.26s"
+          "Value": "0.29s"
         },
         {
           "Name": "modal:awaitResumedOnApiThread",
@@ -6764,7 +6880,7 @@
         },
         {
           "Name": "modal:shownFor",
-          "Value": "2.32s"
+          "Value": "2.38s"
         },
         {
           "Name": "modal:transactionCommit",
@@ -6776,7 +6892,7 @@
         },
         {
           "Name": "modal:transactionCreated",
-          "Value": "627378"
+          "Value": "627392"
         },
         {
           "Name": "modal:transactionRolledBack",
@@ -6796,7 +6912,7 @@
         },
         {
           "Name": "pid",
-          "Value": "87368"
+          "Value": "24412"
         },
         {
           "Name": "release",
@@ -6808,11 +6924,11 @@
         },
         {
           "Name": "instance",
-          "Value": "749440f142d045f38248653cfd61b8b4"
+          "Value": "f838f2be08a344748e72391da59e5004"
         },
         {
           "Name": "log",
-          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2026-87368-20260922-124230.log"
+          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2026-24412-20260923-094656.log"
         },
         {
           "Name": "modal:measured",
@@ -6824,7 +6940,7 @@
         },
         {
           "Name": "modal:pumpRanAt",
-          "Value": "2.32s"
+          "Value": "2.38s"
         },
         {
           "Name": "modal:windowClosed",
@@ -6832,7 +6948,7 @@
         },
         {
           "Name": "pid",
-          "Value": "87368"
+          "Value": "24412"
         },
         {
           "Name": "release",
@@ -6844,11 +6960,11 @@
         },
         {
           "Name": "instance",
-          "Value": "749440f142d045f38248653cfd61b8b4"
+          "Value": "f838f2be08a344748e72391da59e5004"
         },
         {
           "Name": "log",
-          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2026-87368-20260922-124230.log"
+          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2026-24412-20260923-094656.log"
         },
         {
           "Name": "parameters:bound",
@@ -6924,7 +7040,7 @@
         },
         {
           "Name": "pid",
-          "Value": "87368"
+          "Value": "24412"
         },
         {
           "Name": "release",
@@ -7164,7 +7280,7 @@
         },
         {
           "Name": "census: elapsed, ms",
-          "Value": "33"
+          "Value": "49"
         },
         {
           "Name": "circuit ends: electrical systems",
@@ -7204,7 +7320,7 @@
         },
         {
           "Name": "circuit ends: elapsed, ms",
-          "Value": "14"
+          "Value": "22"
         },
         {
           "Name": "circuits on the panel used",
@@ -7553,6 +7669,62 @@
         {
           "Name": "length by where: routes with a length in other carriers",
           "Value": "0"
+        },
+        {
+          "Name": "methods: cable tray types in the host",
+          "Value": "2"
+        },
+        {
+          "Name": "methods: conduit types in the host",
+          "Value": "1"
+        },
+        {
+          "Name": "methods: the type parameter this case states methods in",
+          "Value": "\u041A\u043E\u043C\u043C\u0435\u043D\u0442\u0430\u0440\u0438\u0438 \u043A \u0442\u0438\u043F\u043E\u0440\u0430\u0437\u043C\u0435\u0440\u0443"
+        },
+        {
+          "Name": "methods: indicators of ours already in the model",
+          "Value": "0"
+        },
+        {
+          "Name": "methods: host carriers read back with the method their type states",
+          "Value": "25"
+        },
+        {
+          "Name": "methods: circuits cut in boxes",
+          "Value": "13"
+        },
+        {
+          "Name": "methods: routes found",
+          "Value": "6"
+        },
+        {
+          "Name": "methods: other failures while applying",
+          "Value": "0"
+        },
+        {
+          "Name": "methods: warnings dismissed while applying",
+          "Value": "0"
+        },
+        {
+          "Name": "methods: routes with a length in the slotted tray method",
+          "Value": "6"
+        },
+        {
+          "Name": "methods: routes with a length in the slotted conduit method",
+          "Value": "4"
+        },
+        {
+          "Name": "methods: routes with a length in the unslotted method",
+          "Value": "6"
+        },
+        {
+          "Name": "methods: routes with a length in carriers stating no method",
+          "Value": "5"
+        },
+        {
+          "Name": "methods: what the run screen says",
+          "Value": "names the unslotted method"
         },
         {
           "Name": "inspector: indicators of ours already in the model",
@@ -8028,15 +8200,15 @@
         },
         {
           "Name": "splicing plan: types of those carriers",
-          "Value": "1"
+          "Value": "2"
         },
         {
           "Name": "splicing plan: boxes after marking",
-          "Value": "5"
+          "Value": "4"
         },
         {
           "Name": "splicing plan: splices after marking",
-          "Value": "1"
+          "Value": "2"
         },
         {
           "Name": "capacity: device categories the read found",
@@ -8312,19 +8484,19 @@
         },
         {
           "Name": "Microsoft.Extensions.DependencyInjection 8.0.0.0",
-          "Value": "elsewhere  C:\\program files\\dotnet\\shared\\Microsoft.AspNetCore.App\\8.0.31\\Microsoft.Extensions.DependencyInjection.dll"
+          "Value": "elsewhere  c:\\program files\\dotnet\\shared\\Microsoft.AspNetCore.App\\8.0.31\\Microsoft.Extensions.DependencyInjection.dll"
         },
         {
           "Name": "Microsoft.Extensions.DependencyInjection.Abstractions 8.0.0.0",
-          "Value": "elsewhere  C:\\program files\\dotnet\\shared\\Microsoft.AspNetCore.App\\8.0.31\\Microsoft.Extensions.DependencyInjection.Abstractions.dll"
+          "Value": "elsewhere  c:\\program files\\dotnet\\shared\\Microsoft.AspNetCore.App\\8.0.31\\Microsoft.Extensions.DependencyInjection.Abstractions.dll"
         },
         {
           "Name": "Microsoft.Extensions.Logging.Abstractions 8.0.0.0",
-          "Value": "elsewhere  C:\\program files\\dotnet\\shared\\Microsoft.AspNetCore.App\\8.0.31\\Microsoft.Extensions.Logging.Abstractions.dll"
+          "Value": "elsewhere  c:\\program files\\dotnet\\shared\\Microsoft.AspNetCore.App\\8.0.31\\Microsoft.Extensions.Logging.Abstractions.dll"
         },
         {
           "Name": "Microsoft.Extensions.ObjectPool 8.0.0.0",
-          "Value": "elsewhere  C:\\program files\\dotnet\\shared\\Microsoft.AspNetCore.App\\8.0.31\\Microsoft.Extensions.ObjectPool.dll"
+          "Value": "elsewhere  c:\\program files\\dotnet\\shared\\Microsoft.AspNetCore.App\\8.0.31\\Microsoft.Extensions.ObjectPool.dll"
         },
         {
           "Name": "Newtonsoft.Json 13.0.0.0",
@@ -8336,19 +8508,19 @@
         },
         {
           "Name": "System.Collections.Immutable 8.0.0.0",
-          "Value": "elsewhere  C:\\program files\\dotnet\\shared\\Microsoft.NETCore.App\\8.0.31\\System.Collections.Immutable.dll"
+          "Value": "elsewhere  c:\\program files\\dotnet\\shared\\Microsoft.NETCore.App\\8.0.31\\System.Collections.Immutable.dll"
         },
         {
           "Name": "System.Memory 8.0.0.0",
-          "Value": "elsewhere  C:\\program files\\dotnet\\shared\\Microsoft.NETCore.App\\8.0.31\\System.Memory.dll"
+          "Value": "elsewhere  c:\\program files\\dotnet\\shared\\Microsoft.NETCore.App\\8.0.31\\System.Memory.dll"
         },
         {
           "Name": "System.Numerics.Vectors 8.0.0.0",
-          "Value": "elsewhere  C:\\program files\\dotnet\\shared\\Microsoft.NETCore.App\\8.0.31\\System.Numerics.Vectors.dll"
+          "Value": "elsewhere  c:\\program files\\dotnet\\shared\\Microsoft.NETCore.App\\8.0.31\\System.Numerics.Vectors.dll"
         },
         {
           "Name": "System.Runtime.CompilerServices.Unsafe 8.0.0.0",
-          "Value": "elsewhere  C:\\program files\\dotnet\\shared\\Microsoft.NETCore.App\\8.0.31\\System.Runtime.CompilerServices.Unsafe.dll"
+          "Value": "elsewhere  c:\\program files\\dotnet\\shared\\Microsoft.NETCore.App\\8.0.31\\System.Runtime.CompilerServices.Unsafe.dll"
         },
         {
           "Name": "System.Runtime.CompilerServices.Unsafe (6.0.0.0) 6.0.0.0",
@@ -8372,7 +8544,7 @@
         },
         {
           "Name": "diagnostic events",
-          "Value": "5326 received, 0 dropped by the publisher, longest quiet spell 35.2s during Starting"
+          "Value": "3224 received, 0 dropped by the publisher, longest quiet spell 54.3s during Starting"
         },
         {
           "Name": "phases seen",
@@ -8400,23 +8572,15 @@
         },
         {
           "Name": "progress caption",
-          "Value": "\u041E\u0431\u043D\u043E\u0432\u043B\u0435\u043D\u0438\u0435 \u0434\u043E\u043A\u0443\u043C\u0435\u043D\u0442\u0430 \u0441 \u043F\u0440\u0435\u0434\u044B\u0434\u0443\u0449\u0435\u0439 \u0432\u0435\u0440\u0441\u0438\u0438"
-        },
-        {
-          "Name": "progress caption",
           "Value": "\u041E\u0431\u043D\u043E\u0432\u043B\u0435\u043D\u0438\u0435 \u0441\u0432\u044F\u0437\u0435\u0439"
         },
         {
           "Name": "progress caption",
-          "Value": "\u0420\u0435\u0433\u0435\u043D\u0435\u0440\u0430\u0446\u0438\u044F"
+          "Value": "\u041E\u0431\u043D\u043E\u0432\u043B\u0435\u043D\u0438\u0435"
         },
         {
           "Name": "progress caption",
           "Value": "\u0424\u0438\u043A\u0441\u0430\u0446\u0438\u044F \u0442\u0440\u0430\u043D\u0437\u0430\u043A\u0446\u0438\u0439"
-        },
-        {
-          "Name": "progress caption",
-          "Value": "\u041E\u0431\u043D\u043E\u0432\u043B\u0435\u043D\u0438\u0435"
         },
         {
           "Name": "progress caption",
@@ -8425,6 +8589,10 @@
         {
           "Name": "progress caption",
           "Value": "\u0417\u0430\u0433\u0440\u0443\u0437\u043A\u0430 TestCabling-\u0421\u041A\u0421.rvt"
+        },
+        {
+          "Name": "progress caption",
+          "Value": "\u0420\u0435\u0433\u0435\u043D\u0435\u0440\u0430\u0446\u0438\u044F"
         },
         {
           "Name": "progress caption",
@@ -8460,14 +8628,14 @@
         },
         {
           "Name": "closed after",
-          "Value": "19.9s"
+          "Value": "15.9s"
         }
       ]
     },
     {
       "Release": 2027,
       "FileVersion": "0.1.0.0",
-      "BuiltUtc": "2026-09-22T02:38:48.7246695Z",
+      "BuiltUtc": "2026-09-22T23:44:11.2198761Z",
       "Signed": true,
       "Checks": [
         {
@@ -8955,6 +9123,10 @@
           "Ok": true
         },
         {
+          "Name": "Cabling apply: every circuit that routed is told how its length is laid by the project\u0027s methods - each slot names its method beside a length above zero or holds nothing, a method with no slot lands in the other length, and the slots, the free length and the slack add up to its length",
+          "Ok": true
+        },
+        {
           "Name": "Cabling apply: what an apply wrote reads back through the inspector pane\u0027s reader as it stands - on circuits, indicators and a carrier - and a circuit it did not route reads as never written, not as zero",
           "Ok": true
         },
@@ -9111,11 +9283,11 @@
         },
         {
           "Name": "launched",
-          "Value": "pid 14688"
+          "Value": "pid 59804"
         },
         {
           "Name": "registered after",
-          "Value": "32.9s"
+          "Value": "18.4s"
         },
         {
           "Name": "recovered by enumeration",
@@ -9131,11 +9303,11 @@
         },
         {
           "Name": "probe log",
-          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2027-14688-20260922-124445.log"
+          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2027-59804-20260923-094910.log"
         },
         {
           "Name": "threads",
-          "Value": "api 2, call 5"
+          "Value": "api 2, call 18"
         },
         {
           "Name": "appdomain",
@@ -9159,7 +9331,7 @@
         },
         {
           "Name": "log",
-          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2027-14688-20260922-124445.log"
+          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2027-59804-20260923-094910.log"
         },
         {
           "Name": "sinks",
@@ -9171,7 +9343,7 @@
         },
         {
           "Name": "opened after registration",
-          "Value": "58.4s"
+          "Value": "92.2s"
         },
         {
           "Name": "pane:exists",
@@ -9291,7 +9463,7 @@
         },
         {
           "Name": "instance",
-          "Value": "6bb388263a944eaeb6cf7f3d211bd3ba"
+          "Value": "c47b3b69d3914fb48b0b6e25cf60048c"
         },
         {
           "Name": "link1:linked",
@@ -9339,11 +9511,11 @@
         },
         {
           "Name": "log",
-          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2027-14688-20260922-124445.log"
+          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2027-59804-20260923-094910.log"
         },
         {
           "Name": "pid",
-          "Value": "14688"
+          "Value": "59804"
         },
         {
           "Name": "release",
@@ -9415,15 +9587,15 @@
         },
         {
           "Name": "instance",
-          "Value": "6bb388263a944eaeb6cf7f3d211bd3ba"
+          "Value": "c47b3b69d3914fb48b0b6e25cf60048c"
         },
         {
           "Name": "log",
-          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2027-14688-20260922-124445.log"
+          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2027-59804-20260923-094910.log"
         },
         {
           "Name": "pid",
-          "Value": "14688"
+          "Value": "59804"
         },
         {
           "Name": "place:after",
@@ -9511,11 +9683,11 @@
         },
         {
           "Name": "instance",
-          "Value": "6bb388263a944eaeb6cf7f3d211bd3ba"
+          "Value": "c47b3b69d3914fb48b0b6e25cf60048c"
         },
         {
           "Name": "log",
-          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2027-14688-20260922-124445.log"
+          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2027-59804-20260923-094910.log"
         },
         {
           "Name": "modal:apiCallWorked",
@@ -9567,7 +9739,7 @@
         },
         {
           "Name": "modal:shownFor",
-          "Value": "2.36s"
+          "Value": "2.37s"
         },
         {
           "Name": "modal:transactionCommit",
@@ -9599,7 +9771,7 @@
         },
         {
           "Name": "pid",
-          "Value": "14688"
+          "Value": "59804"
         },
         {
           "Name": "release",
@@ -9611,11 +9783,11 @@
         },
         {
           "Name": "instance",
-          "Value": "6bb388263a944eaeb6cf7f3d211bd3ba"
+          "Value": "c47b3b69d3914fb48b0b6e25cf60048c"
         },
         {
           "Name": "log",
-          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2027-14688-20260922-124445.log"
+          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2027-59804-20260923-094910.log"
         },
         {
           "Name": "modal:measured",
@@ -9627,7 +9799,7 @@
         },
         {
           "Name": "modal:pumpRanAt",
-          "Value": "2.36s"
+          "Value": "2.37s"
         },
         {
           "Name": "modal:windowClosed",
@@ -9635,7 +9807,7 @@
         },
         {
           "Name": "pid",
-          "Value": "14688"
+          "Value": "59804"
         },
         {
           "Name": "release",
@@ -9647,11 +9819,11 @@
         },
         {
           "Name": "instance",
-          "Value": "6bb388263a944eaeb6cf7f3d211bd3ba"
+          "Value": "c47b3b69d3914fb48b0b6e25cf60048c"
         },
         {
           "Name": "log",
-          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2027-14688-20260922-124445.log"
+          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2027-59804-20260923-094910.log"
         },
         {
           "Name": "parameters:bound",
@@ -9727,7 +9899,7 @@
         },
         {
           "Name": "pid",
-          "Value": "14688"
+          "Value": "59804"
         },
         {
           "Name": "release",
@@ -9967,7 +10139,7 @@
         },
         {
           "Name": "census: elapsed, ms",
-          "Value": "33"
+          "Value": "56"
         },
         {
           "Name": "circuit ends: electrical systems",
@@ -10007,7 +10179,7 @@
         },
         {
           "Name": "circuit ends: elapsed, ms",
-          "Value": "15"
+          "Value": "25"
         },
         {
           "Name": "circuits on the panel used",
@@ -10356,6 +10528,62 @@
         {
           "Name": "length by where: routes with a length in other carriers",
           "Value": "0"
+        },
+        {
+          "Name": "methods: cable tray types in the host",
+          "Value": "2"
+        },
+        {
+          "Name": "methods: conduit types in the host",
+          "Value": "1"
+        },
+        {
+          "Name": "methods: the type parameter this case states methods in",
+          "Value": "\u041A\u043E\u043C\u043C\u0435\u043D\u0442\u0430\u0440\u0438\u0438 \u043A \u0442\u0438\u043F\u043E\u0440\u0430\u0437\u043C\u0435\u0440\u0443"
+        },
+        {
+          "Name": "methods: indicators of ours already in the model",
+          "Value": "0"
+        },
+        {
+          "Name": "methods: host carriers read back with the method their type states",
+          "Value": "25"
+        },
+        {
+          "Name": "methods: circuits cut in boxes",
+          "Value": "13"
+        },
+        {
+          "Name": "methods: routes found",
+          "Value": "6"
+        },
+        {
+          "Name": "methods: other failures while applying",
+          "Value": "0"
+        },
+        {
+          "Name": "methods: warnings dismissed while applying",
+          "Value": "0"
+        },
+        {
+          "Name": "methods: routes with a length in the slotted tray method",
+          "Value": "6"
+        },
+        {
+          "Name": "methods: routes with a length in the slotted conduit method",
+          "Value": "4"
+        },
+        {
+          "Name": "methods: routes with a length in the unslotted method",
+          "Value": "6"
+        },
+        {
+          "Name": "methods: routes with a length in carriers stating no method",
+          "Value": "5"
+        },
+        {
+          "Name": "methods: what the run screen says",
+          "Value": "names the unslotted method"
         },
         {
           "Name": "inspector: indicators of ours already in the model",
@@ -10831,7 +11059,7 @@
         },
         {
           "Name": "splicing plan: types of those carriers",
-          "Value": "1"
+          "Value": "2"
         },
         {
           "Name": "splicing plan: boxes after marking",
@@ -11123,7 +11351,7 @@
         },
         {
           "Name": "Microsoft.Extensions.Configuration 10.0.0.0",
-          "Value": "elsewhere  C:\\program files\\dotnet\\shared\\Microsoft.AspNetCore.App\\10.0.12\\Microsoft.Extensions.Configuration.dll"
+          "Value": "elsewhere  c:\\program files\\dotnet\\shared\\Microsoft.AspNetCore.App\\10.0.12\\Microsoft.Extensions.Configuration.dll"
         },
         {
           "Name": "Microsoft.Extensions.Configuration (10.0.0.0) 10.0.0.0",
@@ -11135,7 +11363,7 @@
         },
         {
           "Name": "Microsoft.Extensions.Configuration.Abstractions 10.0.0.0",
-          "Value": "elsewhere  C:\\program files\\dotnet\\shared\\Microsoft.AspNetCore.App\\10.0.12\\Microsoft.Extensions.Configuration.Abstractions.dll"
+          "Value": "elsewhere  c:\\program files\\dotnet\\shared\\Microsoft.AspNetCore.App\\10.0.12\\Microsoft.Extensions.Configuration.Abstractions.dll"
         },
         {
           "Name": "Microsoft.Extensions.Configuration.Abstractions (10.0.0.0) 10.0.0.0",
@@ -11147,7 +11375,7 @@
         },
         {
           "Name": "Microsoft.Extensions.Configuration.Binder 10.0.0.0",
-          "Value": "elsewhere  C:\\program files\\dotnet\\shared\\Microsoft.AspNetCore.App\\10.0.12\\Microsoft.Extensions.Configuration.Binder.dll"
+          "Value": "elsewhere  c:\\program files\\dotnet\\shared\\Microsoft.AspNetCore.App\\10.0.12\\Microsoft.Extensions.Configuration.Binder.dll"
         },
         {
           "Name": "Microsoft.Extensions.Configuration.Binder (10.0.0.0) 10.0.0.0",
@@ -11163,7 +11391,7 @@
         },
         {
           "Name": "Microsoft.Extensions.Configuration.EnvironmentVariables 10.0.0.0",
-          "Value": "elsewhere  C:\\program files\\dotnet\\shared\\Microsoft.AspNetCore.App\\10.0.12\\Microsoft.Extensions.Configuration.EnvironmentVariables.dll"
+          "Value": "elsewhere  c:\\program files\\dotnet\\shared\\Microsoft.AspNetCore.App\\10.0.12\\Microsoft.Extensions.Configuration.EnvironmentVariables.dll"
         },
         {
           "Name": "Microsoft.Extensions.Configuration.EnvironmentVariables (10.0.0.0) 10.0.0.0",
@@ -11171,7 +11399,7 @@
         },
         {
           "Name": "Microsoft.Extensions.Configuration.FileExtensions 10.0.0.0",
-          "Value": "elsewhere  C:\\program files\\dotnet\\shared\\Microsoft.AspNetCore.App\\10.0.12\\Microsoft.Extensions.Configuration.FileExtensions.dll"
+          "Value": "elsewhere  c:\\program files\\dotnet\\shared\\Microsoft.AspNetCore.App\\10.0.12\\Microsoft.Extensions.Configuration.FileExtensions.dll"
         },
         {
           "Name": "Microsoft.Extensions.Configuration.FileExtensions (10.0.0.0) 10.0.0.0",
@@ -11179,7 +11407,7 @@
         },
         {
           "Name": "Microsoft.Extensions.Configuration.Json 10.0.0.0",
-          "Value": "elsewhere  C:\\program files\\dotnet\\shared\\Microsoft.AspNetCore.App\\10.0.12\\Microsoft.Extensions.Configuration.Json.dll"
+          "Value": "elsewhere  c:\\program files\\dotnet\\shared\\Microsoft.AspNetCore.App\\10.0.12\\Microsoft.Extensions.Configuration.Json.dll"
         },
         {
           "Name": "Microsoft.Extensions.Configuration.Json (10.0.0.0) 10.0.0.0",
@@ -11191,7 +11419,7 @@
         },
         {
           "Name": "Microsoft.Extensions.DependencyInjection 10.0.0.0",
-          "Value": "elsewhere  C:\\program files\\dotnet\\shared\\Microsoft.AspNetCore.App\\10.0.12\\Microsoft.Extensions.DependencyInjection.dll"
+          "Value": "elsewhere  c:\\program files\\dotnet\\shared\\Microsoft.AspNetCore.App\\10.0.12\\Microsoft.Extensions.DependencyInjection.dll"
         },
         {
           "Name": "Microsoft.Extensions.DependencyInjection (10.0.0.0) 10.0.0.0",
@@ -11203,7 +11431,7 @@
         },
         {
           "Name": "Microsoft.Extensions.DependencyInjection.Abstractions 10.0.0.0",
-          "Value": "elsewhere  C:\\program files\\dotnet\\shared\\Microsoft.AspNetCore.App\\10.0.12\\Microsoft.Extensions.DependencyInjection.Abstractions.dll"
+          "Value": "elsewhere  c:\\program files\\dotnet\\shared\\Microsoft.AspNetCore.App\\10.0.12\\Microsoft.Extensions.DependencyInjection.Abstractions.dll"
         },
         {
           "Name": "Microsoft.Extensions.DependencyInjection.Abstractions (10.0.0.0) 10.0.0.0",
@@ -11215,7 +11443,7 @@
         },
         {
           "Name": "Microsoft.Extensions.Diagnostics 10.0.0.0",
-          "Value": "elsewhere  C:\\program files\\dotnet\\shared\\Microsoft.AspNetCore.App\\10.0.12\\Microsoft.Extensions.Diagnostics.dll"
+          "Value": "elsewhere  c:\\program files\\dotnet\\shared\\Microsoft.AspNetCore.App\\10.0.12\\Microsoft.Extensions.Diagnostics.dll"
         },
         {
           "Name": "Microsoft.Extensions.Diagnostics (10.0.0.0) 10.0.0.0",
@@ -11227,7 +11455,7 @@
         },
         {
           "Name": "Microsoft.Extensions.Diagnostics.Abstractions 10.0.0.0",
-          "Value": "elsewhere  C:\\program files\\dotnet\\shared\\Microsoft.AspNetCore.App\\10.0.12\\Microsoft.Extensions.Diagnostics.Abstractions.dll"
+          "Value": "elsewhere  c:\\program files\\dotnet\\shared\\Microsoft.AspNetCore.App\\10.0.12\\Microsoft.Extensions.Diagnostics.Abstractions.dll"
         },
         {
           "Name": "Microsoft.Extensions.Diagnostics.Abstractions (10.0.0.0) 10.0.0.0",
@@ -11235,7 +11463,7 @@
         },
         {
           "Name": "Microsoft.Extensions.FileProviders.Abstractions 10.0.0.0",
-          "Value": "elsewhere  C:\\program files\\dotnet\\shared\\Microsoft.AspNetCore.App\\10.0.12\\Microsoft.Extensions.FileProviders.Abstractions.dll"
+          "Value": "elsewhere  c:\\program files\\dotnet\\shared\\Microsoft.AspNetCore.App\\10.0.12\\Microsoft.Extensions.FileProviders.Abstractions.dll"
         },
         {
           "Name": "Microsoft.Extensions.FileProviders.Abstractions (10.0.0.0) 10.0.0.0",
@@ -11243,7 +11471,7 @@
         },
         {
           "Name": "Microsoft.Extensions.FileProviders.Physical 10.0.0.0",
-          "Value": "elsewhere  C:\\program files\\dotnet\\shared\\Microsoft.AspNetCore.App\\10.0.12\\Microsoft.Extensions.FileProviders.Physical.dll"
+          "Value": "elsewhere  c:\\program files\\dotnet\\shared\\Microsoft.AspNetCore.App\\10.0.12\\Microsoft.Extensions.FileProviders.Physical.dll"
         },
         {
           "Name": "Microsoft.Extensions.FileProviders.Physical (10.0.0.0) 10.0.0.0",
@@ -11255,7 +11483,7 @@
         },
         {
           "Name": "Microsoft.Extensions.Hosting 10.0.0.0",
-          "Value": "elsewhere  C:\\program files\\dotnet\\shared\\Microsoft.AspNetCore.App\\10.0.12\\Microsoft.Extensions.Hosting.dll"
+          "Value": "elsewhere  c:\\program files\\dotnet\\shared\\Microsoft.AspNetCore.App\\10.0.12\\Microsoft.Extensions.Hosting.dll"
         },
         {
           "Name": "Microsoft.Extensions.Hosting (10.0.0.0) 10.0.0.0",
@@ -11263,7 +11491,7 @@
         },
         {
           "Name": "Microsoft.Extensions.Hosting.Abstractions 10.0.0.0",
-          "Value": "elsewhere  C:\\program files\\dotnet\\shared\\Microsoft.AspNetCore.App\\10.0.12\\Microsoft.Extensions.Hosting.Abstractions.dll"
+          "Value": "elsewhere  c:\\program files\\dotnet\\shared\\Microsoft.AspNetCore.App\\10.0.12\\Microsoft.Extensions.Hosting.Abstractions.dll"
         },
         {
           "Name": "Microsoft.Extensions.Hosting.Abstractions (10.0.0.0) 10.0.0.0",
@@ -11271,7 +11499,7 @@
         },
         {
           "Name": "Microsoft.Extensions.Http 10.0.0.0",
-          "Value": "elsewhere  C:\\program files\\dotnet\\shared\\Microsoft.AspNetCore.App\\10.0.12\\Microsoft.Extensions.Http.dll"
+          "Value": "elsewhere  c:\\program files\\dotnet\\shared\\Microsoft.AspNetCore.App\\10.0.12\\Microsoft.Extensions.Http.dll"
         },
         {
           "Name": "Microsoft.Extensions.Http (8.0.0.0) 8.0.0.0",
@@ -11283,7 +11511,7 @@
         },
         {
           "Name": "Microsoft.Extensions.Logging 10.0.0.0",
-          "Value": "elsewhere  C:\\program files\\dotnet\\shared\\Microsoft.AspNetCore.App\\10.0.12\\Microsoft.Extensions.Logging.dll"
+          "Value": "elsewhere  c:\\program files\\dotnet\\shared\\Microsoft.AspNetCore.App\\10.0.12\\Microsoft.Extensions.Logging.dll"
         },
         {
           "Name": "Microsoft.Extensions.Logging (10.0.0.0) 10.0.0.0",
@@ -11295,7 +11523,7 @@
         },
         {
           "Name": "Microsoft.Extensions.Logging.Abstractions 10.0.0.0",
-          "Value": "elsewhere  C:\\program files\\dotnet\\shared\\Microsoft.AspNetCore.App\\10.0.12\\Microsoft.Extensions.Logging.Abstractions.dll"
+          "Value": "elsewhere  c:\\program files\\dotnet\\shared\\Microsoft.AspNetCore.App\\10.0.12\\Microsoft.Extensions.Logging.Abstractions.dll"
         },
         {
           "Name": "Microsoft.Extensions.Logging.Abstractions (10.0.0.0) 10.0.0.0",
@@ -11307,7 +11535,7 @@
         },
         {
           "Name": "Microsoft.Extensions.Logging.Configuration 10.0.0.0",
-          "Value": "elsewhere  C:\\program files\\dotnet\\shared\\Microsoft.AspNetCore.App\\10.0.12\\Microsoft.Extensions.Logging.Configuration.dll"
+          "Value": "elsewhere  c:\\program files\\dotnet\\shared\\Microsoft.AspNetCore.App\\10.0.12\\Microsoft.Extensions.Logging.Configuration.dll"
         },
         {
           "Name": "Microsoft.Extensions.Logging.Configuration (10.0.0.0) 10.0.0.0",
@@ -11315,7 +11543,7 @@
         },
         {
           "Name": "Microsoft.Extensions.Logging.Console 10.0.0.0",
-          "Value": "elsewhere  C:\\program files\\dotnet\\shared\\Microsoft.AspNetCore.App\\10.0.12\\Microsoft.Extensions.Logging.Console.dll"
+          "Value": "elsewhere  c:\\program files\\dotnet\\shared\\Microsoft.AspNetCore.App\\10.0.12\\Microsoft.Extensions.Logging.Console.dll"
         },
         {
           "Name": "Microsoft.Extensions.Logging.Console (10.0.0.0) 10.0.0.0",
@@ -11323,7 +11551,7 @@
         },
         {
           "Name": "Microsoft.Extensions.Logging.Debug 10.0.0.0",
-          "Value": "elsewhere  C:\\program files\\dotnet\\shared\\Microsoft.AspNetCore.App\\10.0.12\\Microsoft.Extensions.Logging.Debug.dll"
+          "Value": "elsewhere  c:\\program files\\dotnet\\shared\\Microsoft.AspNetCore.App\\10.0.12\\Microsoft.Extensions.Logging.Debug.dll"
         },
         {
           "Name": "Microsoft.Extensions.Logging.Debug (10.0.0.0) 10.0.0.0",
@@ -11331,7 +11559,7 @@
         },
         {
           "Name": "Microsoft.Extensions.Logging.EventLog 10.0.0.0",
-          "Value": "elsewhere  C:\\program files\\dotnet\\shared\\Microsoft.AspNetCore.App\\10.0.12\\Microsoft.Extensions.Logging.EventLog.dll"
+          "Value": "elsewhere  c:\\program files\\dotnet\\shared\\Microsoft.AspNetCore.App\\10.0.12\\Microsoft.Extensions.Logging.EventLog.dll"
         },
         {
           "Name": "Microsoft.Extensions.Logging.EventLog (10.0.0.0) 10.0.0.0",
@@ -11339,7 +11567,7 @@
         },
         {
           "Name": "Microsoft.Extensions.Logging.EventSource 10.0.0.0",
-          "Value": "elsewhere  C:\\program files\\dotnet\\shared\\Microsoft.AspNetCore.App\\10.0.12\\Microsoft.Extensions.Logging.EventSource.dll"
+          "Value": "elsewhere  c:\\program files\\dotnet\\shared\\Microsoft.AspNetCore.App\\10.0.12\\Microsoft.Extensions.Logging.EventSource.dll"
         },
         {
           "Name": "Microsoft.Extensions.Logging.EventSource (10.0.0.0) 10.0.0.0",
@@ -11347,7 +11575,7 @@
         },
         {
           "Name": "Microsoft.Extensions.Options 10.0.0.0",
-          "Value": "elsewhere  C:\\program files\\dotnet\\shared\\Microsoft.AspNetCore.App\\10.0.12\\Microsoft.Extensions.Options.dll"
+          "Value": "elsewhere  c:\\program files\\dotnet\\shared\\Microsoft.AspNetCore.App\\10.0.12\\Microsoft.Extensions.Options.dll"
         },
         {
           "Name": "Microsoft.Extensions.Options (10.0.0.0) 10.0.0.0",
@@ -11359,7 +11587,7 @@
         },
         {
           "Name": "Microsoft.Extensions.Options.ConfigurationExtensions 10.0.0.0",
-          "Value": "elsewhere  C:\\program files\\dotnet\\shared\\Microsoft.AspNetCore.App\\10.0.12\\Microsoft.Extensions.Options.ConfigurationExtensions.dll"
+          "Value": "elsewhere  c:\\program files\\dotnet\\shared\\Microsoft.AspNetCore.App\\10.0.12\\Microsoft.Extensions.Options.ConfigurationExtensions.dll"
         },
         {
           "Name": "Microsoft.Extensions.Options.ConfigurationExtensions (10.0.0.0) 10.0.0.0",
@@ -11367,7 +11595,7 @@
         },
         {
           "Name": "Microsoft.Extensions.Primitives 10.0.0.0",
-          "Value": "elsewhere  C:\\program files\\dotnet\\shared\\Microsoft.AspNetCore.App\\10.0.12\\Microsoft.Extensions.Primitives.dll"
+          "Value": "elsewhere  c:\\program files\\dotnet\\shared\\Microsoft.AspNetCore.App\\10.0.12\\Microsoft.Extensions.Primitives.dll"
         },
         {
           "Name": "Microsoft.Extensions.Primitives (10.0.0.0) 10.0.0.0",
@@ -11391,19 +11619,19 @@
         },
         {
           "Name": "System.Collections.Immutable 10.0.0.0",
-          "Value": "elsewhere  C:\\program files\\dotnet\\shared\\Microsoft.NETCore.App\\10.0.12\\System.Collections.Immutable.dll"
+          "Value": "elsewhere  c:\\program files\\dotnet\\shared\\Microsoft.NETCore.App\\10.0.12\\System.Collections.Immutable.dll"
         },
         {
           "Name": "System.Memory 10.0.0.0",
-          "Value": "elsewhere  C:\\program files\\dotnet\\shared\\Microsoft.NETCore.App\\10.0.12\\System.Memory.dll"
+          "Value": "elsewhere  c:\\program files\\dotnet\\shared\\Microsoft.NETCore.App\\10.0.12\\System.Memory.dll"
         },
         {
           "Name": "System.Numerics.Vectors 10.0.0.0",
-          "Value": "elsewhere  C:\\program files\\dotnet\\shared\\Microsoft.NETCore.App\\10.0.12\\System.Numerics.Vectors.dll"
+          "Value": "elsewhere  c:\\program files\\dotnet\\shared\\Microsoft.NETCore.App\\10.0.12\\System.Numerics.Vectors.dll"
         },
         {
           "Name": "System.Runtime.CompilerServices.Unsafe 10.0.0.0",
-          "Value": "elsewhere  C:\\program files\\dotnet\\shared\\Microsoft.NETCore.App\\10.0.12\\System.Runtime.CompilerServices.Unsafe.dll"
+          "Value": "elsewhere  c:\\program files\\dotnet\\shared\\Microsoft.NETCore.App\\10.0.12\\System.Runtime.CompilerServices.Unsafe.dll"
         },
         {
           "Name": "System.Runtime.CompilerServices.Unsafe (6.0.0.0) 6.0.0.0",
@@ -11459,7 +11687,7 @@
         },
         {
           "Name": "diagnostic events",
-          "Value": "5420 received, 0 dropped by the publisher, longest quiet spell 31.6s during Starting"
+          "Value": "5643 received, 0 dropped by the publisher, longest quiet spell 65.9s during Starting"
         },
         {
           "Name": "phases seen",
@@ -11547,11 +11775,11 @@
         },
         {
           "Name": "closed after",
-          "Value": "12.9s"
+          "Value": "12.2s"
         }
       ]
     }
   ],
-  "Performed": 632,
+  "Performed": 636,
   "Failed": 0
 }

@@ -1,4 +1,5 @@
-﻿using Autodesk.Revit.DB;
+﻿using System.Globalization;
+using Autodesk.Revit.DB;
 using BHS.Revit.Common.Parameters;
 
 namespace BHS.MEP.Cabling.Revit;
@@ -266,6 +267,41 @@ public sealed class CablingParameters : SharedParameterScheme
     /// </remarks>
     public static readonly Guid LengthSlack = new("fef544f4-2d62-4e45-8482-576b7a7ecaac");
 
+    /// <summary>The installation method each slot names, as text: slot 1 first.</summary>
+    /// <remarks>
+    /// <para>
+    /// <b>Six pairs - a label and a length - the owner's decision of 2026-09-22.</b> A parameter per
+    /// method cannot exist, because the set of methods is open and a parameter that reached a model
+    /// cannot be withdrawn. Six fixed slots per project, see <c>InstallationMethods</c>, make each column
+    /// of a schedule mean one method; the label beside the length says which, so a schedule is
+    /// readable without the project's settings open.
+    /// </para>
+    /// <para>
+    /// <b>The label is written only with a length above zero</b>, and otherwise both stay empty - the
+    /// owner's ninth answer. A label over an empty length would read as "laid this way, for nothing".
+    /// </para>
+    /// </remarks>
+    public static readonly IReadOnlyList<Guid> MethodLabel = new Guid[]
+    {
+        new("9492cfa0-9c71-4eed-a2e0-20a7fa98b7d8"),
+        new("bfa910a3-8606-45d7-b24b-008c6303b2f6"),
+        new("0ac81ddd-2d1b-4512-9119-d78c3bef79b9"),
+        new("26653729-b318-477e-9898-1cbb75494e50"),
+        new("68846650-7a55-49e2-bd65-b982bc64f0b6"),
+        new("d6c94c86-09a7-4271-a5bf-fefd9c551024"),
+    };
+
+    /// <summary>The part of the stored length laid by the method its slot names: slot 1 first.</summary>
+    public static readonly IReadOnlyList<Guid> MethodLength = new Guid[]
+    {
+        new("7992f94a-2f6e-41cb-8c68-2ea4e62c50a0"),
+        new("67939013-c172-4aaa-9dcd-ec1255746557"),
+        new("b51958d4-6bdd-46db-9234-ed5db6b2e1c5"),
+        new("a9198929-d70e-4a26-92ad-6ec3d664ec1d"),
+        new("371f8e75-2518-42ac-ac53-c7ab33ba4616"),
+        new("3268c1b6-e4f2-49e5-96b3-27a3e66c1199"),
+    };
+
     /// <summary>Which of the two connections the stored length was computed with.</summary>
     /// <remarks>
     /// <b>A second parameter rather than a value written back into
@@ -426,6 +462,49 @@ public sealed class CablingParameters : SharedParameterScheme
             Circuits,
             english: new ParameterText(english, englishText),
             russian: new ParameterText(russian, russianText));
+
+    /// <summary>The twelve slot parameters, label and length in turn, slot 1 first.</summary>
+    /// <remarks>
+    /// Generated rather than written out twelve times: the six pairs differ only in their number, and a
+    /// pair typed by hand is where slot 4's length ends up with slot 5's name.
+    /// </remarks>
+    private static IEnumerable<SharedParameter> MethodSlots()
+    {
+        for (var i = 0; i < MethodLabel.Count; i++)
+        {
+            var slot = (i + 1).ToString(CultureInfo.InvariantCulture);
+
+            yield return new SharedParameter(
+                MethodLabel[i],
+                SpecTypeId.String.Text,
+                GroupTypeId.ElectricalCircuiting,
+                instance: true,
+                Circuits,
+                english: new ParameterText(
+                    "BHS_Cbl_Method" + slot,
+                    "The installation method whose length is in BHS_Cbl_LengthMethod" + slot
+                    + ", as the project's Model:Cabling:Methods:" + slot + " names it. Empty when none was laid that way."),
+                russian: new ParameterText(
+                    "BHS_Cbl_Способ" + slot,
+                    "Способ прокладки, длина по которому в BHS_Cbl_ДлинаСпособ" + slot
+                    + ", как его называет Model:Cabling:Methods:" + slot + " проекта. Пусто, если так не проложено ничего."),
+                hideWhenNoValue: true);
+
+            yield return new SharedParameter(
+                MethodLength[i],
+                SpecTypeId.Length,
+                GroupTypeId.ElectricalCircuiting,
+                instance: true,
+                Circuits,
+                english: new ParameterText(
+                    "BHS_Cbl_LengthMethod" + slot,
+                    "The part of BHS_Cbl_CableLength laid by the method named in BHS_Cbl_Method" + slot + "."),
+                russian: new ParameterText(
+                    "BHS_Cbl_ДлинаСпособ" + slot,
+                    "Часть BHS_Cbl_ДлинаКабеля, проложенная способом из BHS_Cbl_Способ" + slot + "."),
+                hideWhenNoValue: true);
+        }
+    }
 
     protected override string GroupName(ParameterLanguage language) => language switch
     {
@@ -593,9 +672,11 @@ public sealed class CablingParameters : SharedParameterScheme
         Length(
             LengthOther,
             "BHS_Cbl_LengthOther",
-            "The part of BHS_Cbl_CableLength laid in carriers the project classes as neither tray nor conduit.",
+            "The part of BHS_Cbl_CableLength laid in carriers the project classes as neither tray nor conduit; "
+            + "when the project names installation methods, the part laid by no method it gave a slot.",
             "BHS_Cbl_ДлинаПрочая",
-            "Часть BHS_Cbl_ДлинаКабеля в носителях, которые проект не относит ни к лоткам, ни к трубам."),
+            "Часть BHS_Cbl_ДлинаКабеля в носителях, которые проект не относит ни к лоткам, ни к трубам; "
+            + "если проект называет способы прокладки - часть, проложенная способами без слота."),
 
         Length(
             LengthSlack,
@@ -659,5 +740,5 @@ public sealed class CablingParameters : SharedParameterScheme
             russian: new ParameterText(
                 "BHS_Cbl_ДопустимыеГруппы",
                 "Какие группы кабелей можно прокладывать в этом элементе, через \"; \". Пусто - только цепи вне групп.")),
-    };
+    }.Concat(MethodSlots()).ToArray();
 }

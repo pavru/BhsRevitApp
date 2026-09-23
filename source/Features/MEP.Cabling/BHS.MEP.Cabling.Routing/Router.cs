@@ -115,6 +115,7 @@ public static class Router
             Path = tree.Carriers,
             AlongCarriers = tree.AlongCarriers,
             AlongByClass = tree.AlongByClass,
+            AlongByMethod = tree.AlongByMethod,
             Approaches = tree.Approaches,
             BuiltInLength = circuit.BuiltInLength,
             Connection = circuit.Connection,

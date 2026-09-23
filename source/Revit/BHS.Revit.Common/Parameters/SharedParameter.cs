@@ -71,6 +71,7 @@ public sealed class SharedParameter
     /// Required, and the fallback for every language that has no text of its own.
     /// </param>
     /// <param name="russian">Optional; when absent this parameter reads English in a Russian Revit.</param>
+    /// <param name="hideWhenNoValue">See <see cref="HideWhenNoValue"/>.</param>
     public SharedParameter(
         Guid id,
         ForgeTypeId spec,
@@ -78,9 +79,11 @@ public sealed class SharedParameter
         bool instance,
         IReadOnlyList<BuiltInCategory> categories,
         ParameterText english,
-        ParameterText? russian = null)
+        ParameterText? russian = null,
+        bool hideWhenNoValue = false)
     {
         Id = id;
+        HideWhenNoValue = hideWhenNoValue;
         Spec = spec;
         Group = group;
         Instance = instance;
@@ -117,6 +120,21 @@ public sealed class SharedParameter
     public bool Instance { get; }
 
     public IReadOnlyList<BuiltInCategory> Categories { get; }
+
+    /// <summary>Whether Revit hides the parameter where it holds nothing, and lets it be emptied again.</summary>
+    /// <remarks>
+    /// <para>
+    /// <b>The only way a value, once written, can be taken back out.</b> <c>Parameter.ClearValue</c>
+    /// "will only succeed for Shared parameters that have their HideWhenNoValue property set to true"
+    /// (the help, 2024 and 2027 alike). A length written as zero is a number a schedule prints; a
+    /// length cleared is an empty cell.
+    /// </para>
+    /// <para>
+    /// <b>Fixed at birth, like the id.</b> It is part of the definition the file writes and the model
+    /// keeps, so a parameter that reached a model with one answer keeps it.
+    /// </para>
+    /// </remarks>
+    public bool HideWhenNoValue { get; }
 
     /// <summary>What this parameter is called in one language.</summary>
     public ParameterText In(ParameterLanguage language) =>

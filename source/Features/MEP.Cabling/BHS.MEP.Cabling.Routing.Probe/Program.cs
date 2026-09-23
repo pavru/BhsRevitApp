@@ -14,7 +14,7 @@ namespace BHS.MEP.Cabling.Routing.Probe;
 internal static class Program
 {
     private const double Tolerance = 0.1;
-    private const int Floor = 187;
+    private const int Floor = 193;
 
     private static int _run;
     private static int _failed;
@@ -45,6 +45,7 @@ internal static class Program
         ACircuitLiesOnlyInCarriersThatAdmitIt();
         SlackIsCountedWhereTheCableIsCut();
         TheLengthIsToldByWhereItIsLaid();
+        TheLengthIsToldByHowItIsLaid();
         AStoredLengthIsToldFromAStaleOne();
 
         Console.WriteLine();
@@ -803,6 +804,73 @@ internal static class Program
         Check("with no slack asked for there is none, and a class the route never walked reads zero",
             Near(bare.SlackOf(circuit.Id), 0) && Near(bare.TotalLengthOf(circuit.Id), 40)
             && Near(none.AlongClass("busway"), 0));
+    }
+
+    /// <summary>
+    /// Two trays of one class laid by one method typed two ways, a conduit whose type says nothing, and a
+    /// third method on a tray the route never reaches.
+    /// <code>
+    ///   P                                             S
+    ///   |                                             |
+    ///   +==[conduit]==+---[tray A]---+---[tray B]---+~~~+
+    ///   0            10             30             38  40
+    ///      (none)        Лоток          "лоток "
+    /// </code>
+    /// </summary>
+    /// <remarks>
+    /// The same geometry as the section above, so the length along carriers is the same 38. Tray B is
+    /// spelled with a different case and a trailing space and has to land with tray A: two people typed
+    /// it. The conduit says nothing and lands under the empty key - which is what the screen names, so it
+    /// must not quietly join a neighbour.
+    /// </remarks>
+    private static void TheLengthIsToldByHowItIsLaid()
+    {
+        Section("the length, told by how it is laid");
+
+        var carriers = new[]
+        {
+            new CarrierNode(new CarrierId(1), CarrierKind.Segment, "conduit", false, 10, 0.05, P(0, 0, 0), P(10, 0, 0)),
+            new CarrierNode(new CarrierId(2), CarrierKind.Segment, "tray", true, 20, 0.05, P(10, 0, 0), P(30, 0, 0))
+            {
+                Method = "Лоток",
+            },
+            new CarrierNode(new CarrierId(3), CarrierKind.Segment, "tray", true, 10, 0.05, P(30, 0, 0), P(40, 0, 0))
+            {
+                Method = "лоток ",
+            },
+            new CarrierNode(new CarrierId(4), CarrierKind.Segment, "tray", true, 10, 0.05, P(0, 50, 0), P(10, 50, 0))
+            {
+                Method = "Кабель-канал",
+            },
+        };
+
+        var options = new RoutingOptions
+        {
+            JoinTolerance = Tolerance,
+            MaxApproach = 6,
+            AxisAlignedApproach = true,
+        };
+
+        var network = NetworkBuilder.Build(1, carriers, options);
+        var circuit = new CircuitSnapshot(
+            new CarrierId(100), "P-1",
+            Terminal(0, 0, -1, "panel"),
+            new[] { Terminal(38, 0, -1, "socket") });
+
+        var routed = Router.Route(network, circuit, options);
+
+        Check("the route is found", routed.Status == RouteStatus.Found);
+        Check("both trays are one method, whatever case and spacing it was typed in",
+            Near(routed.AlongMethod("Лоток"), 28) && Near(routed.AlongMethod("ЛОТОК"), 28));
+        Check("the conduit whose type says nothing lands under the empty key, not with a neighbour",
+            Near(routed.AlongMethod(string.Empty), 10));
+        Check("a method the route never walked reads zero", Near(routed.AlongMethod("Кабель-канал"), 0));
+        Check("the methods add up to the length along carriers, as the classes do",
+            Near(routed.AlongByMethod.Values.Sum(), routed.AlongCarriers)
+            && Near(routed.AlongByClass.Values.Sum(), routed.AlongCarriers)
+            && Near(routed.AlongCarriers, 38));
+        Check("and the class view is untouched by the method: both trays are still one class",
+            Near(routed.AlongClass("tray"), 28) && Near(routed.AlongClass("conduit"), 10));
     }
 
     /// <summary>

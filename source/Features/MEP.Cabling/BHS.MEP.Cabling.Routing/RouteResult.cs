@@ -210,6 +210,28 @@ public sealed class RouteResult
     public double AlongClass(string carrierClass) =>
         AlongByClass.TryGetValue(carrierClass, out var length) ? length : 0;
 
+    /// <summary>
+    /// <see cref="AlongCarriers"/> divided by the installation method of the carriers it was walked
+    /// along - whatever the project's type parameter says - in internal feet.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <b>A second view of the same length, beside <see cref="AlongByClass"/> and not instead of it</b>
+    /// - the owner's decision of 2026-09-22. The set of methods is open, so a parameter per method
+    /// cannot exist; the model gets six fixed slots per project, and this is what they are filled from.
+    /// </para>
+    /// <para>
+    /// Summed with the same measure and in the same walk as the class view, so both add up to
+    /// <see cref="AlongCarriers"/> by construction. Carriers whose type says nothing land under the
+    /// empty key - the part the screen has to name. Keys compare without regard to case and are trimmed.
+    /// </para>
+    /// </remarks>
+    public IReadOnlyDictionary<string, double> AlongByMethod { get; init; } = NoClasses;
+
+    /// <summary>The length walked along carriers laid by one method, zero when the route walked none.</summary>
+    public double AlongMethod(string method) =>
+        AlongByMethod.TryGetValue((method ?? string.Empty).Trim(), out var length) ? length : 0;
+
     private static readonly IReadOnlyDictionary<string, double> NoClasses =
         new Dictionary<string, double>(StringComparer.OrdinalIgnoreCase);
 

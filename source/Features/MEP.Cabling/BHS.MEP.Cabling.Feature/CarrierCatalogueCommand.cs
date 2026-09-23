@@ -66,7 +66,9 @@ public sealed class CarrierCatalogueCommand : IFeatureCommand
             Offered(document),
             Shipped(document),
             rule => Count(document, project, rule),
-            rules => Save(document, services, rules, log));
+            draft => Save(document, services, draft, log),
+            catalogue.Methods.Parameter,
+            Enumerable.Range(1, InstallationMethods.Slots).Select(slot => catalogue.Methods[slot]).ToList());
 
         var window = new CatalogueWindow(model);
 
@@ -161,9 +163,11 @@ public sealed class CarrierCatalogueCommand : IFeatureCommand
     private static string Save(
         Document document,
         IUiFeatureServices services,
-        IReadOnlyList<CatalogueRule> rules,
+        CatalogueDraft draft,
         ILog log)
     {
+        var rules = draft.Rules;
+
         foreach (var rule in rules)
         {
             if (rule.Class.Trim().Length == 0)
@@ -174,6 +178,16 @@ public sealed class CarrierCatalogueCommand : IFeatureCommand
             if (rule.Parameter.Trim().Length == 0 && rule.Value.Trim().Length != 0)
                 return "A value with no parameter is not a rule: " + rule.Name + " names a value and no parameter.";
         }
+
+        // The same refusal the window shows, repeated here because this is what writes: a method in two
+        // slots would split its length between two columns of every schedule.
+        var twice = draft.Methods
+            .Where(one => one.Length != 0)
+            .GroupBy(one => one, StringComparer.OrdinalIgnoreCase)
+            .FirstOrDefault(group => group.Count() > 1);
+
+        if (twice is not null)
+            return "A method is named in more than one slot: '" + twice.Key + "'. Name it once.";
 
         var kept = rules.Select(one => one.Category).ToHashSet(StringComparer.OrdinalIgnoreCase);
         var present = new List<string>();
@@ -208,6 +222,20 @@ public sealed class CarrierCatalogueCommand : IFeatureCommand
             // becomes a category counted whole rather than one filtered by nothing.
             services.ModelSettings.Set(document, at + CarrierCatalogue.ParameterField, Stated(rule.Parameter));
             services.ModelSettings.Set(document, at + CarrierCatalogue.ValueField, Stated(rule.Value));
+        }
+
+        // All six slots written, the empty ones as an empty string rather than cleared: once a project
+        // has saved its slots they are its own, and a cleared key would let a machine file's default show
+        // through - an office that later reorders its methods would move this project's columns.
+        services.ModelSettings.Set(
+            document, InstallationMethods.MethodsKey + ":" + InstallationMethods.ParameterField, draft.MethodParameter);
+
+        for (var slot = 1; slot <= InstallationMethods.Slots; slot++)
+        {
+            var name = slot <= draft.Methods.Count ? draft.Methods[slot - 1] : string.Empty;
+
+            services.ModelSettings.Set(
+                document, InstallationMethods.MethodsKey + ":" + slot.ToString(System.Globalization.CultureInfo.InvariantCulture), name);
         }
 
         var status = transaction.Commit();

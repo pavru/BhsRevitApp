@@ -146,6 +146,11 @@ public sealed partial class CablingApplyTests : IRevitTestSuite
             writes: true),
 
         new RevitTestCase(
+            "every circuit that routed is told how its length is laid by the project's methods - each slot names its method beside a length above zero or holds nothing, a method with no slot lands in the other length, and the slots, the free length and the slack add up to its length",
+            CircuitsAreToldHowTheirLengthIsLaid,
+            writes: true),
+
+        new RevitTestCase(
             "what an apply wrote reads back through the inspector pane's reader as it stands - on circuits, indicators and a carrier - and a circuit it did not route reads as never written, not as zero",
             TheInspectorReadsWhatWasWritten,
             writes: true),

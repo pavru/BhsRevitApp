@@ -682,5 +682,57 @@
       "a carrier rule that admits nothing is named on the screen, and a shipped catalogue says nothing"
     ],
     "hides": []
+  },
+  {
+    "run": 19,
+    "case": "every circuit that routed is told how its length is laid by the project's methods - each slot names its method beside a length above zero or holds nothing, a method with no slot lands in the other length, and the slots, the free length and the slack add up to its length",
+    "file": "source/Features/MEP.Cabling/BHS.MEP.Cabling.Revit/CarrierCatalogue.cs",
+    "anchor": "        if (_parameter.Length == 0 || element is null)\n            return string.Empty;",
+    "replacement": "        if (_parameter.Length == 0 || element is null || true)\n            return string.Empty;",
+    "reddens": "carrier N, whose type says 'BHS-TEST-METHOD-NO-SLOT', read back laid by '' - whichever carrier the collector reaches first",
+    "alsoReddens": [],
+    "hides": [],
+    "rationale": "Makes the reader answer 'no method' for every carrier. It is the failure that looks like a model nobody configured: every metre lands in the other length, the screen names 'carriers whose type names no method', and a person goes to check the types - which are right. Only a case that compares the method read with the one it wrote can tell the two apart.",
+    "risk": "The first assertion of the case, so everything after it stays unproven by this run. Compiles with no warning on all four TFMs: a constant-true disjunct beside a variable leaves no unreachable statement. Cannot throw.",
+    "leftUnproven": "The slots, the other length, the class view, the sum and the screen - reached by runs 20-22."
+  },
+  {
+    "run": 20,
+    "case": "every circuit that routed is told how its length is laid by the project's methods - each slot names its method beside a length above zero or holds nothing, a method with no slot lands in the other length, and the slots, the free length and the slack add up to its length",
+    "file": "source/Features/MEP.Cabling/BHS.MEP.Cabling.Revit/CablingApply.cs",
+    "anchor": "                written |= Clear(circuit, label);\n                written |= Clear(circuit, measure);",
+    "replacement": "                written |= Clear(circuit, label);",
+    "reddens": "circuit N, method slot 6: nothing was laid by 'BHS-TEST-METHOD-UNWALKED', and the length holds 1.000000 ft",
+    "alsoReddens": [],
+    "hides": [],
+    "rationale": "Stops emptying a slot's length. It is the owner's ninth answer undone: a circuit that stopped going one way keeps the metres it once had there, beside an empty label, and a schedule sums them. It is also the one place HideWhenNoValue is load-bearing, so a green here is the first evidence that ClearValue works on the slots at all.",
+    "risk": "Reddens only because the case fills slot 6 before the apply; without that the slot would never have held anything and the breakage would pass. Slots 1 and 2 come first in the loop and are green unless their method was not walked, in which case they redden first on the same cause - either way the red names a slot's length.",
+    "leftUnproven": "The other length, the sum and the screen - reached by runs 21 and 22."
+  },
+  {
+    "run": 21,
+    "case": "every circuit that routed is told how its length is laid by the project's methods - each slot names its method beside a length above zero or holds nothing, a method with no slot lands in the other length, and the slots, the free length and the slack add up to its length",
+    "file": "source/Features/MEP.Cabling/BHS.MEP.Cabling.Revit/CablingApply.cs",
+    "anchor": "                methods.IsOn ? AlongNoSlot(route, methods) : AlongOtherClasses(route));",
+    "replacement": "                methods.IsOn ? AlongOtherClasses(route) : AlongOtherClasses(route));",
+    "reddens": "circuit N: the length laid by no slotted method stored against what the route walked",
+    "alsoReddens": [],
+    "hides": [],
+    "rationale": "Keeps the old meaning of the other length with the methods on. Then the slots, the free length and the slack no longer add up to the total, and the length laid by an unslotted method appears in no column at all.",
+    "risk": "Reddens only on a circuit whose route walked an unslotted or unmethod carrier, or any carrier of a class other than tray and conduit - otherwise both answers are zero. The case writes the unslotted method on half the tray types to make that likely; if no route walks one, this run is green and says so.",
+    "leftUnproven": "The screen - reached by run 22."
+  },
+  {
+    "run": 22,
+    "case": "every circuit that routed is told how its length is laid by the project's methods - each slot names its method beside a length above zero or holds nothing, a method with no slot lands in the other length, and the slots, the free length and the slack add up to its length",
+    "file": "source/Features/MEP.Cabling/BHS.MEP.Cabling.Revit/MethodReport.cs",
+    "anchor": "        if (run is null || methods is null || !methods.IsOn)",
+    "replacement": "        if (run is null || methods is null || !methods.IsOn || true)",
+    "reddens": "the run screen does not name the method given no slot, which was laid",
+    "alsoReddens": [],
+    "hides": [],
+    "rationale": "Silences the screen line. The owner's fourth answer puts an unslotted method's length into the other length and names it, because the model cannot: without the line a typo in a type parameter is a column that is quietly short.",
+    "risk": "Reddens only when some route walked the unslotted method, the same condition as run 21. The last assertion of the case, so run 22 also shows every earlier one green on the unbroken apply.",
+    "leftUnproven": "Nothing further in this case."
   }
 ]
