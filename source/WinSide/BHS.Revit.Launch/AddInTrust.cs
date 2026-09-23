@@ -130,8 +130,14 @@ public static class AddInTrust
 
         foreach (var element in document.Descendants("AddIn"))
         {
-            var id = (string?)element.Element("AddInId") ?? string.Empty;
-            var assembly = (string?)element.Element("Assembly") ?? string.Empty;
+            // Revit takes the older name too, and add-ins still ship with it: R-BIM, Navisworks,
+            // Rushforth and Autodesk's own on this machine. Reading only AddInId passed every one
+            // of them as harmless without a look at its signature.
+            var id = (string?)element.Element("AddInId") ?? (string?)element.Element("ClientId") ?? string.Empty;
+
+            // Quoted by some vendors - Navisworks writes "./bundle/.../nwexportrevit.dll" - and a
+            // path kept with its quotes names no file, which reads as unsigned.
+            var assembly = ((string?)element.Element("Assembly") ?? string.Empty).Trim().Trim('"');
 
             var name = (string?)element.Element("Name")
                        ?? (string?)element.Element("FullClassName")
