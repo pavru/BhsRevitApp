@@ -1,16 +1,16 @@
 {
   "Schema": 2,
   "Disclaimer": "Recorded on a developer machine. Revit cannot run on hosted CI, so CI verifies this record rather than reproducing it: no automated check here has ever started a Revit.",
-  "Commit": "217dbfa2f452cb658759de67334cbc0671bd323d",
+  "Commit": "ccb3531abfffe0b863a4350d776fc34fb93d7daf",
   "CommitClean": true,
   "Content": {
     "source/Revit": "51b1368d7db3a6d3aec743cb1ff6c731bbe3cf73",
     "source/Shared": "b24cf47b52c82b7083b389e7161f5ecf3e45aa1c",
-    "source/WinSide": "5b71abdce4cd8186abf36416137a3dfa7f437a28",
+    "source/WinSide": "d5e4871135dbdbe71098a0740b97b4a30f44f255",
     "source/Features/MEP.Cabling": "0b4603dee642443da9796e8e25811ab7bdfb8d0c",
     "build/BHS.Revit.Sdk": "a8575677c417aaaef872bfda5c751f2858df4a0c"
   },
-  "RecordedUtc": "2026-09-22T23:51:18.1146764Z",
+  "RecordedUtc": "2026-09-23T00:36:32.7192188Z",
   "WithModel": true,
   "ShowTab": false,
   "Linked": true,
@@ -18,7 +18,7 @@
     {
       "Release": 2024,
       "FileVersion": "0.1.0.0",
-      "BuiltUtc": "2026-09-22T23:44:09.4988238Z",
+      "BuiltUtc": "2026-09-23T00:27:29.9096576Z",
       "Signed": true,
       "Checks": [
         {
@@ -666,11 +666,11 @@
         },
         {
           "Name": "launched",
-          "Value": "pid 52100"
+          "Value": "pid 25124"
         },
         {
           "Name": "registered after",
-          "Value": "15.4s"
+          "Value": "27.6s"
         },
         {
           "Name": "recovered by enumeration",
@@ -686,11 +686,11 @@
         },
         {
           "Name": "probe log",
-          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2024-52100-20260923-094437.log"
+          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2024-25124-20260923-102817.log"
         },
         {
           "Name": "threads",
-          "Value": "api 1, call 13"
+          "Value": "api 1, call 22"
         },
         {
           "Name": "appdomain",
@@ -714,7 +714,7 @@
         },
         {
           "Name": "log",
-          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2024-52100-20260923-094437.log"
+          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2024-25124-20260923-102817.log"
         },
         {
           "Name": "sinks",
@@ -726,7 +726,7 @@
         },
         {
           "Name": "opened after registration",
-          "Value": "20.5s"
+          "Value": "24.8s"
         },
         {
           "Name": "pane:exists",
@@ -846,7 +846,7 @@
         },
         {
           "Name": "instance",
-          "Value": "9fbd5228176149b78450cebfc88be290"
+          "Value": "611ec6a9a4b544fbb3c1106bbe19dc72"
         },
         {
           "Name": "link1:linked",
@@ -894,11 +894,11 @@
         },
         {
           "Name": "log",
-          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2024-52100-20260923-094437.log"
+          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2024-25124-20260923-102817.log"
         },
         {
           "Name": "pid",
-          "Value": "52100"
+          "Value": "25124"
         },
         {
           "Name": "release",
@@ -970,15 +970,15 @@
         },
         {
           "Name": "instance",
-          "Value": "9fbd5228176149b78450cebfc88be290"
+          "Value": "611ec6a9a4b544fbb3c1106bbe19dc72"
         },
         {
           "Name": "log",
-          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2024-52100-20260923-094437.log"
+          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2024-25124-20260923-102817.log"
         },
         {
           "Name": "pid",
-          "Value": "52100"
+          "Value": "25124"
         },
         {
           "Name": "place:after",
@@ -1066,11 +1066,11 @@
         },
         {
           "Name": "instance",
-          "Value": "9fbd5228176149b78450cebfc88be290"
+          "Value": "611ec6a9a4b544fbb3c1106bbe19dc72"
         },
         {
           "Name": "log",
-          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2024-52100-20260923-094437.log"
+          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2024-25124-20260923-102817.log"
         },
         {
           "Name": "modal:apiCallWorked",
@@ -1122,7 +1122,7 @@
         },
         {
           "Name": "modal:shownFor",
-          "Value": "2.55s"
+          "Value": "2.57s"
         },
         {
           "Name": "modal:transactionCommit",
@@ -1154,7 +1154,7 @@
         },
         {
           "Name": "pid",
-          "Value": "52100"
+          "Value": "25124"
         },
         {
           "Name": "release",
@@ -1166,11 +1166,11 @@
         },
         {
           "Name": "instance",
-          "Value": "9fbd5228176149b78450cebfc88be290"
+          "Value": "611ec6a9a4b544fbb3c1106bbe19dc72"
         },
         {
           "Name": "log",
-          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2024-52100-20260923-094437.log"
+          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2024-25124-20260923-102817.log"
         },
         {
           "Name": "modal:measured",
@@ -1182,7 +1182,7 @@
         },
         {
           "Name": "modal:pumpRanAt",
-          "Value": "2.55s"
+          "Value": "2.57s"
         },
         {
           "Name": "modal:windowClosed",
@@ -1190,7 +1190,7 @@
         },
         {
           "Name": "pid",
-          "Value": "52100"
+          "Value": "25124"
         },
         {
           "Name": "release",
@@ -1202,11 +1202,11 @@
         },
         {
           "Name": "instance",
-          "Value": "9fbd5228176149b78450cebfc88be290"
+          "Value": "611ec6a9a4b544fbb3c1106bbe19dc72"
         },
         {
           "Name": "log",
-          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2024-52100-20260923-094437.log"
+          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2024-25124-20260923-102817.log"
         },
         {
           "Name": "parameters:bound",
@@ -1282,7 +1282,7 @@
         },
         {
           "Name": "pid",
-          "Value": "52100"
+          "Value": "25124"
         },
         {
           "Name": "release",
@@ -1522,7 +1522,7 @@
         },
         {
           "Name": "census: elapsed, ms",
-          "Value": "51"
+          "Value": "70"
         },
         {
           "Name": "circuit ends: electrical systems",
@@ -1562,7 +1562,7 @@
         },
         {
           "Name": "circuit ends: elapsed, ms",
-          "Value": "32"
+          "Value": "29"
         },
         {
           "Name": "circuits on the panel used",
@@ -2442,7 +2442,7 @@
         },
         {
           "Name": "splicing plan: types of those carriers",
-          "Value": "2"
+          "Value": "1"
         },
         {
           "Name": "splicing plan: boxes after marking",
@@ -2790,7 +2790,7 @@
         },
         {
           "Name": "diagnostic events",
-          "Value": "3335 received, 0 dropped by the publisher, longest quiet spell 10.8s during Starting"
+          "Value": "3351 received, 0 dropped by the publisher, longest quiet spell 14.4s during Starting"
         },
         {
           "Name": "phases seen",
@@ -2874,14 +2874,14 @@
         },
         {
           "Name": "closed after",
-          "Value": "22.1s"
+          "Value": "22.3s"
         }
       ]
     },
     {
       "Release": 2025,
       "FileVersion": "0.1.0.0",
-      "BuiltUtc": "2026-09-22T23:44:09.3703086Z",
+      "BuiltUtc": "2026-09-23T00:27:31.8993731Z",
       "Signed": true,
       "Checks": [
         {
@@ -3529,11 +3529,11 @@
         },
         {
           "Name": "launched",
-          "Value": "pid 59528"
+          "Value": "pid 60664"
         },
         {
           "Name": "registered after",
-          "Value": "14.1s"
+          "Value": "16.3s"
         },
         {
           "Name": "recovered by enumeration",
@@ -3549,11 +3549,11 @@
         },
         {
           "Name": "probe log",
-          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2025-59528-20260923-094601.log"
+          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2025-60664-20260923-102955.log"
         },
         {
           "Name": "threads",
-          "Value": "api 1, call 5"
+          "Value": "api 1, call 24"
         },
         {
           "Name": "appdomain",
@@ -3577,7 +3577,7 @@
         },
         {
           "Name": "log",
-          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2025-59528-20260923-094601.log"
+          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2025-60664-20260923-102955.log"
         },
         {
           "Name": "sinks",
@@ -3589,7 +3589,7 @@
         },
         {
           "Name": "opened after registration",
-          "Value": "21.0s"
+          "Value": "24.1s"
         },
         {
           "Name": "pane:exists",
@@ -3709,7 +3709,7 @@
         },
         {
           "Name": "instance",
-          "Value": "134fdc2e25ee4a67a6c4dc3b97e8fa7e"
+          "Value": "4184005021aa43288472fba9909dfc9f"
         },
         {
           "Name": "link1:linked",
@@ -3757,11 +3757,11 @@
         },
         {
           "Name": "log",
-          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2025-59528-20260923-094601.log"
+          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2025-60664-20260923-102955.log"
         },
         {
           "Name": "pid",
-          "Value": "59528"
+          "Value": "60664"
         },
         {
           "Name": "release",
@@ -3833,15 +3833,15 @@
         },
         {
           "Name": "instance",
-          "Value": "134fdc2e25ee4a67a6c4dc3b97e8fa7e"
+          "Value": "4184005021aa43288472fba9909dfc9f"
         },
         {
           "Name": "log",
-          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2025-59528-20260923-094601.log"
+          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2025-60664-20260923-102955.log"
         },
         {
           "Name": "pid",
-          "Value": "59528"
+          "Value": "60664"
         },
         {
           "Name": "place:after",
@@ -3929,11 +3929,11 @@
         },
         {
           "Name": "instance",
-          "Value": "134fdc2e25ee4a67a6c4dc3b97e8fa7e"
+          "Value": "4184005021aa43288472fba9909dfc9f"
         },
         {
           "Name": "log",
-          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2025-59528-20260923-094601.log"
+          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2025-60664-20260923-102955.log"
         },
         {
           "Name": "modal:apiCallWorked",
@@ -3961,7 +3961,7 @@
         },
         {
           "Name": "modal:awaitResumedAfter",
-          "Value": "0.41s"
+          "Value": "0.47s"
         },
         {
           "Name": "modal:awaitResumedOnApiThread",
@@ -3985,7 +3985,7 @@
         },
         {
           "Name": "modal:shownFor",
-          "Value": "2.48s"
+          "Value": "2.56s"
         },
         {
           "Name": "modal:transactionCommit",
@@ -4017,7 +4017,7 @@
         },
         {
           "Name": "pid",
-          "Value": "59528"
+          "Value": "60664"
         },
         {
           "Name": "release",
@@ -4029,11 +4029,11 @@
         },
         {
           "Name": "instance",
-          "Value": "134fdc2e25ee4a67a6c4dc3b97e8fa7e"
+          "Value": "4184005021aa43288472fba9909dfc9f"
         },
         {
           "Name": "log",
-          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2025-59528-20260923-094601.log"
+          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2025-60664-20260923-102955.log"
         },
         {
           "Name": "modal:measured",
@@ -4045,7 +4045,7 @@
         },
         {
           "Name": "modal:pumpRanAt",
-          "Value": "2.48s"
+          "Value": "2.56s"
         },
         {
           "Name": "modal:windowClosed",
@@ -4053,7 +4053,7 @@
         },
         {
           "Name": "pid",
-          "Value": "59528"
+          "Value": "60664"
         },
         {
           "Name": "release",
@@ -4065,11 +4065,11 @@
         },
         {
           "Name": "instance",
-          "Value": "134fdc2e25ee4a67a6c4dc3b97e8fa7e"
+          "Value": "4184005021aa43288472fba9909dfc9f"
         },
         {
           "Name": "log",
-          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2025-59528-20260923-094601.log"
+          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2025-60664-20260923-102955.log"
         },
         {
           "Name": "parameters:bound",
@@ -4145,7 +4145,7 @@
         },
         {
           "Name": "pid",
-          "Value": "59528"
+          "Value": "60664"
         },
         {
           "Name": "release",
@@ -4385,7 +4385,7 @@
         },
         {
           "Name": "census: elapsed, ms",
-          "Value": "44"
+          "Value": "51"
         },
         {
           "Name": "circuit ends: electrical systems",
@@ -4425,7 +4425,7 @@
         },
         {
           "Name": "circuit ends: elapsed, ms",
-          "Value": "20"
+          "Value": "22"
         },
         {
           "Name": "circuits on the panel used",
@@ -5305,7 +5305,7 @@
         },
         {
           "Name": "splicing plan: types of those carriers",
-          "Value": "2"
+          "Value": "1"
         },
         {
           "Name": "splicing plan: boxes after marking",
@@ -5589,63 +5589,63 @@
         },
         {
           "Name": "Microsoft.Extensions.Configuration 8.0.0.0",
-          "Value": "elsewhere  c:\\program files\\dotnet\\shared\\Microsoft.AspNetCore.App\\8.0.31\\Microsoft.Extensions.Configuration.dll"
+          "Value": "elsewhere  C:\\program files\\dotnet\\shared\\Microsoft.AspNetCore.App\\8.0.31\\Microsoft.Extensions.Configuration.dll"
         },
         {
           "Name": "Microsoft.Extensions.Configuration.Abstractions 8.0.0.0",
-          "Value": "elsewhere  c:\\program files\\dotnet\\shared\\Microsoft.AspNetCore.App\\8.0.31\\Microsoft.Extensions.Configuration.Abstractions.dll"
+          "Value": "elsewhere  C:\\program files\\dotnet\\shared\\Microsoft.AspNetCore.App\\8.0.31\\Microsoft.Extensions.Configuration.Abstractions.dll"
         },
         {
           "Name": "Microsoft.Extensions.Configuration.FileExtensions 8.0.0.0",
-          "Value": "elsewhere  c:\\program files\\dotnet\\shared\\Microsoft.AspNetCore.App\\8.0.31\\Microsoft.Extensions.Configuration.FileExtensions.dll"
+          "Value": "elsewhere  C:\\program files\\dotnet\\shared\\Microsoft.AspNetCore.App\\8.0.31\\Microsoft.Extensions.Configuration.FileExtensions.dll"
         },
         {
           "Name": "Microsoft.Extensions.DependencyInjection 8.0.0.0",
-          "Value": "elsewhere  c:\\program files\\dotnet\\shared\\Microsoft.AspNetCore.App\\8.0.31\\Microsoft.Extensions.DependencyInjection.dll"
+          "Value": "elsewhere  C:\\program files\\dotnet\\shared\\Microsoft.AspNetCore.App\\8.0.31\\Microsoft.Extensions.DependencyInjection.dll"
         },
         {
           "Name": "Microsoft.Extensions.DependencyInjection.Abstractions 8.0.0.0",
-          "Value": "elsewhere  c:\\program files\\dotnet\\shared\\Microsoft.AspNetCore.App\\8.0.31\\Microsoft.Extensions.DependencyInjection.Abstractions.dll"
+          "Value": "elsewhere  C:\\program files\\dotnet\\shared\\Microsoft.AspNetCore.App\\8.0.31\\Microsoft.Extensions.DependencyInjection.Abstractions.dll"
         },
         {
           "Name": "Microsoft.Extensions.Diagnostics 8.0.0.0",
-          "Value": "elsewhere  c:\\program files\\dotnet\\shared\\Microsoft.AspNetCore.App\\8.0.31\\Microsoft.Extensions.Diagnostics.dll"
+          "Value": "elsewhere  C:\\program files\\dotnet\\shared\\Microsoft.AspNetCore.App\\8.0.31\\Microsoft.Extensions.Diagnostics.dll"
         },
         {
           "Name": "Microsoft.Extensions.Diagnostics.Abstractions 8.0.0.0",
-          "Value": "elsewhere  c:\\program files\\dotnet\\shared\\Microsoft.AspNetCore.App\\8.0.31\\Microsoft.Extensions.Diagnostics.Abstractions.dll"
+          "Value": "elsewhere  C:\\program files\\dotnet\\shared\\Microsoft.AspNetCore.App\\8.0.31\\Microsoft.Extensions.Diagnostics.Abstractions.dll"
         },
         {
           "Name": "Microsoft.Extensions.FileProviders.Abstractions 8.0.0.0",
-          "Value": "elsewhere  c:\\program files\\dotnet\\shared\\Microsoft.AspNetCore.App\\8.0.31\\Microsoft.Extensions.FileProviders.Abstractions.dll"
+          "Value": "elsewhere  C:\\program files\\dotnet\\shared\\Microsoft.AspNetCore.App\\8.0.31\\Microsoft.Extensions.FileProviders.Abstractions.dll"
         },
         {
           "Name": "Microsoft.Extensions.FileProviders.Physical 8.0.0.0",
-          "Value": "elsewhere  c:\\program files\\dotnet\\shared\\Microsoft.AspNetCore.App\\8.0.31\\Microsoft.Extensions.FileProviders.Physical.dll"
+          "Value": "elsewhere  C:\\program files\\dotnet\\shared\\Microsoft.AspNetCore.App\\8.0.31\\Microsoft.Extensions.FileProviders.Physical.dll"
         },
         {
           "Name": "Microsoft.Extensions.Hosting 8.0.0.0",
-          "Value": "elsewhere  c:\\program files\\dotnet\\shared\\Microsoft.AspNetCore.App\\8.0.31\\Microsoft.Extensions.Hosting.dll"
+          "Value": "elsewhere  C:\\program files\\dotnet\\shared\\Microsoft.AspNetCore.App\\8.0.31\\Microsoft.Extensions.Hosting.dll"
         },
         {
           "Name": "Microsoft.Extensions.Hosting.Abstractions 8.0.0.0",
-          "Value": "elsewhere  c:\\program files\\dotnet\\shared\\Microsoft.AspNetCore.App\\8.0.31\\Microsoft.Extensions.Hosting.Abstractions.dll"
+          "Value": "elsewhere  C:\\program files\\dotnet\\shared\\Microsoft.AspNetCore.App\\8.0.31\\Microsoft.Extensions.Hosting.Abstractions.dll"
         },
         {
           "Name": "Microsoft.Extensions.Logging 8.0.0.0",
-          "Value": "elsewhere  c:\\program files\\dotnet\\shared\\Microsoft.AspNetCore.App\\8.0.31\\Microsoft.Extensions.Logging.dll"
+          "Value": "elsewhere  C:\\program files\\dotnet\\shared\\Microsoft.AspNetCore.App\\8.0.31\\Microsoft.Extensions.Logging.dll"
         },
         {
           "Name": "Microsoft.Extensions.Logging.Abstractions 8.0.0.0",
-          "Value": "elsewhere  c:\\program files\\dotnet\\shared\\Microsoft.AspNetCore.App\\8.0.31\\Microsoft.Extensions.Logging.Abstractions.dll"
+          "Value": "elsewhere  C:\\program files\\dotnet\\shared\\Microsoft.AspNetCore.App\\8.0.31\\Microsoft.Extensions.Logging.Abstractions.dll"
         },
         {
           "Name": "Microsoft.Extensions.Options 8.0.0.0",
-          "Value": "elsewhere  c:\\program files\\dotnet\\shared\\Microsoft.AspNetCore.App\\8.0.31\\Microsoft.Extensions.Options.dll"
+          "Value": "elsewhere  C:\\program files\\dotnet\\shared\\Microsoft.AspNetCore.App\\8.0.31\\Microsoft.Extensions.Options.dll"
         },
         {
           "Name": "Microsoft.Extensions.Primitives 8.0.0.0",
-          "Value": "elsewhere  c:\\program files\\dotnet\\shared\\Microsoft.AspNetCore.App\\8.0.31\\Microsoft.Extensions.Primitives.dll"
+          "Value": "elsewhere  C:\\program files\\dotnet\\shared\\Microsoft.AspNetCore.App\\8.0.31\\Microsoft.Extensions.Primitives.dll"
         },
         {
           "Name": "Newtonsoft.Json 13.0.0.0",
@@ -5653,19 +5653,19 @@
         },
         {
           "Name": "System.Collections.Immutable 8.0.0.0",
-          "Value": "elsewhere  c:\\program files\\dotnet\\shared\\Microsoft.NETCore.App\\8.0.31\\System.Collections.Immutable.dll"
+          "Value": "elsewhere  C:\\program files\\dotnet\\shared\\Microsoft.NETCore.App\\8.0.31\\System.Collections.Immutable.dll"
         },
         {
           "Name": "System.Memory 8.0.0.0",
-          "Value": "elsewhere  c:\\program files\\dotnet\\shared\\Microsoft.NETCore.App\\8.0.31\\System.Memory.dll"
+          "Value": "elsewhere  C:\\program files\\dotnet\\shared\\Microsoft.NETCore.App\\8.0.31\\System.Memory.dll"
         },
         {
           "Name": "System.Numerics.Vectors 8.0.0.0",
-          "Value": "elsewhere  c:\\program files\\dotnet\\shared\\Microsoft.NETCore.App\\8.0.31\\System.Numerics.Vectors.dll"
+          "Value": "elsewhere  C:\\program files\\dotnet\\shared\\Microsoft.NETCore.App\\8.0.31\\System.Numerics.Vectors.dll"
         },
         {
           "Name": "System.Runtime.CompilerServices.Unsafe 8.0.0.0",
-          "Value": "elsewhere  c:\\program files\\dotnet\\shared\\Microsoft.NETCore.App\\8.0.31\\System.Runtime.CompilerServices.Unsafe.dll"
+          "Value": "elsewhere  C:\\program files\\dotnet\\shared\\Microsoft.NETCore.App\\8.0.31\\System.Runtime.CompilerServices.Unsafe.dll"
         },
         {
           "Name": "assemblies loaded",
@@ -5685,7 +5685,7 @@
         },
         {
           "Name": "diagnostic events",
-          "Value": "5546 received, 0 dropped by the publisher, longest quiet spell 2.9s during Working"
+          "Value": "5522 received, 0 dropped by the publisher, longest quiet spell 3.3s during Working"
         },
         {
           "Name": "phases seen",
@@ -5769,14 +5769,14 @@
         },
         {
           "Name": "closed after",
-          "Value": "4.7s"
+          "Value": "4.1s"
         }
       ]
     },
     {
       "Release": 2026,
       "FileVersion": "0.1.0.0",
-      "BuiltUtc": "2026-09-22T23:44:09.4988238Z",
+      "BuiltUtc": "2026-09-23T00:27:36.2149251Z",
       "Signed": true,
       "Checks": [
         {
@@ -6424,11 +6424,11 @@
         },
         {
           "Name": "launched",
-          "Value": "pid 24412"
+          "Value": "pid 59452"
         },
         {
           "Name": "registered after",
-          "Value": "26.0s"
+          "Value": "28.8s"
         },
         {
           "Name": "recovered by enumeration",
@@ -6444,11 +6444,11 @@
         },
         {
           "Name": "probe log",
-          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2026-24412-20260923-094656.log"
+          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2026-59452-20260923-103057.log"
         },
         {
           "Name": "threads",
-          "Value": "api 1, call 24"
+          "Value": "api 1, call 7"
         },
         {
           "Name": "appdomain",
@@ -6472,7 +6472,7 @@
         },
         {
           "Name": "log",
-          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2026-24412-20260923-094656.log"
+          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2026-59452-20260923-103057.log"
         },
         {
           "Name": "sinks",
@@ -6484,7 +6484,7 @@
         },
         {
           "Name": "opened after registration",
-          "Value": "72.2s"
+          "Value": "113.6s"
         },
         {
           "Name": "pane:exists",
@@ -6604,7 +6604,7 @@
         },
         {
           "Name": "instance",
-          "Value": "f838f2be08a344748e72391da59e5004"
+          "Value": "2606cd3e7bbd4f69af2276eb2cfb8122"
         },
         {
           "Name": "link1:linked",
@@ -6652,11 +6652,11 @@
         },
         {
           "Name": "log",
-          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2026-24412-20260923-094656.log"
+          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2026-59452-20260923-103057.log"
         },
         {
           "Name": "pid",
-          "Value": "24412"
+          "Value": "59452"
         },
         {
           "Name": "release",
@@ -6728,15 +6728,15 @@
         },
         {
           "Name": "instance",
-          "Value": "f838f2be08a344748e72391da59e5004"
+          "Value": "2606cd3e7bbd4f69af2276eb2cfb8122"
         },
         {
           "Name": "log",
-          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2026-24412-20260923-094656.log"
+          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2026-59452-20260923-103057.log"
         },
         {
           "Name": "pid",
-          "Value": "24412"
+          "Value": "59452"
         },
         {
           "Name": "place:after",
@@ -6824,11 +6824,11 @@
         },
         {
           "Name": "instance",
-          "Value": "f838f2be08a344748e72391da59e5004"
+          "Value": "2606cd3e7bbd4f69af2276eb2cfb8122"
         },
         {
           "Name": "log",
-          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2026-24412-20260923-094656.log"
+          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2026-59452-20260923-103057.log"
         },
         {
           "Name": "modal:apiCallWorked",
@@ -6856,7 +6856,7 @@
         },
         {
           "Name": "modal:awaitResumedAfter",
-          "Value": "0.29s"
+          "Value": "0.25s"
         },
         {
           "Name": "modal:awaitResumedOnApiThread",
@@ -6880,7 +6880,7 @@
         },
         {
           "Name": "modal:shownFor",
-          "Value": "2.38s"
+          "Value": "2.32s"
         },
         {
           "Name": "modal:transactionCommit",
@@ -6912,7 +6912,7 @@
         },
         {
           "Name": "pid",
-          "Value": "24412"
+          "Value": "59452"
         },
         {
           "Name": "release",
@@ -6924,11 +6924,11 @@
         },
         {
           "Name": "instance",
-          "Value": "f838f2be08a344748e72391da59e5004"
+          "Value": "2606cd3e7bbd4f69af2276eb2cfb8122"
         },
         {
           "Name": "log",
-          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2026-24412-20260923-094656.log"
+          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2026-59452-20260923-103057.log"
         },
         {
           "Name": "modal:measured",
@@ -6940,7 +6940,7 @@
         },
         {
           "Name": "modal:pumpRanAt",
-          "Value": "2.38s"
+          "Value": "2.32s"
         },
         {
           "Name": "modal:windowClosed",
@@ -6948,7 +6948,7 @@
         },
         {
           "Name": "pid",
-          "Value": "24412"
+          "Value": "59452"
         },
         {
           "Name": "release",
@@ -6960,11 +6960,11 @@
         },
         {
           "Name": "instance",
-          "Value": "f838f2be08a344748e72391da59e5004"
+          "Value": "2606cd3e7bbd4f69af2276eb2cfb8122"
         },
         {
           "Name": "log",
-          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2026-24412-20260923-094656.log"
+          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2026-59452-20260923-103057.log"
         },
         {
           "Name": "parameters:bound",
@@ -7040,7 +7040,7 @@
         },
         {
           "Name": "pid",
-          "Value": "24412"
+          "Value": "59452"
         },
         {
           "Name": "release",
@@ -7280,7 +7280,7 @@
         },
         {
           "Name": "census: elapsed, ms",
-          "Value": "49"
+          "Value": "37"
         },
         {
           "Name": "circuit ends: electrical systems",
@@ -7320,7 +7320,7 @@
         },
         {
           "Name": "circuit ends: elapsed, ms",
-          "Value": "22"
+          "Value": "15"
         },
         {
           "Name": "circuits on the panel used",
@@ -8484,19 +8484,19 @@
         },
         {
           "Name": "Microsoft.Extensions.DependencyInjection 8.0.0.0",
-          "Value": "elsewhere  c:\\program files\\dotnet\\shared\\Microsoft.AspNetCore.App\\8.0.31\\Microsoft.Extensions.DependencyInjection.dll"
+          "Value": "elsewhere  C:\\program files\\dotnet\\shared\\Microsoft.AspNetCore.App\\8.0.31\\Microsoft.Extensions.DependencyInjection.dll"
         },
         {
           "Name": "Microsoft.Extensions.DependencyInjection.Abstractions 8.0.0.0",
-          "Value": "elsewhere  c:\\program files\\dotnet\\shared\\Microsoft.AspNetCore.App\\8.0.31\\Microsoft.Extensions.DependencyInjection.Abstractions.dll"
+          "Value": "elsewhere  C:\\program files\\dotnet\\shared\\Microsoft.AspNetCore.App\\8.0.31\\Microsoft.Extensions.DependencyInjection.Abstractions.dll"
         },
         {
           "Name": "Microsoft.Extensions.Logging.Abstractions 8.0.0.0",
-          "Value": "elsewhere  c:\\program files\\dotnet\\shared\\Microsoft.AspNetCore.App\\8.0.31\\Microsoft.Extensions.Logging.Abstractions.dll"
+          "Value": "elsewhere  C:\\program files\\dotnet\\shared\\Microsoft.AspNetCore.App\\8.0.31\\Microsoft.Extensions.Logging.Abstractions.dll"
         },
         {
           "Name": "Microsoft.Extensions.ObjectPool 8.0.0.0",
-          "Value": "elsewhere  c:\\program files\\dotnet\\shared\\Microsoft.AspNetCore.App\\8.0.31\\Microsoft.Extensions.ObjectPool.dll"
+          "Value": "elsewhere  C:\\program files\\dotnet\\shared\\Microsoft.AspNetCore.App\\8.0.31\\Microsoft.Extensions.ObjectPool.dll"
         },
         {
           "Name": "Newtonsoft.Json 13.0.0.0",
@@ -8508,19 +8508,19 @@
         },
         {
           "Name": "System.Collections.Immutable 8.0.0.0",
-          "Value": "elsewhere  c:\\program files\\dotnet\\shared\\Microsoft.NETCore.App\\8.0.31\\System.Collections.Immutable.dll"
+          "Value": "elsewhere  C:\\program files\\dotnet\\shared\\Microsoft.NETCore.App\\8.0.31\\System.Collections.Immutable.dll"
         },
         {
           "Name": "System.Memory 8.0.0.0",
-          "Value": "elsewhere  c:\\program files\\dotnet\\shared\\Microsoft.NETCore.App\\8.0.31\\System.Memory.dll"
+          "Value": "elsewhere  C:\\program files\\dotnet\\shared\\Microsoft.NETCore.App\\8.0.31\\System.Memory.dll"
         },
         {
           "Name": "System.Numerics.Vectors 8.0.0.0",
-          "Value": "elsewhere  c:\\program files\\dotnet\\shared\\Microsoft.NETCore.App\\8.0.31\\System.Numerics.Vectors.dll"
+          "Value": "elsewhere  C:\\program files\\dotnet\\shared\\Microsoft.NETCore.App\\8.0.31\\System.Numerics.Vectors.dll"
         },
         {
           "Name": "System.Runtime.CompilerServices.Unsafe 8.0.0.0",
-          "Value": "elsewhere  c:\\program files\\dotnet\\shared\\Microsoft.NETCore.App\\8.0.31\\System.Runtime.CompilerServices.Unsafe.dll"
+          "Value": "elsewhere  C:\\program files\\dotnet\\shared\\Microsoft.NETCore.App\\8.0.31\\System.Runtime.CompilerServices.Unsafe.dll"
         },
         {
           "Name": "System.Runtime.CompilerServices.Unsafe (6.0.0.0) 6.0.0.0",
@@ -8544,7 +8544,7 @@
         },
         {
           "Name": "diagnostic events",
-          "Value": "3224 received, 0 dropped by the publisher, longest quiet spell 54.3s during Starting"
+          "Value": "3284 received, 0 dropped by the publisher, longest quiet spell 96.3s during Starting"
         },
         {
           "Name": "phases seen",
@@ -8628,14 +8628,14 @@
         },
         {
           "Name": "closed after",
-          "Value": "15.9s"
+          "Value": "16.5s"
         }
       ]
     },
     {
       "Release": 2027,
       "FileVersion": "0.1.0.0",
-      "BuiltUtc": "2026-09-22T23:44:11.2198761Z",
+      "BuiltUtc": "2026-09-23T00:27:35.1097971Z",
       "Signed": true,
       "Checks": [
         {
@@ -9283,11 +9283,11 @@
         },
         {
           "Name": "launched",
-          "Value": "pid 59804"
+          "Value": "pid 22000"
         },
         {
           "Name": "registered after",
-          "Value": "18.4s"
+          "Value": "19.1s"
         },
         {
           "Name": "recovered by enumeration",
@@ -9303,11 +9303,11 @@
         },
         {
           "Name": "probe log",
-          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2027-59804-20260923-094910.log"
+          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2027-22000-20260923-103353.log"
         },
         {
           "Name": "threads",
-          "Value": "api 2, call 18"
+          "Value": "api 2, call 19"
         },
         {
           "Name": "appdomain",
@@ -9331,7 +9331,7 @@
         },
         {
           "Name": "log",
-          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2027-59804-20260923-094910.log"
+          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2027-22000-20260923-103353.log"
         },
         {
           "Name": "sinks",
@@ -9343,7 +9343,7 @@
         },
         {
           "Name": "opened after registration",
-          "Value": "92.2s"
+          "Value": "74.9s"
         },
         {
           "Name": "pane:exists",
@@ -9463,7 +9463,7 @@
         },
         {
           "Name": "instance",
-          "Value": "c47b3b69d3914fb48b0b6e25cf60048c"
+          "Value": "76d56703f0a04bbc856938721c798bda"
         },
         {
           "Name": "link1:linked",
@@ -9511,11 +9511,11 @@
         },
         {
           "Name": "log",
-          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2027-59804-20260923-094910.log"
+          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2027-22000-20260923-103353.log"
         },
         {
           "Name": "pid",
-          "Value": "59804"
+          "Value": "22000"
         },
         {
           "Name": "release",
@@ -9587,15 +9587,15 @@
         },
         {
           "Name": "instance",
-          "Value": "c47b3b69d3914fb48b0b6e25cf60048c"
+          "Value": "76d56703f0a04bbc856938721c798bda"
         },
         {
           "Name": "log",
-          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2027-59804-20260923-094910.log"
+          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2027-22000-20260923-103353.log"
         },
         {
           "Name": "pid",
-          "Value": "59804"
+          "Value": "22000"
         },
         {
           "Name": "place:after",
@@ -9683,11 +9683,11 @@
         },
         {
           "Name": "instance",
-          "Value": "c47b3b69d3914fb48b0b6e25cf60048c"
+          "Value": "76d56703f0a04bbc856938721c798bda"
         },
         {
           "Name": "log",
-          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2027-59804-20260923-094910.log"
+          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2027-22000-20260923-103353.log"
         },
         {
           "Name": "modal:apiCallWorked",
@@ -9715,7 +9715,7 @@
         },
         {
           "Name": "modal:awaitResumedAfter",
-          "Value": "0.29s"
+          "Value": "0.26s"
         },
         {
           "Name": "modal:awaitResumedOnApiThread",
@@ -9739,7 +9739,7 @@
         },
         {
           "Name": "modal:shownFor",
-          "Value": "2.37s"
+          "Value": "2.34s"
         },
         {
           "Name": "modal:transactionCommit",
@@ -9771,7 +9771,7 @@
         },
         {
           "Name": "pid",
-          "Value": "59804"
+          "Value": "22000"
         },
         {
           "Name": "release",
@@ -9783,11 +9783,11 @@
         },
         {
           "Name": "instance",
-          "Value": "c47b3b69d3914fb48b0b6e25cf60048c"
+          "Value": "76d56703f0a04bbc856938721c798bda"
         },
         {
           "Name": "log",
-          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2027-59804-20260923-094910.log"
+          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2027-22000-20260923-103353.log"
         },
         {
           "Name": "modal:measured",
@@ -9799,7 +9799,7 @@
         },
         {
           "Name": "modal:pumpRanAt",
-          "Value": "2.37s"
+          "Value": "2.34s"
         },
         {
           "Name": "modal:windowClosed",
@@ -9807,7 +9807,7 @@
         },
         {
           "Name": "pid",
-          "Value": "59804"
+          "Value": "22000"
         },
         {
           "Name": "release",
@@ -9819,11 +9819,11 @@
         },
         {
           "Name": "instance",
-          "Value": "c47b3b69d3914fb48b0b6e25cf60048c"
+          "Value": "76d56703f0a04bbc856938721c798bda"
         },
         {
           "Name": "log",
-          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2027-59804-20260923-094910.log"
+          "Value": "C:\\Users\\alex\\AppData\\Local\\BHS\\Logs\\revit2027-22000-20260923-103353.log"
         },
         {
           "Name": "parameters:bound",
@@ -9899,7 +9899,7 @@
         },
         {
           "Name": "pid",
-          "Value": "59804"
+          "Value": "22000"
         },
         {
           "Name": "release",
@@ -10139,7 +10139,7 @@
         },
         {
           "Name": "census: elapsed, ms",
-          "Value": "56"
+          "Value": "40"
         },
         {
           "Name": "circuit ends: electrical systems",
@@ -10179,7 +10179,7 @@
         },
         {
           "Name": "circuit ends: elapsed, ms",
-          "Value": "25"
+          "Value": "23"
         },
         {
           "Name": "circuits on the panel used",
@@ -11351,7 +11351,7 @@
         },
         {
           "Name": "Microsoft.Extensions.Configuration 10.0.0.0",
-          "Value": "elsewhere  c:\\program files\\dotnet\\shared\\Microsoft.AspNetCore.App\\10.0.12\\Microsoft.Extensions.Configuration.dll"
+          "Value": "elsewhere  C:\\program files\\dotnet\\shared\\Microsoft.AspNetCore.App\\10.0.12\\Microsoft.Extensions.Configuration.dll"
         },
         {
           "Name": "Microsoft.Extensions.Configuration (10.0.0.0) 10.0.0.0",
@@ -11363,7 +11363,7 @@
         },
         {
           "Name": "Microsoft.Extensions.Configuration.Abstractions 10.0.0.0",
-          "Value": "elsewhere  c:\\program files\\dotnet\\shared\\Microsoft.AspNetCore.App\\10.0.12\\Microsoft.Extensions.Configuration.Abstractions.dll"
+          "Value": "elsewhere  C:\\program files\\dotnet\\shared\\Microsoft.AspNetCore.App\\10.0.12\\Microsoft.Extensions.Configuration.Abstractions.dll"
         },
         {
           "Name": "Microsoft.Extensions.Configuration.Abstractions (10.0.0.0) 10.0.0.0",
@@ -11375,7 +11375,7 @@
         },
         {
           "Name": "Microsoft.Extensions.Configuration.Binder 10.0.0.0",
-          "Value": "elsewhere  c:\\program files\\dotnet\\shared\\Microsoft.AspNetCore.App\\10.0.12\\Microsoft.Extensions.Configuration.Binder.dll"
+          "Value": "elsewhere  C:\\program files\\dotnet\\shared\\Microsoft.AspNetCore.App\\10.0.12\\Microsoft.Extensions.Configuration.Binder.dll"
         },
         {
           "Name": "Microsoft.Extensions.Configuration.Binder (10.0.0.0) 10.0.0.0",
@@ -11391,7 +11391,7 @@
         },
         {
           "Name": "Microsoft.Extensions.Configuration.EnvironmentVariables 10.0.0.0",
-          "Value": "elsewhere  c:\\program files\\dotnet\\shared\\Microsoft.AspNetCore.App\\10.0.12\\Microsoft.Extensions.Configuration.EnvironmentVariables.dll"
+          "Value": "elsewhere  C:\\program files\\dotnet\\shared\\Microsoft.AspNetCore.App\\10.0.12\\Microsoft.Extensions.Configuration.EnvironmentVariables.dll"
         },
         {
           "Name": "Microsoft.Extensions.Configuration.EnvironmentVariables (10.0.0.0) 10.0.0.0",
@@ -11399,7 +11399,7 @@
         },
         {
           "Name": "Microsoft.Extensions.Configuration.FileExtensions 10.0.0.0",
-          "Value": "elsewhere  c:\\program files\\dotnet\\shared\\Microsoft.AspNetCore.App\\10.0.12\\Microsoft.Extensions.Configuration.FileExtensions.dll"
+          "Value": "elsewhere  C:\\program files\\dotnet\\shared\\Microsoft.AspNetCore.App\\10.0.12\\Microsoft.Extensions.Configuration.FileExtensions.dll"
         },
         {
           "Name": "Microsoft.Extensions.Configuration.FileExtensions (10.0.0.0) 10.0.0.0",
@@ -11407,7 +11407,7 @@
         },
         {
           "Name": "Microsoft.Extensions.Configuration.Json 10.0.0.0",
-          "Value": "elsewhere  c:\\program files\\dotnet\\shared\\Microsoft.AspNetCore.App\\10.0.12\\Microsoft.Extensions.Configuration.Json.dll"
+          "Value": "elsewhere  C:\\program files\\dotnet\\shared\\Microsoft.AspNetCore.App\\10.0.12\\Microsoft.Extensions.Configuration.Json.dll"
         },
         {
           "Name": "Microsoft.Extensions.Configuration.Json (10.0.0.0) 10.0.0.0",
@@ -11419,7 +11419,7 @@
         },
         {
           "Name": "Microsoft.Extensions.DependencyInjection 10.0.0.0",
-          "Value": "elsewhere  c:\\program files\\dotnet\\shared\\Microsoft.AspNetCore.App\\10.0.12\\Microsoft.Extensions.DependencyInjection.dll"
+          "Value": "elsewhere  C:\\program files\\dotnet\\shared\\Microsoft.AspNetCore.App\\10.0.12\\Microsoft.Extensions.DependencyInjection.dll"
         },
         {
           "Name": "Microsoft.Extensions.DependencyInjection (10.0.0.0) 10.0.0.0",
@@ -11431,7 +11431,7 @@
         },
         {
           "Name": "Microsoft.Extensions.DependencyInjection.Abstractions 10.0.0.0",
-          "Value": "elsewhere  c:\\program files\\dotnet\\shared\\Microsoft.AspNetCore.App\\10.0.12\\Microsoft.Extensions.DependencyInjection.Abstractions.dll"
+          "Value": "elsewhere  C:\\program files\\dotnet\\shared\\Microsoft.AspNetCore.App\\10.0.12\\Microsoft.Extensions.DependencyInjection.Abstractions.dll"
         },
         {
           "Name": "Microsoft.Extensions.DependencyInjection.Abstractions (10.0.0.0) 10.0.0.0",
@@ -11443,7 +11443,7 @@
         },
         {
           "Name": "Microsoft.Extensions.Diagnostics 10.0.0.0",
-          "Value": "elsewhere  c:\\program files\\dotnet\\shared\\Microsoft.AspNetCore.App\\10.0.12\\Microsoft.Extensions.Diagnostics.dll"
+          "Value": "elsewhere  C:\\program files\\dotnet\\shared\\Microsoft.AspNetCore.App\\10.0.12\\Microsoft.Extensions.Diagnostics.dll"
         },
         {
           "Name": "Microsoft.Extensions.Diagnostics (10.0.0.0) 10.0.0.0",
@@ -11455,7 +11455,7 @@
         },
         {
           "Name": "Microsoft.Extensions.Diagnostics.Abstractions 10.0.0.0",
-          "Value": "elsewhere  c:\\program files\\dotnet\\shared\\Microsoft.AspNetCore.App\\10.0.12\\Microsoft.Extensions.Diagnostics.Abstractions.dll"
+          "Value": "elsewhere  C:\\program files\\dotnet\\shared\\Microsoft.AspNetCore.App\\10.0.12\\Microsoft.Extensions.Diagnostics.Abstractions.dll"
         },
         {
           "Name": "Microsoft.Extensions.Diagnostics.Abstractions (10.0.0.0) 10.0.0.0",
@@ -11463,7 +11463,7 @@
         },
         {
           "Name": "Microsoft.Extensions.FileProviders.Abstractions 10.0.0.0",
-          "Value": "elsewhere  c:\\program files\\dotnet\\shared\\Microsoft.AspNetCore.App\\10.0.12\\Microsoft.Extensions.FileProviders.Abstractions.dll"
+          "Value": "elsewhere  C:\\program files\\dotnet\\shared\\Microsoft.AspNetCore.App\\10.0.12\\Microsoft.Extensions.FileProviders.Abstractions.dll"
         },
         {
           "Name": "Microsoft.Extensions.FileProviders.Abstractions (10.0.0.0) 10.0.0.0",
@@ -11471,7 +11471,7 @@
         },
         {
           "Name": "Microsoft.Extensions.FileProviders.Physical 10.0.0.0",
-          "Value": "elsewhere  c:\\program files\\dotnet\\shared\\Microsoft.AspNetCore.App\\10.0.12\\Microsoft.Extensions.FileProviders.Physical.dll"
+          "Value": "elsewhere  C:\\program files\\dotnet\\shared\\Microsoft.AspNetCore.App\\10.0.12\\Microsoft.Extensions.FileProviders.Physical.dll"
         },
         {
           "Name": "Microsoft.Extensions.FileProviders.Physical (10.0.0.0) 10.0.0.0",
@@ -11483,7 +11483,7 @@
         },
         {
           "Name": "Microsoft.Extensions.Hosting 10.0.0.0",
-          "Value": "elsewhere  c:\\program files\\dotnet\\shared\\Microsoft.AspNetCore.App\\10.0.12\\Microsoft.Extensions.Hosting.dll"
+          "Value": "elsewhere  C:\\program files\\dotnet\\shared\\Microsoft.AspNetCore.App\\10.0.12\\Microsoft.Extensions.Hosting.dll"
         },
         {
           "Name": "Microsoft.Extensions.Hosting (10.0.0.0) 10.0.0.0",
@@ -11491,7 +11491,7 @@
         },
         {
           "Name": "Microsoft.Extensions.Hosting.Abstractions 10.0.0.0",
-          "Value": "elsewhere  c:\\program files\\dotnet\\shared\\Microsoft.AspNetCore.App\\10.0.12\\Microsoft.Extensions.Hosting.Abstractions.dll"
+          "Value": "elsewhere  C:\\program files\\dotnet\\shared\\Microsoft.AspNetCore.App\\10.0.12\\Microsoft.Extensions.Hosting.Abstractions.dll"
         },
         {
           "Name": "Microsoft.Extensions.Hosting.Abstractions (10.0.0.0) 10.0.0.0",
@@ -11499,7 +11499,7 @@
         },
         {
           "Name": "Microsoft.Extensions.Http 10.0.0.0",
-          "Value": "elsewhere  c:\\program files\\dotnet\\shared\\Microsoft.AspNetCore.App\\10.0.12\\Microsoft.Extensions.Http.dll"
+          "Value": "elsewhere  C:\\program files\\dotnet\\shared\\Microsoft.AspNetCore.App\\10.0.12\\Microsoft.Extensions.Http.dll"
         },
         {
           "Name": "Microsoft.Extensions.Http (8.0.0.0) 8.0.0.0",
@@ -11511,7 +11511,7 @@
         },
         {
           "Name": "Microsoft.Extensions.Logging 10.0.0.0",
-          "Value": "elsewhere  c:\\program files\\dotnet\\shared\\Microsoft.AspNetCore.App\\10.0.12\\Microsoft.Extensions.Logging.dll"
+          "Value": "elsewhere  C:\\program files\\dotnet\\shared\\Microsoft.AspNetCore.App\\10.0.12\\Microsoft.Extensions.Logging.dll"
         },
         {
           "Name": "Microsoft.Extensions.Logging (10.0.0.0) 10.0.0.0",
@@ -11523,7 +11523,7 @@
         },
         {
           "Name": "Microsoft.Extensions.Logging.Abstractions 10.0.0.0",
-          "Value": "elsewhere  c:\\program files\\dotnet\\shared\\Microsoft.AspNetCore.App\\10.0.12\\Microsoft.Extensions.Logging.Abstractions.dll"
+          "Value": "elsewhere  C:\\program files\\dotnet\\shared\\Microsoft.AspNetCore.App\\10.0.12\\Microsoft.Extensions.Logging.Abstractions.dll"
         },
         {
           "Name": "Microsoft.Extensions.Logging.Abstractions (10.0.0.0) 10.0.0.0",
@@ -11535,7 +11535,7 @@
         },
         {
           "Name": "Microsoft.Extensions.Logging.Configuration 10.0.0.0",
-          "Value": "elsewhere  c:\\program files\\dotnet\\shared\\Microsoft.AspNetCore.App\\10.0.12\\Microsoft.Extensions.Logging.Configuration.dll"
+          "Value": "elsewhere  C:\\program files\\dotnet\\shared\\Microsoft.AspNetCore.App\\10.0.12\\Microsoft.Extensions.Logging.Configuration.dll"
         },
         {
           "Name": "Microsoft.Extensions.Logging.Configuration (10.0.0.0) 10.0.0.0",
@@ -11543,7 +11543,7 @@
         },
         {
           "Name": "Microsoft.Extensions.Logging.Console 10.0.0.0",
-          "Value": "elsewhere  c:\\program files\\dotnet\\shared\\Microsoft.AspNetCore.App\\10.0.12\\Microsoft.Extensions.Logging.Console.dll"
+          "Value": "elsewhere  C:\\program files\\dotnet\\shared\\Microsoft.AspNetCore.App\\10.0.12\\Microsoft.Extensions.Logging.Console.dll"
         },
         {
           "Name": "Microsoft.Extensions.Logging.Console (10.0.0.0) 10.0.0.0",
@@ -11551,7 +11551,7 @@
         },
         {
           "Name": "Microsoft.Extensions.Logging.Debug 10.0.0.0",
-          "Value": "elsewhere  c:\\program files\\dotnet\\shared\\Microsoft.AspNetCore.App\\10.0.12\\Microsoft.Extensions.Logging.Debug.dll"
+          "Value": "elsewhere  C:\\program files\\dotnet\\shared\\Microsoft.AspNetCore.App\\10.0.12\\Microsoft.Extensions.Logging.Debug.dll"
         },
         {
           "Name": "Microsoft.Extensions.Logging.Debug (10.0.0.0) 10.0.0.0",
@@ -11559,7 +11559,7 @@
         },
         {
           "Name": "Microsoft.Extensions.Logging.EventLog 10.0.0.0",
-          "Value": "elsewhere  c:\\program files\\dotnet\\shared\\Microsoft.AspNetCore.App\\10.0.12\\Microsoft.Extensions.Logging.EventLog.dll"
+          "Value": "elsewhere  C:\\program files\\dotnet\\shared\\Microsoft.AspNetCore.App\\10.0.12\\Microsoft.Extensions.Logging.EventLog.dll"
         },
         {
           "Name": "Microsoft.Extensions.Logging.EventLog (10.0.0.0) 10.0.0.0",
@@ -11567,7 +11567,7 @@
         },
         {
           "Name": "Microsoft.Extensions.Logging.EventSource 10.0.0.0",
-          "Value": "elsewhere  c:\\program files\\dotnet\\shared\\Microsoft.AspNetCore.App\\10.0.12\\Microsoft.Extensions.Logging.EventSource.dll"
+          "Value": "elsewhere  C:\\program files\\dotnet\\shared\\Microsoft.AspNetCore.App\\10.0.12\\Microsoft.Extensions.Logging.EventSource.dll"
         },
         {
           "Name": "Microsoft.Extensions.Logging.EventSource (10.0.0.0) 10.0.0.0",
@@ -11575,7 +11575,7 @@
         },
         {
           "Name": "Microsoft.Extensions.Options 10.0.0.0",
-          "Value": "elsewhere  c:\\program files\\dotnet\\shared\\Microsoft.AspNetCore.App\\10.0.12\\Microsoft.Extensions.Options.dll"
+          "Value": "elsewhere  C:\\program files\\dotnet\\shared\\Microsoft.AspNetCore.App\\10.0.12\\Microsoft.Extensions.Options.dll"
         },
         {
           "Name": "Microsoft.Extensions.Options (10.0.0.0) 10.0.0.0",
@@ -11587,7 +11587,7 @@
         },
         {
           "Name": "Microsoft.Extensions.Options.ConfigurationExtensions 10.0.0.0",
-          "Value": "elsewhere  c:\\program files\\dotnet\\shared\\Microsoft.AspNetCore.App\\10.0.12\\Microsoft.Extensions.Options.ConfigurationExtensions.dll"
+          "Value": "elsewhere  C:\\program files\\dotnet\\shared\\Microsoft.AspNetCore.App\\10.0.12\\Microsoft.Extensions.Options.ConfigurationExtensions.dll"
         },
         {
           "Name": "Microsoft.Extensions.Options.ConfigurationExtensions (10.0.0.0) 10.0.0.0",
@@ -11595,7 +11595,7 @@
         },
         {
           "Name": "Microsoft.Extensions.Primitives 10.0.0.0",
-          "Value": "elsewhere  c:\\program files\\dotnet\\shared\\Microsoft.AspNetCore.App\\10.0.12\\Microsoft.Extensions.Primitives.dll"
+          "Value": "elsewhere  C:\\program files\\dotnet\\shared\\Microsoft.AspNetCore.App\\10.0.12\\Microsoft.Extensions.Primitives.dll"
         },
         {
           "Name": "Microsoft.Extensions.Primitives (10.0.0.0) 10.0.0.0",
@@ -11619,19 +11619,19 @@
         },
         {
           "Name": "System.Collections.Immutable 10.0.0.0",
-          "Value": "elsewhere  c:\\program files\\dotnet\\shared\\Microsoft.NETCore.App\\10.0.12\\System.Collections.Immutable.dll"
+          "Value": "elsewhere  C:\\program files\\dotnet\\shared\\Microsoft.NETCore.App\\10.0.12\\System.Collections.Immutable.dll"
         },
         {
           "Name": "System.Memory 10.0.0.0",
-          "Value": "elsewhere  c:\\program files\\dotnet\\shared\\Microsoft.NETCore.App\\10.0.12\\System.Memory.dll"
+          "Value": "elsewhere  C:\\program files\\dotnet\\shared\\Microsoft.NETCore.App\\10.0.12\\System.Memory.dll"
         },
         {
           "Name": "System.Numerics.Vectors 10.0.0.0",
-          "Value": "elsewhere  c:\\program files\\dotnet\\shared\\Microsoft.NETCore.App\\10.0.12\\System.Numerics.Vectors.dll"
+          "Value": "elsewhere  C:\\program files\\dotnet\\shared\\Microsoft.NETCore.App\\10.0.12\\System.Numerics.Vectors.dll"
         },
         {
           "Name": "System.Runtime.CompilerServices.Unsafe 10.0.0.0",
-          "Value": "elsewhere  c:\\program files\\dotnet\\shared\\Microsoft.NETCore.App\\10.0.12\\System.Runtime.CompilerServices.Unsafe.dll"
+          "Value": "elsewhere  C:\\program files\\dotnet\\shared\\Microsoft.NETCore.App\\10.0.12\\System.Runtime.CompilerServices.Unsafe.dll"
         },
         {
           "Name": "System.Runtime.CompilerServices.Unsafe (6.0.0.0) 6.0.0.0",
@@ -11687,7 +11687,7 @@
         },
         {
           "Name": "diagnostic events",
-          "Value": "5643 received, 0 dropped by the publisher, longest quiet spell 65.9s during Starting"
+          "Value": "5659 received, 0 dropped by the publisher, longest quiet spell 50.6s during Starting"
         },
         {
           "Name": "phases seen",
@@ -11775,7 +11775,7 @@
         },
         {
           "Name": "closed after",
-          "Value": "12.2s"
+          "Value": "62.9s"
         }
       ]
     }
